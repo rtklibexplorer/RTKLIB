@@ -47,7 +47,7 @@ extern "C" {
 
 /* constants -----------------------------------------------------------------*/
 
-#define VER_RTKLIB  "2.4.3"             /* library version */
+#define VER_RTKLIB  "2.4.3.1"             /* library version */
 
 #define PATCH_LEVEL "b8"                /* patch level */
 
@@ -980,6 +980,8 @@ typedef struct {        /* processing options type */
     int bdsmodear;      /* BeiDou AR mode (0:off,1:on) */
     int maxout;         /* obs outage count to reset bias */
     int minlock;        /* min lock count to fix ambiguity */
+	int minfixsats;     /* min sats to fix integer ambiguities */
+	int minholdsats;    /* min sats to hold integer ambiguities */
     int minfix;         /* min fix count to hold ambiguity */
     int armaxiter;      /* max iteration to resolve ambiguity */
     int ionoopt;        /* ionosphere option (IONOOPT_???) */
@@ -1106,7 +1108,7 @@ typedef struct {        /* satellite status type */
     unsigned char snr [NFREQ]; /* signal strength (0.25 dBHz) */
     unsigned char fix [NFREQ]; /* ambiguity fix flag (1:fix,2:float,3:hold) */
     unsigned char slip[NFREQ]; /* cycle-slip flag */
-    unsigned int lock [NFREQ]; /* lock counter of phase */
+    int lock [NFREQ]; /* lock counter of phase */
     unsigned int outc [NFREQ]; /* obs outage counter of phase */
     unsigned int slipc[NFREQ]; /* cycle-slip counter */
     unsigned int rejc [NFREQ]; /* reject counter */
@@ -1135,6 +1137,7 @@ typedef struct {        /* RTK control/result type */
     double *x, *P;      /* float states and their covariance */
     double *xa,*Pa;     /* fixed states and their covariance */
     int nfix;           /* number of continuous fixes of ambiguity */
+	double com_bias;    /* phase bias common between all sats (used to be distributed to all sats */
     ambc_t ambc[MAXSAT]; /* ambibuity control */
     ssat_t ssat[MAXSAT]; /* satellite status */
     int neb;            /* bytes in error message buffer */
