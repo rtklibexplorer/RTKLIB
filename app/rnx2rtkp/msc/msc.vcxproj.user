@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LocalDebuggerCommandArguments>-x 4 -y 4 -k rtk_b8.conf -o out.pos ebay.obs ebay.nav ebay.sbs</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>D:\gps\ublox\data\ibm_1214</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+</Project>
