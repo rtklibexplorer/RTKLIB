@@ -38,16 +38,25 @@
 *-----------------------------------------------------------------------------*/
 #include <stdlib.h>
 #include <signal.h>
-#include <unistd.h>
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifndef WIN32
+#include <unistd.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <pthread.h>
+#else
+#include <ws2tcpip.h>
+#include <stdio.h>
+#endif
+
 #include <errno.h>
 #include "rtklib.h"
 #include "vt.h"
@@ -76,12 +85,30 @@
 typedef struct {                       /* console type */
     int state;                         /* state (0:stop,1:run) */
     vt_t *vt;                          /* virtual terminal */
-    pthread_t thread;                  /* console thread */
+	#ifdef WIN32
+		thread_t thread;
+	#else
+		pthread_t thread;                  /* console thread */
+	#endif
 } con_t;
 
 /* function prototypes -------------------------------------------------------*/
-extern FILE *popen(const char *, const char *);
-extern int pclose(FILE *);
+#ifdef WIN32
+#define popen _popen
+#define pclose _pclose
+#endif
+
+/* macros --------------------------------------------------------------------*/
+
+#ifdef WIN32
+#define dev_t               HANDLE
+#define socket_t            SOCKET
+typedef int socklen_t;
+#else
+#define dev_t               int
+#define socket_t            int
+#define closesocket         close
+#endif
 
 /* global variables ----------------------------------------------------------*/
 static rtksvr_t svr;                    /* rtk server struct */
@@ -258,7 +285,11 @@ static void chop(char *str)
     for (p=str+strlen(str)-1;p>=str&&!isgraph((int)*p);p--) *p='\0';
 }
 /* thread to send keep alive for monitor port --------------------------------*/
+#ifdef WIN32
+static DWORD WINAPI sendkeepalive(void *arg)
+#else
 static void *sendkeepalive(void *arg)
+#endif
 {
     trace(3,"sendkeepalive: start\n");
     
@@ -267,12 +298,16 @@ static void *sendkeepalive(void *arg)
         sleepms(INTKEEPALIVE);
     }
     trace(3,"sendkeepalive: stop\n");
-    return NULL;
+    return 0;
 }
 /* open monitor port ---------------------------------------------------------*/
 static int openmoni(int port)
 {
-    pthread_t thread;
+#ifdef WIN32
+	thread_t thread;
+#else
+	pthread_t thread;
+#endif
     char path[64];
     
     trace(3,"openmomi: port=%d\n",port);
@@ -281,7 +316,11 @@ static int openmoni(int port)
     if (!stropen(&moni,STR_TCPSVR,STR_MODE_RW,path)) return 0;
     strsettimeout(&moni,timeout,reconnect);
     keepalive=1;
-    pthread_create(&thread,NULL,sendkeepalive,NULL);
+#ifdef WIN32
+	thread = CreateThread(NULL, 0, sendkeepalive, NULL, 0, NULL);
+#else
+	pthread_create(&thread, NULL, sendkeepalive, NULL);
+#endif
     return 1;
 }
 /* close monitor port --------------------------------------------------------*/
@@ -633,8 +672,8 @@ static void prstatus(vt_t *vt)
          "PPP-kinema","PPP-static"
     };
     const char *freq[]={"-","L1","L1+L2","L1+L2+L5","","",""};
-    rtcm_t rtcm[3];
-    int i,j,n,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,nave;
+    //rtcm_t rtcm[3];
+    int i,j,n,threadID,cycle,state,rtkstat,nsat0,nsat1,prcout,nave;
     int cputime,nb[3]={0},nmsg[3][10]={{0}};
     char tstr[64],s[1024],*p;
     double runtime,rt[3]={0},dop[4]={0},rr[3],bl1=0.0,bl2=0.0;
@@ -644,7 +683,7 @@ static void prstatus(vt_t *vt)
     
     rtksvrlock(&svr);
     rtk=svr.rtk;
-    thread=(int)svr.thread;
+    threadID=(int)svr.thread;
     cycle=svr.cycle;
     state=svr.state;
     rtkstat=svr.rtk.sol.stat;
@@ -662,7 +701,7 @@ static void prstatus(vt_t *vt)
         rt[0]=floor(runtime/3600.0); runtime-=rt[0]*3600.0;
         rt[1]=floor(runtime/60.0); rt[2]=runtime-rt[1]*60.0;
     }
-    for (i=0;i<3;i++) rtcm[i]=svr.rtcm[i];
+    //for (i=0;i<3;i++) rtcm[i]=svr.rtcm[i];
     rtksvrunlock(&svr);
     
     for (i=n=0;i<MAXSAT;i++) {
@@ -676,7 +715,7 @@ static void prstatus(vt_t *vt)
     
     vt_printf(vt,"\n%s%-28s: %s%s\n",ESC_BOLD,"Parameter","Value",ESC_RESET);
     vt_printf(vt,"%-28s: %s %s\n","rtklib version",VER_RTKLIB,PATCH_LEVEL);
-    vt_printf(vt,"%-28s: %d\n","rtk server thread",thread);
+    vt_printf(vt,"%-28s: %d\n","rtk server thread",threadID);
     vt_printf(vt,"%-28s: %s\n","rtk server state",svrstate[state]);
     vt_printf(vt,"%-28s: %d\n","processing cycle (ms)",cycle);
     vt_printf(vt,"%-28s: %s\n","positioning mode",mode[rtk.opt.mode]);
@@ -691,24 +730,24 @@ static void prstatus(vt_t *vt)
                 s,nmsg[i][0],nmsg[i][1],nmsg[i][6],nmsg[i][2],nmsg[i][3],
                 nmsg[i][4],nmsg[i][5],nmsg[i][7],nmsg[i][9]);
     }
-    for (i=0;i<3;i++) {
-        p=s; *p='\0';
-        for (j=1;j<100;j++) {
-            if (rtcm[i].nmsg2[j]==0) continue;
-            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j,rtcm[i].nmsg2[j]);
-        }
-        if (rtcm[i].nmsg2[0]>0) {
-            sprintf(p,"%sother2(%d)",p>s?",":"",rtcm[i].nmsg2[0]);
-        }
-        for (j=1;j<300;j++) {
-            if (rtcm[i].nmsg3[j]==0) continue;
-            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+1000,rtcm[i].nmsg3[j]);
-        }
-        if (rtcm[i].nmsg3[0]>0) {
-            sprintf(p,"%sother3(%d)",p>s?",":"",rtcm[i].nmsg3[0]);
-        }
-        vt_printf(vt,"%-15s %-9s: %s\n","# of rtcm messages",type[i],s);
-    }
+    //for (i=0;i<3;i++) {
+    //    p=s; *p='\0';
+    //    for (j=1;j<100;j++) {
+    //        if (rtcm[i].nmsg2[j]==0) continue;
+    //        p+=sprintf(p,"%s%d(%d)",p>s?",":"",j,rtcm[i].nmsg2[j]);
+    //    }
+    //    if (rtcm[i].nmsg2[0]>0) {
+    //        sprintf(p,"%sother2(%d)",p>s?",":"",rtcm[i].nmsg2[0]);
+    //    }
+    //    for (j=1;j<300;j++) {
+    //        if (rtcm[i].nmsg3[j]==0) continue;
+    //        p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+1000,rtcm[i].nmsg3[j]);
+    //    }
+    //    if (rtcm[i].nmsg3[0]>0) {
+    //        sprintf(p,"%sother3(%d)",p>s?",":"",rtcm[i].nmsg3[0]);
+    //    }
+    //    vt_printf(vt,"%-15s %-9s: %s\n","# of rtcm messages",type[i],s);
+    //}
     vt_printf(vt,"%-28s: %s\n","solution status",sol[rtkstat]);
     time2str(rtk.sol.time,tstr,9);
     vt_printf(vt,"%-28s: %s\n","time of receiver clock rover",rtk.sol.time.time?tstr:"-");
@@ -1036,8 +1075,9 @@ static void cmd_status(char **args, int narg, vt_t *vt)
 {
     int cycle=0;
     
-    trace(3,"cmd_status:\n");
-    
+    trace(3,"cmd_status: %d\n", narg);
+
+	cycle = 0;
     if (narg>1) cycle=(int)(atof(args[1])*1000.0);
     
     while (!vt_chkbrk(vt)) {
@@ -1329,7 +1369,11 @@ static int cmd_exec(const char *cmd, vt_t *vt)
     return ret;
 }
 /* console thread ------------------------------------------------------------*/
+#ifdef WIN32
+static DWORD WINAPI con_thread(void *arg)
+#else
 static void *con_thread(void *arg)
+#endif
 {
     const char *cmds[]={
         "start","stop","restart","solution","status","satellite","observ",
@@ -1417,16 +1461,24 @@ static con_t *con_open(int sock, const char *dev)
     
     trace(3,"con_open: sock=%d dev=%s\n",sock,dev);
     
-    if (!(con=(con_t *)malloc(sizeof(con_t)))) return NULL;
+    if (!(con=(con_t *)malloc(sizeof(con_t)))) {
+        trace(4,"returned null from malloc.....");
+        return NULL;
+    }
     
     if (!(con->vt=vt_open(sock,dev))) {
         free(con);
+        trace(4,"returned null vt_open.....");
         return NULL;
     }
     /* start console thread */
     con->state=1;
-    if (pthread_create(&con->thread,NULL,con_thread,con)) {
-        free(con);
+#ifdef WIN32
+	if (!(con->thread = CreateThread(NULL, 0, con_thread, con, 0, NULL))) {
+#else
+	if (pthread_create(&con->thread, NULL, con_thread, con)) {
+#endif
+		free(con);
         return NULL;
     }
     return con;
@@ -1438,8 +1490,13 @@ static void con_close(con_t *con)
     
     if (!con) return;
     con->state=con->vt->state=0;
-    pthread_join(con->thread,NULL);
-    free(con);
+
+#ifdef WIN32
+	WaitForSingleObject(con->thread, 10000);
+	CloseHandle(con->thread);
+#else
+	pthread_join(con->thread, NULL);
+#endif    free(con);
 }
 /* open socket for remote console --------------------------------------------*/
 static int open_sock(int port)
@@ -1458,52 +1515,67 @@ static int open_sock(int port)
     addr.sin_family=AF_INET;
     addr.sin_port=htons(port);
     
-    if (bind(sock,(struct sockaddr *)&addr,sizeof(addr))<0) {
-        fprintf(stderr,"bind error (%d)\n",errno);
-        close(sock);
-        return -1;
-    }
+	if (bind(sock, (struct sockaddr *)&addr, sizeof(addr))<0) {
+		fprintf(stderr, "bind error (%d)\n", errno);
+
+#ifdef _WIN32
+		auto status = shutdown(sock, SD_BOTH);
+		if (status == 0) { status = closesocket(sock); }
+#else
+		auto status = shutdown(sock, SHUT_RDWR);
+		if (status == 0) { status = close(sock); }
+#endif
+		return -1;
+	}
     listen(sock,5);
     return sock;
 }
 /* accept remote console connection ------------------------------------------*/
 static void accept_sock(int ssock, con_t **con)
 {
-    struct timeval tv={0};
-    struct sockaddr_in addr;
-    socklen_t len=sizeof(addr);
-    fd_set rs;
-    int i,sock;
-    
-    if (ssock<=0) return;
-    
-    trace(4,"accept_sock: ssock=%d\n",ssock);
-    
-    for (i=1;i<MAXCON;i++) {
-        if (!con[i]||con[i]->state) continue;
-        con_close(con[i]);
-        con[i]=NULL;
-    }
-    FD_ZERO(&rs);
-    FD_SET(ssock,&rs);
-    if (select(ssock+1,&rs,NULL,NULL,&tv)<=0) {
-        return;
-    }
-    if ((sock=accept(ssock,(struct sockaddr *)&addr,&len))<=0) {
-        return;
-    }
-    for (i=1;i<MAXCON;i++) {
-        if (con[i]) continue;
-        
-        con[i]=con_open(sock,"");
-        
-        trace(3,"remote console connected: addr=%s\n",
-              inet_ntoa(addr.sin_addr));
-        return;
-    }
-    close(sock);
-    trace(2,"remote console connection refused. addr=%s\n",
-         inet_ntoa(addr.sin_addr));
+	struct timeval tv = { 0 };
+	struct sockaddr_in addr;
+	socklen_t len = sizeof(addr);
+	fd_set rs;
+	int i, sock;
+
+	if (ssock <= 0) return;
+
+	trace(4, "accept_sock: ssock=%d\n", ssock);
+
+	for (i = 1; i<MAXCON; i++) {
+		if (!con[i] || con[i]->state) continue;
+		con_close(con[i]);
+		con[i] = NULL;
+	}
+	FD_ZERO(&rs);
+	FD_SET(ssock, &rs);
+	if (select(ssock + 1, &rs, NULL, NULL, &tv) <= 0) {
+		return;
+	}
+	if ((sock = accept(ssock, (struct sockaddr *)&addr, &len)) <= 0) {
+		return;
+	}
+	for (i = 1; i<MAXCON; i++) {
+		if (con[i]) continue;
+
+		con[i] = con_open(sock, "");
+
+		trace(3, "remote console connected: addr=%s\n",
+			inet_ntoa(addr.sin_addr));
+		return;
+	}
+
+#ifdef _WIN32
+	auto status = shutdown(sock, SD_BOTH);
+	if (status == 0) { status = closesocket(sock); }
+#else
+	auto status = shutdown(sock, SHUT_RDWR);
+	if (status == 0) { status = close(sock); }
+#endif
+
+	trace(2, "remote console connection refused. addr=%s\n",
+		inet_ntoa(addr.sin_addr));
 }
 /* rtkrcv main -----------------------------------------------------------------
 * sysnopsis
@@ -1611,9 +1683,48 @@ static void accept_sock(int ssock, con_t **con)
 *-----------------------------------------------------------------------------*/
 int main(int argc, char **argv)
 {
-    con_t *con[MAXCON]={0};
-    int i,start=0,port=0,outstat=0,trace=0,sock=0;
-    char *dev="",file[MAXSTR]="";
+	setbuf(stdout, NULL);
+	setbuf(stderr, NULL);
+	setbuf(stdin, NULL);
+	setvbuf(stdin, NULL, _IONBF, 0);
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
+
+	con_t *con[MAXCON] = { 0 };
+	int i, start = 0, port = 0, outstat = 0, trace = 0, sock = 0;
+	char *dev = "", file[MAXSTR] = "", *logfile = "", *statfile = "";
+
+
+#ifdef WIN32
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	int err;
+
+	/* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
+	wVersionRequested = MAKEWORD(2, 2);
+
+	err = WSAStartup(wVersionRequested, &wsaData);
+	if (err != 0) {
+		/* Tell the user that we could not find a usable */
+		/* Winsock DLL.                                  */
+		printf("WSAStartup failed with error: %d\n", err);
+		return 1;
+	}
+
+	/* Confirm that the WinSock DLL supports 2.2.*/
+	/* Note that if the DLL supports versions greater    */
+	/* than 2.2 in addition to 2.2, it will still return */
+	/* 2.2 in wVersion since that is the version we      */
+	/* requested.                                        */
+
+	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
+		/* Tell the user that we could not find a usable */
+		/* WinSock DLL.                                  */
+		printf("Could not find a usable version of Winsock.dll\n");
+		WSACleanup();
+		return 1;
+	}
+#endif
     
     for (i=1;i<argc;i++) {
         if      (!strcmp(argv[i],"-s")) start=1;
@@ -1655,10 +1766,11 @@ int main(int argc, char **argv)
     if (moniport>0&&!openmoni(moniport)) {
         fprintf(stderr,"monitor port open error: %d\n",moniport);
     }
+	
     if (port) {
         /* open socket for remote console */
         if ((sock=open_sock(port))<=0) {
-            fprintf(stderr,"console open error port=%d\n",port);
+            fprintf(stderr,"console open error remote port=%d\n",port);
             if (moniport>0) closemoni();
             if (outstat>0) rtkclosestat();
             traceclose();
@@ -1668,18 +1780,21 @@ int main(int argc, char **argv)
     else {
         /* open device for local console */
         if (!(con[0]=con_open(0,dev))) {
-            fprintf(stderr,"console open error dev=%s\n",dev);
+            fprintf(stderr,"console open local error dev=%s\n",dev);
             if (moniport>0) closemoni();
             if (outstat>0) rtkclosestat();
             traceclose();
             return -1;
         }
     }
-    signal(SIGINT, sigshut); /* keyboard interrupt */
-    signal(SIGTERM,sigshut); /* external shutdown signal */
-    signal(SIGUSR2,sigshut);
-    signal(SIGHUP ,SIG_IGN);
-    signal(SIGPIPE,SIG_IGN);
+	
+	signal(SIGINT, sigshut); /* keyboard interrupt */
+	signal(SIGTERM, sigshut); /* external shutdown signal */
+#ifndef WIN32
+	signal(SIGUSR2, sigshut);
+	signal(SIGHUP, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
+#endif
     
     /* start rtk server */
     if (start) {
@@ -1705,5 +1820,11 @@ int main(int argc, char **argv)
         fprintf(stderr,"navigation data save error: %s\n",NAVIFILE);
     }
     traceclose();
+
+#ifdef WIN32
+	WSACleanup();
+#endif	
+
     return 0;
 }
+
