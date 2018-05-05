@@ -157,7 +157,7 @@ static const char *usage[]={
     "  -s         start RTK server on program startup",
     "  -p port    port number for telnet console",
     "  -m port    port number for monitor stream",
-    "  -d dev     terminal device for console",
+    "  -d dev     terminal device for console (not supported in windows, use -p",
     "  -o file    processing options file",
     "  -w pwd     login password for remote console (\"\": no password)",
     "  -r level   output solution status file (0:off,1:states,2:residuals)",
@@ -1727,10 +1727,21 @@ int main(int argc, char **argv)
 #endif
     
     for (i=1;i<argc;i++) {
+#ifndef WIN32
         if      (!strcmp(argv[i],"-s")) start=1;
+#else
+		if (!strcmp(argv[i], "-s")) {
+			start = 1;
+			fprintf(stderr, "\n-s not supported in windows, please use -p to start a console....");
+			fprintf(stderr, "\n and execute the start command! \n");
+			return -1;
+		}
+#endif
         else if (!strcmp(argv[i],"-p")&&i+1<argc) port=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-m")&&i+1<argc) moniport=atoi(argv[++i]);
+#ifndef WIN32
         else if (!strcmp(argv[i],"-d")&&i+1<argc) dev=argv[++i];
+#endif
         else if (!strcmp(argv[i],"-o")&&i+1<argc) strcpy(file,argv[++i]);
         else if (!strcmp(argv[i],"-w")&&i+1<argc) strcpy(passwd,argv[++i]);
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
@@ -1778,6 +1789,7 @@ int main(int argc, char **argv)
         }
     }
     else {
+#ifndef WIN32
         /* open device for local console */
         if (!(con[0]=con_open(0,dev))) {
             fprintf(stderr,"console open local error dev=%s\n",dev);
@@ -1786,6 +1798,16 @@ int main(int argc, char **argv)
             traceclose();
             return -1;
         }
+#else
+		/* open device for local console */
+		if (!(con[0] = con_open(0, dev))) {
+			fprintf(stderr, "\n -d not supported in windows, please use -p to start a console.... \n");
+			if (moniport>0) closemoni();
+			if (outstat>0) rtkclosestat();
+			traceclose();
+			return -1;
+		}
+#endif
     }
 	
 	signal(SIGINT, sigshut); /* keyboard interrupt */
