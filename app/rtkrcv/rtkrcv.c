@@ -672,7 +672,7 @@ static void prstatus(vt_t *vt)
          "PPP-kinema","PPP-static"
     };
     const char *freq[]={"-","L1","L1+L2","L1+L2+L5","","",""};
-    //rtcm_t rtcm[3];
+    rtcm_t rtcm[3];
     int i,j,n,threadID,cycle,state,rtkstat,nsat0,nsat1,prcout,nave;
     int cputime,nb[3]={0},nmsg[3][10]={{0}};
     char tstr[64],s[1024],*p;
@@ -701,7 +701,7 @@ static void prstatus(vt_t *vt)
         rt[0]=floor(runtime/3600.0); runtime-=rt[0]*3600.0;
         rt[1]=floor(runtime/60.0); rt[2]=runtime-rt[1]*60.0;
     }
-    //for (i=0;i<3;i++) rtcm[i]=svr.rtcm[i];
+    for (i=0;i<3;i++) rtcm[i]=svr.rtcm[i];
     rtksvrunlock(&svr);
     
     for (i=n=0;i<MAXSAT;i++) {
@@ -730,24 +730,24 @@ static void prstatus(vt_t *vt)
                 s,nmsg[i][0],nmsg[i][1],nmsg[i][6],nmsg[i][2],nmsg[i][3],
                 nmsg[i][4],nmsg[i][5],nmsg[i][7],nmsg[i][9]);
     }
-    //for (i=0;i<3;i++) {
-    //    p=s; *p='\0';
-    //    for (j=1;j<100;j++) {
-    //        if (rtcm[i].nmsg2[j]==0) continue;
-    //        p+=sprintf(p,"%s%d(%d)",p>s?",":"",j,rtcm[i].nmsg2[j]);
-    //    }
-    //    if (rtcm[i].nmsg2[0]>0) {
-    //        sprintf(p,"%sother2(%d)",p>s?",":"",rtcm[i].nmsg2[0]);
-    //    }
-    //    for (j=1;j<300;j++) {
-    //        if (rtcm[i].nmsg3[j]==0) continue;
-    //        p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+1000,rtcm[i].nmsg3[j]);
-    //    }
-    //    if (rtcm[i].nmsg3[0]>0) {
-    //        sprintf(p,"%sother3(%d)",p>s?",":"",rtcm[i].nmsg3[0]);
-    //    }
-    //    vt_printf(vt,"%-15s %-9s: %s\n","# of rtcm messages",type[i],s);
-    //}
+    for (i=0;i<3;i++) {
+        p=s; *p='\0';
+        for (j=1;j<100;j++) {
+            if (rtcm[i].nmsg2[j]==0) continue;
+            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j,rtcm[i].nmsg2[j]);
+        }
+        if (rtcm[i].nmsg2[0]>0) {
+            sprintf(p,"%sother2(%d)",p>s?",":"",rtcm[i].nmsg2[0]);
+        }
+        for (j=1;j<300;j++) {
+            if (rtcm[i].nmsg3[j]==0) continue;
+            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+1000,rtcm[i].nmsg3[j]);
+        }
+        if (rtcm[i].nmsg3[0]>0) {
+            sprintf(p,"%sother3(%d)",p>s?",":"",rtcm[i].nmsg3[0]);
+        }
+        vt_printf(vt,"%-15s %-9s: %s\n","# of rtcm messages",type[i],s);
+    }
     vt_printf(vt,"%-28s: %s\n","solution status",sol[rtkstat]);
     time2str(rtk.sol.time,tstr,9);
     vt_printf(vt,"%-28s: %s\n","time of receiver clock rover",rtk.sol.time.time?tstr:"-");

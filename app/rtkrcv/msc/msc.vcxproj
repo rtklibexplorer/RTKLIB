@@ -100,6 +100,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <StackReserveSize>5242880</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
