@@ -345,10 +345,19 @@ static int confwrite(vt_t *vt, const char *file)
     
     strcpy(buff,file);
     if ((p=strstr(buff,"::"))) *p='\0'; /* omit options in path */
+#ifndef WIN32
     if (!vt->state||!(fp=fopen(buff,"r"))) return 1; /* no existing file */
     fclose(fp);
+	trace(4, "after fclose.......\n");
     vt_printf(vt,"overwrite %-16s ? (y/n): ",buff);
     if (!vt_gets(vt,buff,sizeof(buff))||vt->brk) return 0;
+#else
+	if (!(fp = fopen(buff, "r"))) return 1; /* no existing file */
+	fclose(fp);
+	fprintf(stdout, "overwrite %-16s ? (y/n): ", buff);
+	scanf("%s", buff);
+	//if (!vt_gets(vt, buff, sizeof(buff)) || vt->brk) return 0;
+#endif
     return toupper((int)buff[0])=='Y';
 }
 /* login ---------------------------------------------------------------------*/
@@ -1726,29 +1735,22 @@ int main(int argc, char **argv)
 	}
 #endif
     
-    for (i=1;i<argc;i++) {
+	for (i = 1; i<argc; i++) {
+
+		if (!strcmp(argv[i], "-s")) start = 1;
+		else if (!strcmp(argv[i], "-p") && i + 1<argc) port = atoi(argv[++i]);
+		else if (!strcmp(argv[i], "-m") && i + 1<argc) moniport = atoi(argv[++i]);
 #ifndef WIN32
-        if      (!strcmp(argv[i],"-s")) start=1;
-#else
-		if (!strcmp(argv[i], "-s")) {
-			start = 1;
-			fprintf(stderr, "\n-s not supported in windows, please use -p to start a console....");
-			fprintf(stderr, "\n and execute the start command! \n");
-			return -1;
+		else if (!strcmp(argv[i], "-d") && i + 1<argc) dev = argv[++i];
+#endif
+		else if (!strcmp(argv[i], "-o") && i + 1<argc) strcpy(file, argv[++i]);
+		else if (!strcmp(argv[i], "-w") && i + 1<argc) strcpy(passwd, argv[++i]);
+		else if (!strcmp(argv[i], "-r") && i + 1<argc) outstat = atoi(argv[++i]);
+		else if (!strcmp(argv[i], "-t") && i + 1<argc) trace = atoi(argv[++i]);
+		else if (!strcmp(argv[i], "-sta") && i + 1<argc) strcpy(sta_name, argv[++i]);
+		else printusage();
 		}
-#endif
-        else if (!strcmp(argv[i],"-p")&&i+1<argc) port=atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-m")&&i+1<argc) moniport=atoi(argv[++i]);
-#ifndef WIN32
-        else if (!strcmp(argv[i],"-d")&&i+1<argc) dev=argv[++i];
-#endif
-        else if (!strcmp(argv[i],"-o")&&i+1<argc) strcpy(file,argv[++i]);
-        else if (!strcmp(argv[i],"-w")&&i+1<argc) strcpy(passwd,argv[++i]);
-        else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-sta")&&i+1<argc) strcpy(sta_name,argv[++i]);
-        else printusage();
-    }
+
     if (trace>0) {
         traceopen(TRACEFILE);
         tracelevel(trace);
