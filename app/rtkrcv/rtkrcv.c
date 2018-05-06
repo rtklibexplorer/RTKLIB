@@ -1801,14 +1801,16 @@ int main(int argc, char **argv)
             return -1;
         }
 #else
-		/* open device for local console */
-		if (!(con[0] = con_open(0, dev))) {
-			fprintf(stderr, "\n -d not supported in windows, please use -p to start a console.... \n");
-			if (moniport>0) closemoni();
-			if (outstat>0) rtkclosestat();
-			traceclose();
-			return -1;
+		fprintf(stdout, "\n -d not supported in windows, please use -p to start a console \n");
+		fprintf(stdout, "\n continuing without /dev console.... \n");
+
+		int i;
+		for (i = 0; i<(int)(sizeof(usage) / sizeof(*usage)); i++) {
+			fprintf(stdout, "%s\n", usage[i]);
 		}
+		fprintf(stdout, "\n");
+
+
 #endif
     }
 	
