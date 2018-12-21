@@ -346,13 +346,8 @@ static serial_t *openserial(const char *path, int mode, char *msg)
     char dcb[64]="";
 #else
 
-<<<<<<< HEAD
-/* MacOS doesn't support higher baudrates (>230400B) */
-#ifdef __APPLE__
-=======
 #ifdef __APPLE__
     /* MacOS doesn't support higher baudrates (>230400B) */
->>>>>>> 16ea34b3b52d0cee97d27c71a6174af8f48f00a5
     const speed_t bs[]={
         B300,B600,B1200,B2400,B4800,B9600,B19200,B38400,B57600,B115200,B230400
     };
@@ -361,10 +356,6 @@ static serial_t *openserial(const char *path, int mode, char *msg)
         B300,B600,B1200,B2400,B4800,B9600,B19200,B38400,B57600,B115200,B230400,B460800
     };
 #endif /* ifdef __APPLE__ */
-<<<<<<< HEAD
-
-=======
->>>>>>> 16ea34b3b52d0cee97d27c71a6174af8f48f00a5
     struct termios ios={0};
     int rw=0;
 #endif
@@ -817,11 +808,7 @@ static int readfile(file_t *file, unsigned char *buff, int nmax, char *msg)
             tick_master=t;
         }
         /* seek time-tag file to get next tick and file position */
-<<<<<<< HEAD
-        while (file->tick_n<=t) {
-=======
         while ((int)(file->tick_n-t)<=0) {
->>>>>>> 16ea34b3b52d0cee97d27c71a6174af8f48f00a5
 
             if (fread(&file->tick_n,sizeof(tick),1,file->fp_tag)<1||
                 fread(file->size_fpos==4?(void *)&fpos_4B:(void *)&fpos_8B,
@@ -842,21 +829,11 @@ static int readfile(file_t *file, unsigned char *buff, int nmax, char *msg)
         sprintf(msg,"T%+.1fs",(int)t*0.001);
         }
         file->wtime = timeadd(file->time,(int)t*0.001);
-<<<<<<< HEAD
-        timeset(timeadd(file->time,(int)file->tick_n*0.001));
-
-        if ((n=file->fpos_n-ftell(file->fp))<nmax) {
-            nmax=n;
-        }
-
-        if (!file->repmode) tick_master = file->tick_n;
-=======
         timeset(timeadd(gpst2utc(file->time),(int)file->tick_n*0.001));
-        
+
         if ((n=file->fpos_n-ftell(file->fp))<nmax) {
             nmax=n;
         }
->>>>>>> 16ea34b3b52d0cee97d27c71a6174af8f48f00a5
     }
     if (nmax>0) {
         nr=(int)fread(buff,1,nmax,file->fp);
@@ -875,15 +852,9 @@ static int writefile(file_t *file, unsigned char *buff, int n, char *msg)
     int week1,week2,ns;
     double tow1,tow2,intv;
     size_t fpos,fpos_tmp;
-<<<<<<< HEAD
 
-    tracet(3,"writefile: fp=%d n=%d\n",file->fp,n);
-
-=======
-    
     tracet(4,"writefile: fp=%d n=%d\n",file->fp,n);
-    
->>>>>>> 16ea34b3b52d0cee97d27c71a6174af8f48f00a5
+
     if (!file) return 0;
 
     wtime=utc2gpst(timeget()); /* write time in gpst */
@@ -1515,13 +1486,8 @@ static int encbase64(char *str, const unsigned char *byte, int n)
 /* send ntrip server request -------------------------------------------------*/
 static int reqntrip_s(ntrip_t *ntrip, char *msg)
 {
-<<<<<<< HEAD
-    char buff[256+NTRIP_MAXSTR],*p=buff;
-
-=======
     char buff[1024+NTRIP_MAXSTR],*p=buff;
-    
->>>>>>> 16ea34b3b52d0cee97d27c71a6174af8f48f00a5
+
     tracet(3,"reqntrip_s: state=%d\n",ntrip->state);
 
     p+=sprintf(p,"SOURCE %s %s\r\n",ntrip->passwd,ntrip->mntpnt);
@@ -1530,13 +1496,8 @@ static int reqntrip_s(ntrip_t *ntrip, char *msg)
     p+=sprintf(p,"\r\n");
 
     if (writetcpcli(ntrip->tcp,(unsigned char *)buff,p-buff,msg)!=p-buff) return 0;
-<<<<<<< HEAD
 
-    tracet(2,"reqntrip_s: send request state=%d ns=%d\n",ntrip->state,p-buff);
-=======
-    
     tracet(3,"reqntrip_s: send request state=%d ns=%d\n",ntrip->state,p-buff);
->>>>>>> 16ea34b3b52d0cee97d27c71a6174af8f48f00a5
     tracet(5,"reqntrip_s: n=%d buff=\n%s\n",p-buff,buff);
     ntrip->state=1;
     return 1;
@@ -1564,13 +1525,8 @@ static int reqntrip_c(ntrip_t *ntrip, char *msg)
     p+=sprintf(p,"\r\n");
 
     if (writetcpcli(ntrip->tcp,(unsigned char *)buff,p-buff,msg)!=p-buff) return 0;
-<<<<<<< HEAD
 
-    tracet(2,"reqntrip_c: send request state=%d ns=%d\n",ntrip->state,p-buff);
-=======
-    
     tracet(3,"reqntrip_c: send request state=%d ns=%d\n",ntrip->state,p-buff);
->>>>>>> 16ea34b3b52d0cee97d27c71a6174af8f48f00a5
     tracet(5,"reqntrip_c: n=%d buff=\n%s\n",p-buff,buff);
     ntrip->state=1;
     return 1;
@@ -1908,13 +1864,8 @@ static void rsp_ntripc_c(ntripc_t *ntripc, int i)
 {
     const char *rsp1=NTRIP_RSP_UNAUTH,*rsp2=NTRIP_RSP_OK_CLI;
     ntripc_con_t *con=ntripc->con+i;
-<<<<<<< HEAD
-    char url[256]="",mntpnt[256]="",proto[256]="",user[256],user_pwd[256],*p,*q;
-
-=======
     char url[256]="",mntpnt[256]="",proto[256]="",user[513],user_pwd[256],*p,*q;
-    
->>>>>>> 16ea34b3b52d0cee97d27c71a6174af8f48f00a5
+
     tracet(3,"rspntripc_c i=%d\n",i);
     con->buff[con->nb]='\0';
     tracet(5,"rspntripc_c: n=%d,buff=\n%s\n",con->nb,con->buff);
