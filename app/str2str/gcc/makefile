@@ -76,7 +76,7 @@ cmr.o      : $(SRC)/rcv/cmr.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/cmr.c
 tersus.o   : $(SRC)/rcv/tersus.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/tersus.c
-comnav.o   : $(SRC)/rcv/tersus.c
+comnav.o   : $(SRC)/rcv/comnav.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/comnav.c
 
 str2str.o  : $(SRC)/rtklib.h

@@ -521,7 +521,24 @@ static int decode_solenu(char *buff, const solopt_t *opt, sol_t *sol)
     }
     if (i<n) sol->age  =(float)val[i++];
     if (i<n) sol->ratio=(float)val[i++];
-    
+
+    if (i+3<=n) { /* velocity */
+        for (j=0;j<3;j++) {
+            sol->rr[j+3]=val[i++]; /* vel-enu */
+        }
+    }
+    if (i+3<=n) {
+        for (j=0;j<9;j++) Q[j]=0.0;
+        Q[0]=val[i]*val[i]; i++; /* sde */
+        Q[4]=val[i]*val[i]; i++; /* sdn */
+        Q[8]=val[i]*val[i]; i++; /* sdu */
+        if (i+3<=n) {
+            Q[1]=Q[3]=SQR(val[i]); i++; /* sden */
+            Q[5]=Q[7]=SQR(val[i]); i++; /* sdnu */
+            Q[2]=Q[6]=SQR(val[i]); i++; /* sdue */
+        }
+        covtosol_vel(Q,sol);
+    }
     sol->type=1; /* postion type = enu */
     
     if (MAXSOLQ<sol->stat) sol->stat=SOLQ_NONE;
@@ -1176,7 +1193,7 @@ static int outpos(unsigned char *buff, const char *s, const sol_t *sol,
 static int outenu(unsigned char *buff, const char *s, const sol_t *sol,
                   const double *rb, const solopt_t *opt)
 {
-    double pos[3],rr[3],enu[3],P[9],Q[9];
+    double pos[3],vel[3],rr[3],enu[3],P[9],Q[9];
     int i;
     const char *sep=opt2sep(opt);
     char *p=(char *)buff;
@@ -1188,10 +1205,20 @@ static int outenu(unsigned char *buff, const char *s, const sol_t *sol,
     soltocov(sol,P);
     covenu(pos,P,Q);
     ecef2enu(pos,rr,enu);
-    p+=sprintf(p,"%s%s%14.4f%s%14.4f%s%14.4f%s%3d%s%3d%s%8.4f%s%8.4f%s%8.4f%s%8.4f%s%8.4f%s%8.4f%s%6.2f%s%6.1f\n",
+    p+=sprintf(p,"%s%s%14.4f%s%14.4f%s%14.4f%s%3d%s%3d%s%8.4f%s%8.4f%s%8.4f%s%8.4f%s%8.4f%s%8.4f%s%6.2f%s%6.1f",
                s,sep,enu[0],sep,enu[1],sep,enu[2],sep,sol->stat,sep,sol->ns,sep,
                SQRT(Q[0]),sep,SQRT(Q[4]),sep,SQRT(Q[8]),sep,sqvar(Q[1]),
                sep,sqvar(Q[5]),sep,sqvar(Q[2]),sep,sol->age,sep,sol->ratio);
+    if (opt->outvel) { /* output velocity */
+        soltocov_vel(sol,P);
+        ecef2enu(pos,sol->rr+3,vel);
+        covenu(pos,P,Q);
+        p+=sprintf(p,"%s%10.5f%s%10.5f%s%10.5f%s%9.5f%s%8.5f%s%8.5f%s%8.5f%s%8.5f%s%8.5f",
+                   sep,vel[0],sep,vel[1],sep,vel[2],sep,SQRT(Q[0]),sep,
+                   SQRT(Q[4]),sep,SQRT(Q[8]),sep,sqvar(Q[1]),sep,sqvar(Q[5]),
+                   sep,sqvar(Q[2]));
+    }
+    p+=sprintf(p,"\n");
     return p-(char *)buff;
 }
 /* output solution in the form of nmea RMC sentence --------------------------*/
@@ -1574,6 +1601,11 @@ extern int outsolheads(unsigned char *buff, const solopt_t *opt)
                    "e-baseline(m)",sep,"n-baseline(m)",sep,"u-baseline(m)",sep,
                    "Q",sep,"ns",sep,"sde(m)",sep,"sdn(m)",sep,"sdu(m)",sep,
                    "sden(m)",sep,"sdnu(m)",sep,"sdue(m)",sep,"age(s)",sep,"ratio");
+        if (opt->outvel) {
+            p+=sprintf(p,"%s%10s%s%10s%s%10s%s%9s%s%8s%s%8s%s%8s%s%8s%s%8s",
+                       sep,"ve(m/s)",sep,"vn(m/s)",sep,"vu(m/s)",sep,"sdve",sep,
+                       "sdvn",sep,"sdvu",sep,"sdven",sep,"sdvnu",sep,"sdvue");
+        }
     }
     p+=sprintf(p,"\n");
     return p-(char *)buff;

@@ -116,6 +116,7 @@ static int modflgr[256] ={0};           /* modified flags of receiver options */
 static int modflgs[256] ={0};           /* modified flags of system options */
 static int moniport     =0;             /* monitor port */
 static int keepalive    =0;             /* keep alive flag */
+static int start        =0;             /* auto start */
 static int fswapmargin  =30;            /* file swap margin (s) */
 static char sta_name[256]="";           /* station name */
 
@@ -1360,6 +1361,13 @@ static void *con_thread(void *arg)
         con->state=0;
         return 0;
     }
+ 
+    /* auto start if option set */
+    if (start) {
+        cmd_start(args,narg,con->vt);
+        start=0;
+    }
+    
     while (con->state) {
         
         /* output prompt */
@@ -1622,7 +1630,7 @@ static void accept_sock(int ssock, con_t **con)
 int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
-    int i,start=0,port=0,outstat=0,trace=0,sock=0;
+    int i,port=0,outstat=0,trace=0,sock=0;
     char *dev="",file[MAXSTR]="";
     
     for (i=1;i<argc;i++) {
@@ -1690,11 +1698,7 @@ int main(int argc, char **argv)
     signal(SIGUSR2,sigshut);
     signal(SIGHUP ,SIG_IGN);
     signal(SIGPIPE,SIG_IGN);
-    
-    /* start rtk server */
-    if (start) {
-        startsvr(NULL);
-    }
+
     while (!intflg) {
         /* accept remote console connection */
         accept_sock(sock,con);
