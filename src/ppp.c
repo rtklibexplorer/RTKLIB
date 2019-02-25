@@ -389,7 +389,7 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
             else if (sys==SYS_GLO)
                 ix=(i==0?CODE_L1P-1:CODE_L2P-1);
 			else if (sys == SYS_GAL)
-				ix = (i == 0 ? CODE_L1A - 1 : CODE_L6A - 1);
+				ix = (i == 0 ? CODE_L1X - 1 : CODE_L7X - 1);
             P[i]+=(nav->ssr[obs->sat-1].cbias[obs->code[i]-1]-nav->ssr[obs->sat-1].cbias[ix]); /* ssr correction */
         }
         else {
