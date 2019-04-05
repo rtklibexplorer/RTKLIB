@@ -326,7 +326,7 @@ QColor Plot::ObsColor(const obsd_t *obs, double az, double el)
     }
     else if (*code) {
         for (i=0;i<NFREQ+NEXOBS;i++) {
-            if (!strstr(code2obs(obs->code[i],NULL),code)) continue;
+            if (!strstr(code2obs(0,obs->code[i],NULL),code)) continue;
             color=SnrColor(obs->SNR[i]*0.25);
             break;
         }

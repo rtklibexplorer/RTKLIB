@@ -5,6 +5,16 @@
 #include "rtklib.h"
 #include "convopt.h"
 #include "codeopt.h"
+
+#define FREQTYPE_L1 0x01                /* frequency type: L1/E1 */
+#define FREQTYPE_L2 0x02                /* frequency type: L2/B1 */
+#define FREQTYPE_L5 0x04                /* frequency type: L5/E5a/L3 */
+#define FREQTYPE_L6 0x08                /* frequency type: E6/LEX/B3 */
+#define FREQTYPE_L7 0x10                /* frequency type: E5b/B2 */
+#define FREQTYPE_L8 0x20                /* frequency type: E5(a+b) */
+#define FREQTYPE_L9 0x40                /* frequency type: S */
+#define FREQTYPE_ALL 0xFF               /* frequency type: all */
+
 //---------------------------------------------------------------------------
 CodeOptDialog::CodeOptDialog(QWidget *parent, ConvOptDialog *c)
     : QDialog(parent), convOptDialog(c)

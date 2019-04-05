@@ -36,7 +36,7 @@
 *-----------------------------------------------------------------------------*/
 #include "rtklib.h"
 
-#define NOUTFILE        9       /* number of output files */
+#define NOUTFILE        7       /* number of output files */
 #define NSATSYS         7       /* number of satellite systems */
 #define TSTARTMARGIN    60.0    /* time margin for file name replacement */
 
@@ -1267,7 +1267,7 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
     trace(3,"convrnx_s: sess=%d format=%d file=%s ofile=%s %s %s %s %s %s %s %s %s\n",
           sess,format,file,ofile[0],ofile[1],ofile[2],ofile[3],ofile[4],
           ofile[5],ofile[6],ofile[7],ofile[8]);
-    
+
     /* replace keywords in input file */
     if (reppath(file,path,opt->ts,staname,"")<0) {
         showmsg("no time for input file: %s",file);

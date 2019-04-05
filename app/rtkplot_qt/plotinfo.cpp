@@ -337,7 +337,7 @@ void Plot::UpdateObsType(void)
     }
     for (unsigned char c=1;c<=MAXCODE;c++) {
         if (!cmask[c]) continue;
-        codes[n++]=code2obs(c,&j);
+        codes[n++]=code2obs(0,c,&j);
         fmask[j-1]=1;
     }
     ObsType ->clear();

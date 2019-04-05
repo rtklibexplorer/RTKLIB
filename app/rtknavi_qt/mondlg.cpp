@@ -1004,7 +1004,7 @@ void MonitorDialog::ShowObs(void)
             Console->setItem(i,j++, new QTableWidgetItem(QString::number(obs[i].LLI[k])));
 		}
 		for (k=0;k<NFREQ+nex;k++) {
-			code=code2obs(obs[i].code[k],NULL);
+			code=code2obs(0,obs[i].code[k],NULL);
             if (*code) Console->setItem(i,j++, new QTableWidgetItem(QString(tr("L%1")).arg(code)));
             else       Console->setItem(i,j++, new QTableWidgetItem(""));
 		}
@@ -1861,7 +1861,7 @@ void MonitorDialog::SetRtcmSsr(void)
         Console->setColumnWidth(i,width[i]*FontScale/96);
 	}
     for (i=18;i<Console->columnCount();i++) {
-        char *code=code2obs(i-17,NULL);
+        char *code=code2obs(0,i-17,NULL);
         Console->setColumnWidth(i,40*FontScale/96);
         header<<QString(tr("BL%1(m)")).arg(code);
         Console->setItem(1,i, new QTableWidgetItem(""));

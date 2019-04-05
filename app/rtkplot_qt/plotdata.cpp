@@ -933,7 +933,7 @@ void Plot::SaveSnrMp(const QString &file)
             if (Obs.data[j].sat!=i+1) continue;
             
             for (k=0;k<NFREQ+NEXOBS;k++) {
-                if (strstr(code2obs(Obs.data[j].code[k],NULL),code)) break;
+                if (strstr(code2obs(0,Obs.data[j].code[k],NULL),code)) break;
             }
             if (k>=NFREQ+NEXOBS) continue;
             
@@ -1196,7 +1196,7 @@ void Plot::UpdateMp(void)
         for (j=0;j<NFREQ+NEXOBS;j++) {
             Mp[j][i]=0.0;
             
-            code2obs(data->code[j],&f1);
+            code2obs(0,data->code[j],&f1);
             
             if (sys==SYS_CMP) {
                 if      (f1==5) f1=2; /* B2 */
@@ -1224,7 +1224,7 @@ void Plot::UpdateMp(void)
         for (j=k=n=0,B=0.0;j<Obs.n;j++) {
             if (Obs.data[j].sat!=sat) continue;
             
-            code2obs(Obs.data[j].code[i],&f1);
+            code2obs(0,Obs.data[j].code[i],&f1);
             
             if (sys==SYS_CMP) {
                 if      (f1==5) f1=2; /* B2 */
