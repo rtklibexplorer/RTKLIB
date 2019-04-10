@@ -1218,8 +1218,8 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
         free(solb);
         free(rbf);
         free(rbb);
-        rtkfree(&rtk);
     }
+	rtkfree(&rtk);
     /* free obs and nav data */
     freeobsnav(&obss,&navs);
     
