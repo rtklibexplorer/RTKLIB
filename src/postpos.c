@@ -756,6 +756,7 @@ static int readobsnav(gtime_t ts, gtime_t te, double ti, char **infile,
     obs->data=NULL; obs->n =obs->nmax =0;
     nav->eph =NULL; nav->n =nav->nmax =0;
     nav->geph=NULL; nav->ng=nav->ngmax=0;
+	free(nav->seph); // To avoid memory leak
     nav->seph=NULL; nav->ns=nav->nsmax=0;
     nepoch=0;
     
