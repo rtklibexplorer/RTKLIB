@@ -252,8 +252,8 @@ static int decode_sirfclock(raw_t *raw)
 
     /* GPS Clock Frequency 
        NOTE MID 93.18 provides Clock Drift Uncertainty */
-    /* printf("\nGPS Clock:%f kHz, RepBias:%8.3f µs, ",(FREQ1+drift)*16/1540/1e+3,U4(p+12)/1e+3);
-    printf("CalcBias = %8.3f µs, ",1e6*drift/FREQ1);
+    /* printf("\nGPS Clock:%f kHz, RepBias:%8.3f µs, ",(FREQL1+drift)*16/1540/1e+3,U4(p+12)/1e+3);
+    printf("CalcBias = %8.3f µs, ",1e6*drift/FREQL1);
     printf("DeltaTime = %.3f s, ",tow-U4(p+16)/1000); */
 
     drift=U4(p+8);		/* Clock Drift in CSR receivers is directly related to the frequency of the GPS clock, 
@@ -261,11 +261,11 @@ static int decode_sirfclock(raw_t *raw)
                                    Frequency calculation, reported in Message ID 28. 
                                    NOTE Clock drift is only reported to a truncated 1 Hz resolution! */
     bias=U4(p+12)/1e+9;	/* TBD: In einem 125er Array ablegen und rsd rechnen? */
-    /*bias=drift/FREQ1; 		/* ClkBiasTCXO; */
+    /*bias=drift/FREQL1; 		/* ClkBiasTCXO; */
     /*printf("\nRAW:"); for (i=0;i<raw->len;i++) printf("%02X",U1(p-4+i));	/* Print RAW Data Bytes	*/
 
     /* printf("\nBIAS %08X->%f",U4(p+12),bias); */
-    /*,FREQ1,FREQ1*bias);*/
+    /*,FREQL1,FREQL1*bias);*/
 
     /* NOTE Korrektur von Carrier Frequency, Phase, Pseudorange, Zeitbasis, etc. */
     for (i=0;i<raw->obuf.n&&i<MAXOBS;i++) {
@@ -284,7 +284,7 @@ static int decode_sirfclock(raw_t *raw)
            Corrected Carrier Frequency (m/s) = Reported Carrier Frequency (m/s) – Clock Drift (Hz)*C / 1575420000 Hz. 		
                                              = 16756.8m/s - 18315.766m/s ...? */
         /* printf("\nCarrier Frequency = %15.3f // %15.3f // %15.3f",dst->D[0],auxData[dst->sat].CarrFreq28,auxData[dst->sat].CarrFreq64); */
-        /* dst->D[0]-=drift;  /*FREQ1/CLIGHT;		/* Adjust reported Carrier Frequency [m/s] by Clock Drift [Hz]			*/
+        /* dst->D[0]-=drift;  /*FREQL1/CLIGHT;		/* Adjust reported Carrier Frequency [m/s] by Clock Drift [Hz]			*/
         /* printf(" // %15.3f",dst->D[0]); */
         
         /* Carrier Phase Adjustmest [m] -> [Cycles]  -> Mid 64 Output in L1 Cycle, M28 in Metern
@@ -292,14 +292,14 @@ static int decode_sirfclock(raw_t *raw)
            2) Convert from [m] to Cycles by dividing by wavelength			    */
         /* NICHT ZU GEBRAUCHEN! dst->L[0]=auxData[dst->sat].CarrPhase64; */
         if (dst->L[0]) {
-              printf("\nCarrier Phase     = %15.3f // %15.3f // ",dst->L[0],auxData[dst->sat].CarrPhase28); 
+/*              printf("\nCarrier Phase     = %15.3f // %15.3f // ",dst->L[0],auxData[dst->sat].CarrPhase28); */
 /*            printf("%15.3f",auxData[dst->sat].CarrPhase64); */
-            dst->L[0]-=FREQ1*bias;
+            dst->L[0]-=FREQL1*bias;
 /*            printf("\nCP %d -",auxData[dst->sat].CarrPhase64);
             dst->L[0]=auxData[dst->sat].CarrPhase64;
             printf("\nCP %f !",dst->L[0]); */
             if (((auxData[dst->sat].trackStat&0x02)>>1)>0) dst->L[0]=0;	/* MID 4: Carrier Phase valid? */
-            printf("%15.3f // %15.3f // D=%.1f // Q=%d",auxData[dst->sat].CarrPhase64,dst->L[0],100*FREQ1*bias/dst->L[0],auxData[dst->sat].PhLockQ);  
+/*            printf("%15.3f // %15.3f // D=%.1f // Q=%d",auxData[dst->sat].CarrPhase64,dst->L[0],100*FREQL1*bias/dst->L[0],auxData[dst->sat].PhLockQ);  */
         }
         
         /* Adjust Pseudorange measurement in [m] by clock bias */
@@ -368,8 +368,8 @@ static int decode_sirfnlmeas(raw_t *raw)
     obsd->sat=satno(SYS_GPS,U1(p+6)); obsd->code[0]=CODE_L1C;
     obsd->time.sec=R8(p+7,gsw230); 					/* GPS Software Time 							*/
     obsd->P[0]=R8(p+15,gsw230);						/* Pseudorange, without corrections [m]					*/
-    obsd->D[0]=R4(p+23)*FREQ1/CLIGHT;					/* Carrier Frequency [m/s] -> Hz (Doppler Extract erst mit GPS Clock!)	*/
-    obsd->L[0]=R8(p+27,gsw230)*FREQ1/CLIGHT;  /*((U1(p+37)&0x02)>>1);	/* Carrier Phase [m], report as Cycles					*/
+    obsd->D[0]=R4(p+23)*FREQL1/CLIGHT;					/* Carrier Frequency [m/s] -> Hz (Doppler Extract erst mit GPS Clock!)	*/
+    obsd->L[0]=R8(p+27,gsw230)*FREQL1/CLIGHT;  /*((U1(p+37)&0x02)>>1);	/* Carrier Phase [m], report as Cycles					*/
     obsd->SNR[0]=U1(p+38); for (i=39;i<=47;i++) {			/* Kleinstes Signalrauschverhältnis ermitteln und abspeichern		*/
         if (U1(p+i)<obsd->SNR[0]) obsd->SNR[0]=U1(p+i);
     }
@@ -381,7 +381,7 @@ static int decode_sirfnlmeas(raw_t *raw)
     auxData[obsd->sat].time.sec=obsd->time.sec;
     auxData[obsd->sat].CarrPhase28=obsd->L[0];    
     auxData[obsd->sat].CarrFreq28=obsd->D[0];
-/*    printf("\nXXX RAW=%04X%04X->%f",U4(p+27),U4(p+31),R8(p+27,gsw230)*FREQ1/CLIGHT);
+/*    printf("\nXXX RAW=%04X%04X->%f",U4(p+27),U4(p+31),R8(p+27,gsw230)*FREQL1/CLIGHT);
     printf("YYY obsd=%f,auxData=%f",obsd->L[0],auxData[obsd->sat].CarrPhase28); */
 /*    printf("\nXXX28CarrF28=%08X->%f",U4(p+23),R4(p+23)); */
     auxData[obsd->sat].PseudoR=obsd->P[0];
@@ -780,7 +780,7 @@ MID225 0xE1 - Sub ID 6 = Statistics Channel (-> gefunden in OSP Info, Rev. 8!)
 static int decode_sirfgen(raw_t *raw)
 {
     int i,prn,sat,id,j,w,sid,vis;
-    int marray[24] = {MID_SRFCLOCK, MID_SRF50BPS, MID_SRFNLMEAS, MID_SRFALM, MID_SRFEPH, 71, 2, 4, 9, 13, 30, 31, 41, 50, 51, 56, 164, 91, 92, 193, 11, 18, 225 };
+    int marray[24] = {MID_SRFCLOCK, MID_SRF50BPS, MID_SRFNLMEAS, MID_SRFALM, MID_SRFEPH, 71, 2, 4, 9, 13, 30, 31, 41, 50, 51, 56, 164, 91, 92, 93, 11, 18, 225 };
     /* 130,141,164 193 */
     unsigned gsw230=strstr(raw->opt,"-GSW230")!=NULL;
     
@@ -1027,7 +1027,7 @@ static int decode_sirfgen(raw_t *raw)
                 printf("RecStat=");
                 printBits(U1(message+62));
                 printf(":SWTU:%3d:",U4(message+63)); 
-                printf(":CFR=%4dHz,CFS=%f,",S4(message+18),S4(message+18)*0.000476);   *0.000476*(CLIGHT/FREQ1)); */
+                printf(":CFR=%4dHz,CFS=%f,",S4(message+18),S4(message+18)*0.000476);   *0.000476*(CLIGHT/FREQL1)); */
 
                 printf(" Frequency[m/s]= (%10.0f)",S4(message+18)*0.000476);	/* Hz		*/
                 /*printf("  Phase[cy]= %10ld",S4(message+14)); 	* Cycles	*/
@@ -1175,7 +1175,10 @@ static int decode_sirf(raw_t *raw)
         case MID_SRFSVSTATE:	return decode_sirfsvstate(raw);
         case MID_SRFAUXDATA:	return decode_sirfauxdata(raw);
         case 4:			return decode_sirfmtdo(raw);
-        case 6:			printf("SiRF Firmware = %s\n",p+7); break; 	/* Software Version String */
+        case 6:			
+            /* printf("SiRF Firmware = %s\n",p+7); 	/* Software Version String */
+            fprintf(stderr,"%s [%s]\n",time_str(utc2gpst(timeget()),0),p+7);
+            break;
         default: 	    	return decode_sirfgen(raw);
     }
     return 0;
