@@ -27,7 +27,6 @@
 *           2016/09/06  1.15 add reload soure table by USR2 signal
 *           2016/09/17  1.16 add option -b
 *           2017/05/26  1.17 add input format tersus
-*	    2019/10/28  1.18 readded SiRF option
 *-----------------------------------------------------------------------------*/
 #include <signal.h>
 #include <unistd.h>
@@ -80,7 +79,6 @@ static const char *help[]={
 "    nov          : NovAtel OEMV/4/6,OEMStar (only in)",
 "    cnav         : ComNav (only in)",
 "    ubx          : ublox LEA-4T/5T/6T (only in)",
-"    sirf         : SiRF Star II/III/IV (only in)",
 "    swiftnav     : SwiftNav Piksi Multi",
 "    hemis        : Hemisphere Eclipse/Crescent (only in)",
 "    stq          : SkyTraq S1315F (only in)",
@@ -150,7 +148,6 @@ static void decodefmt(char *path, int *fmt)
         else if (!strcmp(p,"#nov"  )) *fmt=STRFMT_OEM4;
         else if (!strcmp(p,"#cnav" )) *fmt=STRFMT_CNAV;
         else if (!strcmp(p,"#ubx"  )) *fmt=STRFMT_UBX;
-        else if (!strcmp(p,"#sirf" )) *fmt=STRFMT_SIRF;
         else if (!strcmp(p,"#swift")) *fmt=STRFMT_SBP;
         else if (!strcmp(p,"#hemis")) *fmt=STRFMT_CRES;
         else if (!strcmp(p,"#stq"  )) *fmt=STRFMT_STQ;

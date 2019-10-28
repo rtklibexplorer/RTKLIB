@@ -1,0 +1,69 @@
+#; Switch to SiRF 57600/115200
+$PSRF100,0,57600,8,1,0*37
+#$PSRF100,0,115200,8,1,0*04
+!WAIT 100
+
+#; Enable navlib ... TBD: Include fix for week rollover issue
+!HEX a0a20019 80 00000000 00000000 00000000 00000000 00000000 0000 0c 10 009cb0b3
+!WAIT 100
+
+#; Disable SGEE, enable CGEE
+!HEX a0a20004 e8200100 0109b0b3
+!WAIT 200
+
+#; Disable CGEE(+prediction) and SGEE at all
+#!HEX A0A20006 e8feffffffff 05E2B0B3
+#!WAIT 100
+#!HEX A0A20004 e8200000 0108B0B3
+#!WAIT 100
+
+#; Disable Messages #51 unknown, #91 HW Control Output & AGC; #92 CW Controller Output
+!HEX a0a20004 a600330000000000 00d9b0b3
+!WAIT 200
+!HEX a0a20004 a6005b2e00000000 012fb0b3
+!WAIT 200
+!HEX a0a20004 a6005c0000000000 0102b0b3
+!WAIT 200
+
+#; Enable 1PPS output ... geht nicht
+!HEX a0a20004 a600340100000000 00dbb0b3 
+!WAIT 200
+
+#; Poll version,clock, ephemeris, almanac
+!HEX a0a20002 8400 0084b0b3
+!WAIT 100
+!HEX a0a20002 9000 0090b0b3
+!WAIT 100
+!HEX a0a20002 9000 0092b0b3
+!WAIT 100
+!HEX a0a20003 930000 0093b0b3
+!WAIT 100
+!HEX a0a20002 9200 0092b0b3
+
+
+#; Freeze Clock drift, disable fast time sync, no altitude hold=all fixes 3D, disable DR, raw measurement, softw Tracking disable
+# Enable fast time sync?
+#;!HEX a0a2000e 8800000300000000020000000000 008db0b3
+# 5Hz + Fasttr
+#!HEX a0a2000e 8800000314000000020000000004 00a5b0b3
+!HEX a0a2000e 8800000310000000020000000004 00a1b0b3
+!WAIT 100
+
+# Set OnTime  112233445566778899 1000 = 100% +200ms on
+!HEX a0a20009 97000000c8000000c8 0227b0b3 
+# 5Hz ... naja
+#;!HEX a0a20009 97000003e8000000c8 024ab0b3 
+!WAIT 100
+
+# Set Elevetaion mask 10 Degrees
+!HEX a0a20005 8b00320064 0121b0b3
+!WAIT 100
+
+# Set Power Mask 12 dbHz
+!HEX a0a20003 8c080c 00a0b0b3
+!WAIT 100
+
+# Switch to RTCM
+#!HEX a0a20002 8704 0091b0b3
+# Time Accuracy Status Request
+!HEX a0a200d4 0402 0006b0b3

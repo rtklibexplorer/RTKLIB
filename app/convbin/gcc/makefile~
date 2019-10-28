@@ -83,8 +83,6 @@ tersus.o   : $(SRC)/rcv/tersus.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/tersus.c
 comnav.o   : $(SRC)/rcv/comnav.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/comnav.c
-sirf.o     : $(SRC)/rcv/sirf.c
-	$(CC) -c $(CFLAGS) $(SRC)/rcv/sirf.c
 
 convbin.o  : $(SRC)/rtklib.h
 rtkcmn.o   : $(SRC)/rtklib.h

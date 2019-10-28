@@ -125,6 +125,7 @@ pntpos.o   : $(SRC)/rtklib.h
 ppp.o      : $(SRC)/rtklib.h
 novatel.o  : $(SRC)/rtklib.h
 ublox.o    : $(SRC)/rtklib.h
+sirf.o     : $(SRC)/rtklib.h
 swiftnav.o : $(SRC)/rtklib.h
 crescent.o : $(SRC)/rtklib.h
 skytraq.o  : $(SRC)/rtklib.h
@@ -143,8 +144,6 @@ ionex.o    : $(SRC)/rtklib.h
 qzslex.o   : $(SRC)/rtklib.h
 tides.o    : $(SRC)/rtklib.h
 ppp_corr.o : $(SRC)/rtklib.h
-sirf.o     : $(SRC)/rtklib.h
-
 
 install:
 	cp rtkrcv $(BINDIR)

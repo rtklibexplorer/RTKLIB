@@ -1,2 +1,6 @@
 Source of knowledge regarding git:
 https://blog.scottlowe.org/2015/01/27/using-fork-branch-git-workflow/
+Workflow
+1) git add .
+2) git commit
+3) git push origin SiRF

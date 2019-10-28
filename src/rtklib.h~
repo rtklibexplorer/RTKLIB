@@ -28,7 +28,6 @@
 *           2011/05/27 1.9  rtklib ver.2.4.1
 *           2013/03/28 1.10 rtklib ver.2.4.2
 *           2016/01/26 1.11 rtklib ver.2.4.3
-*	    2019/10/28 1.12 readded SiRF
 *-----------------------------------------------------------------------------*/
 #ifndef RTKLIB_H
 #define RTKLIB_H
@@ -461,7 +460,6 @@ extern "C" {
 #define STRFMT_RNXCLK 19                /* stream format: RINEX CLK */
 #define STRFMT_SBAS  20                 /* stream format: SBAS messages */
 #define STRFMT_NMEA  21                 /* stream format: NMEA 0183 */
-#define STRFMR_SIRF  22			/* stream format: SiRF */
 #ifndef EXTLEX
 #define MAXRCVFMT    15                 /* max number of receiver format */
 #else
@@ -1725,7 +1723,6 @@ EXPORT int input_sbf   (raw_t *raw, unsigned char data);
 EXPORT int input_cmr   (raw_t *raw, unsigned char data);
 EXPORT int input_tersus(raw_t *raw, unsigned char data);
 EXPORT int input_lexr  (raw_t *raw, unsigned char data);
-EXPORT int input_sirf  (raw_t *raw, unsigned char data);
 EXPORT int input_oem4f (raw_t *raw, FILE *fp);
 EXPORT int input_cnavf (raw_t *raw, FILE *fp);
 EXPORT int input_ubxf  (raw_t *raw, FILE *fp);
@@ -1741,7 +1738,6 @@ EXPORT int input_sbff  (raw_t *raw, FILE *fp);
 EXPORT int input_cmrf  (raw_t *raw, FILE *fp);
 EXPORT int input_tersusf(raw_t *raw, FILE *fp);
 EXPORT int input_lexrf (raw_t *raw, FILE *fp);
-extern int input_sirff (raw_t *raw, FILE *fp);
 
 EXPORT int gen_ubx (const char *msg, unsigned char *buff);
 EXPORT int gen_stq (const char *msg, unsigned char *buff);

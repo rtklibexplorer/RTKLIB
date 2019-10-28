@@ -39,7 +39,6 @@
 *                             scan input file: off - on
 *                             number of freq: 2 -> 3
 *                           add option -noscan
-*	    2019/10/28 1.20 readded SiRF
 *-----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,7 +69,6 @@ static const char *help[]={
 " NovAtel OEMV/4,OEMStar: RANGECMPB, RANGEB, RAWEPHEMB, IONUTCB, RAWWASSFRAMEB",
 " NovAtel OEM3          : RGEB, REGD, REPB, FRMB, IONB, UTCB",
 " u-blox LEA-4T/5T/6T   : RXM-RAW, RXM-SFRB",
-" SiRF Star II/III/IV   : MID7, MID8, MID28",
 " Swift Piksi Multi     : ",
 " Hemisphere            : BIN76, BIN80, BIN94, BIN95, BIN96",
 " SkyTraq S1315F        : msg0xDD, msg0xE0, msg0xDC",
@@ -105,7 +103,6 @@ static const char *help[]={
 "                  ubx  = ublox LEA-4T/5T/6T/7T/M8T",
 "                  sbp  = Swift Navigation SBP",
 "                  hemis= Hemisphere Eclipse/Crescent",
-"                  sirf = SiRF Star II/III/IV",
 "                  stq  = SkyTraq S1315F",
 "                  javad= Javad",
 "                  nvs  = NVS NV08C BINR",
@@ -169,7 +166,6 @@ static const char *help[]={
 "     *.bnx,*binex  BINEX",
 "     *.rt17        Trimble RT17",
 "     *.sbf         Septentrio SBF",
-"     *.srf      SiRF Star II/III/IV",
 "     *.cmr         CMR/CMR+",
 "     *.trs         TERSUS",
 "     *.obs,*.*o    RINEX OBS"
@@ -512,7 +508,6 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         else if (!strcmp(fmt,"nov"  )) format=STRFMT_OEM4;
         else if (!strcmp(fmt,"cnav" )) format=STRFMT_CNAV;
         else if (!strcmp(fmt,"ubx"  )) format=STRFMT_UBX;
-        else if (!strcmp(fmt,"sirf" )) format=STRFMT_SIRF;
         else if (!strcmp(fmt,"sbp"  )) format=STRFMT_SBP;
         else if (!strcmp(fmt,"hemis")) format=STRFMT_CRES;
         else if (!strcmp(fmt,"stq"  )) format=STRFMT_STQ;
@@ -534,7 +529,6 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         else if (!strcmp(p,".ubx"  ))  format=STRFMT_UBX;
         else if (!strcmp(p,".sbp"  ))  format=STRFMT_SBP;
         else if (!strcmp(p,".bin"  ))  format=STRFMT_CRES;
-        else if (!strcmp(p,".srf"  ))  format=STRFMT_SIRF;
         else if (!strcmp(p,".stq"  ))  format=STRFMT_STQ;
         else if (!strcmp(p,".jps"  ))  format=STRFMT_JAVAD;
         else if (!strcmp(p,".bnx"  ))  format=STRFMT_BINEX;
