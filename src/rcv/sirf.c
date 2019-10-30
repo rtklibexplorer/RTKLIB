@@ -292,20 +292,26 @@ static int decode_sirfclock(raw_t *raw)
            2) Convert from [m] to Cycles by dividing by wavelength			    */
         /* NICHT ZU GEBRAUCHEN! dst->L[0]=auxData[dst->sat].CarrPhase64; */
         if (dst->L[0]) {
-/*              printf("\nCarrier Phase     = %15.3f // %15.3f // ",dst->L[0],auxData[dst->sat].CarrPhase28); */
+              /* printf("\nCarrier Phase     = %15.3f // %15.3f // ",dst->L[0],auxData[dst->sat].CarrPhase28); */
 /*            printf("%15.3f",auxData[dst->sat].CarrPhase64); */
             dst->L[0]-=FREQL1*bias;
 /*            printf("\nCP %d -",auxData[dst->sat].CarrPhase64);
             dst->L[0]=auxData[dst->sat].CarrPhase64;
             printf("\nCP %f !",dst->L[0]); */
             if (((auxData[dst->sat].trackStat&0x02)>>1)>0) dst->L[0]=0;	/* MID 4: Carrier Phase valid? */
-/*            printf("%15.3f // %15.3f // D=%.1f // Q=%d",auxData[dst->sat].CarrPhase64,dst->L[0],100*FREQL1*bias/dst->L[0],auxData[dst->sat].PhLockQ);  */
+            /* printf("%15.3f // %15.3f // D=%.1f // DQ=%6d // PQ=%5d // NQ=%5d,%5d",auxData[dst->sat].CarrPhase64,dst->L[0],100*FREQL1*bias/dst->L[0],auxData[dst->sat].dRngQ,auxData[dst->sat].PhLockQ,auxData[dst->sat].PRNoise,auxData[dst->sat].cno);  */
+            /* dst->SNR[0]=160; /*auxData[dst->sat].PhLockQ/3; */
         }
         
         /* Adjust Pseudorange measurement in [m] by clock bias */
         /* printf("\nPseudorange=      = %15.3f // %15.3f // ",dst->P[0],auxData[dst->sat].PseudoR); */
+        printf("\nPseudorange=%15.3f",dst->P[0]);
         dst->P[0]-=CLIGHT*bias; /*printf(" // %15.3f",dst->P[0]);*/
-        
+        printf(" // %15.3f // %6d",dst->P[0],auxData[dst->sat].iono);
+        dst->P[0]-=auxData[dst->sat].iono;
+        printf(" // %15.3f",dst->P[0]);
+
+                
         /* LLI: bit1=slip,bit2=half-cycle-invalid */
         /* printf("\nStati (Ext)="); printBits(auxData[dst->sat].extStat); printf("|"); printBits(auxData[dst->sat].RecovStat);printf("|");
         printf("Ext:%d",(auxData[dst->sat].extStat&0x3c)>>2); */
@@ -445,7 +451,7 @@ static int decode_sirfsvstate(raw_t *raw)
     auxData[sat].vz=R8(p+50,gsw230);
     auxData[sat].clkbias=R8(p+58,gsw230);
     auxData[sat].clkdrift=S4(p+66);	/* R4, zum Beispiel passt aber S4 */
-    auxData[sat].iono=S4(p+79);		/* R4, zum Beispiel passt aber S4 */
+    auxData[sat].iono=R4(p+79);		/* R4, zum Beispiel passt aber S4 */
 /*    printf("\n!!Iono=%f,%d",R4(p+79),S4(p+79));
     printf("\n!!CLK:%08X->%lf,%f,%d",U4(p+66),R4(p+66)*1e+12,R4(p+66),R4(p+66));
     printf("\n!!CLKD:%08X%08X->%lf,%f,%d",U4(p+58),U4(p+62),R8(p+58,gsw230),R8(p+58,gsw230),R8(p+58,gsw230)); */
@@ -484,7 +490,7 @@ static int decode_sirfauxdata(raw_t *raw)
     auxData[sat].PRNoise=S2(p+42);
     auxData[sat].dRngQ=S2(p+44);
     auxData[sat].PhLockQ=S2(p+46);
-    printf("XXXX %04X->%d",U2(p+46),S2(p+46));
+/*    printf("XXXX %04X->%d",U2(p+46),S2(p+46)); */
 
 /* Carrier frequency may be interpreted as the measured Doppler on the received signal.
    The value is reported in metres per second but can be converted to hertz using the
