@@ -1,9 +1,9 @@
 #; Switch to SiRF 57600/115200
-$PSRF100,0,57600,8,1,0*37
-#$PSRF100,0,115200,8,1,0*04
+#$PSRF100,0,57600,8,1,0*37
+$PSRF100,0,115200,8,1,0*04
 !WAIT 100
 
-#; Enable navlib ... TBD: Include fix for week rollover issue
+#; Enable navlib 
 !HEX a0a20019 80 00000000 00000000 00000000 00000000 00000000 0000 0c 10 009cb0b3
 !WAIT 100
 
@@ -25,10 +25,6 @@ $PSRF100,0,57600,8,1,0*37
 !HEX a0a20004 a6005c0000000000 0102b0b3
 !WAIT 200
 
-#; Enable 1PPS output ... geht nicht
-!HEX a0a20004 a600340100000000 00dbb0b3 
-!WAIT 200
-
 #; Poll version,clock, ephemeris, almanac
 !HEX a0a20002 8400 0084b0b3
 !WAIT 100
@@ -39,7 +35,6 @@ $PSRF100,0,57600,8,1,0*37
 !HEX a0a20003 930000 0093b0b3
 !WAIT 100
 !HEX a0a20002 9200 0092b0b3
-
 
 #; Freeze Clock drift, disable fast time sync, no altitude hold=all fixes 3D, disable DR, raw measurement, softw Tracking disable
 # Enable fast time sync?
@@ -67,3 +62,7 @@ $PSRF100,0,57600,8,1,0*37
 #!HEX a0a20002 8704 0091b0b3
 # Time Accuracy Status Request
 !HEX a0a200d4 0402 0006b0b3
+
+#; Enable 1PPS output ... geht nicht
+!HEX a0a20004 a600340100000000 00dbb0b3 
+!WAIT 200
