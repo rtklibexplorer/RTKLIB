@@ -7,9 +7,6 @@ $PSRF100,0,115200,8,1,0*04
 !HEX a0a20019 80 00000000 00000000 00000000 00000000 00000000 0000 0c 10 009cb0b3
 !WAIT 100
 
-!HEX a0a20002 8400 0084b0b3
-!WAIT 100
-
 #; Disable SGEE, enable CGEE
 !HEX a0a20004 e8200100 0109b0b3
 !WAIT 200
@@ -19,9 +16,6 @@ $PSRF100,0,115200,8,1,0*04
 #!WAIT 100
 #!HEX A0A20004 e8200000 0108B0B3
 #!WAIT 100
-
-!HEX a0a20002 8400 0084b0b3
-!WAIT 100
 
 #; Disable Messages #51 unknown, #91 HW Control Output & AGC; #92 CW Controller Output
 !HEX a0a20004 a600330000000000 00d9b0b3
@@ -44,7 +38,7 @@ $PSRF100,0,115200,8,1,0*04
 
 #; Freeze Clock drift, disable fast time sync, no altitude hold=all fixes 3D, disable DR, raw measurement, softw Tracking disable
 # Enable fast time sync?
-#;!HEX a0a2000e 8800000300000000020000000000 008db0b3
+#!HEX a0a2000e 8800000300000000020000000000 008db0b3
 # 5Hz + Fasttr
 !HEX a0a2000e 8800000314000000020000000004 00a5b0b3
 # No 5Hz
@@ -75,6 +69,3 @@ $PSRF100,0,115200,8,1,0*04
 #; Enable 1PPS output ... geht nicht
 !HEX a0a20004 a600340100000000 00dbb0b3 
 !WAIT 200
-
-!HEX a0a20002 8400 0084b0b3
-!WAIT 100

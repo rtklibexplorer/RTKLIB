@@ -30,6 +30,7 @@
 /* double L[NFREQ+NEXOBS]; /* observation data carrier-phase (cycle) */
 /* double P[NFREQ+NEXOBS]; /* observation data pseudorange (m) */
 /* float  D[NFREQ+NEXOBS]; /* observation data doppler frequency (Hz) */
+/* NOTE * invalid carrier phase measurements are flagged in RTKLIB by setting the carrier phase value to zero. */
 
 typedef struct {        /* MID 4 + MID28 + MID30 + MID64 data 					*/
     int sat;            /* satellite number 						*/
@@ -232,20 +233,7 @@ NOTE Appendix A: Reported clock bias and clock bias computed using the above
      formula will likely agree only to within a few nanoseconds because the
      actual measurement interval may be slightly more or less than an exact
      second, and the clock drift is only reported to a (truncated) 1 Hz 
-     resolution. 
-
-NOTE GPS Clock Frequency  MID 93.18 provides Clock Drift Uncertainty 
-     printf("\nGPS Clock:%f kHz, RepBias:%8.3f µs, ",(FREQL1+drift)*16/1540/1e+3,U4(p+12)/1e+3);
-     printf("CalcBias = %8.3f µs, ",1e6*drift/FREQL1);  printf("DeltaTime = %.3f s, ",tow-U4(p+16)/1000); 
-     
-TOW=27633.20 
-SAT=11 
-P1(m)=   21391638.994 L1(cycle)=  207929957.248 D1(Hz)=      93830.461     
-CarrPh=221767[kCy] CarrPh[M]=42201[km] PseudoRng[M]=42201[km] PseudoRng[dT]=43022 dt=0.071->PseudoR[GPS]=21360[km] PseudoR=21360.408[km]D[0]=93902.078125,93902.078125
-
-P= 23740100 m
-L=124706000 Cycles
-D=     1434 Hz          */
+     resolution. */
 static int decode_sirfclock(raw_t *raw)
 {
     unsigned drift;
@@ -253,7 +241,7 @@ static int decode_sirfclock(raw_t *raw)
     int i,j,n=0;
     unsigned char *p;
     unsigned wn;
-    double tow,DBAK;
+    double tow;
     obsd_t *src,*dst;
     gtime_t tr,time0={0};
     gtime_t dtbias;
@@ -271,6 +259,10 @@ static int decode_sirfclock(raw_t *raw)
 
     wn=U2(p+1); tow=U4(p+3)*0.01; raw->time=gpst2time(wn,tow);
 
+    /* GPS Clock Frequency 
+       NOTE MID 93.18 provides Clock Drift Uncertainty */
+    /* printf("\nGPS Clock:%f kHz, RepBias:%8.3f µs, ",(FREQL1+drift)*16/1540/1e+3,U4(p+12)/1e+3);
+    printf("CalcBias = %8.3f µs, ",1e6*drift/FREQL1);  printf("DeltaTime = %.3f s, ",tow-U4(p+16)/1000); */
 
     drift=U4(p+8);		/* Clock Drift in CSR receivers is directly related to the frequency of the GPS clock, 
                                    derived from the GPS crystal. Clock drift can be used as a Doppler bias for Carrier
@@ -278,7 +270,6 @@ static int decode_sirfclock(raw_t *raw)
                                    NOTE Clock drift is only reported to a truncated 1 Hz resolution! */
     bias=U4(p+12)/1e+9;		/* TBD: In einem 125er Array ablegen und rsd rechnen? */
 
-    /* NOTE Delta TOW -> Zeitl. Abstand zw. zwei Messungen*/
     if (lastTOW==-1) lastTOW=U4(p+3);
     /* printf("\ntd=%d[Hz]/1575.42[MHz]=%f[s]",drift,(float)drift/FREQL1); printf("\ndtb=%d-%d=%d[ns] ",U4(p+12),lastClkB,U4(p+12)-lastClkB); */
     /*  printf("\n(4) (td+dtb)*c=(%f[s]+%f[s])*%.0f[m/s]=%.3f[m]",(float)drift/FREQL1,(float)(U4(p+12)-lastClkB)/1e+9,CLIGHT,(float)CLIGHT*(drift/FREQL1+(U4(p+12)-lastClkB)/1e+9));*/
@@ -288,7 +279,7 @@ static int decode_sirfclock(raw_t *raw)
         Cnt=0; lastTOW=U4(p+3); lastClkD=U4(p+8); lastClkB=U4(p+12); 
     } else Cnt++;
 
-    /* NOTE MAIN PROCESSING LOOP */
+    /* NOTE Korrektur von Carrier Frequency, Phase, Pseudorange, Zeitbasis, etc. */
     for (i=0;i<raw->obuf.n&&i<MAXOBS;i++) {
         src=&raw->obuf.data[i];
         if (!satsys(src->sat,NULL)) continue;
@@ -296,10 +287,17 @@ static int decode_sirfclock(raw_t *raw)
         dst=&raw->obs.data[n++]; *dst=*src;		/* Kopie des Orginals erstellen */
         dst->time=gpst2time(wn,src->time.sec-bias);	/* Subtract Clock Bias to get time of receipt 	*/
 
-        /* NOTE CARRIER PHASE 	dst->L[0] [cycles]	-> Mid 64 Output in L1 Cycle, M28 in Meters	*/
-        dst->P[0]-=CLIGHT*bias;				/* Adjust pseudorange measurement by clock bias	*/
+/*        dst->D[0]=dst->D[0]*CLIGHT/FREQL1;	/* Convert from Hz to m/s */
+/*        printf("\n(3) Fc=F-td*l1= %.3f[m/s]-%d[Hz]*%.3f[m]= %.3f[m/s]-%.3f[m/s]= %.3f[m/s]",dst->D[0],drift,CLIGHT/FREQL1,dst->D[0],drift*CLIGHT/FREQL1,dst->D[0]-drift*CLIGHT/FREQL1); */
+        
+/*        dst->D[0]=dst->D[0]-drift*CLIGHT/FREQL1;/* Apply Drift Correction */
+/*        dst->D[0]=dst->D[0]*FREQL1/CLIGHT;	/* Convert from m/s to Hz */
+
+        /* NOTE CARRIER PHASE 	dst->L[0] [cycles]	Carrier Phase Adjustmest [m] -> [Cycles]  -> Mid 64 Output in L1 Cycle, M28 in Meters	*/
 
         if (dst->L[0]) {
+            dst->L[0]-=FREQL1*bias;
+            
             /* LLI: bit1=slip,bit2=half-cycle-invalid 	if (!dst->LLI[0]&&auxData[dst->sat].TimeTrack<30000) printf("\nSAT#%2d: active %ds",dst->sat,auxData[dst->sat].TimeTrack); */
             if (((auxData[dst->sat].trackStat&0x02)>>1)>0) dst->L[0]=0;		/* MID 4: Carrier Phase valid? 		*/
             if ((auxData[dst->sat].extStat&0x3c)>>2) {
@@ -310,38 +308,23 @@ static int decode_sirfclock(raw_t *raw)
                 dst->LLI[0]=1;							/* Bad PrePos, wrong BitSync		*/
                 printf("\nSAT#%2d: Bad PrePos or Sync ...",dst->sat);
             }
-            
-            /* NOTE invalid carrier phase measurements are flagged in RTKLIB by setting the carrier phase value to zero. */
-            if (dst->LLI[0]) dst->L[0]=0;					
+            if (dst->LLI[0]) dst->L[0]=0;
         }
-        if (dst->L[0]) dst->L[0]-=bias*FREQL1;					/* Adjust Carrier Phase with Clock Bias */
-            
-        /* 1) Reconstruction of Carrier Frequency from Carrier Phase and determination of sat speed				*/
-        /* printf("\nCarrPh=%.0f[kCy] CarrFreq/ClkDr=%.0f[Hz]/%d[Hz] CarrFr[R]=%.3f[Hz]",dst->L[0]/1000,dst->D[0],drift,FREQL1*dst->D[0]/drift);
-        printf(" v(sat)=%.3f[km/s]",dst->D[0]*CLIGHT/FREQL1*CLIGHT/FREQL1/1000);	/* Theo: ~3,8km/s			*/
-        DBAK=dst->D[0];
-        dst->D[0]=FREQL1*dst->D[0]/drift;						/* Reconstruct Carrier Frequency 	*/
-        dst->D[0]=dst->D[0]*CLIGHT/FREQL1;						/* Convert from Hz to m/s 		*/
-        dst->D[0]-=drift*CLIGHT/FREQL1;		                                        /* Clock Drift Correction		*/
-        dst->D[0]=dst->D[0]*FREQL1/CLIGHT;						/* Convert from m/s to Hz 		*/
-        /* printf(" CarrFr=%.0f[Hz]",dst->D[0]); */
-        /* dst->D[0]=0; ... keine Auswirkung! */
+        
+        /* NOTE PSEUDORANGE	dst->P[0] [m] 		Adjust Pseudorange measurement in [m] by clock bias */
+        dst->P[0]-=CLIGHT*bias; 
+        
+        if (dst->L[0]) {
+            printf("SAT=%2d P1(m)=%15.3f L1(cycle)=%15.3f D1(Hz)=%15.3f",dst->sat,dst->P[0],dst->L[0],dst->D[0]);
 
-        if (dst->L[0]) { /* NOTE PSEUDO RANGE Alternatives ->P[0] */
-/*            printf("\nCarrPh=%.0f[kCy] CarrPh[M]=%.0f[km] PseudoRng[M]=%.0f[km] ",dst->L[0]/1000,dst->L[0]*CLIGHT/FREQL1/1000,dst->P[0]/1000);
-            printf("PseudoRng[dTL]=%.0f[km] ",dst->L[0]/dst->D[0]*CLIGHT/1000);		/* Doppler / Carrier Frequency		*/
-/*            printf("PseudoRng[dTP]=%.0f[km] ",dst->P[0]*FREQL1/dst->D[0]/1000);		/* Pseudo Range / Carrier Frequency	*/
-            tor=U4(p+3)/100-bias; tot=U4(p+3)/100-(dst->L[0]+bias*FREQL1)/dst->D[0];
-/*            printf("dt=%.3f[µs]->PseudoR[GPS]=%.0f[km] ",(tor-tot)*1000,CLIGHT*(tor-tot)/1000);
-            /* dst->P[0]=CLIGHT*(tor-tot); 
-            /* V2 dst->P[0]=dst->L[0]*CLIGHT/FREQL1;						/* Reconstruct from Carrier Phase - slip detected forward			*/
-            /* dst->P[0]=dst->L[0]/dst->D[0]*CLIGHT;					/* Reconstruct from Carrier Phase & Doppler Frequency - outlier	*/
-/*            printf("\nSV CarrAcc=%f CarrPh=%f ",auxData[dst->sat].CarrAcc,auxData[dst->sat].CarrPhase64);
-            printf("CarrFr=%f Noise=%f ",auxData[dst->sat].CarrFreq64,auxData[dst->sat].PRNoise);
-            printf("PhLockQ=%f",auxData[dst->sat].PhLockQ); */
-        }
-
-        if (0) { /*dst->L[0]) { */
+        if (0) { /* (dst->L[0]) { */
+            /* 1) Reconstruction of Carrier Frequency from Carrier Phase and determination of sat speed				*/
+            printf("\nCarrPh=%.0f[kCy] CarrFreq/ClkDr=%.0f[Hz]/%d[Hz] CarrFr[R]=%.3f[Hz]",dst->L[0]/1000,dst->D[0],drift,FREQL1*dst->D[0]/drift);
+            printf(" v(sat)=%.3f[km/s]",dst->D[0]*CLIGHT/FREQL1*CLIGHT/FREQL1/1000);	/* Theo: ~3,8km/s			*/
+            dst->D[0]=FREQL1*dst->D[0]/drift;						/* Reconstruct Carrier Frequency 	*/
+            dst->D[0]=dst->D[0]*CLIGHT/FREQL1;						/* Convert from Hz to m/s 		*/
+            dst->D[0]-=drift*CLIGHT/FREQL1;                                             /* Clock Drift Correction		*/
+            dst->D[0]=dst->D[0]*FREQL1/CLIGHT;						/* Convert from m/s to Hz 		*/
                                                         
             /* 2) Reconstruction of Pseudorange 										*/
             printf("\nCarrPh=%.0f[kCy] CarrPh[M]=%.0f[km] PseudoRng[M]=%.0f[km] ",dst->L[0]/1000,dst->L[0]*CLIGHT/FREQL1/1000,dst->P[0]/1000);
@@ -349,19 +332,19 @@ static int decode_sirfclock(raw_t *raw)
             tor=U4(p+3)/100-bias; tot=U4(p+3)/100-(dst->L[0]/(dst->D[0]*CLIGHT))*CLIGHT;
             printf("dt=%.3f->PseudoR[GPS]=%.0f[km] ",tor-tot,CLIGHT*(tor-tot)/1000);
             dst->P[0]=dst->P[0];							/* Use Receiver Data, "smoothed" by Carrier Phase	*/
-            dst->P[0]=dst->L[0]*CLIGHT/FREQL1;						/* Reconstruct from Carrier Phase			*/
-            dst->P[0]=dst->L[0]/dst->D[0]*CLIGHT;					/* Reconstruct from Carrier Phase & Doppler Frequency	*/
-            dst->P[0]-=CLIGHT*bias;							/* Adjust pseudorange measurement by clock bias		*/
+/*            dst->P[0]=dst->L[0]*CLIGHT/FREQL1;						/* Reconstruct from Carrier Phase			*/
+/*            dst->P[0]=dst->L[0]/dst->D[0]*CLIGHT;					/* Reconstruct from Carrier Phase & Doppler Frequency	*/
+/*            dst->P[0]-=CLIGHT*bias;							/* Adjust pseudorange measurement by clock bias		*/
             printf("PseudoR=%.3f[km]",dst->P[0]/1000); 
-            dst->P[0]=CLIGHT*(tor-tot);							/* Reconstruct from GPS Transmission and Receipt Time 	*/
-            printf(" PseudoR=%.3f[km]",dst->P[0]/1000); 
+/*            dst->P[0]=CLIGHT*(tor-tot);							/* Reconstruct from GPS Transmission and Receipt Time 	*/
 
-
+            /* NOTE Carrier Phase und Carrier Frequency ebenfalls korrigieren .. zurückrechnen? */
             /* NOTE IONO Delay? */            
             /* 3) Adjust SV Position? TBD */
-            dst->D[0]=DBAK; 								/* dst->D[0]*drift/FREQL1; Reconstruct Doppler Frequency	*/
+            dst->D[0]=dst->D[0]*drift/FREQL1;						/* Reconstruct Doppler Frequency	*/
+/*            printf("D[0]=%f",dst->D[0]); */
+            dst->LLI[0]=0;                                                            
         }
-
     }
     raw->obs.n=n;
 
@@ -376,8 +359,19 @@ static int decode_sirfclock(raw_t *raw)
         }
     }
 
+
     return n>0?1:0;
 }
+
+        /* NOTE Zurückrechnen ... */
+        /* if (dst->L[0]) printf("\nPseudorange=%.0f[m]->%.0f[kcy] CarrierPhase:%.0f[kcy] Delta=%.0f[cy]->%.2f[m]",dst->P[0],dst->P[0]*FREQL1/CLIGHT/1000,dst->L[0]/1000,dst->L[0]-dst->P[0]*FREQL1/CLIGHT,(dst->L[0]-dst->P[0]*FREQL1/CLIGHT)*CLIGHT/FREQL1);
+        if (dst->L[0]) printf("\nToR=%.2f[s]-%.2f[s]=%.2f[s] Pseudorange=%.0f[m]->%.2f[s] ToT=%.2f[s]-%.2f[s]=%.2f[s]",(float)U4(p+3)/100,bias,(float)U4(p+3)/100-bias,dst->P[0],dst->P[0]/CLIGHT,(float)U4(p+3)/100,dst->P[0]/CLIGHT,(float)U4(p+3)/100-dst->P[0]/CLIGHT);
+        tor=U4(p+3)/100-bias;
+        tot=U4(p+3)/100-dst->P[0]/CLIGHT;
+        if (dst->L[0]) printf("\ndt=%.6f Reconstructed Carrier Frequency=%.3f",tor-tot,(dst->P[0]*FREQL1/CLIGHT)/(dst->P[0]/CLIGHT));   /*CLIGHT/FREQL1/(tor-tot));*/
+        /*if (dst->L[0]) printf(" Reported Carrier Frequency=%.3f %3.f",dst->D[0],dst->D[0]*FREQL1/CLIGHT);
+        if (dst->L[0]) printf("\nPseudorange=%.0f[m]->%.0f[kcy] t=%F",dst->P[0],dst->P[0]*FREQL1/CLIGHT/1000,(dst->P[0]*CLIGHT/FREQL1)/dst->D[0]);
+        */
 
 /* decode id#28 measurement block --------------------------------------------
 NOTE The reported Time of Measurement, Pseudorange and Carrier Phase are all uncorrected values.
@@ -415,7 +409,6 @@ static int decode_sirfnlmeas(raw_t *raw)
 /*    printf("DEC: "); for (i=0;i<=raw->len;i++) printf("%02X",U1(p+i)); */
 /*    printf("\nXXX CF=%08X->%f->%f XXX",U4(p+23),R4(p+23),R4(p+23)*FREQL1/CLIGHT);  */
     obsd->L[0]=R8(p+27,gsw230)*FREQL1/CLIGHT;  /*((U1(p+37)&0x02)>>1);	/* Carrier Phase [m], report as Cycles					*/
-/*    printf("\nDEBUG L=%.0f[m]->%0.f[cy] ",R8(p+27,gsw230),R8(p+27,gsw230)*FREQL1/CLIGHT);*/
     for (i=120;i>0;i--) {
         auxData[obsd->sat].cn[i+10]=auxData[obsd->sat].cn[i];
     }
