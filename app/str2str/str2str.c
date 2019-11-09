@@ -68,6 +68,8 @@ static const char *help[]={
 "    serial       : serial://port[:brate[:bsize[:parity[:stopb[:fctr]]]]]",
 "    tcp server   : tcpsvr://:port",
 "    tcp client   : tcpcli://addr[:port]",
+"    udp server   : udpsvr://:port",
+"    udp client   : udpcli://addr[:port]",
 "    ntrip client : ntrip://[user[:passwd]@]addr[:port][/mntpnt]",
 "    ntrip server : ntrips://[:passwd@]addr[:port]/mntpnt[:str] (only out)",
 "    ntrip caster server: ntripc_s://[:passwd@][:port] (only in)",
@@ -190,8 +192,11 @@ static int decodepath(const char *path, int *type, char *strpath, int *fmt)
     else if (!strncmp(path,"ntrips",  6)) *type=STR_NTRIPSVR;
     else if (!strncmp(path,"ntrip",   5)) *type=STR_NTRIPCLI;
     else if (!strncmp(path,"file",    4)) *type=STR_FILE;
+    else if (!strncmp(path,"udpcli",  6)) *type=STR_UDPCLI;
+    else if (!strncmp(path,"udpsvr",  6)) *type=STR_UDPSVR;
+
     else {
-        fprintf(stderr,"stream path error: %s\n",buff);
+        fprintf(stderr,"!!stream path error: %s\n",buff);
         return 0;
     }
     strcpy(strpath,p+3);
