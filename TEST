@@ -12,3 +12,6 @@ Sync with upstream
 5) git remote add upstream https://github.com/rtklibexplorer/RTKLIB.git
 6) git pull upstream demo5
 7) git push origin master
+
+Commandline example (Msg-Option "1075" is necessary for Doppler Frequency to be reported)
+str2str -in serial://ttyUSB0:115200:8:n:1:off#sirf -out tcpsvr://:5000#rtcm3 -msg "1075"
