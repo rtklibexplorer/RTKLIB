@@ -794,7 +794,7 @@ static void set_obstype(int format, rnxopt_t *opt)
         {0}
     };
     static const unsigned char codes_other[NSATSYS][8]={ /* others inc u-blox */
-        {CODE_L1C,CODE_L2L},
+        {CODE_L1C,CODE_L2L,CODE_L2S},
         {CODE_L1C,CODE_L2C},
         {CODE_L1C,CODE_L1X,CODE_L7Q},
         {CODE_L1C},

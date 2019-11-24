@@ -7,19 +7,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "msc", "msc.vcxproj", "{E7D8
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Win32 = Debug|Win32
-		Release|Win32 = Release|Win32
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E7D8F3E9-5363-4E31-8F16-4256E570767A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E7D8F3E9-5363-4E31-8F16-4256E570767A}.Debug|Win32.Build.0 = Debug|Win32
-		{E7D8F3E9-5363-4E31-8F16-4256E570767A}.Release|Win32.ActiveCfg = Release|Win32
-		{E7D8F3E9-5363-4E31-8F16-4256E570767A}.Release|Win32.Build.0 = Release|Win32
+		{E7D8F3E9-5363-4E31-8F16-4256E570767A}.Debug|x86.ActiveCfg = Debug|Win32
+		{E7D8F3E9-5363-4E31-8F16-4256E570767A}.Debug|x86.Build.0 = Debug|Win32
+		{E7D8F3E9-5363-4E31-8F16-4256E570767A}.Release|x86.ActiveCfg = Release|Win32
+		{E7D8F3E9-5363-4E31-8F16-4256E570767A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {33063145-C24F-457F-B83D-3D709114A8CD}
+		SolutionGuid = {63470E00-432E-4F72-8777-0C56CECC0A69}
 	EndGlobalSection
 EndGlobal

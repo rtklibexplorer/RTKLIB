@@ -1369,11 +1369,9 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                 threshadj=code||(rtk->P[ii+rtk->nx*ii]>SQR(rtk->opt.std[0]/2))||
                           (rtk->P[jj+rtk->nx*jj]>SQR(rtk->opt.std[0]/2))?opt->eratio[frq]:1;
                 if (opt->maxinno>0.0&&fabs(v[nv])>opt->maxinno*threshadj) {
-                    if (!code) {
-                        rtk->ssat[sat[j]-1].vsat[frq]=0;
-                        rtk->ssat[sat[j]-1].rejc[frq]++;
-                    }
-                    errmsg(rtk,"outlier rejected (sat=%3d-%3d %s%d v=%.3f)\n",
+                       rtk->ssat[sat[j]-1].vsat[frq]=0;
+                       rtk->ssat[sat[j]-1].rejc[frq]++;
+                       errmsg(rtk,"outlier rejected (sat=%3d-%3d %s%d v=%.3f)\n",
                             sat[i],sat[j],code?"P":"L",frq+1,v[nv]);
                     continue;
                 }
@@ -1549,8 +1547,8 @@ static int ddmat(rtk_t *rtk, double *D,int gps,int glo,int sbs)
     trace(5,"D=\n"); tracemat(5,D,nx,na+nb,2,0);
 
     if (nb>0) {
-        trace(3,"refSats=");tracemat(3,ref,1,nb,3,0);
-        trace(3,"fixSats=");tracemat(3,fix,1,nb,3,0);
+        trace(3,"refSats=");tracemat(3,ref,1,nb,7,0);
+        trace(3,"fixSats=");tracemat(3,fix,1,nb,7,0);
     }
     return nb;
 }
@@ -1615,7 +1613,7 @@ static void holdamb(rtk_t *rtk, const double *xa)
         }
     }
     /* return if less than min sats for hold (skip if fix&hold for GLONASS only) */
-    if (rtk->opt.modear==ARMODE_FIXHOLD&&nv<rtk->opt.minholdsats-1) { /* nv=sat pairs, so subtract 1 */
+    if (rtk->opt.modear==ARMODE_FIXHOLD&&nv<rtk->opt.minholdsats) { 
         trace(3,"holdamb: not enough sats to hold ambiguity\n");
         free(v); free(H);
         return;
@@ -1692,7 +1690,8 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     rtk->sol.ratio=0.0;
     
     if (rtk->opt.mode<=PMODE_DGPS||rtk->opt.modear==ARMODE_OFF||
-        rtk->opt.thresar[0]<1.0) { 
+        rtk->opt.thresar[0]<1.0) {
+        rtk->nb_ar=0;
         return 0;
     }
     /* skip AR if position variance too high to avoid false fix */
@@ -1701,6 +1700,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     trace(3,"posvar=%.6f\n",var);
     if (var>rtk->opt.thresar[1]) {
         errmsg(rtk,"position variance too large:  %.4f\n",var);
+        rtk->nb_ar=0;
         return 0;
     }
     /* Create single to double-difference transformation matrix (D')
@@ -1711,6 +1711,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
         free(D);
         return -1; /* flag abort */
     }
+    rtk->nb_ar=nb;
     /* nx=# of float states, na=# of fixed states, nb=# of double-diff phase biases */
     ny=na+nb; y=mat(ny,1); Qy=mat(ny,ny); DP=mat(ny,nx);
     b=mat(nb,2); db=mat(nb,1); Qb=mat(nb,nb); Qab=mat(na,nb); QQ=mat(na,nb);
@@ -1724,15 +1725,15 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     for (i=0;i<nb;i++) for (j=0;j<nb;j++) Qb [i+j*nb]=Qy[na+i+(na+j)*ny];
     for (i=0;i<na;i++) for (j=0;j<nb;j++) Qab[i+j*na]=Qy[   i+(na+j)*ny];
     
-    trace(3,"N(0)="); tracemat(3,y+na,1,nb,10,3);
+    trace(3,"N(0)=     "); tracemat(3,y+na,1,nb,7,2);
     
     /* lambda/mlambda integer least-square estimation */
     /* return best integer solutions */
     /* b are best integer solutions, s are residuals */
     if (!(info=lambda(nb,2,y+na,Qb,b,s))) {
         
-        trace(3,"N(1)="); tracemat(3,b   ,1,nb,10,3);
-        trace(3,"N(2)="); tracemat(3,b+nb,1,nb,10,3);
+        trace(3,"N(1)=     "); tracemat(3,b   ,1,nb,7,2);
+        trace(3,"N(2)=     "); tracemat(3,b+nb,1,nb,7,2);
         
         rtk->sol.ratio=s[0]>0?(float)(s[1]/s[0]):0.0f;
         if (rtk->sol.ratio>999.9) rtk->sol.ratio=999.9f;
@@ -1795,21 +1796,20 @@ static int manage_amb_LAMBDA(rtk_t *rtk, double *bias, double *xa, const int *sa
     float ratio1;
 
     trace(3,"prevRatios= %.3f %.3f\n",rtk->sol.prev_ratio1,rtk->sol.prev_ratio2);
-
-    /* find and count sats used last time for AR */
-    for (f=0;f<nf;f++) for (i=0;i<ns;i++) 
-            if (rtk->ssat[sat[i]-1].vsat[f]&&rtk->ssat[sat[i]-1].lock[f]>0)
-                arsats[ar++]=i;
-
     /* if no fix on previous sample and enough sats, exclude next sat in list */
-    trace(3,"num sats used last AR: %d\n",ar);
-    if (rtk->sol.prev_ratio2<rtk->sol.thres&&ar>=rtk->opt.mindropsats) {
+    trace(3,"num ambiguities used last AR: %d\n",rtk->nb_ar);
+    if (rtk->sol.prev_ratio2<rtk->sol.thres&&rtk->nb_ar>=rtk->opt.mindropsats) {
+        /* find and count sats used last time for AR */
+        for (f=0;f<nf;f++) for (i=0;i<ns;i++) 
+            if (rtk->ssat[sat[i]-1].vsat[f] && rtk->ssat[sat[i]-1].lock[f]>=0 && rtk->ssat[sat[i]-1].azel[1]>=rtk->opt.elmin) {
+                arsats[ar++]=i;
+            }
         if (rtk->excsat<ar) {
             i=sat[arsats[rtk->excsat]];
             for (f=0;f<nf;f++) {
                 lockc[f]=rtk->ssat[i-1].lock[f];  /* save lock count */
-            /* remove sat from AR long enough to enable hold if stays fixed */
-                rtk->ssat[i-1].lock[f]=-rtk->opt.minfix;
+                /* remove sat from AR long enough to enable hold if stays fixed */
+                rtk->ssat[i-1].lock[f]=-rtk->nb_ar;
             }
             trace(3,"AR: exclude sat %d\n",i);
             excflag=1;
@@ -1829,8 +1829,8 @@ static int manage_amb_LAMBDA(rtk_t *rtk, double *bias, double *xa, const int *sa
         if (rtk->opt.arfilter) {
             rerun=0;
             /* if results are much poorer than previous epoch or dropped below ar ratio thresh, remove new sats */
-            if (nb>=0 && ar>0 && ((rtk->sol.ratio<rtk->opt.thresar[0]*1.1 && rtk->sol.ratio<rtk->sol.prev_ratio1/2.0) ||
-                (rtk->sol.ratio<rtk->sol.thres && rtk->sol.prev_ratio2>=rtk->sol.thres))) {
+            if (nb>=0 && rtk->sol.prev_ratio2>=rtk->sol.thres && ((rtk->sol.ratio<rtk->sol.thres) ||
+                (rtk->sol.ratio<rtk->opt.thresar[0]*1.1 && rtk->sol.ratio<rtk->sol.prev_ratio1/2.0))) {
                 trace(3,"low ratio: check for new sat\n");
                 dly=2;
                 for (i=0;i<ns;i++) for (f=0;f<nf;f++) {
@@ -1869,16 +1869,15 @@ static int manage_amb_LAMBDA(rtk_t *rtk, double *bias, double *xa, const int *sa
         if (glo1!=glo2||gps1!=gps2)
             nb=resamb_LAMBDA(rtk,bias,xa,gps2,glo2,glo2);
     }
-    
-    rtk->sol.prev_ratio1=ratio1>0?ratio1:rtk->sol.ratio;
-    rtk->sol.prev_ratio2=rtk->sol.ratio;
-
-    /* restore excluded sat if still no fix */
-    if (excflag&&rtk->sol.ratio<rtk->sol.thres) {
+    /* restore excluded sat if still no fix or significant increase in ar ratio */
+    if (excflag && (rtk->sol.ratio<rtk->sol.thres) && (rtk->sol.ratio<(1.5*rtk->sol.prev_ratio2))) {
         i=sat[arsats[rtk->excsat++]];
         for (f=0;f<nf;f++) rtk->ssat[i-1].lock[f]=lockc[f];
         trace(3,"AR: restore sat %d\n",i);
     }
+
+    rtk->sol.prev_ratio1=ratio1>0?ratio1:rtk->sol.ratio;
+    rtk->sol.prev_ratio2=rtk->sol.ratio;
 
     return nb;
 }
@@ -2223,6 +2222,7 @@ extern void rtkinit(rtk_t *rtk, const prcopt_t *opt)
     }
     rtk->holdamb=0;
     rtk->excsat=0;
+    rtk->nb_ar=0;
     for (i=0;i<MAXERRMSG;i++) rtk->errbuf[i]=0;
     rtk->opt=*opt;
     rtk->initial_mode=rtk->opt.mode;

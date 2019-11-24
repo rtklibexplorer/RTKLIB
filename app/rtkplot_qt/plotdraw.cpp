@@ -968,7 +968,7 @@ void Plot::DrawObsSlip(QPainter &c,double *yp)
             else if (!*code||!strcmp(code,"1")||!strcmp(code,"2")) {
                 if (obs->L[0]!=0.0&&obs->L[1]!=0.0&&
                     satsys(obs->sat,NULL)!=SYS_GLO) {
-                    gf=CLIGHT*(obs->L[0]/FREQ1-obs->L[1]/FREQ2);
+                    gf=CLIGHT*(obs->L[0]/FREQL1-obs->L[1]/FREQL2);
                     if (fabs(gfp[obs->sat-1]-gf)>THRESLIP) slip=1;
                     gfp[obs->sat-1]=gf;
                 }
@@ -1155,7 +1155,7 @@ void Plot::DrawSky(QPainter &c,int level)
             else if (!*code||!strcmp(code,"1")||!strcmp(code,"2")) {
                 if (obs->L[0]!=0.0&&obs->L[1]!=0.0&&
                     satsys(obs->sat,NULL)!=SYS_GLO) {
-                    gf=CLIGHT*(obs->L[0]/FREQ1-obs->L[1]/FREQ2);
+                    gf=CLIGHT*(obs->L[0]/FREQL1-obs->L[1]/FREQL2);
                     if (fabs(gfp[obs->sat-1]-gf)>THRESLIP) slip=1;
                     gfp[obs->sat-1]=gf;
                 }

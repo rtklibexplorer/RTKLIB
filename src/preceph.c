@@ -606,7 +606,7 @@ static int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
     if (nav->nc<2||
         timediff(time,nav->pclk[0].time)<-MAXDTE||
         timediff(time,nav->pclk[nav->nc-1].time)>MAXDTE) {
-        trace(3,"no prec clock %s sat=%2d\n",time_str(time,0),sat);
+        trace(4,"no prec clock %s sat=%2d\n",time_str(time,0),sat);
         return 1;
     }
     /* binary search */

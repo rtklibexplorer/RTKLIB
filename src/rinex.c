@@ -2079,12 +2079,12 @@ static int obsindex(double ver, int sys, const unsigned char *code,
                     return i;
             }
             else {
-				id=code2obs(code[i],NULL);
+                id=code2obs(code[i],NULL);
                 if (id[0]==tobs[1]) return i;
             }
         }
         else { /* ver.3 */
-			id=code2obs(code[i],NULL);
+            id=code2obs(code[i],NULL);
             if (!strcmp(id,tobs+1)) return i;
         }
     }

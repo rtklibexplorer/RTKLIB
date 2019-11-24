@@ -59,7 +59,7 @@ extern "C" {
 
 #define VER_RTKLIB  "demo5"             /* library version */
 
-#define PATCH_LEVEL "b33a"               /* patch level */
+#define PATCH_LEVEL "b33b2"               /* patch level */
 
 #define COPYRIGHT_RTKLIB \
             "Copyright (C) 2007-2019 T.Takasu\nAll rights reserved."
@@ -1253,6 +1253,7 @@ typedef struct {        /* RTK control/result type */
     double *xa,*Pa;     /* fixed states and their covariance */
     int nfix;           /* number of continuous fixes of ambiguity */
     int excsat;         /* index of next satellite to be excluded for partial ambiguity resolution */
+    int nb_ar;          /* number of ambiguities used for AR last epoch */
 	double com_bias;    /* phase bias common between all sats (used to be distributed to all sats */
     char holdamb;       /* set if fix-and-hold has occurred at least once */
     ambc_t ambc[MAXSAT]; /* ambiguity control */

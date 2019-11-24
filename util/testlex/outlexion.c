@@ -45,7 +45,7 @@ static void printtec(int index, gtime_t time, double sec, const nav_t *nav,
             pos[0]=(lat0-dpos*i)*D2R;
             pos[1]=(lon0+dpos*j)*D2R;
             if (lexioncorr(time,nav,pos,azel,&ion,&var)) {
-                /*tec=ion*FREQ1*FREQ1/40.3E16;*/ /* L1 iono delay -> tecu */
+                /*tec=ion*FREQL1*FREQL1/40.3E16;*/ /* L1 iono delay -> tecu */
                 fprintf(fp,"%7.3f ",ion);
             }
             else {
