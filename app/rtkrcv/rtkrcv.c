@@ -1425,7 +1425,6 @@ static void *con_thread(void *arg)
                 break;
         }
     }
-    vt_close(con->vt);
     return 0;
 }
 /* open console --------------------------------------------------------------*/
@@ -1457,6 +1456,7 @@ static void con_close(con_t *con)
     if (!con) return;
     con->state=con->vt->state=0;
     pthread_join(con->thread,NULL);
+    vt_close(con->vt);
     free(con);
 }
 /* open socket for remote console --------------------------------------------*/
