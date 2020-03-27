@@ -1683,15 +1683,13 @@ int main(int argc, char **argv)
             return -1;
         }
     }
-    else {
-        /* open device for local console */
-        if (!(con[0]=con_open(0,dev))) {
-            fprintf(stderr,"console open error dev=%s\n",dev);
-            if (moniport>0) closemoni();
-            if (outstat>0) rtkclosestat();
-            traceclose();
-            return -1;
-        }
+    /* open device for local console */
+    if (!(con[0]=con_open(0,dev))) {
+      fprintf(stderr,"console open error dev=%s\n",dev);
+      if (moniport>0) closemoni();
+      if (outstat>0) rtkclosestat();
+      traceclose();
+      return -1;
     }
     signal(SIGINT, sigshut); /* keyboard interrupt */
     signal(SIGTERM,sigshut); /* external shutdown signal */
