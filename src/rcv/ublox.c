@@ -109,7 +109,7 @@ typedef enum { false, true } bool;
 #define U1(p) (*((unsigned char *)(p)))
 #define I1(p) (*((signed char *)(p)))
 static unsigned short U2(unsigned char *p) {unsigned short u; memcpy(&u,p,2); return u;}
-static unsigned long  U4(unsigned char *p) {unsigned long  u; memcpy(&u,p,4); return u;}
+static unsigned long  U4(unsigned char *p) {unsigned long  u=0; memcpy(&u,p,4); return u;}
 static int            I4(unsigned char *p) {signed long    u; memcpy(&u,p,4); return u;}
 static float          R4(unsigned char *p) {float          r; memcpy(&r,p,4); return r;}
 static double         R8(unsigned char *p) {double         r; memcpy(&r,p,8); return r;}
