@@ -100,7 +100,8 @@ typedef enum { false, true } bool;
 
 #define P2_10       0.0009765625 /* 2^-10 */
 
-#define CPSTD_VALID 5           /* std-dev threshold of carrier-phase valid */
+#define MAX_CPSTD_VALID 5       /* max std-dev for valid carrier-phase  */
+#define CPSTD_SLIP 15           /* std-dev threshold for slip */
 
 #define ROUND(x)    (int)floor((x)+0.5)
 
@@ -334,7 +335,7 @@ static int decode_rxmrawx(raw_t *raw)
     unsigned char *p=raw->buff+6;
     char *q,tstr[64];
     double tow,P,L,D,tn,tadj=0.0,toff=0.0;
-    int i,j,k,f,sys,prn,sat,code,slip,halfv,halfc,LLI,n=0,std_slip=0;
+    int i,j,k,f,sys,prn,sat,code,slip,halfv,halfc,LLI,n=0,cpstd_valid,cpstd_slip;
     int week,nmeas,ver,gnss,svid,sigid,frqid,lockt,cn0,cpstd,prstd,tstat;
 
     trace(4,"decode_rxmrawx: len=%d\n",raw->len);
@@ -367,10 +368,15 @@ static int decode_rxmrawx(raw_t *raw)
     if ((q=strstr(raw->opt,"-TADJ="))) {
         sscanf(q,"-TADJ=%lf",&tadj);
     }
+    /* max valid std-dev of carrier-phase (-MAX_STD_CP) */
+    if ((q=strstr(raw->opt,"-MAX_STD_CP="))) {
+        sscanf(q,"-MAX_STD_CP=%d",&cpstd_valid);
+    } else cpstd_valid=MAX_CPSTD_VALID;
     /* slip threshold of std-dev of carrier-phase (-STD_SLIP) */
     if ((q=strstr(raw->opt,"-STD_SLIP="))) {
-        sscanf(q,"-STD_SLIP=%d",&std_slip);
-    }
+        sscanf(q,"-STD_SLIP=%d",&cpstd_slip);
+    } else cpstd_slip=CPSTD_SLIP;
+
     /* time tag adjustment */
     if (tadj>0.0) {
         tn=time2gpst(time,&week)/tadj;
@@ -390,16 +396,15 @@ static int decode_rxmrawx(raw_t *raw)
         prstd=U1(p+27)&15; /* pseudorange std-dev */
         cpstd=U1(p+28)&15; /* cpStdev (m) */
         prstd=1<<(prstd>=5?prstd-5:0); /* prstd=2^(x-5) */
-        prstd=prstd<=9?prstd:9;  /* limit to 9 to fit RINEX format */
         tstat=U1(p+30);    /* trkStat */
         if (!(tstat&1)) P=0.0;
-        if (!(tstat&2)||L==-0.5||cpstd>CPSTD_VALID) L=0.0; /* invalid phase */
+        if (!(tstat&2)||L==-0.5||cpstd>cpstd_valid) L=0.0; /* invalid phase */
 
         if (!(sys=ubx_sys(gnss))) {
             trace(2,"ubx rxmrawx: system error gnss=%d\n", gnss);
             continue;
         }
-        prn=svid+(sys==SYS_QZS?192:0);
+        prn=svid+(sys==SYS_QZS?MINPRNQZS-1:0);
         if (!(sat=satno(sys,prn))) {
             if (sys==SYS_GLO&&prn==255) {
                 continue; /* suppress warning for unknown glo satellite */
@@ -432,7 +437,7 @@ static int decode_rxmrawx(raw_t *raw)
         halfc=tstat&8?1:0; /* half cycle subtracted from phase */
         slip=lockt==0||lockt*1E-3<raw->lockt[sat-1][f-1]||
              halfc!=raw->halfc[sat-1][f-1];
-        if (std_slip>0&&cpstd>=std_slip) slip=LLI_SLIP;
+        if (cpstd>=cpstd_slip) slip=LLI_SLIP;
         if (slip) raw->lockflag[sat-1][f-1]=slip;
         raw->lockt[sat-1][f-1]=lockt*1E-3;
         raw->halfc[sat-1][f-1]=halfc;
@@ -450,16 +455,18 @@ static int decode_rxmrawx(raw_t *raw)
             raw->obs.data[n].rcv=0;
             for (k=0;k<NFREQ+NEXOBS;k++) {
                 raw->obs.data[n].L[k]=raw->obs.data[n].P[k]=0.0;
-                raw->obs.data[n].qualL[k]=raw->obs.data[n].qualP[k]=0.0;
+                raw->obs.data[n].qualL[k]=raw->obs.data[n].qualP[k]=0;
                 raw->obs.data[n].D[k]=0.0;
                 raw->obs.data[n].SNR[k]=raw->obs.data[n].LLI[k]=0;
                 raw->obs.data[n].code[k]=CODE_NONE;
             }
             n++;
         }
+        prstd=prstd<=9?prstd:9;  /* limit to 9 to fit RINEX format */
+        cpstd=cpstd<=9?cpstd:9;  /* limit to 9 to fit RINEX format */
         raw->obs.data[j].L[f-1]=L;
         raw->obs.data[j].P[f-1]=P;
-        raw->obs.data[j].qualL[f-1]=cpstd<=7?cpstd:0;
+        raw->obs.data[j].qualL[f-1]=cpstd;
         raw->obs.data[j].qualP[f-1]=prstd;
         raw->obs.data[j].D[f-1]=(float)D;
         raw->obs.data[j].SNR[f-1]=(unsigned char)(cn0*4);
@@ -1269,6 +1276,7 @@ static int sync_ubx(unsigned char *buff, unsigned char data)
 *          -INVCP     : invert polarity of carrier-phase
 *          -TADJ=tint : adjust time tags to multiples of tint (sec)
 *          -STD_SLIP=std: slip by std-dev of carrier phase under std
+*          -MAX_CP_STD=std: max std-dev of carrier phase
 *          -GALFNAV   : input only F/NAV for galileo ephemeris
 *
 *          The supported messages are as follows.

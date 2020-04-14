@@ -413,6 +413,7 @@ static double varerr(int sat, int sys, double el, double snr_rover, double snr_b
 
     frq=f%nf;code=f<nf?0:1;
 
+    /* extended error model, not currently used */
     switch (sys) {
         case SYS_GPS: i = 0; break;
         case SYS_GLO: i = 1; break;
@@ -420,7 +421,6 @@ static double varerr(int sat, int sys, double el, double snr_rover, double snr_b
         default:      i = 0; break;
     }
     
-    /* extended error model, not currently used */
     if (code && opt->exterr.ena[0]) { /* code */
         a = opt->exterr.cerr[i][  frq * 2];
         b = opt->exterr.cerr[i][1+frq * 2];
@@ -431,6 +431,7 @@ static double varerr(int sat, int sys, double el, double snr_rover, double snr_b
         b = opt->exterr.perr[i][1+frq * 2];
         if (sys == SYS_SBS) {a *= EFACT_SBS; b *= EFACT_SBS;}
     }
+
     else { /* normal error model */
         if (opt->rcvstds&& obs->qualL[frq]!='\0'&&obs->qualP[frq]!='\0') {
             /* include err ratio and measurement std (P or L) from receiver */
@@ -441,7 +442,11 @@ static double varerr(int sat, int sys, double el, double snr_rover, double snr_b
         switch (sys) {
             case SYS_GPS: fact *= EFACT_GPS; break;
             case SYS_GLO: fact *= EFACT_GLO; break;
+            case SYS_GAL: fact *= EFACT_GAL; break;
             case SYS_SBS: fact *= EFACT_SBS; break;
+            case SYS_QZS: fact *= EFACT_QZS; break;
+            case SYS_CMP: fact *= EFACT_CMP; break;
+            case SYS_IRN: fact *= EFACT_IRN; break;
             default:      fact *= EFACT_GPS; break;
         }
         
@@ -1684,6 +1689,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     prcopt_t *opt=&rtk->opt;
     int i,j,ny,nb,info,nx=rtk->nx,na=rtk->na;
     double *D,*DP,*y,*Qy,*b,*db,*Qb,*Qab,*QQ,s[2],var=0;
+    double QQb[MAXSAT];
     
     trace(3,"resamb_LAMBDA : nx=%d\n",nx);
     
@@ -1722,10 +1728,16 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     matmul("NN",ny,ny,nx,1.0,DP,D     ,0.0,Qy);   /* Qy=DP'*D */
     
     /* phase-bias covariance (Qb) and real-parameters to bias covariance (Qab) */
-    for (i=0;i<nb;i++) for (j=0;j<nb;j++) Qb [i+j*nb]=Qy[na+i+(na+j)*ny];
+    for (i=0;i<nb;i++) {
+        QQb[i]= Qy[na+i+(na+i)*ny];
+        for (j=0;j<nb;j++) {
+            Qb [i+j*nb]=Qy[na+i+(na+j)*ny];
+        }
+    }
     for (i=0;i<na;i++) for (j=0;j<nb;j++) Qab[i+j*na]=Qy[   i+(na+j)*ny];
     
     trace(3,"N(0)=     "); tracemat(3,y+na,1,nb,7,2);
+    trace(3,"Qb  =     "); tracemat(3,QQb,1,nb,7,5);
     
     /* lambda/mlambda integer least-square estimation */
     /* return best integer solutions */
@@ -1791,7 +1803,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
 /* resolve integer ambiguity by LAMBDA using partial fix techniques and multiple attempts -----------------------*/
 static int manage_amb_LAMBDA(rtk_t *rtk, double *bias, double *xa, const int *sat, int nf, int ns) 
 {
-    int i,f,lockc[NFREQ],ar=0,excflag=0,arsats[MAXOBS];
+    int i,f,lockc[NFREQ],ar=0,excflag=0,arsats[MAXOBS]={0};
     int gps1=-1,glo1=-1,gps2,glo2,nb,rerun,dly;
     float ratio1;
 
@@ -2172,8 +2184,9 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     }
     for (i=0;i<n;i++) for (j=0;j<nf;j++) {
         if (obs[i].L[j]==0.0) continue;
-        rtk->ssat[obs[i].sat-1].pt[obs[i].rcv-1][j]=obs[i].time;
-        rtk->ssat[obs[i].sat-1].ph[obs[i].rcv-1][j]=obs[i].L[j];
+        nf=opt->ionoopt==IONOOPT_IFLC?1:opt->nf;  /* fixes gcc compiler warnings */
+        rtk->ssat[obs[i].sat-1].pt[obs[i].rcv-1][j<nf?j:nf]=obs[i].time;
+        rtk->ssat[obs[i].sat-1].ph[obs[i].rcv-1][j<nf?j:nf]=obs[i].L[j];
     }
     for (i=0;i<MAXSAT;i++) for (j=0;j<nf;j++) {
         /* Don't lose track of which sats were used to try and resolve the ambiguities */

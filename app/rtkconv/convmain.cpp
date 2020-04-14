@@ -38,7 +38,6 @@ TMainWindow *MainWindow;
 #define PRGNAME		"RTKCONV"  // program name
 #define MAXHIST		20		   // max number of histories
 #define TSTARTMARGIN 60.0	   // time margin for file name replacement
-#define TRACEFILE	"rtkconv.trace" // trace file
 
 static int abortf=0;
 
@@ -788,7 +787,7 @@ void __fastcall TMainWindow::ConvertFile(void)
 	AnsiString OutFile9_Text=OutFile9->Text;
 	int i,format,sat;
 	char file[1024]="",*ofile[9],ofile_[9][1024]={""},msg[256],*p;
-	char buff[256],tstr[32];
+	char buff[256],tstr[32],tracefile[1024];
 	double RNXVER[]={2.10,2.11,2.12,3.00,3.01,3.02,3.03};
 	FILE *fp;
 	
@@ -927,7 +926,9 @@ void __fastcall TMainWindow::ConvertFile(void)
 	Message		->Caption="";
 	
 	if (TraceLevel>0) {
-		traceopen(TRACEFILE);
+		strcpy(tracefile,ofile[0]);
+		strcat(tracefile,".trace");
+		traceopen(tracefile);
 		tracelevel(TraceLevel);
 	}
 	// convert to rinex

@@ -550,7 +550,7 @@ extern int input_nvsf(raw_t *raw, FILE *fp)
 extern int gen_nvs(const char *msg, unsigned char *buff)
 {
     unsigned char *q=buff;
-    char mbuff[1024],*args[32],*p;
+    char mbuff[1024],*args[32]={0},*p;
     unsigned int byte;
     int iRate,n,narg=0;
     unsigned char ui100Ms;

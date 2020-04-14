@@ -61,14 +61,6 @@ static int exsign(unsigned int v, int bits)
 {
     return (int)(v&(1<<(bits-1))?v|(~0u<<bits):v);
 }
-/* checksum ------------------------------------------------------------------*/
-static unsigned char chksum(const unsigned char *buff, int len)
-{
-    unsigned char sum=0;
-    int i;
-    for (i=0;i<len;i++) sum^=buff[i];
-    return sum;
-}
 /* adjust weekly rollover of gps time ----------------------------------------*/
 static gtime_t adjweek(gtime_t time, double tow)
 {

@@ -389,7 +389,7 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
 {
     const double *lam=nav->lam[obs->sat-1];
     double C1,C2;
-    int i,sys,ix;
+    int i,sys,ix=0;
     
     sys=satsys(obs->sat,NULL);
     
@@ -445,16 +445,14 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
 /* detect cycle slip by LLI --------------------------------------------------*/
 static void detslp_ll(rtk_t *rtk, const obsd_t *obs, int n)
 {
-    int i,j;
+    int i,j,nf;
     
     trace(3,"detslp_ll: n=%d\n",n);
-    
     for (i=0;i<n&&i<MAXOBS;i++) for (j=0;j<rtk->opt.nf;j++) {
         if (obs[i].L[j]==0.0||!(obs[i].LLI[j]&3)) continue;
-        
         trace(3,"detslp_ll: slip detected sat=%2d f=%d\n",obs[i].sat,j+1);
-        
-        rtk->ssat[obs[i].sat-1].slip[j]=1;
+        nf=rtk->opt.nf;/* fixes gcc compiler warning */
+        rtk->ssat[obs[i].sat-1].slip[j<nf?j:nf]=1;
     }
 }
 /* detect cycle slip by geometry free phase jump -----------------------------*/

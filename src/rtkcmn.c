@@ -188,11 +188,11 @@ const double lam_carr[MAXFREQ]={ /* carrier wave length (m) */
     CLIGHT/FREQE5ab,CLIGHT/FREQs
 };
 const prcopt_t prcopt_default={ /* defaults processing options */
-    PMODE_SINGLE,0,2,SYS_GPS,   /* mode,soltype,nf,navsys */
+    PMODE_KINEMA,0,2,SYS_GPS|SYS_GLO|SYS_GAL,   /* mode,soltype,nf,navsys */
     15.0*D2R,{{0,0}},           /* elmin,snrmask */
     0,3,3,1,0,1,                /* sateph,modear,glomodear,gpsmodear,bdsmodear,arfilter */
-    20,5,4,5,10,20,             /* maxout,minlock,minfixsats,minholdsats,mindropsats,minfix */
-    0,1,0,0,1,0,                /* rcvstds,armaxiter,estion,esttrop,dynamics,tidecorr */
+    20,0,4,5,10,20,             /* maxout,minlock,minfixsats,minholdsats,mindropsats,minfix */
+    0,1,1,1,1,0,                /* rcvstds,armaxiter,estion,esttrop,dynamics,tidecorr */
     1,0,0,0,0,                  /* niter,codesmooth,intpref,sbascorr,sbassatsel */
     0,0,                        /* rovpos,refpos */
     WEIGHTOPT_ELEVATION,        /* weightmode */
@@ -203,11 +203,11 @@ const prcopt_t prcopt_default={ /* defaults processing options */
     5E-12,                      /* sclkstab */
     {3.0,0.25,0.0,1E-9,1E-5,0.0,0.0,0.0}, /* thresar */
     0.0,0.0,0.05,0.1,0.01,      /* elmaskar,elmaskhold,thresslip,varholdamb,gainholdamb */
-    30.0,1000.0,30.0,           /* maxtdif,maxinno,maxgdop */
+    30.0,5.0,30.0,              /* maxtdif,maxinno,maxgdop */
     {0},{0},{0},                /* baseline,ru,rb */
     {"",""},                    /* anttype */
     {{0}},{{0}},{0},            /* antdel,pcv,exsats */
-    1,1                           /* maxaveep,initrst */
+    1,1                         /* maxaveep,initrst */
 };
 const solopt_t solopt_default={ /* defaults solution output options */
     SOLF_LLH,TIMES_GPST,1,3,    /* posf,times,timef,timeu */
@@ -2294,7 +2294,7 @@ extern pcv_t *searchpcv(int sat, const char *type, gtime_t time,
     char buff[MAXANT],*types[2],*p;
     int i,j,n=0;
     
-    trace(3,"searchpcv: sat=%2d type=%s\n",sat,type);
+    trace(4,"searchpcv: sat=%2d type=%s\n",sat,type);
     
     if (sat) { /* search satellite antenna */
         for (i=0;i<pcvs->n;i++) {
@@ -2945,6 +2945,10 @@ extern void traceclose(void)
 extern void tracelevel(int level)
 {
     level_trace=level;
+}
+extern int gettracelevel(void)
+{
+    return level_trace;
 }
 extern void trace(int level, const char *format, ...)
 {

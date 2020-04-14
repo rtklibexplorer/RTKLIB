@@ -279,7 +279,7 @@ static void gen_obs_glo(rtcm_t *rtcm, const obsd_t *data, int fcn, int *code1,
                         double tadj)
 {
     double lam1=0.0,lam2=0.0,pr1c=0.0,ppr;
-    double P0,L0,P1,L1,freq1,freq2;
+    double P0,L0,P1,L1,freq1=0,freq2=0;
     int lt1,lt2;
     
     if (fcn>=0) {

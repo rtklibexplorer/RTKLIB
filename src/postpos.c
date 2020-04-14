@@ -909,15 +909,16 @@ static int antpos(prcopt_t *opt, int rcvno, const obs_t *obs, const nav_t *nav,
             trace(1,"no position in rinex header\n");
             return 0;
         }
-        /* antenna delta */
-        if (stas[rcvno==1?0:1].deltype==0) { /* enu */
-            for (i=0;i<3;i++) del[i]=stas[rcvno==1?0:1].del[i];
-            del[2]+=stas[rcvno==1?0:1].hgt;
-            ecef2pos(stas[rcvno==1?0:1].pos,pos);
-            enu2ecef(pos,del,dr);
-        }
-        else { /* xyz */
-            for (i=0;i<3;i++) dr[i]=stas[rcvno==1?0:1].del[i];
+        /* add antenna delta unless already done in antpcv() */
+        if (!strcmp(opt->anttype[rcvno],"*")) {
+            if (stas[rcvno==1?0:1].deltype==0) { /* enu */
+                for (i=0;i<3;i++) del[i]=stas[rcvno==1?0:1].del[i];
+                del[2]+=stas[rcvno==1?0:1].hgt;
+                ecef2pos(stas[rcvno==1?0:1].pos,pos);
+                enu2ecef(pos,del,dr);
+            }  else { /* xyz */
+                for (i=0;i<3;i++) dr[i]=stas[rcvno==1?0:1].del[i];
+            }
         }
         for (i=0;i<3;i++) rr[i]=stas[rcvno==1?0:1].pos[i]+dr[i];
     }

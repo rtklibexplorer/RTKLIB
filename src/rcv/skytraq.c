@@ -762,7 +762,7 @@ extern int gen_stq(const char *msg, unsigned char *buff)
 {
     const char *hz[]={"1Hz","2Hz","4Hz","5Hz","10Hz","20Hz",""};
     unsigned char *q=buff;
-    char mbuff[1024],*args[32],*p;
+    char mbuff[1024],*args[32]={0},*p;
     int i,n,narg=0;
     
     trace(4,"gen_stq: msg=%s\n",msg);

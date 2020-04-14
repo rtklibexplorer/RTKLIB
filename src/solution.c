@@ -298,7 +298,7 @@ static int test_solstat(const char *buff)
 /* decode nmea ---------------------------------------------------------------*/
 static int decode_nmea(char *buff, sol_t *sol)
 {
-    char *p,*q,*val[MAXFIELD];
+    char *p,*q,*val[MAXFIELD]={0};
     int n=0;
     
     trace(4,"decode_nmea: buff=%s\n",buff);
@@ -1634,7 +1634,7 @@ extern int outsols(unsigned char *buff, const sol_t *sol, const double *rb,
     double gpst;
     int week,timeu;
     const char *sep=opt2sep(opt);
-    char s[64];
+    char s[256];
     unsigned char *p=buff;
     
     trace(3,"outsols :\n");

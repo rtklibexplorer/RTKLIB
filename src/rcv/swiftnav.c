@@ -15,8 +15,6 @@
 #include <math.h>
 #include <stdint.h>
 
-static const char rcsid[] = "$Id: Swiftnav SBP,v 1.0 2017/02/01 FT $";
-
 #define SBP_SYNC1 0x55 /* SBP message header sync */
 
 #define ID_MEASEPOCH 0x004A      /* observation */
@@ -191,11 +189,6 @@ static const uint32_t CRC_16CCIT_LookUp[256] = {
 static const uint32_t rtcm_phase_lock_table[16] = {
     0,    32,   64,    128,   256,   512,    1024,   2048,
     4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288};
-
-static const double ura_eph[] = {/* ura values */
-                                 2.4,    3.4,    4.85,   6.85,  9.65,  13.65,
-                                 24.0,   48.0,   96.0,   192.0, 384.0, 768.0,
-                                 1536.0, 3072.0, 6144.0, 0.0};
 
 static const uint8_t decoding_table[256] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
