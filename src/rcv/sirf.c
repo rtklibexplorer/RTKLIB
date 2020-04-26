@@ -10,6 +10,7 @@
 *	    2019/10/28 2.0  S. Juhl improved the six year old first version.
 *	    2020/03/22 2.1  S. Juhl Bugfixes, Auto-Learning Q Indicator for Carrier Phase,
                                     Data alignment of subframes (TBD: MID 14)
+            2020/04/26 2.5  S. Juhl Fixed Ephemeris Data acquisition
 *-- Query Firmware Version -----------------------------------------------------*
 echo -en "\xA0\xA2\x00\x02\x84\x00\x00\x84\xb0\xb3" > /dev/ttyUSB0
 ROM GSD4e_4.1.2-P1 R+ 11/15/2011 319-Nov 15 2011-23:04:55
@@ -92,25 +93,29 @@ typedef struct {        /* MID 4 + MID28 + MID30 + MID64 data 				*/
     signed short PhLockQ;	/* Phase Lock Quality, normalized and left-shifted 8 bits */
     float QIRatio;
     float elev;		/* elevation angle from MID 4	*/
+    double tgd,f0,f1,f2;	/* Subframe clock data */
 } auxData_t;
 
 /* Global Variabels ------------------------------------------------------------*/
 int VerData = 0;
+int AuxMeasData = 0;
 int lastTOW=-1;
 int lastClkB=-1;
 int lastClkD=-1;
 int Cnt=0;
-int InfoCnt=0;
+int InfoCnt0=0;
+int InfoCnt1=0;
+int obsCnt=0;
+int TimeDebug=0;
 unsigned int MBuf[100];
 unsigned int MC=0;
 float QImin=100; 
 float QImax=0;
-double ClkBias=0;			/* MID 7     Clock Status			*/
 double ClkBiasTCXO = 96250/10e+9;	/* MID 93.18 calculated clock bias of TCXO 	*/
 float altMSL=0.0;			/* MID 41 for tropo correction			*/
-int SFcnt[]={0,0,0,0,0};
 
 auxData_t auxData[MAXSAT]; 
+
 
 /* get fields (big-endian) -----------------------------------------------------*/
 #define U1(p) (*((unsigned char *)(p)))
@@ -229,6 +234,7 @@ static int chksum(const unsigned char *buff, int len)
     for (i=4;i<len-4;i++) sum=0x7fff&(sum+buff[i]);
     return (sum>>8)==buff[len-4]&&(sum&0xFF)==buff[len-3];
 }
+
 
 /* generic decode & print SiRF message --------------------------------
 MID  2 0x02 D Measure Navigation Data Out
@@ -608,9 +614,9 @@ static int decode_sirfmtdo(raw_t *raw)
     for(j=0; j<=11; j++) { 				/* NOTE Save Tracking status for further processing */
         sat=satno(SYS_GPS,U1(p+8+j*15)); 	        
         if (sat) {
-            auxData[sat].trackStat=U1(p+12+j*15);
+            auxData[sat].trackStat=U1(p+12+j*15); 
             auxData[sat].elev=(float)U1(p+10+j*15)/2;	/* Save Elevation for Tropo correction	*/
-            }
+            }						/* if (auxData[sat].tgd!=0) printf("\nMID 41 AUXDATA sat=%d tgd=%f elev=%d",sat,auxData[sat].tgd,U1(p+10+j*15)); */
     }
 
     if (debug) {					/* NOTE For Debugging purpose only 	*/
@@ -643,88 +649,97 @@ static int decode_sirfmtdo(raw_t *raw)
 }    
 
 /* NOTE DECODE Generic Clock Data (from MID 7, add MID 41, too?)
-        - U-Blox RXM-RAWX Carrier phase locktime counter (maximum 64500ms)			        
+        - U-Blox RXM-RAWX Carrier phase locktime counter (maximum 64500ms) -> SiRF value limited to 30000ms
+        - SV Clock Drift Correction still missing!  
+
+        Time of receipt, time of transmission and resulting pseudo range correction 
+        GPS Software Time – Clock Bias = Time of Receipt = GPS Time. 
+        GPS Software Time – Pseudorange (sec) = Time of Transmission = GPS Time. 
+
    NOTE GPS Clock Frequency  MID 93.18 provides Clock Drift Uncertainty 
         printf("\nGPS Clock:%f kHz, RepBias:%8.3f µs, ",(FREQL1+drift)*16/1540/1e+3,U4(p+12)/1e+3);
         printf("CalcBias = %8.3f µs, ",1e6*drift/FREQL1);  printf("DeltaTime = %.3f s, ",tow-U4(p+16)/1000);  */
 static int decode_clock(raw_t *raw,double rcBias, double drift,unsigned week,double tow)
 {
-    const double EGC=3.986005E+14; 
-    const double F=-2*sqrt(EGC)/CLIGHT/CLIGHT;	/* Earth's universal gravitational parameters 	*/
+    /* const double EGC=3.986005E+14; 
+       const double F=-2*sqrt(EGC)/CLIGHT/CLIGHT;	 Earth's universal gravitational parameters 	*/
+    const int debug=0;
     unsigned char *p;
     obsd_t *src,*dst;
     int i,j,n=0,mid,cs=0;
-    double bias,Padj,Ladj,tt,tgd=0,dt,tsv,td,tTD=0,tID=0;
-    gtime_t time, time0={0},toc,ts,time1;
+    double Ladj,dt,tTD=0;
+    gtime_t time, time0={0};
     
-    p=raw->buff+4; mid=U1(p); time=gpst2time(week,tow); 			/* printf("\nM7:time.sec:%f",time.sec); */
-    /*time=gpst2time(week,(float)U4(p+16)/1000);				/* SiRF   Estimated GPS time is the time estimated when the measurements were made. */
-    time=timeadd(time,-rcBias); /*printf("- bias %f = %f\n",rcBias,time);	/* U-Blox RXM-RAW uses Measurement time of week in receiver
-                                                                                          local time approximately aligned to the GPS time system. */
+ /*   if (!obsCnt) return 0;							/* EXIT if no observations are be to processed */
+    p=raw->buff+4; mid=U1(p); 
+
+    /* INFO U-Blox RXM-RAW uses Measurement time of week in receiver local time approximately aligned to the GPS time system. */
+    time=gpst2time(week,tow); 			/* time=gpst2time(week,(float)U4(p+16)/1000); -> SiRF Estimated GPS time is the time estimated when the measurements were made. */
+    time=timeadd(time,-rcBias); raw->time=time; /* Subtract Clock Bias to get time of receipt   */
+    
+    if (TimeDebug) printf("\nMID 7 time=%.3f est=%.3f bias=%.3f obuf.n=%d Cnt=%d",tow-rcBias,(float)U4(p+16)/1000,rcBias,raw->obuf.n,obsCnt);	/* Store receiver clock bias to be able to calc clock bias at MID30 */
   
     /* NOTE MAIN PROCESSING LOOP */
-/*    if (MAXOBS < 4) return 0; */
     for (i=0;i<raw->obuf.n&&i<MAXOBS;i++) {
-        src=&raw->obuf.data[i];
-        if (!satsys(src->sat,NULL)) continue;				/* Satellit gehört zum L1-System? 	printf("DE=%f ",fabs(tow+RawBias-src->time.sec)); */
-        if (fabs(tow+rcBias-src->time.sec)>0.01) continue;
-        dst=&raw->obs.data[n++]; *dst=*src;				/* referenzierte Kopie des Originals		*/
-        raw->obs.data[n].sat =dst->sat; raw->obs.data[n].time=time;	/* Copy Sat PRN Code + Time			*/
-        dst->time=gpst2time(week,src->time.sec-rcBias);			/* Subtract Clock Bias to get time of receipt 	*/
-        raw->time=dst->time;
-        
-        /* NOTE Approximation of atmospheric delay according to Spilker (1994)	*/
-        if (auxData[dst->sat].elev>0) { 
-            tTD=2.44*1.0121*exp(-0.000133*altMSL)/(0.121+sin(auxData[dst->sat].elev*PI/180));
-        } else { tTD=0; }	/* printf("\nSAT %d: Tropo Delay: %.1fm\n",dst->sat,tTD); */
+        src=&raw->obuf.data[i]; if (!satsys(src->sat,NULL)) continue;		/* Satellit of L1-System? 	printf("DE=%f ",fabs(tow+RawBias-src->time.sec)); */
+        if (fabs(tow+rcBias-src->time.sec)>0.1) continue;			/* requirement unknown, but necessary for proper function  ... */
+        dst=&raw->obs.data[n++]; *dst=*src;					/* referenzierte Kopie des Originals	*/
+        raw->obs.data[n].sat =dst->sat; raw->obs.data[n].time=raw->time;	/* Copy Sat PRN Code + Time			*/
+        raw->obs.data[n].code[0]=CODE_L1C;
+        dst->time=raw->time; 
 
-/*        if (auxData[dst->sat].iono>0) { 
+        /* NOTE If Carrier pullin has been completed, Apply Pseudo range [m] adjustment by receiver clock bias */
+        if (((auxData[dst->sat].trackStat&0x08)>>3)) dst->P[0]-=rcBias*CLIGHT;
+
+        /* NOTE Approximation of atmospheric delay according to Spilker (1994)	*/
+        if (auxData[dst->sat].elev!=0&&altMSL!=0) { 
+            tTD=1*2.44*1.0121*exp(-0.000133*altMSL)/(0.121+sin(auxData[dst->sat].elev*PI/180))/CLIGHT; 
+        } else { tTD=0; }								/* printf("\nSAT %d: Tropo Delay= %.1fm ",dst->sat,tTD); */
+
+        /* NOTE Apply satellite clock offset -> Deactivated due to massive performance degradation 
+                The satellite clock offset (dt) is calculated as Satellite time of transmission (sec) minus = Time of clock (sec) */
+        if (auxData[dst->sat].f0!=0) { dt=dst->P[0]/CLIGHT; tTD+=0*auxData[dst->sat].f0+0*dt*auxData[dst->sat].f1+0*dt*dt*auxData[dst->sat].f2; }
+        
+        /* NOTE Apply group delay according to IS-GPS-200K 20.3.3.3.3.2 	*/
+        if (auxData[dst->sat].tgd!=0) tTD+=auxData[dst->sat].tgd;	
+        dst->P[0]-=tTD*CLIGHT; 			
+        
+        if (debug) { printf("\nCLK sat=%2d TD=%6.3fkm ntgd=%fms ",dst->sat,tTD,(float)raw->nav.eph[dst->sat-1].tgd[0]*1000);
+        printf("atgd=%.3fkm elev=%3.1f P=%.0fkm TrackStat=",(float)auxData[dst->sat].tgd*CLIGHT/1000,auxData[dst->sat].elev,dst->P[0]/1000);
+        printBits(auxData[dst->sat].trackStat); printf(" "); }
+
+        /* NOTE Ionospheric Delay disabled, tbd ... use subframe 4 correction parameter set 
+        if (auxData[dst->sat].iono>0) { 
             tID=(40.3*1E+16)/FREQL1/FREQL1*auxData[dst->sat].iono;
             printf("\nSAT %d: Iono Delay: %.1f %d",dst->sat,tID*CLIGHT,auxData[dst->sat].iono);
             }  /*rintf("IONO=%d,%d,%.6fkm",auxData[dst->sat].iono,FREQL1,(float)auxData[dst->sat].iono/FREQL1/FREQL1); }*/
         
-        /* Time of receipt, time of transmission and resulting pseudo range correction */
-        /* NOTE SV Clock Drift Correction still missing!  printf("\n[%d] sat=%2d RcvClkBi=%.6fs ",n,dst->sat,bias); */
-        /*      GPS Software Time – Clock Bias = Time of Receipt = GPS Time. 
-                GPS Software Time – Pseudorange (sec) = Time of Transmission = GPS Time. */
-
         /* NOTE MID 28 Adjust Carrier Frequency [Hz]
                 Corrected Carrier Frequency (m/s) = Reported Carrier Frequency (m/s) – Clock Drift (Hz)*C / 1575420000 Hz	*/
         if (auxData[dst->sat].trackStat & (1 << 4)) dst->D[0]-=drift; 
         dst->D[0]*=-1;								/* Mandatory change of sign proved by comparison with u-Blox dataset		*/
 
-        Padj=tTD/CLIGHT+rcBias; 
-        if (auxData[dst->sat].trackStat & (1 << 1)) { 				/* If LOCKED, adjust carrier phase by receiver clock bias			*/
-            if (dst->sat==raw->nav.eph[dst->sat-1].sat) { 			/* If AVAILABLE, apply group delay correcetion (acc. IS-GPS-200K 20.3.3.3.2)	*/
-                Padj+=0*raw->nav.eph[dst->sat-1].tgd[0] * (1-sqrt(FREQL1)/(sqrt(FREQL1)-sqrt(FREQL2))); } 	
-                                                                                /* printf("\nSV %2d TGD -%3.3fm\n",dst->sat,raw->nav.eph[dst->sat-1].tgd[0]*CLIGHT); } 	*/
-            /* Standard Deviation of pseudo range measurement */
-            dst->qualP[0]=(float)15*(auxData[dst->sat].QIRatio-QImin)/(QImax-QImin);	/* MID 64.2 Auto-Learning Quality Level of Carrier Phase measurement		*/
-        } /* else { dst->L[0]=0; }							/* Mark Carrier phase measeurement as invalid 	*/
-        Padj*=CLIGHT; 
-/*        if (auxData[dst->sat].iono>0) { Padj+=(float)auxData[dst->sat].iono/FREQL1/FREQL1;
-        /*rintf("IONO=%d,%d,%.6fkm",auxData[dst->sat].iono,FREQL1,(float)auxData[dst->sat].iono/FREQL1/FREQL1); }*/
-        dst->P[0]-=Padj;						/* Pseudo range [m] adjustment *Ladj*=FREQL1;  	*/
+        /* NOTE MID 64.2 Auto-Learning Quality Level of Carrier Phase measurement	(auxData[dst->sat].trackStat & (1 << 1))	*/
+        if (AuxMeasData) dst->qualP[0]=(float)15*(auxData[dst->sat].QIRatio-QImin)/(QImax-QImin); /* printf("\nSV %2d Q=%d",dst->sat,dst->qualP[0]); } */
 
         /* NOTE CARRIER PHASE dst->L[0] [cycles] -> Mid 64 outputs L1 Cycles, M28 reports Meters			        */
-        /*if (!dst->LLI[0]&&auxData[dst->sat].TimeTrack<30000) dst->L[0]=0;	/* SAT <30 Sekunden aktiv?			*/
+        raw->lockt[dst->sat-1][0]=auxData[dst->sat].TimeTrack/1000; 
         if (dst->L[0]) { 							/* LLI: bit1=slip, bit2=half-cycle-invalid 	*/
-            /* if (!((auxData[dst->sat].trackStat&0x06)>>1)) dst->L[0]=0; 		/* MID  4: Carrier Phase valid?			*/
-            /* if ( ((auxData[dst->sat].extStat&0x3c)>>2  )) { dst->LLI[0]=1; cs++;}	/* MID 64: Cycle Slip, Subframe sync, Multipath */
-            /* if ( ((auxData[dst->sat].RecovStat&0x14)>>2)) dst->LLI[0]=1;	/* MID 64: Bad PrePos, wrong BitSync	 	*/
+            if (!((auxData[dst->sat].trackStat&0x06)>>1)) dst->L[0]=0; 		/* MID  4: Carrier Phase valid?			*/
+            if ( ((auxData[dst->sat].extStat&0x3c)>>2  )) { dst->LLI[0]=1; cs++;}	/* MID 64: Cycle Slip, Subframe sync, Multipath */
+            if ( ((auxData[dst->sat].RecovStat&0x14)>>2)) dst->LLI[0]=1;	/* MID 64: Bad PrePos, wrong BitSync	 	*/
             
             /* NOTE invalid carrier phase measurements are flagged in RTKLIB by setting the carrier phase value to zero. */
             if (dst->LLI[0]) dst->L[0]=0;
-            if (dst->sat==raw->nav.eph[dst->sat-1].sat) { 			/* If AVAILABLE, apply group delay correcetion (acc. IS-GPS-200K 20.3.3.3.2)	*/
-                tgd=raw->nav.eph[dst->sat-1].tgd[0] * (1-sqrt(FREQL1)/(sqrt(FREQL1)-sqrt(FREQL2))); 
-                } else { tgd=0; }
-            Ladj=(0*tgd+rcBias+tTD/CLIGHT)*FREQL1; if (dst->L[0]) dst->L[0]-=Ladj;		 	/* Carrier Phase [Cycles] adjustment		*/ 
+            Ladj=(rcBias+tTD)*FREQL1; if (dst->L[0]) dst->L[0]-=Ladj;	/* Carrier Phase [Cycles] adjustment		*/ 
             dst->qualL[0]=7-(dst->L[0] ? 1 : 0 );				/* MID 2 PMode Phase Lock = 7			*/
         } 
-/* NOTE        printf("\nSAT %2d P=%.0fkm pAdj=%.6fs L=%.fk LLI=%d Q=%d %.3f %.3f",dst->sat,dst->P[0]/1000,Padj/CLIGHT,dst->L[0]/1000,dst->LLI[0],dst->qualP[0],auxData[dst->sat].QIRatio,(QImax-QImin));*/
+        if (strstr(raw->opt,"-INVCP")) { raw->obs.data[n].L[0]*=-1; } 		/* Phase polarity flip option (-INVCP) */        
+
+        if (debug) printf("P3=%.0fkm LLI=%d ",dst->P[0]/1000,dst->LLI[0]);
+        if (debug&&dst->L[0]) printf("P/L ratio =%.2fppm",(1-(dst->P[0]*FREQL1/CLIGHT/dst->L[0]))*1E+6);        /* printf("\nSAT %2d P=%.0fkm pAdj=%.6fs L=%.fk LLI=%d Q=%d %.3f %.3f",dst->sat,dst->P[0]/1000,Padj/CLIGHT,dst->L[0]/1000,dst->LLI[0],dst->qualP[0],auxData[dst->sat].QIRatio,(QImax-QImin)); */
     }
-    if (strstr(raw->opt,"-INVCP")) { raw->obs.data[n].L[0]*=-1; } 		/* Phase polarity flip option (-INVCP) */        
-    raw->obs.n=n;  
+    raw->obs.n=n; if (fabs(timediff(raw->obs.data[0].time,raw->time))>1E-9) raw->obs.n=0;			/* printf("\nCLK n=%d obsCnt=%d obsProc=%d ",n,obsCnt,obsproc);*/
     
     /* clear observation data buffer */
     for (i=0;i<MAXOBS;i++) {
@@ -737,7 +752,7 @@ static int decode_clock(raw_t *raw,double rcBias, double drift,unsigned week,dou
             raw->obuf.data[i].qualL[j]=raw->obuf.data[i].qualP[j]=0;
         }
     }
-    if (n>1) printMBuf();
+    obsCnt=0; 
     return n>0?1:0;
 }
 
@@ -782,13 +797,17 @@ static int decode_sirfclock(raw_t *raw)
     return decode_clock(raw,bias,drift,wn,tow); /* printf("\nMID 7 tow=%.3f, est=%.3f, bias=%f ",tow,(float)U4(p+16)/1000,bias); */
 }
 
-/* NOTE DECODE MID 41 Geodetic Navigation Data */
+/* NOTE DECODE MID 41 Geodetic Navigation Data 
+        The pulse-per-second (PPS) output provides a pulse signal for timing purposes.
+        Pulse length (high state) is 200ms about 1µs synchronized to full UTC second.
+        The UTC time message is generated and put into output FIFO 300ms after PPS.
+        The exact time between PPS and UTC time message delivery depends on message rate,
+        message queue and communication baud rate.					*/
 static int decode_sirfgeoclk(raw_t *raw)
 {
     double bias,tow;
     unsigned drift,wn;
     unsigned char *p; 
-    int i;
     trace(4,"decode_sirfgeoclk: len=%d\n",raw->len);
 
     p=raw->buff+4;
@@ -801,11 +820,10 @@ static int decode_sirfgeoclk(raw_t *raw)
     bias=U4(p+64)/CLIGHT/100;
     drift=S4(p+72)*FREQL1/CLIGHT/100; 
     altMSL=(float)S4(p+35)/100; 
+    if (TimeDebug) printf("\nMID41 time=%.3f bias=%f drift=%d",tow,bias,drift);
     
-/*    fprintf(stderr,"%s [INFO ] GPS N:%.4f° E:%.4f° H%.2fm HDOP:%.1fm Q:%d:%d\n",time_str(utc2gpst(timeget()),0),(float)S4(p+23)/1e+7,(float)S4(p+27)/1e+7,(float)S4(p+31)/100,(float)U1(p+89)/5,U1(p+4)&0x0f,U1(p+88)); */
-    if (InfoCnt==2) {
-        fprintf(stderr,"%4d/%02d/%02d %02d:%02d:%02.0f [INFO ] GPS N:%.4f° E:%.4f° H%.2fm HDOP:%.1fm Q:%d:%d ",U2(p+11),U1(p+13),U1(p+14),U1(p+15),U1(p+16),(float)U2(p+17)/1000,(float)S4(p+23)/1e+7,(float)S4(p+27)/1e+7,(float)S4(p+31)/100,(float)U1(p+89)/5,U1(p+4)&0x0f,U1(p+88));
-        for (i=0;i<5;i++) printf("SF%d:%X ",i+1,SFcnt[i]);
+    if (abs(InfoCnt1-tickget())>5000) { InfoCnt1=tickget();	/* NOTE Report GPS position every 5 seconds */
+        fprintf(stderr,"%4d/%02d/%02d %02d:%02d:%02.0f [INFO ] GPS N:%.4f° E:%.4f° H%.2fm HDOP:%.1fm Q:%d:%d",U2(p+11),U1(p+13),U1(p+14),U1(p+15),U1(p+16),(float)U2(p+17)/1000,(float)S4(p+23)/1e+7,(float)S4(p+27)/1e+7,(float)S4(p+31)/100,(float)U1(p+89)/5,U1(p+4)&0x0f,U1(p+88));
         printf("\n");
     }
 /*    fprintf(stderr,"%s [INFO ] UTC %4d-%02d-%02d %02d:%02d:%02.1f\n",time_str(utc2gpst(timeget()),0),U2(p+11),U1(p+13),U1(p+14),U1(p+15),U1(p+16),(float)U2(p+17)/1000); */
@@ -880,7 +898,7 @@ static int decode_sirfnlmeas(raw_t *raw)
     unsigned char *p;
     unsigned gsw230=strstr(raw->opt,"-GSW230")!=NULL;
     obsd_t *obsd;
-    
+
     trace(4,"decode_sirfnlmeas: len=%d\n",raw->len);
     if (raw->len!=64)	{ trace(2,"SiRF mid#28 length error: len=%d\n",raw->len); return -1; }
     p=raw->buff+4; ch=U1(p+1);
@@ -891,9 +909,11 @@ static int decode_sirfnlmeas(raw_t *raw)
 
     /* Fill Observation Data Structure */
     obsd->sat=satno(SYS_GPS,U1(p+6)); obsd->code[0]=CODE_L1C;
-    obsd->time.sec=R8(p+7,gsw230); 
+    obsd->time.sec=R8(p+7,gsw230); 					/* NOTE - Bias will be subtracted at MID 7 clock processing!		*/
+    /* printf("\nMID 28 sat=%2d traw=%f time.sec=%f",obsd->sat,R8(p+7,gsw230),obsd->time.sec); */
     auxData[obsd->sat].dtime=R8(p+7,gsw230);				/* GPS Software Time  printf("\nMID 28: GPS TIME:%.3f",obsd->time.sec); */
-
+    obsCnt++;
+    
     /* NOTE The reported Time of Measurement, Pseudorange and Carrier Phase are all uncorrected values	*/
     obsd->P[0]=R8(p+15,gsw230);						/* Pseudorange, without corrections [m], smoothed by carrier phase!	*/
     obsd->D[0]=R4(p+23)*FREQL1/CLIGHT;					/* Carrier Frequency [m/s] -> Hz (Doppler Extract erst mit GPS Clock!)	*/
@@ -913,6 +933,7 @@ static int decode_sirfnlmeas(raw_t *raw)
     /* Constistent code epoch alignment, phase errors > 60 degrees prec. second */
     flags=U1(p+37); pherrcnt=U1(p+54);					/* printf("\nsat=%d,PhaseQ=%d %d ",obsd->sat,pherrcnt,U1(p+54)); printBits(flags&0x02); */
     obsd->LLI[0]=flags&0x02&&pherrcnt<50?0:1; 				/* printf(" LLI=%d",obsd->LLI[0]); printf("\n"); */
+    if (TimeDebug) printf("\nMID28 time=%.3f SAT %2d ch=%2d n=%2d P=%f obsCnt=%2d SNR=%.1f LLI=%d",obsd->time.sec,obsd->sat,ch,raw->obuf.n,obsd->P[0],obsCnt,(float)cm/130,obsd->LLI[0]);
 
     /* Fill Auxiliary Data Structure */
     auxData[obsd->sat].time.sec=obsd->time.sec;
@@ -926,10 +947,8 @@ static int decode_sirfnlmeas(raw_t *raw)
     auxData[obsd->sat].MeanDRTime=U2(p+50);
     auxData[obsd->sat].ExtraTime=S2(p+52);
     auxData[obsd->sat].PhErrCnt=U1(p+54);
-    
     return 0;
 }
-
 
 /* NOTE DECODE MID 30 Navigation Library SV State Data
    NOTE The data in MID 30 reports the computed satellite position and velocity at the specified GPS time!
@@ -956,6 +975,9 @@ static int decode_sirfsvstate(raw_t *raw)
     } 
 
     p=raw->buff+4; sat=satno(SYS_GPS,U1(p+1)); /* printf("MID 30 sat=%d->obs[%d]?",sat,MAXOBS); */
+    
+    if (TimeDebug) printf("\nMID30 time=%.3f SAT %2d EFV=%02X Bias=%fs Drift=%ds/s",R8(p+2,gsw230),sat,U1(p+70),R8(p+58,gsw230),U4(p+66));
+    
     for(ch=0; ch<=MAXOBS; ch++) { if (raw->obs.data[ch].sat==sat) break; }	/* printf("(SAT=%d)",ch,sat); */
     /* NOTE Satellite Clock Error and Orbital Solution Error Estimation for Precise Navigation Applications
             https://www.researchgate.net/publication/272877529_Satellite_Clock_Error_and_Orbital_Solution_Error_Estimation_for_Precise_Navigation_Applications */
@@ -975,7 +997,7 @@ static int decode_sirfsvstate(raw_t *raw)
                                 printf("\nvx=%f, vy=%f, vz=%f",R8(p+34,gsw230),R8(p+42,gsw230),R8(p+50,gsw230));
                                 printf("\nPseudorange             =   %.3fkm",pr/1000);
                                 printf("\nIono Delay   (%08x) =   %.3fkm",U4(p+79),(float)U4(p+79)/1000); /* Datentyp = DEZIMAL, nicht Floating-Point! */
-        BiasCorr=(ClkBias-R8(p+58,gsw230))*CLIGHT; 
+        BiasCorr=0; /* (ClkBias-R8(p+58,gsw230))*CLIGHT;  */
                                 /* printf("\nBias Correction (%.1fms) = %.3fkm",BiasCorr/CLIGHT*1000,BiasCorr/1000); */
                                 /* printf("\nesc = %f =",(float)R8(p+58,gsw230)+0*R4(p+66)*dt); */
 /*                                printf("%fkm",(float)
@@ -996,6 +1018,7 @@ static int decode_sirfsvstate(raw_t *raw)
 /*    printf("ClkBias:%08X%08X->%gsec -> ",U4(p+58),U4(p+62),R8(p+58,gsw230)); 
     printf("%f\n",R8(p+2,gsw230)-R8(p+58,gsw230));
 */
+    
     auxData[sat].time.sec=R8(p+2,gsw230);
     auxData[sat].px=R8(p+10,gsw230);
     auxData[sat].py=R8(p+18,gsw230);
@@ -1025,31 +1048,39 @@ static int decode_sirfsvstate(raw_t *raw)
         printf("ClkDrift:%f;",R4(p+66));
         printf("EFV:%d;",U1(p+70));
         printf("IonoDly:%f;",R4(p+79));
-
+    
+    printf("MID 30 AUXDATA tgd=%f",auxData[sat].tgd);
     return 0;	/* NOTE Gibt nichts zurück ... keine Aktion / Verwertung ... */
 }
 /* NOTE DECODE MID 64 Navigation Library (NL) Auxiliary Measurement Data	
         Added Self-Learing QI-Range	*/
 static int decode_sirfauxdata(raw_t *raw)
 {
-    int sat;
+    int sat,sid,i,debug=0;
     unsigned ch;
     unsigned char *p;
     float QI;
-    printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-    p=raw->buff+4; if (U1(p+1)!=2) decode_sirfgen(raw);
+    
+    p=raw->buff+4; ch=U1(p+2); sid=U1(p+1); if (sid!=2) decode_sirfgen(raw);
     if (raw->len!=75) {
         trace(2,"SiRF mid#64 length error: len=%d\n",raw->len);
         printf("SiRF mid#64 length error: len=%d\n",raw->len);
         return -1;
     } 
-
-    ch=U1(p+2); sat=satno(SYS_GPS,U1(p+2));
+    
+    sat=satno(SYS_GPS,U1(p+2));
     if (ch>=MAXOBS) {
         trace(2,"SiRF mid#64 wrong channel: ch=%d\n",ch);
-        printf("SiRF mid#64 wrong channel: ch=%d\n",ch);
+        printf("SiRF mid#64 wrong channel: sat=%d ch=%d\n",sat,ch);
+        for (i=0;i<raw->len;i++) printf("%02X ",U1(p+i));
+        printf("\n"); 
         return -1;
+    } 
+    if (AuxMeasData == 0) { 
+        fprintf(stderr,"%s [INFO ] Navigation Library Auxiliary Measurement Data detected.\n",time_str(utc2gpst(timeget()),0));
+        AuxMeasData=1;
     }
+
     auxData[sat].extStat=U1(p+4);
     auxData[sat].RecovStat=U1(p+62);		/*     printf("XXXXRecov=%02X,SWU=%d",U1(p+62),U4(p+63));*/
     auxData[sat].TimeTag64=U4(p+6);
@@ -1060,29 +1091,84 @@ static int decode_sirfauxdata(raw_t *raw)
     auxData[sat].PRNoise=S2(p+42); 
     auxData[sat].dRngQ=S2(p+44);
     auxData[sat].PhLockQ=S2(p+46);		/*     printf("XXXX %04X->%d",U2(p+46),S2(p+46)); */
-    auxData[sat].QIRatio=(float)U2(p+52)/U2(p+50);
-    QI=(float)U2(p+52)/U2(p+50);
-    if (QI < QImin) QImin=QI;
-    if (QI > QImax) QImax=QI;
-    printf("\nQRQR Qmin=%f Qmax=%f QR=%f",QImin,QImax,(float)U2(p+52)/U2(p+50));
-   return 0;
+    if (auxData[sat].TimeTrack>=30000) { auxData[sat].QIRatio=(float)U2(p+52)/U2(p+50);
+        QI=(float)U2(p+52)/U2(p+50);
+        if (QI < QImin) QImin=QI;
+        if (QI > QImax) QImax=QI;
+        if (debug) printf("\nSAT %2d Q=%.3f min=%.3f max=%.3f Q=%.3f\n",sat,QI,QImin,QImax,(float)15*(auxData[sat].QIRatio-QImin)/(QImax-QImin));
+    }
+    return 0;
 }
+
+static void print_eph(eph_t eph, int sf)
+{
+    printf("\nSAT %d SF%d:",eph.sat,sf);
+    switch (sf) {
+    case 1:
+        printf(" code=%d",eph.code);
+        printf(" week=%d",eph.week);
+        printf(" flag=%d",eph.flag);
+        printf(" sva=%d",eph.sva);
+        printf(" svh=%d",eph.svh);
+        printf(" tgd=%fs",eph.tgd[0]);
+        printf(" iodc=%d",eph.iodc);
+        printf(" toc=%fs",eph.toc.sec);
+        printf(" f2=%fs/s²",eph.f2);
+        printf(" f1=%fs/s",eph.f1);
+        printf(" f0=%fs",eph.f0);
+        printf(" ttr=%f",eph.ttr.sec);
+        break;
+    case 2:
+        printf(" iode=%02X",eph.iode);
+        printf(" ncrs=%f",eph.crs);
+        printf(" deln=%f",eph.deln);
+        printf(" M0=%f",eph.M0);
+        printf(" cuc=%f",eph.cuc);
+        printf(" e=%f",eph.e);
+        printf(" cus=%f",eph.cus);
+        printf(" toes=%f",eph.toes);
+        printf(" fit=%f",eph.fit);
+        printf(" A=%f",eph.A);
+        break;
+    case 3:
+        printf(" cic=%f",eph.cic);
+        printf(" OMG0=%f",eph.OMG0);
+        printf(" cis=%f",eph.cis);
+        printf(" i0=%f",eph.i0);
+        printf(" ncrc=%f",eph.crc);
+        printf(" omg=%f",eph.omg);
+        printf(" idot=%f",eph.idot);
+        printf(" idoc=%d",eph.iodc&0xff);
+        printf(" ntoe=%f",eph.toe.sec);
+        printf(" toc=%f",eph.toc.sec);
+        printf(" ttr=%f",eph.ttr.sec);
+        printf(" OMGd=%f",eph.OMGd);
+        printf(" idot=%f",eph.idot);
+    }
+}
+
+
+/* NOTE == Epemeris ==  NOTE */
 static int decode_ephem(int sat, raw_t *raw)
 {
+    const int debug=0;
     eph_t eph={0};
     int k,j,x1,x2,x3;
 
     x1=decode_frame(raw->subfrm[sat-1]   ,&eph,NULL,NULL,NULL,NULL);
     x2=decode_frame(raw->subfrm[sat-1]+30,&eph,NULL,NULL,NULL,NULL);
     x3=decode_frame(raw->subfrm[sat-1]+60,&eph,NULL,NULL,NULL,NULL);
-    fprintf(stderr,"%s [INFO ] Ephemeris Decoding Status: %d%d%d ",time_str(utc2gpst(timeget()),0),x1,x2,x3);
-    /* printf("IODE-Chk:%02X-%02X",U1(raw->subfrm[sat-1]+30+48/8),U1(raw->subfrm[sat-1]+60+216/8)); */
-    if (!x3) printf("IODE mismatch: %02X/%02X",U1(raw->subfrm[sat-1]+30+48/8),U1(raw->subfrm[sat-1]+60+216/8));
-    printf("\n");
-    
-    if (decode_frame(raw->subfrm[sat-1]   ,&eph,NULL,NULL,NULL,NULL)!=1||
-            decode_frame(raw->subfrm[sat-1]+30,&eph,NULL,NULL,NULL,NULL)!=2||
-            decode_frame(raw->subfrm[sat-1]+60,&eph,NULL,NULL,NULL,NULL)!=3) return 0;
+    if (debug) { printf("%s [INFO ] Ephemeris Decoding Status: %d%d%d ",time_str(utc2gpst(timeget()),0),x1,x2,x3);
+            for (j=0;j<3;j++) {
+            printf("\nSV %2d SF%d: ",sat,j+1);
+            for (k=0;k<30;k++) { if (k%3==0) printf("|"); printf("%02X",U1(raw->subfrm[sat-1]+j*30+k)); }
+            printf("|IOD"); switch (j+1) {
+            case 1: printf("C=%02X",U1(raw->subfrm[sat-1]+168/8)); break;
+            case 2: printf("E=%02X",U1(raw->subfrm[sat-1]+30+48/8)); break;
+            case 3: printf("E=%02X",U1(raw->subfrm[sat-1]+60+216/8)); break;
+        } } 
+        printf("\nSV %2d t=%d eph.iode=%02X raw->nav.eph[%2d].iode=%02X\n",sat,tickget(),eph.iode,sat,raw->nav.eph[sat-1].iode);
+    }
 
     if (!strstr(raw->opt,"-EPHALL")) {
         if (eph.iode==raw->nav.eph[sat-1].iode) return 0; /* unchanged */
@@ -1091,97 +1177,185 @@ static int decode_ephem(int sat, raw_t *raw)
     raw->nav.eph[sat-1]=eph;
     raw->ephsat=sat;
 
-    printMBuf();
     return 2;
 }
 
-    /* for (j=1;j<3;j++) {
-        printf("\nDECODE EPH-SF%d:",j+1); for (k=0;k<30;k++) printf("%02X",U1(raw->subfrm[sat-1]+j*30+k)); 
-        id2=getbitu(raw->subfrm[sat-1]+j*30,43,3); /* subframe id */
-/*        printf("|%d|",id2);
+static void writesf(raw_t *raw, int sat, int id, int tow)	{ /*unsigned char *p) {
+    /* Dateizeiger erstellen*/
+    int i;
+    FILE *fp;
+
+    /* Datei oeffnen */
+    fp = fopen("/tmp/SF.out", "a");
+
+    if(fp == NULL) { printf("Datei konnte NICHT geoeffnet werden.\n");
+	} else {
+	    fprintf(fp, "S t=%10d sat=%2d SF%d ",tickget(),sat,id);
+	    for (i=0; i<30; i++) { 
+	        fprintf(fp, "%02X", U1(raw->subfrm[sat-1]+30*(id-1)+i));
+	        if (i==2||i==5||i==8||i==11||i==14||i==17||i==20||i==23||i==26) fprintf(fp,"|"); }
+	    fprintf(fp,"\n"); /* if (x!=0) { fprintf(fp,"Y\n"); } else { fprintf(fp,"N\n"); } */
+    	fclose(fp);
     }
-    printf("IODE-Chk:%02X-%02X",U1(raw->subfrm[sat-1]+30+48/8),U1(raw->subfrm[sat-1]+60+216/8)); */
+}
 
 
-
-/* NOTE DECODE MID 8 50BPS message (MID 8 & MID 56.5)
+/* NOTE DECODE MID 8 50BPS message (... & MID 56.5)
    NOTE decode_word is only used by sirf.c, not by ublox.c
-        1000101100000000110100001010XX SiRF   -> padded trailing bits 
-        XX1000101100000000110100001010 u-Blox -> padded front bits			
 Chris Kuethe "Message 8 is generated as the data is received. It is not buffered
              on the chip. So when you enable message 8, you'll get one subframe
              every 6 seconds. Of the data received, the almanac and ephemeris are
              buffered and stored, so you can query them at will. Alas, the time
              parameters are not stored, which is really lame, as the UTC-GPS
-             correction changes 1 second every few years. Maybe."		
-SF#1:22C035 7BD1A5 EB4872 8E4C30 5F5680 567CC9 43B870 8BA625 C0CBDB 3BFFF5 
-SF#1:22C035 7AAFC6 035400 8B61D6 3AD6D0 0A79F6 330EB9 08C465 FFFFE8 B5F06E */
+             correction changes 1 second every few years. Maybe."		*/
 static int decode_sirf50bps(raw_t *raw)
 {
-    int debug=0,mid,prn,sat,id,word,i,DataID,PageID,tlm,tow,SFID,carry,j,id2,week,toa,x4,x5;
+    int debug=1,mid,prn,sat,id,word,i,DataID,PageID,SFID,week,toa,x5,svid,x1;
     unsigned int words[10];
     unsigned char *p=raw->buff+4; 	/* strip start sequence and payload	*/
     unsigned char subfrm[30];
+    eph_t eph={0};			/* NOTE raw->nav.eph[sat-1]=eph; ??? */
     raw->len=(raw->len-4-4);		/* strip checksum and end sequence 	*/
 
     trace(4,"decode_sirf50bps: len=%d\n",raw->len);
-    mid=U1(p);prn=U1(p+2); /* if (mid!=81) {	/* NOTE MID #?				*/
-    /*        printf("\nMID:%2d",mid); printf("->50BPS[%d]:SAT#%2d",raw->len,prn); 
-        for (i=0;i<raw->len;i++) { if (i==0||i==3||i==7||i==11) printf("|"); printf("%02X",U1(p+i)); } 
-    }*/
+    mid=U1(p); prn=U1(p+2); p+=3; SFID=(U1(p+6)&0x1c)>>2;
 
-    if (raw->len!=43) {
-        trace(2,"SiRF 50BSP length error: len=%d\n",raw->len);
-        printf("SiRF 50BSP length error: len=%d\n",raw->len);
-        return 0;
-    }
-
-    if (!(sat=satno(SYS_GPS,prn))) {
-        trace(2,"SiRF 50BPS satellite number error: prn=%d\n",prn);
-        printf("SiRF 50BPS satellite number error: prn=%d\n",prn);
-        return 0; }
+    /* NOTE Sanity Checks */
+    if (raw->len!=43) 		   { trace(2,"SiRF 50BSP length error: len=%d\n",raw->len); return 0; }
+    if (!(sat=satno(SYS_GPS,prn))) { trace(2,"SiRF 50BPS satellite number error: prn=%d\n",prn); return 0; }
+    if (mid==MID_SRF50BPS && VerData==1 && SFID <= 3) return 0;  /* EXIT if Verified Ephermeris Data present     */
     
-    /* EXIT on parity error		*/
-    word=U4(p+3+0*4); if (!decode_word(word,subfrm)) { trace(2,"SiRF 50BPS parity error: prn=%d\n",prn); return 0; }
+    /* NOTE U-Blox does not / is unable to perform a parity check ... so why check SiRF protocol for it? */
+    word=U4(p); if (!decode_word(word,subfrm)) { trace(2, "SiRF 50BPS parity error: prn=%d\n",prn); return 0; }
         
-    /* tlm=(U4(p+7)&0xFFFFFC)>>9;			/* Bit1: 0->URE > 4.42x URA-Index 1E-5/h   1-> URE > 5.73xURA 1E-8/h	*/    
-    tow=getbitu(p,7*8,17); SFID=(U1(p+9)&0x1c)>>2;	/* printf("\nTOW=%d HOW[3]=",tow); printBits(U1(p+9)); printf(" SFID=%d",SFID); */
+    /* NOTE Save raw data to words array, taking swapped bits into account	*/
+    for (i=0;i<10;i++) { 	
+        words[i]=U4(p+4*i); if (words[i]&0x40000000) words[i]^=0x3FFFFFC0;
+        words[i]=(words[i]&0x3fffffc0)>>6; 
+    }
+        
+    /* NOTE Get Subframe ID 	*/
+    id=(words[1]>>2)&7; SFID=id; if (id<1||5<id) { trace(2, "subfrm id error: sat=%2d id=%d len=%d\n",sat,id,raw->len); return -1; }
 
-    p+=3; for (i=0;i<10;i++,p+=4) words[i]=U4(p)>>8;	/* 24 bits without parity and padding bits	*/
-    id=(words[1]>>2)&7; 				/* OK printf("id=%d",id);			*/
-    if (id<1||5<id) { trace(2,"subfrm id error: sat=%2d id=%d len=%d\n",sat,id,raw->len); return -1; }
-    SFcnt[id-1]++;
-    /* printf("|%d|",id); */
+    /* NOTE Save words to raw subframe buffer, use writesf(raw,sat,id,tow) for debugging purposes */
+    for (i=0;i<10;i++) setbitu(raw->subfrm[sat-1]+(id-1)*30,i*24,24,words[i]);	
 
-    /* NOTE Save Subframe	*/
-    for (i=0;i<10;i++) setbitu(raw->subfrm[sat-1]+(id-1)*30,i*24,24,words[i]);	/* Save Subframe back to raw			*/
-    /* id2=getbitu(raw->subfrm[sat-1]+(id-1)*30,43,3); /* subframe id */
-    /* printf("%d|",id2); */
-
-    if (U1(p)==MID_SRF50BPS && VerData==1 && id < 4) return 0;	/* EXIT if Verified Ephermeris Data present	*/
-    if (id==1) { printf("\nSF#%d:",id); for (i=0;i<10;i++) printf("%06X ",words[i]); }
-    
-    /* Suframe 1+2 werden gespeichert, Auswertung erfolgt, wenn Subframe #3 auftritt */
     switch (id) {
-        case 3:	return decode_ephem(sat,raw); /* Ephemeris */
-        case 4:	/* NOTE Almanac SV 25-32 + Ionosphere + UTC 	*/
-            DataID=(words[3]&0xc00000)>>22; PageID=(words[3]&0x3f0000)>>16;
-            if (debug) printf ("SF4 PRN=%d DID=%d PID=%d Valid=",prn,DataID,PageID);
-            x4=decode_frame(raw->subfrm[sat-1]+90,NULL,raw->nav.alm,raw->nav.ion_gps,raw->nav.utc_gps,&raw->nav.leaps);
-            if (debug) { (x4==4) ? putchar('Y') : putchar('N'); printf("\n"); }
-            adj_utcweek(raw->time,raw->nav.utc_gps);            
-            return 9;
+        case 1: /* NOTE Store SV Clock data in AuxData-Array also */ 
+            x1=decode_frame(raw->subfrm[sat-1]   ,&eph,NULL,NULL,NULL,NULL);
+            auxData[sat].tgd=eph.tgd[0]; auxData[sat].f0=eph.f0; auxData[sat].f1=eph.f1; auxData[sat].f2=eph.f2;
+            return 0;
+        case 3:	return decode_ephem(sat,raw); /* Decode Subframe 1,2,3 to (precise) Ephemeris Data */
+        case 4: /* NOTE Almanac SV 25-32 + Ionosphere + UTC 	*/
+            DataID=(words[3]&0xc00000)>>22; PageID=(words[3]&0x3f0000)>>16; svid=getbitu(raw->subfrm[sat-1]+90,50,6);
+            if (debug&&(svid==56||svid==63||svid==18)) { 	printf ("SF4 PRN=%2d DID=%d PID=%d svid=%d Data=",prn,DataID,PageID,svid);
+                                for (i=0;i<30;i=i+3) printf("%06X ",U4(raw->subfrm[sat-1]+(id-1)*30+i)>>8);
+                                printf("Valid="); }
+            if (decode_frame(raw->subfrm[sat-1]+90,NULL,raw->nav.alm,raw->nav.ion_gps,raw->nav.utc_gps,&raw->nav.leaps)!=4) return 0;	/* if (debug&&(svid==56||svid==63||svid==18)) { (x4==4) ? putchar('Y') : putchar('N'); }*/
+            switch (svid) {
+                case 63: 
+                    if (debug) { printf(" SAT %2d SF4:",prn); printf("svconf=%d svh=%d\n",raw->nav.alm[sat-1].svconf,raw->nav.alm[sat-1].svh ); }
+                    break;
+                case 18:
+                case 56: printf("\nSAT %2d SF4:",prn);
+                         for (i=0;i<8;i++) printf("ion[%d]=%.3f ",i,raw->nav.ion_gps[i]);
+                         for (i=0;i<4;i++) printf("utc[%d]=%.3f ",i,raw->nav.utc_gps[i]);
+                         printf("\nleaps=%d",raw->nav.leaps);
+                         adj_utcweek(raw->time,raw->nav.utc_gps);
+                         return 9;
+            }
+            return 0;
         case 5:	/* NOTE Almanac SV 1-24 			*/
-            DataID=(words[3]&0xc00000)>>22; PageID=(words[3]&0x3f0000)>>16;
-            if (debug) printf ("SF5 PRN=%d DID=%d PID=%d Valid=",prn,DataID,PageID);
+            DataID=(words[3]&0xc00000)>>22; PageID=(words[3]&0x3f0000)>>16; svid=getbitu(raw->subfrm[sat-1]+(id-1)*30,50,6);
+            return 0;
+            if (PageID>=1&&PageID<=24) { /* NOTE Almanac Data af0 2⁻20 af1 2-38 */
+                printf("af1=%fs/s af0=%fs",(float)((words[10-1]&0x00ffe0)>>5)*P2_43,(float)(((words[10-1]&0x1c)>>2)+(8*(words[10-1]&0xff0000)>>16)*P2_31));}
+            if (debug&&svid==51) { printf ("SF5 PRN=%d DID=%d PID=%d svid=%d Data=",prn,DataID,PageID,svid);
+                                   for (i=0;i<30;i=i+3) printf("%06X ",U4(raw->subfrm[sat-1]+(id-1)*30+i)>>8);
+                                   printf("Valid="); }
+            x5=decode_frame(raw->subfrm[sat-1]+120,NULL,raw->nav.alm,NULL,NULL,NULL);
+            if (debug&&svid!=51) { (x5==5) ? putchar('Y') : putchar('N'); printf("\n"); } 
+            if (svid!=51) return 0;	
             toa=(words[2]&0xff00)>>8; week=words[2]&0xff;
             raw->nav.alm[sat-1].week=week;				/* Almanac Woche setzen */
-            x5=decode_frame(raw->subfrm[sat-1]+120,NULL,raw->nav.alm,NULL,NULL,NULL);
-            if (debug) { (x5==5) ? putchar('Y') : putchar('N'); printf("\n"); }
+            printf("SAT %2d SF5: toas=%f week=%d, toa=%f, toa=%d\n", sat, raw->nav.alm[sat-1].toas, raw->nav.alm[sat-1].week, raw->nav.alm[sat-1].toa.sec,toa);
             return 0;
         default: return 0; printf("\nMID #%d: Subframe %d detected",mid,id); 
     }
     return 0;
+}
+/* NOTE DECODE MID 14 Almanac Data */
+static int decode_sirfalm(raw_t *raw)
+{
+    int prn,sat,week,id,status,x5; /* ,ckSum=0; */
+    unsigned char *D=raw->buff+5;
+    unsigned char subfrm[25];
+    return 0;
+
+    id=(U1(D)&0xC0)>>6;		/* DataID */
+    prn=U1(D)&0x3F;	   	/* SVid   */
+    week=(U2(D+1)&0xFFC0)>>6;  	/* Week   */
+    status=U2(D+1)&0x003F;	/* Status */
+    
+    if (!(sat=satno(SYS_GPS,prn))) {
+        trace(2,"SiRF satellite number error: prn=%d\n",prn);
+        return -1;
+    }
+    trace(4,"decode_sirfalm: sat=%2d\n",sat);
+
+    printf("\nDECODE_ALM_0x0E[%d]:id=%2d:sat=%2d:week=%d:status=%d:",raw->len-9,id,sat,week,status); printBits(status);
+
+    /* NOTE Check Data Alignment!	*/
+    memcpy(subfrm+1,D+3,24);
+    subfrm[0]=4+16; 			/* subframe id#5 setzen! */
+    memcpy(raw->subfrm[sat-1]+120+5,subfrm,25);
+    raw->nav.alm[sat-1].week=week;	/* Almanac Woche setzen */
+
+    x5=decode_frame(raw->subfrm[sat-1]+120,NULL,raw->nav.alm,NULL,NULL,NULL); /* decode subframe #5 */
+    printf(" x5=%d\n",x5);
+/*    print_alm(sat,raw->nav.alm); */
+    return 0;
+}
+
+
+/* NOTE DECODE MID 15 Ephemeris Data	
+        It is essential to consult with GPS-ICD documentation to become more familiar with 
+        conversions. For more information, see https://www.gps.gov/technical/icwg/IS-GPS-200K.pdf
+        ICD200 X(24bits) 50-bps, 24-bit data word (See GPS ICD 200) Subframe 1,2,3 Words 2-10
+        SiRF   X(16bits) SiRF Data structure per subframe, D[0] -> D[14], 2 byte words            */
+static int decode_sirfeph(raw_t *raw)
+{
+    eph_t eph={0};
+    int prn,sat,j;
+    unsigned char *p=raw->buff+5; 
+    int x1,x2,x3;
+    return 0;
+  
+    prn=U1(p);
+    if (!(sat=satno(SYS_GPS,prn))) {
+        trace(2,"SiRF satellite number error: prn=%d\n",prn);
+        printf("SiRF satellite number error: prn=%d\n",prn);
+        return -1;
+    }
+
+    trace(4,"decode_sirfeph: sat=%2d\n",sat);
+
+    for (j=0;j<3;j++) memcpy(raw->subfrm[sat-1]+j*30,p+1+j*30,30);
+
+    printf("=== MID 15 MID 15 MID 15 ===");
+    x1=decode_frame(raw->subfrm[sat-1]   ,&eph,NULL,NULL,NULL,NULL);
+    x2=decode_frame(raw->subfrm[sat-1]+30,&eph,NULL,NULL,NULL,NULL);
+    x3=decode_frame(raw->subfrm[sat-1]+60,&eph,NULL,NULL,NULL,NULL);
+    if (x1==1&&x2==2&&x3==3) fprintf(stderr,"%s [INFO ] SV %2d Update of ephemeris data\n",time_str(utc2gpst(timeget()),0),sat);
+    
+     if (decode_frame(raw->subfrm[sat-1]   ,&eph,NULL,NULL,NULL,NULL)!=1||
+            decode_frame(raw->subfrm[sat-1]+30,&eph,NULL,NULL,NULL,NULL)!=2||
+            decode_frame(raw->subfrm[sat-1]+60,&eph,NULL,NULL,NULL,NULL)!=3) return 0;
+
+    eph.sat=sat;
+    raw->nav.eph[sat-1]=eph;
+    raw->ephsat=sat;
+    return 2;
 }
 
 
@@ -1215,115 +1389,7 @@ static int decode_sirf50bpshq(raw_t *raw)
     return 0;
 }
 
-/* NOTE DECODE MID 15 Ephemeris Data	
-        It is essential to consult with GPS-ICD documentation to become more familiar with 
-        conversions. For more information, see https://www.gps.gov/technical/icwg/IS-GPS-200K.pdf
-        ICD200 X(24bits) 50-bps, 24-bit data word (See GPS ICD 200) Subframe 1,2,3 Words 2-10
-        SiRF   X(16bits) SiRF Data structure per subframe, D[0] -> D[14], 2 byte words            */
-static int decode_sirfeph(raw_t *raw)
-{
-    eph_t eph={0};
-    int prn,sat,j;
-    unsigned char *p=raw->buff+5; 
-    int i,id,DW,LW,HW,w,x1,x2,x3;
-    unsigned int words[11];
-  
-    prn=U1(p);
-    if (!(sat=satno(SYS_GPS,prn))) {
-        trace(2,"SiRF satellite number error: prn=%d\n",prn);
-        printf("SiRF satellite number error: prn=%d\n",prn);
-        return -1;
-    }
 
-    trace(4,"decode_sirfeph: sat=%2d\n",sat);
-
-    for (j=0;j<3;j++) memcpy(raw->subfrm[sat-1]+j*30,p+1+j*30,30);
-
-    x1=decode_frame(raw->subfrm[sat-1]   ,&eph,NULL,NULL,NULL,NULL);
-    x2=decode_frame(raw->subfrm[sat-1]+30,&eph,NULL,NULL,NULL,NULL);
-    x3=decode_frame(raw->subfrm[sat-1]+60,&eph,NULL,NULL,NULL,NULL);
-    if (x1==1&&x2==2&&x3==3) fprintf(stderr,"%s [INFO ] SV %2d Update of ephemeris data\n",time_str(utc2gpst(timeget()),0),sat);
-    
-     if (decode_frame(raw->subfrm[sat-1]   ,&eph,NULL,NULL,NULL,NULL)!=1||
-            decode_frame(raw->subfrm[sat-1]+30,&eph,NULL,NULL,NULL,NULL)!=2||
-            decode_frame(raw->subfrm[sat-1]+60,&eph,NULL,NULL,NULL,NULL)!=3) return 0;
-
-    eph.sat=sat;
-    raw->nav.eph[sat-1]=eph;
-    raw->ephsat=sat;
-    return 2;
-
-    printf("MID 15 ANALYSE:A0A2|002B|MI|SV|1111111111111111111111111112222222222222222222222222222233333333333333333333333333|CkSm|B0B3");
-
-    printf("\nMID 15 ANALYSE:"); for (i=0;i<raw->len;i++) { printf("%02X",U1(p+i)); if (i==1||i==3||i==4||i==5||i==95||i==97) printf("|"); }
-    printf("\nMID 15 [l=%d] SAT=%2d",raw->len,sat);
-    
-    /* NOTE Save Subframe */
-    for (j=0;j<3;j++) {
-        for (w=1,i=0;i<6;i++) { if (i==0) {w=0; words[w]=0; printf("\n"); }
-            printf("j=%d i=%d p=%2d ",j,i,6+i*3+j*15);
-            /* DW=U4(p+6+i*3+j*15)>>8; LW=(DW&0xfff000)>>12; HW=(DW&0xfff); */
-            DW=U4(p+6+i*3+j*15)>>8; LW=(DW&0xfff000)>>12; HW=(DW&0xfff); 
-            printf("W=%06X ",DW); printBits((DW&0xff0000)>>16); printf(""); printBits((DW&0xff00)>>8); printf(""); printBits((DW&0xff));
-            printf(" w[%2d]=%04X w[%2d]=%04X\n",w,LW,w+1,HW); 
-            words[w++]=LW; words[w++]=HW;
-        }
-        printf("\n"); /*  id=1; for (i=0;i<11;i++) printf("w[%2d]=%04X\n",i,words[i]); */
-        id=(words[1]>>2)&7; 				/* OK printf("id=%d",id);			*/
-        if (id<1||5<id) id=j+1;
-        for (i=0;i<10;i++) setbitu(raw->subfrm[sat-1]+(id-1)*30,i*24,24,words[i]);	/* Save Subframe back to raw			*/
-        printf("SV=%2d Subframe[%d|%d]=",sat,id,j+1);
-        for (i=0;i<30;i++) printf("%02X",U1(raw->subfrm[sat-1]+(id-1)*30+i));
-        printf("\n");
-    }
-
-
-    /* 7 X UNIT16 1111 1111 1111 1111 1111 1111 1111 */
-    /* 9 words with 3 bytes per subframe = 27 bytes = 14 x 16-bit words */
-
-    p+=2; for (i=0;i<10;i++,p+=4) words[i]=U4(p)>>8;	/* 24 bits without parity and padding bits	*/
-    id=(words[1]>>2)&7; 				/* OK printf("id=%d",id);			*/
-    if (id<1||5<id) { trace(2,"subfrm id error: sat=%2d id=%d len=%d\n",sat,id,raw->len); return -1; }
-    SFcnt[id-1]++;
-    printf("MID15:");
-    printf("|%d|",id); 
-
-    /* NOTE Save Subframe	*/
-    /* for (i=0;i<10;i++) setbitu(raw->subfrm[sat-1]+(id-1)*30,i*24,24,words[i]);	/* Save Subframe back to raw			*/
-}
-
-/* NOTE DECODE MID 14 Almanac Data */
-static int decode_sirfalm(raw_t *raw)
-{
-    int prn,sat,week,id,status,x5; /* ,ckSum=0; */
-    unsigned char *D=raw->buff+5;
-    unsigned char subfrm[25];
-
-    id=(U1(D)&0xC0)>>6;		/* DataID */
-    prn=U1(D)&0x3F;	   	/* SVid   */
-    week=(U2(D+1)&0xFFC0)>>6;  	/* Week   */
-    status=U2(D+1)&0x003F;	/* Status */
-    
-    if (!(sat=satno(SYS_GPS,prn))) {
-        trace(2,"SiRF satellite number error: prn=%d\n",prn);
-        return -1;
-    }
-    trace(4,"decode_sirfalm: sat=%2d\n",sat);
-    return 0;
-
-    printf("\nDECODE_ALM_0x0E[%d]:id=%2d:sat=%2d:week=%d:status=%d:",raw->len-9,id,sat,week,status); printBits(status);
-
-    /* NOTE Check Data Alignment!	*/
-    memcpy(subfrm+1,D+3,24);
-    subfrm[0]=4+16; 			/* subframe id#5 setzen! */
-    memcpy(raw->subfrm[sat-1]+120+5,subfrm,25);
-    raw->nav.alm[sat-1].week=week;	/* Almanac Woche setzen */
-
-    x5=decode_frame(raw->subfrm[sat-1]+120,NULL,raw->nav.alm,NULL,NULL,NULL); /* decode subframe #5 */
-    printf(" x5=%d\n",x5);
-/*    print_alm(sat,raw->nav.alm); */
-    return 0;
-}
 /* NOTE DECODE MID 93 Temperature Value Output	*/
 static int decode_sirftcxo(raw_t *raw)
 {
@@ -1335,17 +1401,19 @@ static int decode_sirftcxo(raw_t *raw)
     p=raw->buff+4;
     sid=U1(p+1);
     if (sid != 18) return 0;	/* Exit on SubId other than #18 */
-    if (InfoCnt<50) {InfoCnt++; return 0;}
-    InfoCnt=0;
+    
     if (raw->len!=34) {
         trace(2,"SiRF mid#93 length error: len=%d\n",raw->len);
         printf("SiRF mid#93 length error: len=%d\n",raw->len);
         return -1;
     }
     ClkBiasTCXO=U4(p+18)/1.0e9;	/*    printf("MID 93: tow=%d\n",U4(p+2));*/
-    fprintf(stderr,"%s [INFO ] Temperature = %.1f° ",time_str(utc2gpst(timeget()),0),(float)(140*U1(p+22)/255)-40);
-    fprintf(stderr,"Clock Drift = %d±%dHz ",U4(p+10),U4(p+14)); 
-    fprintf(stderr,"Bias = %fs\n",U4(p+18)/1.0e9);
+    
+    if (abs(InfoCnt0-tickget())>10000) { InfoCnt0=tickget();	/* NOTE Report TCXO info every 10 seconds */
+        fprintf(stderr,"%s [INFO ] Temperature = %.1f° ",time_str(utc2gpst(timeget()),0),(float)(140*U1(p+22)/255)-40);
+        fprintf(stderr,"Clock Drift = %d±%dHz ",U4(p+10),U4(p+14)); 
+        fprintf(stderr,"Bias = %fs\n",U4(p+18)/1.0e9);
+    }
     return 0;
     
     printf("TOW:%6u;",U4(p+2));
@@ -1364,7 +1432,7 @@ static int decode_sirftcxo(raw_t *raw)
 static int decode_sirf(raw_t *raw)
 {
     unsigned char *p=raw->buff;
-    int rv,mid=U1(p+4),i=0,sid;
+    int mid=U1(p+4),sid;
 
     trace(3,"decode_sirf: mid=%2d\n",mid);
 
@@ -1381,12 +1449,12 @@ static int decode_sirf(raw_t *raw)
         sprintf(raw->msgtype,"SiRF %2d (%4d):",mid,raw->len);
     }
     /* NOTE Check Message Sequence */
-    if (MC==0) { MBuf[0]=mid; MC++; } 
+/*    if (MC==0) { MBuf[0]=mid; MC++; } 
     else if (mid != MBuf[0]) {
         MC++; for (i=MC;i>0;i--) MBuf[i]=MBuf[i-1]; 
         MBuf[0]=mid;
-    }
-    
+    }*/
+
     switch (mid) {
         case MID_SRFCLOCK:	return decode_sirfclock(raw);
         case MID_SRFGEOCLK:	return decode_sirfgeoclk(raw);
@@ -1400,8 +1468,9 @@ static int decode_sirf(raw_t *raw)
         case MID_SRFMTDO:	return decode_sirfmtdo(raw);
         case MID_SRFAUXDATA:	return decode_sirfauxdata(raw);
         case 6:			/* MID  6 Software Version String 				*/
-            fprintf(stderr,"%s [INFO ] Firmware = %s\n",time_str(utc2gpst(timeget()),0),p+7);
-            return 0;
+            fprintf(stderr,"%s [INFO ] Firmware = %s\n",time_str(utc2gpst(timeget()),0),p+7); return 0;
+        case 255:		/* MID 255 ASCII Development Data Output */
+            raw->buff[U2(p+2)+4]=0; fprintf(stderr,"%s [DEBUG] %s\n",time_str(utc2gpst(timeget()),0),p+5); return 0;
         case 11: return 0;	/* MID 11 Command Acknowledgment A0A2|0003|0B|8400|008F|B0B3 	*/
         case 50:		/* MID 50 SBAS Parameters					*/
             if (U1(p+5)==0) return 0;
@@ -1423,7 +1492,26 @@ static int decode_sirf(raw_t *raw)
             ((U1(p+8) & (1 << 3)) ? putchar('D') : putchar('U'));
             printf("\n");
             return 0;
+        case 2:	/* - MID 2, solution data: X, Y, Z, vX, vY, vZ, week, TOW and satellites used */
+             if (TimeDebug) { printf("\nMID 2 time=%.2fX ",(float)U4(p+28)/100); } 
+            return 0;
+/*            for (i=1;i<=5;i++) printf("%02X ", U1(message+i) );
+            printf("X:%8d;",S4(message+1));
+            printf("Y:%8d;",S4(message+5));
+            printf("Z:%8d;",S4(message+9));
+            printf("vX:%4hd;",S2(message+13));
+            printf("vY:%4hd;",S2(message+15));
+            printf("vZ:%4hd;",S2(message+17));
+            printf("Mode1:");
+            printBits(U1(message+19));
+            printf(";HDOP2:%d;",U1(message+20)); 
+            printf("Mode2:");
+            printBits(U1(message+21));
+            printf(";wk:%4hu;",U2(message+22));
+            printf("TOW:%6u;",U4(message+24));
+            printf("SVs:%2d",U1(message+28)); */
         case 75:		/* MID 75 ACK/NACK/ERROR Notification A0A2|0007|4B|01|9400FA0000|01DA|B0B3 */
+            return 0;
             sid=U1(p+5);
             fprintf(stderr,"%s [NACK ] ",time_str(utc2gpst(timeget()),0));
             /* for (i=5;i<raw->len-4;i++) printf("%02X ",U1(p+i)); /* 51 [NACK ] 01 49 04 FA 00 00 */
@@ -1431,7 +1519,7 @@ static int decode_sirf(raw_t *raw)
             printf("\n");
             return 0;
         default: 	    	return decode_sirfgen(raw);
-            return 0;
+            return 0; 
     }
     return 0;
 }
@@ -1476,6 +1564,7 @@ extern int input_sirf(raw_t *raw, unsigned char data)
     raw->nbyte=0;
 
     /* decode sirf raw message */
+    /* writesf(raw->buff); */
     return decode_sirf(raw);
 }
 /* input superstar 2 raw message from file -------------------------------------

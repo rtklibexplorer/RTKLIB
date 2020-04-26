@@ -1,18 +1,23 @@
-$PSRF101,0,0,0,0,0,0,12,4*10
+# $PSRF101,0,0,0,0,0,0,12,4*10
 !WAIT 300
 $PSRF100,0,115200,8,1,0*04
 # Enable CW controller
 #!HEX a0 a2 00 03 dc 01 00 00 dd b0 b3
 
+# Initalize GPS/DR Navigation + Debug Output
+!HEX a0 a2 00 1c ac 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0c 36 00 ef b0 b3
+!WAIT 200
+
 # Set Elevetaion mask 10 Degrees
 !HEX a0 a2 00 05 8b 00 32 00 64 01 21 b0 b3
 !WAIT 100
 
-# Set Power Mask 12 dbHz
-#!HEX a0a20003 8c080c 00a0b0b3
 # Set Power Mask 32 dbHz
 !HEX a0 a2 00 03 8c 1c 20 00 c8 b0 b3
 !WAIT 100
+
+# Disable DOP Mask
+!HEX a0 a2 00 05 89 04 00 00 00 00 8d b0 b3
 
 #; Disable SGEE, enable CGEE
 #!HEX a0 a2 00 04 e8 20 01 00 01 09 b0 b3
@@ -30,7 +35,7 @@ $PSRF100,0,115200,8,1,0*04
 !HEX a0 a2 00 02 c8 00 00 c8 b0 b2
 
 #; Enable navlib 
-#!HEX a0 a2 00 19 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0c 10 00 9c b0 b3
+!HEX a0 a2 00 19 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0c 30 00 bc b0 b3
 !WAIT 100
 
 #; Disable Messages #51 unknown, #91 HW Control Output & AGC; #92 CW Controller Output, MID 9+255
@@ -64,19 +69,20 @@ $PSRF100,0,115200,8,1,0*04
 
 #;  MID 136 Freeze Clock drift, Full Power, disable fast time sync, no altitude hold=all fixes 3D, disable DR, raw measurement, softw Tracking disable
 # Enable fast time sync?
-#!HEX a0a2000e 8800000300000000020000000000 008db0b3
-#!HEX a0a2000e 880000 03 00 00 0000 02 00 00 00 00 04 00 91 b0 b3
-!HEX a0 a2 00 0e 88 00 00 03 14 00 00 00 02 00 00 00 00 04 00 a5 b0 b3
-# 5Hz + Fasttrack
-#!HEX a0a2000e 8800000314000000020000000004 00a5b0b3
-# No 5Hz
-#!HEX a0a2000e 8800000310000000020000000004 00a1b0b3
+#!HEX a0 a2 00 0e 88 00 00 03 14 00 00 00 02 00 00 00 00 04 00 a5 b0 b3
+#!HEX a0 a2 00 0e 88 00 00 04 04 00 00 00 02 00 00 00 00 04 00 96 b0 b3
+!HEX a0 a2 00 0e 88 00 00 04 00 00 00 00 02 00 00 00 00 04 00 92 b0 b3
+
 !WAIT 100
 
 # Set OnTime  112233445566778899 1000 = 100% +200ms on
 #!HEX a0a20009 97000000c8000000c8 0227b0b3 
 # 5Hz ... naja
 !HEX a0 a2 00 09 97 00 00 03 e8 00 00 00 c8 02 4a b0 b3 
+!WAIT 100
+
+# Disable DGPS / SBAS
+!HEX a0 a2 00 03 8a 02 00 00 8c b0 b3
 !WAIT 100
 
 # Switch to RTCM
