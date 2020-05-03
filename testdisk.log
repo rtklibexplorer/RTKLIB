@@ -1,0 +1,111 @@
+
+
+Sat May  2 12:45:17 2020
+Command line: TestDisk
+
+TestDisk 7.0, Data Recovery Utility, April 2015
+Christophe GRENIER <grenier@cgsecurity.org>
+http://www.cgsecurity.org
+OS: Linux, kernel 5.4.28-sunxi64 (#20.02.7 SMP Sat Mar 28 17:25:10 CET 2020) aarch64
+Compiler: GCC 7.2
+ext2fs lib: 1.44.1, ntfs lib: libntfs-3g, reiserfs lib: none, ewf lib: none, curses lib: ncurses 6.0
+Warning: can't get size for Disk /dev/mapper/control - 0 B - 0 sectors, sector size=512
+Hard disk list
+Disk /dev/mmcblk2 - 7818 MB / 7456 MiB - CHS 238592 4 16, sector size=512
+
+Partition table type (auto): Intel
+Disk /dev/mmcblk2 - 7818 MB / 7456 MiB
+Partition table type: Intel
+
+Analyse Disk /dev/mmcblk2 - 7818 MB / 7456 MiB - CHS 238592 4 16
+Geometry from i386 MBR: head=255 sector=63
+BAD_RS LBA=8192 4096
+BAD_RS LBA=15763456 63749
+check_part_i386 failed for partition type 83
+get_geometry_from_list_part_aux head=4 nbr=4
+get_geometry_from_list_part_aux head=8 nbr=4
+get_geometry_from_list_part_aux head=16 nbr=4
+get_geometry_from_list_part_aux head=32 nbr=4
+get_geometry_from_list_part_aux head=64 nbr=4
+get_geometry_from_list_part_aux head=128 nbr=4
+Current partition structure:
+ 1 P Linux                  128   0  1 51359   3 16    3278848
+
+Warning: Bad ending head (CHS and LBA don't match)
+No ext2, JFS, Reiser, cramfs or XFS marker
+ 2 P Linux                246304   0  1 976895   3 16   46757888
+ 2 P Linux                246304   0  1 976895   3 16   46757888
+
+Warning: Bad starting sector (CHS and LBA don't match)
+No partition is bootable
+
+search_part()
+Disk /dev/mmcblk2 - 7818 MB / 7456 MiB - CHS 238592 4 16
+
+recover_EXT2: s_block_group_nr=0/12, s_mnt_count=1/4294967295, s_blocks_per_group=32768, s_inodes_per_group=7216
+recover_EXT2: s_blocksize=4096
+recover_EXT2: s_blocks_count 409856
+recover_EXT2: part_size 3278848
+     Linux                  128   0  1 51359   3 16    3278848
+     ext4 blocksize=4096 Large_file Sparse_SB Recover, 1678 MB / 1601 MiB
+Search for partition aborted
+get_geometry_from_list_part_aux head=4 nbr=2
+get_geometry_from_list_part_aux head=8 nbr=2
+get_geometry_from_list_part_aux head=16 nbr=2
+get_geometry_from_list_part_aux head=32 nbr=2
+get_geometry_from_list_part_aux head=64 nbr=2
+get_geometry_from_list_part_aux head=128 nbr=2
+Warning: the current number of heads per cylinder is 4 but the correct value may be 128.
+
+Results
+   * Linux                  128   0  1 51359   3 16    3278848
+     ext4 blocksize=4096 Large_file Sparse_SB Recover, 1678 MB / 1601 MiB
+
+Hint for advanced users. dmsetup may be used if you prefer to avoid to rewrite the partition table for the moment:
+echo "0 3278848 linear /dev/mmcblk2 8192" | dmsetup create test0
+
+interface_write()
+ 1 * Linux                  128   0  1 51359   3 16    3278848
+simulate write!
+
+write_mbr_i386: starting...
+write_all_log_i386: starting...
+No extended partition
+
+Interface Advanced
+Geometry from i386 MBR: head=255 sector=63
+BAD_RS LBA=8192 4096
+BAD_RS LBA=15763456 63749
+check_part_i386 failed for partition type 83
+get_geometry_from_list_part_aux head=4 nbr=4
+get_geometry_from_list_part_aux head=8 nbr=4
+get_geometry_from_list_part_aux head=16 nbr=4
+get_geometry_from_list_part_aux head=32 nbr=4
+get_geometry_from_list_part_aux head=64 nbr=4
+get_geometry_from_list_part_aux head=128 nbr=4
+ 1 P Linux                  128   0  1 51359   3 16    3278848
+     ext4 blocksize=4096 Large_file Sparse_SB Recover, 1678 MB / 1601 MiB
+ 2 P Linux                246304   0  1 976895   3 16   46757888
+Partition table type (auto): Intel
+Disk /dev/mmcblk2 - 7818 MB / 7456 MiB
+Partition table type: Intel
+
+Interface Advanced
+Geometry from i386 MBR: head=255 sector=63
+BAD_RS LBA=8192 4096
+BAD_RS LBA=15763456 63749
+check_part_i386 failed for partition type 83
+get_geometry_from_list_part_aux head=4 nbr=4
+get_geometry_from_list_part_aux head=8 nbr=4
+get_geometry_from_list_part_aux head=16 nbr=4
+get_geometry_from_list_part_aux head=32 nbr=4
+get_geometry_from_list_part_aux head=64 nbr=4
+get_geometry_from_list_part_aux head=128 nbr=4
+ 1 P Linux                  128   0  1 51359   3 16    3278848
+     ext4 blocksize=4096 Large_file Sparse_SB Recover, 1678 MB / 1601 MiB
+ 2 P Linux                246304   0  1 976895   3 16   46757888
+Change partition type:
+ 1 P Linux                  128   0  1 51359   3 16    3278848
+     ext4 blocksize=4096 Large_file Sparse_SB Recover, 1678 MB / 1601 MiB
+
+TestDisk exited normally.

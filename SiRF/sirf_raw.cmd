@@ -2,7 +2,7 @@
 !WAIT 300
 $PSRF100,0,115200,8,1,0*04
 # Enable CW controller
-#!HEX a0 a2 00 03 dc 01 00 00 dd b0 b3
+!HEX a0 a2 00 03 dc 01 00 00 dd b0 b3
 
 # Initalize GPS/DR Navigation + Debug Output
 !HEX a0 a2 00 1c ac 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0c 36 00 ef b0 b3
@@ -35,6 +35,8 @@ $PSRF100,0,115200,8,1,0*04
 !HEX a0 a2 00 02 c8 00 00 c8 b0 b2
 
 #; Enable navlib 
+#!HEX a0 a2 00 19 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0c 30 00 bc b0 b3
+# Fast Time + Software Tracking Loop
 !HEX a0 a2 00 19 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0c 30 00 bc b0 b3
 !WAIT 100
 
@@ -67,16 +69,18 @@ $PSRF100,0,115200,8,1,0*04
 !HEX a0 a2 00 02 92 00 00 92 b0 b3
 !WAIT 100
 
-#;  MID 136 Freeze Clock drift, Full Power, disable fast time sync, no altitude hold=all fixes 3D, disable DR, raw measurement, softw Tracking disable
-# Enable fast time sync?
-#!HEX a0 a2 00 0e 88 00 00 03 14 00 00 00 02 00 00 00 00 04 00 a5 b0 b3
-#!HEX a0 a2 00 0e 88 00 00 04 04 00 00 00 02 00 00 00 00 04 00 96 b0 b3
-!HEX a0 a2 00 0e 88 00 00 04 00 00 00 00 02 00 00 00 00 04 00 92 b0 b3
-
+# MID 136 Freeze Clock drift, Full Power, disable fast time sync, no altitude hold=all fixes 3D, disable DR, raw measurement, softw Tracking disable
+# Setting of best performance! 
+#!HEX a0 a2 00 0e 88 00 00 03 02 00 00 00 02 00 00 00 00 04 00 93 b0 b3
+#!HEX a0 a2 00 0e 88 00 00 03 10 00 00 00 02 00 00 00 00 04 00 a1 b0 b3
+!HEX a0 a2 00 0e 88 00 00 03 00 00 00 00 02 00 00 00 00 04 00 91 b0 b3
+# Fast time sync, software Tracking loop = negative effect
+# No degraded mode, 5Hz navigation, Automatically determine best available altitude to use, smoothed measurements, 15 seconds DR timeout
+#!HEX a0 a2 00 0e 88 00 00 04 04 00 00 00 00 00 00 00 0f 02 00 a1 b0 b3
 !WAIT 100
 
 # Set OnTime  112233445566778899 1000 = 100% +200ms on
-#!HEX a0a20009 97000000c8000000c8 0227b0b3 
+#!HEX a0 a2 00 09 97 00 00 00 c8 00 00 00 c8 02 27 b0 b3 
 # 5Hz ... naja
 !HEX a0 a2 00 09 97 00 00 03 e8 00 00 00 c8 02 4a b0 b3 
 !WAIT 100
@@ -88,10 +92,11 @@ $PSRF100,0,115200,8,1,0*04
 # Switch to RTCM
 #!HEX a0a20002 8704 0091b0b3
 # Time Accuracy Status Request
-!HEX a0 a2 00 d4 0402 00 06 b0 b3
+!HEX a0 a2 00 d4 04 02 00 06 b0 b3
 
-#; Static Navigaton
+# MID 143 Static Navigaton ON/off
 !HEX a0 a2 00 02 8f 01 00 90 b0 b3
+#!HEX a0 a2 00 02 8f 00 00 8f b0 b3
 
 #; Query Power Mode - should return A0 A2 00 02 5A 00 00 5A B0 B3 on Full Power Mode
 #!HEX a0 a2 00 02 da 00 00 da b0 b3
