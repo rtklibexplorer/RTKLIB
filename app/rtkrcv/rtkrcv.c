@@ -469,9 +469,9 @@ static int startsvr(vt_t *vt)
         trace(2,"command exec error: %s (%d)\n",startcmd,ret);
         vt_printf(vt,"command exec error: %s (%d)\n",startcmd,ret);
     }
-    solopt[1] = solopt[0];
-    solopt[0].posf=strfmt[3];
-    solopt[1].posf=strfmt[4];
+    solopt[1] = solopt[0];  // TODO: There is only 1 solution type in config file, sync output 2 and 1 with the same config
+    // solopt[0].posf=strfmt[3];
+    // solopt[1].posf=strfmt[4];
     
     /* start rtk server */
     if (!rtksvrstart(&svr,svrcycle,buffsize,strtype,paths,strfmt,navmsgsel,
