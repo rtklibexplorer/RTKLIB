@@ -624,6 +624,7 @@ extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, char **paths,
     for (i=0;i<svr->nstr;i++) {
         strcpy(file1,paths[0]); if ((p=strstr(file1,"::"))) *p='\0';
         strcpy(file2,paths[i]); if ((p=strstr(file2,"::"))) *p='\0';
+        
         if (i>0&&*file1&&!strcmp(file1,file2)) {
             sprintf(svr->stream[i].msg,"output path error: %s",file2);
             for (i--;i>=0;i--) strclose(svr->stream+i);
@@ -640,6 +641,7 @@ extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, char **paths,
         return 0;
     }
     /* write start commands to input streams */
+
     for (i=0;i<svr->nstr;i++) {
         if (!cmds[i]) continue;
         strwrite(svr->stream+i,(unsigned char *)"",0); /* for connect */

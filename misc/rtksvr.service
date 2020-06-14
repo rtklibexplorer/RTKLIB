@@ -1,0 +1,13 @@
+[Unit]
+Description=Startup Script Service
+#After=multi-user.target
+After=strsvr.service
+
+[Service]
+TimeoutStartSec=infinity
+Type=forking
+ExecStart=/usr/bin/python /opt/RTKLIB/misc/rtksvr.py start
+ExecStop=/usr/bin/python /opt/RTKLIB/misc/rtksvr.py stop
+
+[Install]
+WantedBy=multi-user.target

@@ -672,7 +672,7 @@ static int decode_clock(raw_t *raw,double rcBias, double drift,unsigned week,dou
     unsigned char *p;
     obsd_t *src,*dst;
     int i,j,n=0,mid,cs=0,nPR=0;
-    double Ladj,dt,tTD=0,r,v,dtr,Rs,dtb,dT,Fc,dL,SRng=0;
+    double Ladj,dt,tTD=0,r,v,dtr,Rs,dtb,dT,Fc,dL,SRng=0,tadj,toff,tt,tn;
     gtime_t time, time0={0};
     
  /*   if (!obsCnt) return 0;							/* EXIT if no observations are be to processed */
@@ -680,12 +680,16 @@ static int decode_clock(raw_t *raw,double rcBias, double drift,unsigned week,dou
     /* printf("\nMID 7 SV%2d tow=%.3f, GeoTOW=%.3f",tow,GeoTOW);*/
 
     /* INFO U-Blox RXM-RAW uses Measurement time of week in receiver local time approximately aligned to the GPS time system. */
-    time=gpst2time(week,tow); 			
-    /* time=gpst2time(week,(float)U4(p+16)/1000); 	/*-> SiRF Estimated GPS time is the time estimated when the measurements were made. */
-/*    time=timeadd(time,-rcBias); 			/* Subtract Clock Bias to get time of receipt   */
-/*    time=timeadd(time,-0.00002); */
+    time=gpst2time(week,tow); 				/* time=gpst2time(week,(float)U4(p+16)/1000); -> SiRF Estimated GPS time is the time estimated when the measurements were made. */
+
+    /* NOTE The resolution of the time stamps in the RTCM format is 0.001 seconds. */
+    tadj=0.001; if (tadj>0.0) {
+        tn=time2gpst(time,&week)/tadj;
+        toff=(tn-floor(tn+0.5))*tadj;
+        time=timeadd(time,-toff);
+    }
+    tt=timediff(time,raw->time);
     raw->time=time;
-    
     if (TimeDebug) printf("\nMID 7 time=%.3f est=%.3f bias=%.3f obuf.n=%d Cnt=%d",tow-rcBias,(float)U4(p+16)/1000,rcBias,raw->obuf.n,obsCnt);	/* Store receiver clock bias to be able to calc clock bias at MID30 */
   
     /* NOTE MAIN PROCESSING LOOP */
@@ -695,6 +699,7 @@ static int decode_clock(raw_t *raw,double rcBias, double drift,unsigned week,dou
         dst=&raw->obs.data[n++]; *dst=*src;					/* referenzierte Kopie des Originals				*/
         raw->obs.data[n].code[0]=CODE_L1C; raw->obs.data[n].sat =dst->sat; 	/* Set Code and SAT 						*/
         dst->time=gpst2time(week,auxData[dst->sat].dtime-rcBias);		/* Equivalent to dst->time=raw->time;*/
+        raw->obs.data[n].time=time;
         
         /* NOTE If Carrier pullin has been completed, Apply Pseudo range [m] adjustment by receiver clock bias */
         if (((auxData[dst->sat].trackStat&0x08)>>3)&&dst->P[0]>0) { dst->P[0]-=rcBias*CLIGHT;
@@ -719,7 +724,9 @@ static int decode_clock(raw_t *raw,double rcBias, double drift,unsigned week,dou
             tTD+=2*r*v/pow(CLIGHT,2); /* tTD+=v*(dst->P[0]-tTD*CLIGHT)/pow(CLIGHT,2); /* Sagnac effect correction */
         }
         tTD=0; dst->P[0]-=tTD*CLIGHT; 	/* P [meter] */		
-        dst->P[0]-=fmod(dst->P[0],CLIGHT/FREQL1)*CLIGHT/FREQL1; 	/* Cut off residuals of cycles			*/
+        /* dst->P[0]-=fmod(dst->P[0],CLIGHT/FREQL1)*CLIGHT/FREQL1; 	/* Cut off residuals of cycles			*/
+
+        dst->P[0]-=toff*CLIGHT;	/*raw->obs.data[n].P[0]  =R8(p+ 8)-toff*CLIGHT;*/
 
         /*dst->P[0]-=auxData[dst->sat].SmoothCode*CLIGHT/FREQL1*8000;			/* NOTE EXPERIMENTAL! *CL/L1 		*/
         
@@ -763,12 +770,17 @@ static int decode_clock(raw_t *raw,double rcBias, double drift,unsigned week,dou
             
             /* NOTE invalid carrier phase measurements are flagged in RTKLIB by setting the carrier phase value to zero. */
             if (dst->LLI[0]) dst->L[0]=0;
-            Ladj=(rcBias+tTD)*FREQL1; if (dst->L[0]) dst->L[0]-=Ladj;	/* Carrier Phase [Cycles] adjustment		*/ 
-            dst->L[0]-=fmod(dst->L[0],CLIGHT/FREQL1)*CLIGHT/FREQL1; 	/* Cut off residuals of cycles			*/
+            Ladj=(rcBias+tTD)*FREQL1; if (dst->L[0]) { dst->L[0]-=Ladj;	/* Carrier Phase [Cycles] adjustment		*/ 
+            /* dst->L[0]-=fmod(dst->L[0],CLIGHT/FREQL1)*CLIGHT/FREQL1; 	/* Cut off residuals of cycles			*/
+            dst->L[0]-=toff*FREQL1; }					/* raw->obs.data[n].L[0]  =R8(p   )-toff*FREQL1;*/
             dst->qualL[0]=7-(dst->L[0] ? 1 : 0 );			/* MID 2 PMode Phase Lock = 7			*/
         } 
         if (debug) printf(" Pf=%.3fkm LLI=%d Q=%2d S=%d tgd=%.1fm",dst->P[0]/1000,dst->LLI[0],dst->qualP[0],dst->SNR[0]/4,auxData[dst->sat].tgd*CLIGHT);
         if (debug&&dst->L[0]) printf("P/L ratio =%.2fppm",(1-(dst->P[0]*FREQL1/CLIGHT/dst->L[0]))*1E+6);        /* printf("\nSAT %2d P=%.0fkm pAdj=%.6fs L=%.fk LLI=%d Q=%d %.3f %.3f",dst->sat,dst->P[0]/1000,Padj/CLIGHT,dst->L[0]/1000,dst->LLI[0],dst->qualP[0],auxData[dst->sat].QIRatio,(QImax-QImin)); */
+        
+        if (raw->obs.data[n].LLI[0]&1) raw->lockt[dst->sat-1][0]=0.0;
+        else if (tt<1.0||10.0<tt) raw->lockt[dst->sat-1][0]=0.0;
+        else raw->lockt[dst->sat-1][0]+=tt;
     }
     raw->obs.n=n; /*if (fabs(timediff(raw->obs.data[0].time,raw->time))>1E-9) raw->obs.n=0;			/* printf("\nCLK n=%d obsCnt=%d obsProc=%d ",n,obsCnt,obsproc);*/
     if (SmoothMax < (SRng/nPR)) SmoothMax=SRng/nPR;

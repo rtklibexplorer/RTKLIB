@@ -1,0 +1,12 @@
+[Unit]
+Description=Startup Script Service
+After=multi-user.target
+
+[Service]
+TimeoutStartSec=infinity
+Type=forking
+ExecStart=/usr/bin/python /opt/RTKLIB/misc/strsvr.py start
+ExecStop=/usr/bin/python /opt/RTKLIB/misc/strsvr.py stop
+
+[Install]
+WantedBy=multi-user.target

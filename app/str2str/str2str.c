@@ -238,7 +238,7 @@ int main(int argc, char **argv)
     int types[MAXSTR]={STR_FILE,STR_FILE},stat[MAXSTR]={0},byte[MAXSTR]={0};
     int bps[MAXSTR]={0},fmts[MAXSTR]={0},sta=0;
     
-    for (i=0;i<MAXSTR;i++) {
+    for (i=0;i<=MAXSTR;i++) {
         paths[i]=s[i];
         cmds[i]=cmd_strs[i];
         cmds_periodic[i]=cmd_periodic_strs[i];
@@ -247,7 +247,7 @@ int main(int argc, char **argv)
         if (!strcmp(argv[i],"-in")&&i+1<argc) {
             if (!decodepath(argv[++i],types,paths[0],fmts)) return -1;
         }
-        else if (!strcmp(argv[i],"-out")&&i+1<argc&&n<MAXSTR-1) {
+        else if (!strcmp(argv[i],"-out")&&i+1<argc&&n<MAXSTR-1) { 
             if (!decodepath(argv[++i],types+n+1,paths[n+1],fmts+n+1)) return -1;
             n++;
         }
@@ -344,6 +344,7 @@ int main(int argc, char **argv)
         fprintf(stderr,"stream server start error\n");
         return -1;
     }
+
     /* read and set ntrip source table */
     if (*srctbl) {
         strsvrsetsrctbl(&strsvr,srctbl);

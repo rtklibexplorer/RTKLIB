@@ -4,6 +4,7 @@
 *.obs
 *.ini
 *.local
+*.trace
 Release
 Release_Build
 Debug_Build
