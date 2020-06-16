@@ -5,6 +5,7 @@
 *.ini
 *.local
 *.trace
+*.nav
 Release
 Release_Build
 Debug_Build
