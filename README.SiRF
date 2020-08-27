@@ -1,0 +1,26 @@
+Source of knowledge regarding git:
+https://blog.scottlowe.org/2015/01/27/using-fork-branch-git-workflow/
+Workflow
+1) git add .
+2) git commit
+3) git push origin SiRF
+
+Sync (local) repositories
+4) git pull origin master
+
+Sync with upstream
+5) git remote add upstream https://github.com/rtklibexplorer/RTKLIB.git
+6) git pull upstream demo5
+7) git push origin 
+
+Commandline examples (Msg-Option "1075" is necessary for Doppler Frequency to be reported)
+for SiRF, U-Blox and HD9310
+
+/opt/RTKLIB/app/str2str/gcc/str2str -c /opt/RTKLIB/SiRF/sirf_raw.cmd -in serial://ttyUSB0:115200:8:n:1:off#sirf
+-out tcpsvr://:6001 -out tcpsvr://:6002#rtcm3 -msg 1002,1005,1006,1013,1019,1032,1075
+
+/opt/RTKLIB/app/str2str/gcc/str2str -c /opt/RTKLIB/data/m8t_5hz_usb.cmd -in serial://ttyACM0:115200:8:n:1:off#ubx 
+-out tcpsvr://:6001 -out tcpsvr://:6002#rtcm3 -msg 1002,1005,1006,1013,1019,1032,1075 -opt STD_SLIP=4
+
+/opt/RTKLIB/app/str2str/gcc/str2str -in serial://ttyUSB0#rtcm3 -c /opt/RTKLIB/data/9310_5Hz_good.cmd
+-out tcpsvr://:6002#rtcm3 -msg 1002,1005,1006,1013,1019,1032,1075,1077,1087,1097,1127
