@@ -1,6 +1,28 @@
-Source of knowledge regarding git:
-https://blog.scottlowe.org/2015/01/27/using-fork-branch-git-workflow/
-Workflow
+Commandline examples (Msg-Option "1075" is necessary for Doppler Frequency to be reported)
+
+* SiRF *
+/opt/RTKLIB/app/str2str/gcc/str2str -c /opt/RTKLIB/SiRF/sirf_raw.cmd -in serial://ttyUSB0:115200:8:n:1:off#sirf
+-out tcpsvr://:6001 -out tcpsvr://:6002#rtcm3 -msg 1002,1005,1006,1013,1019,1032,1075
+
+* U-Blox *
+/opt/RTKLIB/app/str2str/gcc/str2str -c /opt/RTKLIB/data/m8t_5hz_usb.cmd -in serial://ttyACM0:115200:8:n:1:off#ubx 
+-out tcpsvr://:6001 -out tcpsvr://:6002#rtcm3 -msg 1002,1005,1006,1013,1019,1032,1075 -opt STD_SLIP=4
+(1) -STD_SLIP = x: Carrier phase measurements are flagged as cycle-slips if the standard deviation of the carrier
+                   phase measurement (as reported by the receiver) is greater or equal to x (scale=0.04 meters/count).
+                   This feature now exists in both versions but is not listed in the 2.4.3 documentation. It is only
+                   used for the M8T receiver. If this option is not set, then the same fixed threshold will be used
+                   for cycle-slips as for valid carrier-phase measurements, which in the release code can cause
+                   cycle-slips to fail to be flagged after the phase-bias estimate is valid.
+(2) -TRKM_ADJ=x:   Apply corrections to TRK-MEAS pseudorange measurements from a table to remove integer number of
+                   meter errors in the GLONASS satellite measurements.  With this option set, the TRK-MEAS command
+                   gives identical pseudorange measurements as the RXM-RAWX command.  Use "x=2" for firmware
+                   versions 2.01 and 2.30, and "x=3" for firmware version 3.01.
+
+* DataGNSS HD9310 *
+/opt/RTKLIB/app/str2str/gcc/str2str -in serial://ttyUSB0#rtcm3 -c /opt/RTKLIB/data/9310_5Hz_good.cmd
+-out tcpsvr://:6002#rtcm3 -msg 1002,1005,1006,1013,1019,1032,1075,1077,1087,1097,1127
+
+* Github Workflow (for internal use) *
 1) git add .
 2) git commit
 3) git push origin SiRF
@@ -12,15 +34,4 @@ Sync with upstream
 5) git remote add upstream https://github.com/rtklibexplorer/RTKLIB.git
 6) git pull upstream demo5
 7) git push origin 
-
-Commandline examples (Msg-Option "1075" is necessary for Doppler Frequency to be reported)
-for SiRF, U-Blox and HD9310
-
-/opt/RTKLIB/app/str2str/gcc/str2str -c /opt/RTKLIB/SiRF/sirf_raw.cmd -in serial://ttyUSB0:115200:8:n:1:off#sirf
--out tcpsvr://:6001 -out tcpsvr://:6002#rtcm3 -msg 1002,1005,1006,1013,1019,1032,1075
-
-/opt/RTKLIB/app/str2str/gcc/str2str -c /opt/RTKLIB/data/m8t_5hz_usb.cmd -in serial://ttyACM0:115200:8:n:1:off#ubx 
--out tcpsvr://:6001 -out tcpsvr://:6002#rtcm3 -msg 1002,1005,1006,1013,1019,1032,1075 -opt STD_SLIP=4
-
-/opt/RTKLIB/app/str2str/gcc/str2str -in serial://ttyUSB0#rtcm3 -c /opt/RTKLIB/data/9310_5Hz_good.cmd
--out tcpsvr://:6002#rtcm3 -msg 1002,1005,1006,1013,1019,1032,1075,1077,1087,1097,1127
+Source of knowledge regarding git: https://blog.scottlowe.org/2015/01/27/using-fork-branch-git-workflow/
