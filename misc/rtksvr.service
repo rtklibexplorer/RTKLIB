@@ -5,9 +5,9 @@ After=strsvr.service
 
 [Service]
 TimeoutStartSec=infinity
-Type=forking
-ExecStart=/usr/bin/python /opt/RTKLIB/misc/rtksvr.py start
-ExecStop=/usr/bin/python /opt/RTKLIB/misc/rtksvr.py stop
+Type=simple
+ExecStart=/usr/bin/python3 /opt/RTKLIB/misc/rtksvr.py start
+ExecStop=/usr/bin/python3 /opt/RTKLIB/misc/rtksvr.py stop
 
 [Install]
 WantedBy=multi-user.target

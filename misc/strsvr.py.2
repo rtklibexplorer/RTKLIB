@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
 from gps import *
 from optparse import OptionParser
-import subprocess,os,sys,configparser,io,shlex,time,getopt,argparse,textwrap,datetime,csv
+import subprocess,os,sys,ConfigParser,io,shlex,time,getopt,argparse,textwrap,datetime,csv
 from datetime import datetime, timedelta
 
 # Global Variables
@@ -37,8 +37,8 @@ if args.gps is None:
  Serial = os.popen("find /sys/devices -iname 'ttyA*' -printf %f").read()
 else:
  Serial = args.gps[0]
-if Serial == "":
- print("ERROR: No GPS device found or set.")
+if Serial is "":
+ print "ERROR: No GPS device found or set."
  sys.exit(2)
 
 # Config file
@@ -46,20 +46,20 @@ if args.conf is None:
  CFILE='/opt/RTKLIB/misc/strstr.ini'
 else:
  CFILE = args.conf[0]
-config = configparser.RawConfigParser()
+config = ConfigParser.RawConfigParser()
 config.read(CFILE)
  
 # Action switcher
 posRequest=False
 if args.action == 'stop':
   stop_server()
-  print("INFO: Stream Server Stopped!")
+  print "INFO: Stream Server Stopped!"
   sys.exit(0)
 
 # Action: START + UPDATE
 if args.lat is None or args.lng is None or args.alt is None:
   if args.action == 'update':
-    print("ERROR: Coordinates Missing!")
+    print "ERROR: Coordinates Missing!"
     sys.exit(2)
   posRequest=True
 
@@ -84,7 +84,7 @@ if posRequest:
 
    def getPositionData(gps):
       global lat, lng, epv, alt
-      nx = next(gpsd)
+      nx = gpsd.next()
       # For a list of all supported classes and fields refer to:
       # https://gpsd.gitlab.io/gpsd/gpsd_json.html
       if nx['class'] == 'TPV':
@@ -95,7 +95,7 @@ if posRequest:
 
    gpsd = gps(mode=WATCH_ENABLE|WATCH_NEWSTYLE)
 
-   print("INFO: Waiting for position ...")
+   print "INFO: Waiting for position ..."
    Countdown=0
    while Countdown < 60 :
       getPositionData(gpsd)
@@ -104,7 +104,7 @@ if posRequest:
       if epv > 0 and epv < 15 : break
       
    strproc.terminate()
-   print("INFO: Receiver position: lon = " + str(lng) + ", lat = " + str(lat) + ", alt = " + str(alt) + ", epv = " + str(epv))
+   print "INFO: Receiver position: lon = " + str(lng) + ", lat = " + str(lat) + ", alt = " + str(alt) + ", epv = " + str(epv)
 else:
    lat=args.lat
    lng=args.lng
@@ -131,7 +131,7 @@ args.append(' -p ')
 args.append(str(lat) + " " + str(lng) + " " + str(alt))
 args=''.join(args)
 args=shlex.split(args)
-print("INFO: Starting Continuously Operating Mobile GNSS Reference Station")
+print "INFO: Starting Continuously Operating Mobile GNSS Reference Station"
 stop_server()
 os.system("systemctl stop serial-getty@" + Serial + ".service")
 strproc = subprocess.Popen(args, stdout=devnull, stderr=devnull)
@@ -148,9 +148,9 @@ if not os.path.isfile(CDATAFILE):
 
 gpsd = gps(mode=WATCH_ENABLE|WATCH_NEWSTYLE)
 
-print("INFO: Observing Satellites and if necessary I could watch out for a receiver position update ...")
+print "INFO: Observing Satellites and if necessary I could watch out for a receiver position update ..."
 while True :
-    nx = next(gpsd)
+    nx = gpsd.next()
     # For a list of all supported classes and fields refer to:
     # https://gpsd.gitlab.io/gpsd/gpsd_json.html
     if nx['class'] == 'SKY':

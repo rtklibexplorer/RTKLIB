@@ -5,8 +5,8 @@ After=multi-user.target
 [Service]
 TimeoutStartSec=infinity
 Type=forking
-ExecStart=/usr/bin/python /opt/RTKLIB/misc/strsvr.py start
-ExecStop=/usr/bin/python /opt/RTKLIB/misc/strsvr.py stop
+ExecStart=/usr/bin/python3 /opt/RTKLIB/misc/strsvr.py start
+ExecStop=/usr/bin/python3 /opt/RTKLIB/misc/strsvr.py stop
 
 [Install]
 WantedBy=multi-user.target

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 # /opt/RTKLIB/app/rtkrcv/gcc/rtkrcv -s -o /opt/rtl.conf -m 5008 -d /dev/null >/dev/null 2>&1 &
 # HIGHLY Recommended: https://csvkit.readthedocs.io/en/latest/
@@ -13,15 +13,15 @@ from pyproj import Proj, transform
 from math import radians, sin, cos, tan, atan, hypot, degrees, atan2, sqrt, pi
 from datetime import datetime, timedelta
 from socket import error as SocketError
-import errno,subprocess,os,time,sys,configparser,io,shlex,time,getopt,argparse,textwrap,socket,math,pyproj,csv,json
+import errno,subprocess,os,time,sys,ConfigParser,io,shlex,time,getopt,argparse,textwrap,socket,math,pyproj,csv,json
 
 # Global Variables
 devnull = open(os.devnull, "wb")
 lat=lng=epv=alt=0
 input_EPSG  = "4978"  # 4978  = Geodetic CRS -> Earth centred, earth fixed, righthanded 3D coordinate system, consisting of 3 orthogonal axes with X and Y axes in the equatorial plane, positive Z-axis parallel to mean earth rotation axis and pointing towards North Pole.
 output_EPSG = "25832" # 25832 = ETRS1989 UTM 32N
-input_proj = pyproj.Proj("EPSG:"+input_EPSG, nadgrids='@/var/www/html/grid/BWTA2017.gsb,@/var/www/html/grid/BETA2007.gsb,null')
-output_proj = pyproj.Proj("EPSG:"+output_EPSG)
+input_proj = pyproj.Proj(init="EPSG:"+input_EPSG, nadgrids='@/var/www/html/grid/BWTA2017.gsb,@/var/www/html/grid/BETA2007.gsb,null')
+output_proj = pyproj.Proj(init="EPSG:"+output_EPSG)
 # os.environ["PROJ_DEBUG"] = '0'
 # x_out, y_out, z_out = pyproj.transform(input_proj, output_proj, x_in, y_in, z_in)
 
@@ -54,17 +54,17 @@ def netcat(hostname, port):
         data = s.recv(1024)
         if data == "":
             break
-        print("Received:", repr(data))
-    print("Connection closed.")
+        print "Received:", repr(data)
+    print "Connection closed."
     s.close()
 
 def chkproj():
     x_in = 4138451.590 
     y_in = 640012.068  
     z_in = 4795041.866
-    print(x_in, y_in, z_in)
+    print x_in, y_in, z_in
     x_out, y_out, z_out = pyproj.transform(input_proj, output_proj, x_in, y_in, z_in)
-    print(x_out, y_out, z_out)
+    print x_out, y_out, z_out
 
 def ecef2UTM(x,y,z):
 # NOTE based on:
@@ -141,7 +141,7 @@ PJSON='/var/www/html/rtkpos.json'
 posRequest=False
 if args.action == 'stop':
   stop_server()
-  print("INFO: Stream Server Stopped!")
+  print "INFO: Stream Server Stopped!"
   sys.exit(0)
 
 # NOTE Config file
@@ -231,11 +231,11 @@ while True:
         while not finished:
             retrycnt += 1
             try:
-                nx = next(gpsdd)
+                nx = gpsdd.next()
             except SocketError as SE:
                 if SE.errno != errno.ECONNRESET:
-                    print("SOCKET ERROR!")
-                print("ERROR: " + SE.errno)
+                    print "SOCKET ERROR!"
+                print "ERROR: " + SE.errno
             if nx['class'] == 'SKY':
                 skyview = getattr(nx,'satellites')
                 for sat in skyview:
@@ -246,7 +246,7 @@ while True:
                              csvfileB.close
                 finished=True
             if retrycnt == 10:
-                print("ERROR: Gave up after 10 times")
+                print "ERROR: Gave up after 10 times"
                 finished=True
 
 csvfile.close()
@@ -255,7 +255,7 @@ sys.exit(0)
 
 
 try:
-    response = urllib.request.urlopen(request).read()
+    response = urllib2.urlopen(request).read()
 except SocketError as e:
     if e.errno != errno.ECONNRESET:
         raise # Not error we are looking for
