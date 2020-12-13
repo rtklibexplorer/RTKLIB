@@ -2224,6 +2224,8 @@ static int readantex(const char *file, pcvs_t *pcvs)
             if (sscanf(buff+4,"%d",&f)<1) continue;
             for (i=0;i<NFREQ;i++) if (freqs[i]==f) break;
             if (i<NFREQ) freq=i+1;
+            /* for Galileo E5b: use E2, not E7 */
+            if (satsys(pcv.sat,NULL)==SYS_GAL&&f==7) freq=2;
         }
         else if (strstr(buff+60,"END OF FREQUENCY")) {
             freq=0;
@@ -3357,7 +3359,7 @@ extern int reppaths(const char *path, char *rpath[], int nmax, gtime_t ts,
 /* satellite carrier wave length -----------------------------------------------
 * get satellite carrier wave lengths
 * args   : int    sat       I   satellite number
-*          int    frq       I   frequency index (0:L1,1:L2,2:L5/3,...)
+*          int    frq       I   frequency index (0:L1,1:L2/E5b,2:L5/3,...)
 *          nav_t  *nav      I   navigation messages
 * return : carrier wave length (m) (0.0: error)
 *-----------------------------------------------------------------------------*/

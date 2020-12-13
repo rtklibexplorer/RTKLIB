@@ -85,9 +85,9 @@ static double prange(const obsd_t *obs, const nav_t *nav, const double *azel,
     
     if (!(sys=satsys(obs->sat,NULL))) return 0.0;
     
-    /* L1-L2 for GPS/GLO/QZS, L1-L5 for GAL/SBS */
-    if (NFREQ>=3&&(sys&(SYS_GAL|SYS_SBS))) j=2;
-    
+    /* L1-L2 for GPS/GLO/QZS/GAL E5b, L1-L5 for SBS, GAL E5a */
+    if (NFREQ>=3&&(sys&(SYS_SBS))) j=2;  /* L5 for SBAS */
+    if (obs->P[1]==0) j=2; /* use E5a if no Galileo E5b obs */
     if (NFREQ<2||lam[i]==0.0||lam[j]==0.0) return 0.0;
     
     /* test snr mask */

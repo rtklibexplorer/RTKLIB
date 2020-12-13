@@ -167,22 +167,23 @@ static int ubx_sig(int sys, int sigid)
 {
     if (sys == SYS_GPS) {
         if (sigid == 0) return CODE_L1C; /* L1C/A */
-        if (sigid == 3) return CODE_L2L; /* L2C(L) */
-        if (sigid == 4) return CODE_L2S; /* L2C(M) */
+        if (sigid == 3) return CODE_L2X; /* L2C(L) */
+        if (sigid == 4) return CODE_L2X; /* L2C(M) */
     }
     else if (sys == SYS_GLO) {
         if (sigid == 0) return CODE_L1C; /* G1C/A (GLO L1 OF) */
         if (sigid == 2) return CODE_L2C; /* G2C/A (GLO L2 OF) */
     }
     else if (sys == SYS_GAL) {
-        if (sigid == 0) return CODE_L1C; /* E1C */
-        if (sigid == 1) return CODE_L1B; /* E1B */
-        if (sigid == 5) return CODE_L7I; /* E5bI */
-        if (sigid == 6) return CODE_L7Q; /* E5bQ */
+        if (sigid == 0) return CODE_L1X; /* E1C */
+        if (sigid == 1) return CODE_L1X; /* E1B */
+        if (sigid == 5) return CODE_L7X; /* E5bI */
+        if (sigid == 6) return CODE_L7X; /* E5bQ */
     }
     else if (sys == SYS_QZS) {
         if (sigid == 0) return CODE_L1C; /* L1C/A */
-        if (sigid == 5) return CODE_L2L; /* L2CL (not specified in [5]) */
+        if (sigid == 4) return CODE_L2X; /* L2CM */
+        if (sigid == 5) return CODE_L2X; /* L2CL (not specified in [5]) */
     }
     else if (sys == SYS_CMP) {
         if (sigid == 0) return CODE_L2I; /* B1I D1 (rinex 3.03) */
@@ -200,22 +201,19 @@ static int sig_idx(int sys, int code)
 {
     if (sys == SYS_GPS) {
         if (code==CODE_L1C) return 1;
-        if (code==CODE_L2L) return 2;
-        if (code==CODE_L2S) return 2;
+        if (code==CODE_L2X) return 2;
     }
     else if (sys == SYS_GLO) {
         if (code==CODE_L1C) return 1;
         if (code==CODE_L2C) return 2;
     }
     else if (sys == SYS_GAL) {
-        if (code==CODE_L1C) return 1;
-        if (code==CODE_L1B) return 1;
-        if (code==CODE_L7I) return 2; /* E5bI */
-        if (code==CODE_L7Q) return 2; /* E5bQ */
+        if (code==CODE_L1X) return 1;
+        if (code==CODE_L7X) return 2; /* E5bI, E5bQ */
     }
     else if (sys == SYS_QZS) {
         if (code==CODE_L1C) return 1;
-        if (code==CODE_L2L) return 2;
+        if (code==CODE_L2X) return 2;
     }
     else if (sys == SYS_CMP) {
         if (code==CODE_L1I||code==CODE_L2I) return 1;

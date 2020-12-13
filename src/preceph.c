@@ -66,21 +66,21 @@ static int code2sys(char code)
 static int readsp3h(FILE *fp, gtime_t *time, char *type, int *sats,
                     double *bfact, char *tsys)
 {
-    int i,j,k=0,ns=0,sys,prn;
+    int i=0,j,k=0,ns=0,nl=5,sys,prn;
     char buff[1024];
     
     trace(3,"readsp3h:\n");
     
-    for (i=0;i<22;i++) {
-        if (!fgets(buff,sizeof(buff),fp)) break;
-        
-        if (i==0) {
+    while (fgets(buff,sizeof(buff),fp)) {
+
+        if (buff[0]=='#'&&(buff[1]=='c'||buff[1]=='d')) {
             *type=buff[2];
             if (str2time(buff,3,28,time)) return 0;
         }
-        else if (2<=i&&i<=6) {
+        else if (buff[0]=='+'&&buff[1]==' ') {
             if (i==2) {
-                ns=(int)str2num(buff,4,2);
+                ns=(int)str2num(buff,3,3);
+                if (ns>85) nl=ns/17+(ns%17!=0);
             }
             for (j=0;j<17&&k<ns;j++) {
                 sys=code2sys(buff[9+3*j]);
@@ -88,13 +88,17 @@ static int readsp3h(FILE *fp, gtime_t *time, char *type, int *sats,
                 if (k<MAXSAT) sats[k++]=satno(sys,prn);
             }
         }
-        else if (i==12) {
+        else if (i==2*nl+2) {/* %c */
             strncpy(tsys,buff+9,3); tsys[3]='\0';
         }
-        else if (i==14) {
+        else if (i==2*nl+4) {/* %f */
             bfact[0]=str2num(buff, 3,10);
             bfact[1]=str2num(buff,14,12);
         }
+        else if (i==2*nl+11){
+            break; /* at end of header */
+        }
+        i=i+1; /* line counter */
     }
     return ns;
 }
@@ -649,7 +653,7 @@ static int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
 *                                 {x,y,z,vx,vy,vz} (m|m/s)
 *          int    sat         I   satellite number
 *          nav_t  *nav        I   navigation data
-*          double *dant       I   satellite antenna phase center offset (ecef)
+*          double *dant       O   satellite antenna phase center offset (ecef)
 *                                 {dx,dy,dz} (m) (iono-free LC value)
 * return : none
 *-----------------------------------------------------------------------------*/
@@ -676,8 +680,8 @@ extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
     if (!normv3(r,ey)) return;
     cross3(ey,ez,ex);
     
-    if (NFREQ>=3&&(satsys(sat,NULL)&(SYS_GAL|SYS_SBS))) k=2;
-    
+    if ((NFREQ>=3)&&(satsys(sat,NULL)&SYS_SBS)) k=2;  /* always use L5 for SBAS */
+    if ((NFREQ>=3)&&(satsys(sat,NULL)&SYS_GAL)&&(lam[1]==0)) k=2; /* use E5a if no E5b for GAL */
     if (NFREQ<2||lam[j]==0.0||lam[k]==0.0) return;
     
     gamma=SQR(lam[k])/SQR(lam[j]);

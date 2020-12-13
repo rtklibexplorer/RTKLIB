@@ -59,7 +59,7 @@ extern "C" {
 
 #define VER_RTKLIB  "demo5"             /* library version */
 
-#define PATCH_LEVEL "b33c"               /* patch level */
+#define PATCH_LEVEL "b33e"               /* patch level */
 
 #define COPYRIGHT_RTKLIB \
             "Copyright (C) 2007-2019 T.Takasu\nAll rights reserved."
@@ -177,7 +177,7 @@ extern "C" {
 #endif
 #ifdef ENACMP
 #define MINPRNCMP   1                   /* min satellite sat number of BeiDou */
-#define MAXPRNCMP   37                  /* max satellite sat number of BeiDou */
+#define MAXPRNCMP   46                  /* max satellite sat number of BeiDou */
 #define NSATCMP     (MAXPRNCMP-MINPRNCMP+1) /* number of BeiDou satellites */
 #define NSYSCMP     1
 #else
@@ -722,8 +722,8 @@ typedef struct {        /* TEC grid type */
 
 typedef struct {        /* satellite fcb data type */
     gtime_t ts,te;      /* start/end time (GPST) */
-    double bias[MAXSAT][3]; /* fcb value   (cyc) */
-    double std [MAXSAT][3]; /* fcb std-dev (cyc) */
+    double bias[MAXSAT][NFREQ]; /* fcb value   (cyc) */
+    double std [MAXSAT][NFREQ]; /* fcb std-dev (cyc) */
 } fcbd_t;
 
 typedef struct {        /* SBAS message type */

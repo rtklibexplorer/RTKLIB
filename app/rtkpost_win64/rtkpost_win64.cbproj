@@ -59,7 +59,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <BCC_Defines>WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=4;NEXOBS=3;$(BCC_Defines)</BCC_Defines>
+        <BCC_Defines>WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;$(BCC_Defines)</BCC_Defines>
         <ILINK_LinkwithRegEx>false</ILINK_LinkwithRegEx>
         <ILINK_LinkwithMidas>false</ILINK_LinkwithMidas>
         <ILINK_LinkwithZLib>false</ILINK_LinkwithZLib>
@@ -96,8 +96,8 @@
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <OutputExt>exe</OutputExt>
-        <BRCC_Defines>_RTLDLL;WIN32;TRACE;MKL;ENAGLO;ENAQZS;ENAGAL;ENACMP;NFREQ=4;NEXOBS=3;$(BRCC_Defines)</BRCC_Defines>
-        <TASM_Defines>_RTLDLL;WIN32;TRACE;MKL;ENAGLO;ENAQZS;ENAGAL;ENACMP;NFREQ=4;NEXOBS=3;$(TASM_Defines)</TASM_Defines>
+        <BRCC_Defines>_RTLDLL;WIN32;TRACE;MKL;ENAGLO;ENAQZS;ENAGAL;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;$(BRCC_Defines)</BRCC_Defines>
+        <TASM_Defines>_RTLDLL;WIN32;TRACE;MKL;ENAGLO;ENAQZS;ENAGAL;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;$(TASM_Defines)</TASM_Defines>
         <BCC_UserSuppliedOptions> -tWM -AT -xp</BCC_UserSuppliedOptions>
         <ILINK_LibraryPath>..\..\lib\omf;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
@@ -113,8 +113,8 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <TASM_Defines>_RTLDLL;WIN32;TRACE;MKL;ENAGLO;ENAQZS;ENAGAL;ENACMP;NFREQ=4;NEXOBS=3;$(TASM_Defines)</TASM_Defines>
-        <BRCC_Defines>_RTLDLL;WIN32;TRACE;MKL;ENAGLO;ENAQZS;ENAGAL;ENACMP;NFREQ=4;NEXOBS=3;$(BRCC_Defines)</BRCC_Defines>
+        <TASM_Defines>_RTLDLL;WIN32;TRACE;MKL;ENAGLO;ENAQZS;ENAGAL;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;$(TASM_Defines)</TASM_Defines>
+        <BRCC_Defines>_RTLDLL;WIN32;TRACE;MKL;ENAGLO;ENAQZS;ENAGAL;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;$(BRCC_Defines)</BRCC_Defines>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
     </PropertyGroup>

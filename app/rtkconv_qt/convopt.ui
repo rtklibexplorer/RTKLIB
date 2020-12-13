@@ -829,23 +829,10 @@
             <string/>
            </property>
            <property name="text">
-            <string>L2</string>
+            <string>L2/E5b</string>
            </property>
            <property name="checked">
             <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="Freq3">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="text">
-            <string>L5/L3</string>
-           </property>
-           <property name="checked">
-            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -855,7 +842,7 @@
             <string/>
            </property>
            <property name="text">
-            <string>L6</string>
+            <string>L5</string>
            </property>
            <property name="checked">
             <bool>false</bool>
@@ -868,7 +855,7 @@
             <string/>
            </property>
            <property name="text">
-            <string>L7</string>
+            <string>E6</string>
            </property>
            <property name="checked">
             <bool>false</bool>
@@ -881,7 +868,7 @@
             <string/>
            </property>
            <property name="text">
-            <string>L8</string>
+            <string>E5ab</string>
            </property>
            <property name="checked">
             <bool>false</bool>
@@ -891,7 +878,7 @@
          <item>
           <widget class="QCheckBox" name="Freq7">
            <property name="text">
-            <string>L9</string>
+            <string>S</string>
            </property>
           </widget>
          </item>

@@ -78,11 +78,10 @@ void ConvOptDialog::showEvent(QShowEvent *event)
     Obs4->setChecked(mainWindow->ObsType&OBSTYPE_SNR);
     Freq1->setChecked(mainWindow->FreqType&FREQTYPE_L1);
     Freq2->setChecked(mainWindow->FreqType&FREQTYPE_L2);
-    Freq3->setChecked(mainWindow->FreqType&FREQTYPE_L5);
-    Freq4->setChecked(mainWindow->FreqType&FREQTYPE_L6);
-    Freq5->setChecked(mainWindow->FreqType&FREQTYPE_L7);
-    Freq6->setChecked(mainWindow->FreqType&FREQTYPE_L8);
-    Freq7->setChecked(mainWindow->FreqType&FREQTYPE_L9);
+    Freq4->setChecked(mainWindow->FreqType&FREQTYPE_L5);
+    Freq5->setChecked(mainWindow->FreqType&FREQTYPE_E6);
+    Freq6->setChecked(mainWindow->FreqType&FREQTYPE_E5ab);
+    Freq7->setChecked(mainWindow->FreqType&FREQTYPE_S);
     ExSats->setText(mainWindow->ExSats);
     TraceLevel->setCurrentIndex(mainWindow->TraceLevel);
 	
@@ -136,11 +135,10 @@ void ConvOptDialog::BtnOkClick()
     if (Obs4->isChecked()) obstype|=OBSTYPE_SNR;
     if (Freq1->isChecked()) freqtype|=FREQTYPE_L1;
     if (Freq2->isChecked()) freqtype|=FREQTYPE_L2;
-    if (Freq3->isChecked()) freqtype|=FREQTYPE_L5;
-    if (Freq4->isChecked()) freqtype|=FREQTYPE_L6;
-    if (Freq5->isChecked()) freqtype|=FREQTYPE_L7;
-    if (Freq6->isChecked()) freqtype|=FREQTYPE_L8;
-    if (Freq7->isChecked()) freqtype|=FREQTYPE_L9;
+    if (Freq4->isChecked()) freqtype|=FREQTYPE_L5;
+    if (Freq5->isChecked()) freqtype|=FREQTYPE_E6;
+    if (Freq6->isChecked()) freqtype|=FREQTYPE_E5ab;
+    if (Freq7->isChecked()) freqtype|=FREQTYPE_S;
     mainWindow->NavSys=navsys;
     mainWindow->ObsType=obstype;
     mainWindow->FreqType=freqtype;
@@ -178,11 +176,10 @@ void ConvOptDialog::BtnMaskClick()
     if (Nav7->isChecked()) codeOptDialog->NavSys|=SYS_IRN;
     if (Freq1->isChecked()) codeOptDialog->FreqType|=FREQTYPE_L1;
     if (Freq2->isChecked()) codeOptDialog->FreqType|=FREQTYPE_L2;
-    if (Freq3->isChecked()) codeOptDialog->FreqType|=FREQTYPE_L5;
-    if (Freq4->isChecked()) codeOptDialog->FreqType|=FREQTYPE_L6;
-    if (Freq5->isChecked()) codeOptDialog->FreqType|=FREQTYPE_L7;
-    if (Freq6->isChecked()) codeOptDialog->FreqType|=FREQTYPE_L8;
-    if (Freq7->isChecked()) codeOptDialog->FreqType|=FREQTYPE_L9;
+    if (Freq4->isChecked()) codeOptDialog->FreqType|=FREQTYPE_L5;
+    if (Freq5->isChecked()) codeOptDialog->FreqType|=FREQTYPE_E6;
+    if (Freq6->isChecked()) codeOptDialog->FreqType|=FREQTYPE_E5ab;
+    if (Freq7->isChecked()) codeOptDialog->FreqType|=FREQTYPE_S;
 
     codeOptDialog->show();
 }

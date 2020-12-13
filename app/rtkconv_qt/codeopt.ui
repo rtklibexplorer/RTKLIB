@@ -943,7 +943,7 @@
        <number>0</number>
       </property>
       <item row="0" column="0">
-       <widget class="QCheckBox" name="C47">
+       <widget class="QCheckBox" name="C40">
         <property name="toolTip">
          <string/>
         </property>
@@ -956,7 +956,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QCheckBox" name="C48">
+       <widget class="QCheckBox" name="C41">
         <property name="toolTip">
          <string/>
         </property>

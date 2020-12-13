@@ -330,6 +330,7 @@ static double varerr(int sat, int sys, double el, double snr_rover, int freq,
     switch (sys) {
         case SYS_GPS: fact *= EFACT_GPS; break;
         case SYS_GLO: fact *= EFACT_GLO; break;
+        case SYS_GAL: fact *= EFACT_GAL; break;
         case SYS_SBS: fact *= EFACT_SBS; break;
         default:      fact *= EFACT_GPS; break;
     }
@@ -365,7 +366,8 @@ static void initx(rtk_t *rtk, double xi, double var, int i)
 static double gfmeas(const obsd_t *obs, const nav_t *nav)
 {
     const double *lam=nav->lam[obs->sat-1];
-    int i=(satsys(obs->sat,NULL)&(SYS_GAL|SYS_SBS))?2:1;
+    int i=(satsys(obs->sat,NULL)&(SYS_SBS))?2:1; /* always use L1/L5 for SBAS */
+    if (NFREQ>2&&obs->P[1]==0.0) i=2; /* otherwise, if no L2, try L5 */
     
     if (lam[0]==0.0||lam[i]==0.0||obs->L[0]==0.0||obs->L[i]==0.0) return 0.0;
     return lam[0]*obs->L[0]-lam[i]*obs->L[i];
@@ -374,7 +376,8 @@ static double gfmeas(const obsd_t *obs, const nav_t *nav)
 static double mwmeas(const obsd_t *obs, const nav_t *nav)
 {
     const double *lam=nav->lam[obs->sat-1];
-    int i=(satsys(obs->sat,NULL)&(SYS_GAL|SYS_SBS))?2:1;
+    int i=(satsys(obs->sat,NULL)&(SYS_SBS))?2:1; /* always use L1/L5 for SBAS */
+    if (NFREQ>2&&obs->P[1]==0.0) i=2; /* otherwise, if no L2, try L5 */
     
     if (lam[0]==0.0||lam[i]==0.0||obs->L[0]==0.0||obs->L[i]==0.0||
         obs->P[0]==0.0||obs->P[i]==0.0) return 0.0;
@@ -408,6 +411,8 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
                 ix=(i==0?CODE_L1W-1:CODE_L2W-1);
             else if (sys==SYS_GLO)
                 ix=(i==0?CODE_L1P-1:CODE_L2P-1);
+            else if (sys==SYS_GAL)
+                ix=(i==0?CODE_L1X-1:CODE_L7X-1);
             P[i]+=(nav->ssr[obs->sat-1].cbias[obs->code[i]-1]-nav->ssr[obs->sat-1].cbias[ix]); /* ssr correction */
         }
         else {
@@ -426,7 +431,8 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
     }
     /* iono-free LC */
     *Lc=*Pc=0.0;
-    i=(sys&(SYS_GAL|SYS_SBS))?2:1; /* L1/L2 or L1/L5 */
+    i=(sys&(SYS_SBS))?2:1; /* always use L1/L5 for SBAS */
+    if (NFREQ>2&&P[1]==0.0) i=2; /* otherwise, if no L2, try L5 */
     if (lam[0]==0.0||lam[i]==0.0) return;
     
     C1= SQR(lam[i])/(SQR(lam[i])-SQR(lam[0]));
@@ -654,7 +660,8 @@ static void udiono_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
     for (i=0;i<n;i++) {
         j=II(obs[i].sat,&rtk->opt);
         if (rtk->x[j]==0.0) {
-            k=satsys(obs[i].sat,NULL)==SYS_GAL?2:1;
+            k=1;
+            if (NFREQ>2&&obs[i].P[1]==0.0) k=2; /* if no L2, try L5 */
             lam=nav->lam[obs[i].sat-1];
             if (obs[i].P[0]==0.0||obs[i].P[k]==0.0||lam[0]==0.0||lam[k]==0.0) {
                 continue;
@@ -733,7 +740,8 @@ static void udbias_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
             }
             else if (L[f]!=0.0&&P[f]!=0.0) {
                 slip[i]=rtk->ssat[sat-1].slip[f];
-                l=satsys(sat,NULL)==SYS_GAL?2:1;
+                l=1;
+                if (NFREQ>2&&obs[i].P[l]==0.0) l=2; /* if no L2, try L5 */
                 lam=nav->lam[sat-1];
                 if (obs[i].P[0]==0.0||obs[i].P[l]==0.0||lam[0]==0.0||lam[l]==0.0||lam[f]==0.0)
                     ion=0;

@@ -416,7 +416,7 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
     sol_t sol={{0}},oldsol={{0}},newsol={{0}};
     obsd_t obs[MAXOBS*2]; /* for rover and base */
     double rb[3]={0};
-    int i,nobs,n,solstatic,num=0,pri[]={0,1,2,3,4,5,1,6};
+    int i,nobs,n,solstatic,num=0,pri[]={6,1,2,3,4,5,1,6};
     
     trace(3,"procpos : mode=%d\n",mode);
     
@@ -756,6 +756,7 @@ static int readobsnav(gtime_t ts, gtime_t te, double ti, char **infile,
     obs->data=NULL; obs->n =obs->nmax =0;
     nav->eph =NULL; nav->n =nav->nmax =0;
     nav->geph=NULL; nav->ng=nav->ngmax=0;
+    /* free(nav->seph); */ /* is this needed to avoid memory leak??? */
     nav->seph=NULL; nav->ns=nav->nsmax=0;
     nepoch=0;
     
@@ -789,7 +790,16 @@ static int readobsnav(gtime_t ts, gtime_t te, double ti, char **infile,
     
     /* delete duplicated ephemeris */
     uniqnav(nav);
-    
+
+    /* Set lam[1] as flag for satellite PCV antenna offset calc to indicate
+       using Galileo E5a or E5b  */
+    if (prcopt->nf>2) {       /* if L1+L2+L5 solution */
+        for (i=0;i<MAXSAT;i++) {
+            /* set Galileo lam[1]=0 which will force offset calc to use lam[2] (E5a) */
+            if (satsys(i+1,NULL)==SYS_GAL) nav->lam[i][1]=0;
+        }
+    }
+
     /* set time span for progress display */
     if (ts.time==0||te.time==0) {
         for (i=0;   i<obs->n;i++) if (obs->data[i].rcv==1) break;
@@ -1219,9 +1229,9 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
         free(solb);
         free(rbf);
         free(rbb);
-        rtkfree(&rtk);
     }
-    /* free obs and nav data */
+    /* free rtk, obs and nav data */
+    rtkfree(&rtk);
     freeobsnav(&obss,&navs);
     
     return aborts?1:0;
@@ -1459,7 +1469,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
             
             if (stat==1) break;
         }
-        for (i=0;i<MAXINFILE;i++) free(ifile[i]);
+        for (i=0;i<n&&i<MAXINFILE;i++) free(ifile[i]);
     }
     else if (ts.time!=0) {
         for (i=0;i<n&&i<MAXINFILE;i++) {

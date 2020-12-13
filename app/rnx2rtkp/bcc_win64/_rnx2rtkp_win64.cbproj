@@ -68,7 +68,7 @@
         <ILINK_LinkwithMidas>false</ILINK_LinkwithMidas>
         <ILINK_LinkwithSQL>false</ILINK_LinkwithSQL>
         <ILINK_LinkwithRegEx>false</ILINK_LinkwithRegEx>
-        <BCC_Defines>WIN32;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=3;TRACE;$(BCC_Defines)</BCC_Defines>
+        <BCC_Defines>WIN32;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;TRACE;$(BCC_Defines)</BCC_Defines>
         <BCC_weff>false</BCC_weff>
         <Manifest_File>None</Manifest_File>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
@@ -91,8 +91,8 @@
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <OutputExt>exe</OutputExt>
         <BCC_UserSuppliedOptions> -tWM -tWC -wvoi</BCC_UserSuppliedOptions>
-        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(TASM_Defines)</TASM_Defines>
-        <BRCC_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(BRCC_Defines)</BRCC_Defines>
+        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;TRACE;$(TASM_Defines)</TASM_Defines>
+        <BRCC_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;TRACE;$(BRCC_Defines)</BRCC_Defines>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Debugger_UseLauncher>true</Debugger_UseLauncher>
@@ -100,8 +100,8 @@
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
-        <BRCC_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(BRCC_Defines)</BRCC_Defines>
-        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(TASM_Defines)</TASM_Defines>
+        <BRCC_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;TRACE;$(BRCC_Defines)</BRCC_Defines>
+        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;TRACE;$(TASM_Defines)</TASM_Defines>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
         <DCC_AdditionalSwitches> -V</DCC_AdditionalSwitches>
