@@ -13,7 +13,9 @@ from pyproj import Proj, transform
 from math import radians, sin, cos, tan, atan, hypot, degrees, atan2, sqrt, pi
 from datetime import datetime, timedelta
 from socket import error as SocketError
-import errno,subprocess,os,time,sys,configparser,io,shlex,time,getopt,argparse,textwrap,socket,math,pyproj,csv,json
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
+import errno,subprocess,os,time,sys,configparser,io,shlex,time,getopt,argparse,textwrap,socket,math,pyproj,csv,json,asyncio,dateparser,pandas as pd
 
 # Global Variables
 devnull = open(os.devnull, "wb")
@@ -45,18 +47,6 @@ def stop_server():
     if pid: 
         os.system("kill " + str(pid))
         time.sleep(5)
-    
-def netcat(hostname, port):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((hostname, port))
-    s.shutdown(socket.SHUT_WR)
-    while 1:
-        data = s.recv(1024)
-        if data == "":
-            break
-        print("Received:", repr(data))
-    print("Connection closed.")
-    s.close()
 
 def chkproj():
     x_in = 4138451.590 
@@ -66,10 +56,10 @@ def chkproj():
     x_out, y_out, z_out = pyproj.transform(input_proj, output_proj, x_in, y_in, z_in)
     print(x_out, y_out, z_out)
 
-def ecef2UTM(x,y,z):
 # NOTE based on:
 #      You, Rey-Jer. (2000). Transformation of Cartesian to Geodetic Coordinates without Iterations.
 #      Journal of Surveying Engineering. doi: 10.1061/(ASCE)0733-9453
+def ecef2UTM(x,y,z):
     r = sqrt(x ** 2 + y ** 2 + z ** 2)
     E = sqrt(6.378137E+6 ** 2 - 6.356752314E+6 ** 2)
 
@@ -123,7 +113,14 @@ def ecef2UTM(x,y,z):
 
     return str(ZN)+ZL
 
-# Command Line Parser
+# NOTE Readline from RTK TCP server
+async def tcp_echo_client(*server_address):
+    reader, writer = await asyncio.open_connection(*server_address)  
+    data = await reader.readline()
+    writer.close()
+    return data.decode()
+
+# NOTE START Command line parsing
 parser = argparse.ArgumentParser(
 formatter_class=argparse.RawDescriptionHelpFormatter,description=textwrap.dedent('''
 Python script to control RTK Solution Server
@@ -165,9 +162,7 @@ if not os.path.isfile(args.obs):
         writerB.writeheader()
         csvfileB.close()
 
-# NOTE Main processing loop -> netcat('localhost',5005)
-
-# Laufen Stream-Server + GPS-Dienst bereits?
+# NOTE Stream-Server + GPS-Service are ready?
 pid = os.popen("pidof str2str").read()
 if not pid: 
   print("ERROR: Stream Server not running!")
@@ -180,26 +175,28 @@ if not pid:
 stop_server()
 Start_server()
 
-# NOTE Streaming setup
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(('localhost', 5005))
-s.shutdown(socket.SHUT_WR)
+# NOTE RTK receiver streaming socket
+rtksvr_address = ('localhost', 5005)
 
-# NOTE Dauerschleife
+# NOTE Control Loop
+print("INFO: Enter Control Loop ...")
+CycleTime=datetime.now()
 while True:
-    # NOTE RTK Status
-    data = s.recv(1024)
-    if data == "":
-        break
+    try:
+        data = asyncio.run(tcp_echo_client(*rtksvr_address))
+    except:
+        data = ""
+        print("INFO: Reconnect")
+    time.sleep(.5)
     DArr = repr(data).split(";")
-    # [0]	    [1]	            [2]           [3]           [4] [5]  [6]      [7]      [8]     [9]      [10]     [11]    [12]    [13]
-    #%  GPST           x-ecef(m)      y-ecef(m)      z-ecef(m)   Q  ns   sdx(m)   sdy(m)   sdz(m)  sdxy(m)  sdyz(m)  sdzx(m) age(s)  ratio
+    #    [0]	    [1]	            [2]           [3]           [4] [5]  [6]      [7]      [8]     [9]      [10]     [11]    [12]    [13]
+    # %  GPST           x-ecef(m)      y-ecef(m)      z-ecef(m)   Q  ns   sdx(m)   sdy(m)   sdz(m)  sdxy(m)  sdyz(m)  sdzx(m) age(s)  ratio
     # 2106 601309   4138451.7897    640011.7954   4795039.4922   2   5   3.7878   1.7982   3.4559   0.7144   0.7729   3.0019   0.99    0.0
     # print "Received:", DArr[1], DArr[2], DArr[3]
     sdx, sdy, sdz = float(DArr[6]), float(DArr[7]), float(DArr[8])
     R95 = 2.0789 * (62 * sdy + 56 * sdx)
     PDOP = sqrt( sdx ** 2 + sdy ** 2 + sdz ** 2)						# print("R95=%.3f PDOP=%.4f"%(R95,PDOP))    
-    x_out, y_out, z_out = pyproj.transform(input_proj, output_proj, DArr[1], DArr[2], DArr[3])	#print x_out, y_out, z_out
+    x_out, y_out, z_out = pyproj.transform(input_proj, output_proj, DArr[1], DArr[2], DArr[3])	# print x_out, y_out, z_out
     if int(DArr[4]) == 1:
         wrj=True
         if os.path.isfile(PJSON): 		# Datei vorhanden?
@@ -248,33 +245,21 @@ while True:
             if retrycnt == 10:
                 print("ERROR: Gave up after 10 times")
                 finished=True
-
-csvfile.close()
-s.close()
+    # NOTE Garbage Collection every 60 Minutes
+    delta=datetime.now()-CycleTime
+    if delta.seconds < 36: #00:
+        time.sleep(0.8)
+    else:
+        print("INFO: RTK Data Garbage collection.")
+        CycleTime=datetime.now()
+        df=pd.read_csv(args.rtk,parse_dates=['Timestamp'],date_parser=lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+        LastRec=df['Timestamp'].iloc[-1] 
+        CutOff = LastRec + relativedelta( hours = -24 )
+        df=df.loc[df['Timestamp'] >= CutOff]
+        df.to_csv(args.rtk, index=False)
 sys.exit(0)
 
-
-try:
-    response = urllib.request.urlopen(request).read()
-except SocketError as e:
-    if e.errno != errno.ECONNRESET:
-        raise # Not error we are looking for
-    pass # Handle error here.
-
-# ECHO SERVER
-import socket
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(('localhost', 50000))
-s.listen(1)
-conn, addr = s.accept()
-while 1:
-    data = conn.recv(1024)
-    if not data:
-        break
-    conn.sendall(data)
-conn.close()
-
-############################################################
+##########################
 # Jonn Person's interpretation of dilution of precision values
 # DOP	Rating	Description
 # 1	Ideal	This is the highest possible confidence level to be used for applications demanding the highest possible precision at all times.
@@ -284,3 +269,4 @@ conn.close()
 # 9-20	Fair	Represents a low confidence level. Positional measurements should be discarded or used only to indicate a very rough estimate of the current location.
 # 21-50	Poor	At this level, measurements are inaccurate by as much as half a football field and should be discarded.
 #########################
+
