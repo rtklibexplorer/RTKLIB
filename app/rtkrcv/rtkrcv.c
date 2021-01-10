@@ -35,6 +35,7 @@
 *           2016/09/19 1.20 support multiple remote console connections
 *                           add option -w
 *           2017/09/01 1.21 add command ssr
+*	    2021/01/02 1.22 add system clock reporting and baseline calculation
 *-----------------------------------------------------------------------------*/
 #include <stdlib.h>
 #include <signal.h>
@@ -51,6 +52,8 @@
 #include <errno.h>
 #include "rtklib.h"
 #include "vt.h"
+/* Externally Defined Routines */
+extern double vincenty(double lat1, double lon1, double lat2, double lon2);
 
 #define PRGNAME     "rtkrcv"            /* program name */
 #define CMDPROMPT   "rtkrcv> "          /* command prompt */
@@ -623,6 +626,61 @@ static void prsolution(vt_t *vt, const sol_t *sol, const double *rb)
     }
     vt_printf(vt,"\n");
 }
+
+/* NOTE Baseline calculation using Vincenty's formulae
+        Calculated by vincenty function:     28279.084(801)m
+        Verified by using online calculator: 28279.085     m
+    
+        double lat1=49.05895591 * M_PI/180.0;
+        double lon1=8.79114214 * M_PI/180.0;;
+        double lat2=49.01124701 * M_PI/180.0;;
+        double lon2=8.41126261 * M_PI/180.0;;
+        vbl=vinct(lat1,lon1,lat2,lon2);				*/
+double vincenty_o(double lat1, double lon1, double lat2, double lon2)
+{
+    double L, lambda, lambda0, cos_2sigma_m, cos2_alpha, sigma, t1, t2, sin_sigma, cos_sigma, sin_alpha, sin2_alpha;
+    double C, squares, braces, u2, A, B, z1, z2, z3, z4, DELTA_sigma, distance;
+    static const double b = (1 - FE_WGS84) * RE_WGS84;	
+
+    double U1 = atan((1.0 - FE_WGS84) * tan(lat1));	
+    double U2 = atan((1.0 - FE_WGS84) * tan(lat2));	
+  
+    lambda = L  = lon2 - lon1; 
+    do {
+        lambda0 = lambda;
+        t1 = cos(U2)*sin(lambda);
+        t2 = cos(U1)*sin(U2) - sin(U1)*cos(U2)*cos(lambda);
+        sin_sigma = sqrt(t1*t1 + t2*t2);
+        cos_sigma = sin(U1)*sin(U2) + cos(U1)*cos(U2)*cos(lambda);
+        sigma = atan2(sin_sigma, cos_sigma);
+        sin_alpha = cos(U1)*cos(U2)*sin(lambda)/sin(sigma);
+        sin2_alpha = sin_alpha * sin_alpha;
+        cos2_alpha = 1.0 - sin2_alpha;
+        cos_2sigma_m = cos(sigma) - 2.0*sin(U1)*sin(U2)/cos2_alpha;
+        C = (1.0/16.0) * FE_WGS84 * cos2_alpha * (4.0 + FE_WGS84 * (4.0 - 3.0*cos2_alpha));
+        squares = cos_2sigma_m + C * cos(sigma) * (-1.0 + 2.0 * cos_2sigma_m * cos_2sigma_m);
+        braces = sigma + C * sin(sigma) * squares;
+        lambda = L + (1.0 - C) * FE_WGS84 * sin_alpha * braces;
+    } while (fabs(lambda0 - lambda) > 1.0e-12);
+
+    u2 = cos2_alpha * (RE_WGS84 - b) * (RE_WGS84 + b) / (b*b);
+    A = 1.0 + (u2 / 16384.0) * (
+        4096.0 + u2 * (-768.0 + u2*(320.0 - 175.0*u2))
+        );
+    B = (u2 / 1024.0) * (
+        256.0 + u2*(-128.0 + u2*(74.0 - 47.0*u2))
+        );
+    z1 = cos(sigma)*(-1.0 + 2.0*cos_2sigma_m*cos_2sigma_m);
+    z2 = -3.0 + 4.0 * sin(sigma)*sin(sigma);
+    z3 = -3.0 + 4.0 * cos_2sigma_m * cos_2sigma_m;
+    z4 = (B/6.0) * cos_2sigma_m * z2 * z3;
+    DELTA_sigma = B * sin(sigma) * (
+        cos_2sigma_m + (B/4.0) * (z1 - z4)
+        );
+        distance = b * A * (sigma - DELTA_sigma);
+    return distance;
+}
+
 /* print status --------------------------------------------------------------*/
 static void prstatus(vt_t *vt)
 {
@@ -641,6 +699,9 @@ static void prstatus(vt_t *vt)
     char tstr[64],tmstr[64],s[1024],*p;
     double runtime,rt[3]={0},dop[4]={0},rr[3],bl1=0.0,bl2=0.0;
     double azel[MAXSAT*2],pos[3],vel[3],*del;
+    gtime_t sysclock;
+    char sc_str[64];
+    double toff, vbl, posb[3];
     
     trace(4,"prstatus:\n");
     
@@ -718,14 +779,24 @@ static void prstatus(vt_t *vt)
         }
         vt_printf(vt,"%-15s %-9s: %s\n","# of rtcm messages",type[i],s);
     }
-    vt_printf(vt,"%-28s: %s\n","solution status",sol[rtkstat]);
+    vt_printf(vt,"%-28s: %s","solution status",sol[rtkstat]);
+    if (rtkstat==1) vt_printf(vt," (%ds)",rtk.nfix);
     time2str(rtk.sol.time,tstr,9);
-    vt_printf(vt,"%-28s: %s\n","time of receiver clock rover",rtk.sol.time.time?tstr:"-");
+    vt_printf(vt,"\n%-28s: %s\n","time of receiver clock rover",rtk.sol.time.time?tstr:"-");
+    vt_printf(vt,"%-28s: %s","chrony update delta","");
+    if (rtk.chrony_delta < -99) { vt_printf(vt,"INACTIVE\n"); }
+    else { vt_printf(vt,"%+.9fs\n",rtk.chrony_delta); }
+/*    sysclock=utc2gpst(timeget()); 
+    time2str(sysclock,sc_str,9);
+    vt_printf(vt,"%-28s: %s\n","System clock",sc_str);
+    toff=timediff(sysclock,rtk.sol.time);
+    vt_printf(vt,"%-28s: %.3f\n","TOffset",toff); */
+    
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f,%.3f\n","time sys offset (ns)",rtk.sol.dtr[1]*1e9,
               rtk.sol.dtr[2]*1e9,rtk.sol.dtr[3]*1e9,rtk.sol.dtr[4]*1e9);
     vt_printf(vt,"%-28s: %.3f\n","solution interval (s)",rtk.tt);
     vt_printf(vt,"%-28s: %.3f\n","age of differential (s)",rtk.sol.age);
-    vt_printf(vt,"%-28s: %.3f\n","ratio for ar validation",rtk.sol.ratio);
+    vt_printf(vt,"%-28s: %.2f (%.1f%%)\n","ar validation ratio (Fα=95%)",rtk.sol.ratio,rtk.sol.ratio_pr);
     vt_printf(vt,"%-28s: %d\n","# of satellites rover",nsat0);
     vt_printf(vt,"%-28s: %d\n","# of satellites base",nsat1);
     vt_printf(vt,"%-28s: %d\n","# of valid satellites",rtk.sol.ns);
@@ -770,8 +841,17 @@ static void prstatus(vt_t *vt)
         for (i=0;i<3;i++) rr[i]=rtk.xa[i]-rtk.rb[i];
         bl2=norm(rr,3);
     }
+
+    /* Calculate baseline using Vincenty's formula */
+    if (norm(rtk.sol.rr,3)>0.0) ecef2pos(rtk.sol.rr,pos); else pos[0]=pos[1]=pos[2]=0.0;
+    if (norm(rtk.rb,3)>0.0) ecef2pos(rtk.rb,posb); else posb[0]=posb[1]=posb[2]=0.0;
+    if (norm(rtk.sol.rr,3)>0.0 && norm(rtk.rb,3)>0.0) {
+        vbl=vincenty(pos[0],pos[1],posb[0],posb[1]);
+        vt_printf(vt,"%-28s: %.3f\n","Vincenty's Distance (m)",vbl);
+    }
     vt_printf(vt,"%-28s: %.3f\n","baseline length float (m)",bl1);
     vt_printf(vt,"%-28s: %.3f\n","baseline length fixed (m)",bl2);
+
     vt_printf(vt,"%-28s: %s\n","last time mark",tmcount ? tmstr : "-");
     vt_printf(vt,"%-28s: %d\n","receiver time mark count",rcvcount);
     vt_printf(vt,"%-28s: %d\n","rtklib time mark count",tmcount);
@@ -1650,7 +1730,7 @@ int main(int argc, char **argv)
         tracelevel(trace);
     }
     /* initialize rtk server and monitor port */
-    rtksvrinit(&svr);
+    rtksvrinit(&svr); svr.rtk.chrony_delta = -100;
     strinit(&moni);
     
     /* load options file */

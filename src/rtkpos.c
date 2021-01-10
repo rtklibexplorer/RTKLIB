@@ -41,9 +41,14 @@
 *           2016/08/20 1.22 fix bug on ddres() function
 *           2018/10/10 1.13 support api change of satexclude()
 *           2018/12/15 1.14 disable ambiguity resolution for gps-qzss
+*	    2021/01/02 1.30 add chrony support
+*			    add baseline calculation acc. to Vincenty formula
+*			    add fixed F-Ratio check of residual variances
 *-----------------------------------------------------------------------------*/
 #include <stdarg.h>
 #include "rtklib.h"
+#include "chrony.h"     /* 2021-01-05 Added Chrony Integration by S. Juhl      */
+#include "stat.h"	/* 2021-01-08 Added Statistical Calculation by S. Juhl */
 
 /* constants/macros ----------------------------------------------------------*/
 
@@ -64,6 +69,11 @@
 
 #define TTOL_MOVEB  (1.0+2*DTTOL)
                              /* time sync tolerance for moving-baseline (s) */
+
+#define M_PI acos(-1.0)
+#define MPI 3.14159265358979323846264338327950288
+/* #define TO_RAD (3.1415926536 / 180)*/
+#define TO_RAD (MPI / 180)
 
 /* number of parameters (pos,ionos,tropos,hw-bias,phase-bias,real,estimated) */
 #define NF(opt)     ((opt)->ionoopt==IONOOPT_IFLC?1:(opt)->nf)
@@ -470,8 +480,66 @@ static double baseline(const double *ru, const double *rb, double *dr)
 {
     int i;
     for (i=0;i<3;i++) dr[i]=ru[i]-rb[i];
-    return norm(dr,3);
+    return norm(dr,3); 	/* NOTE Approximate precision ~1m */
 }
+
+/* NOTE Baseline calculation using Vincenty's formulae, precision ~1mm
+        Calculated by vincenty function:     28279.084(801)m
+        Verified by using online calculator: 28279.085     m
+    
+        double lat1=49.05895591 * M_PI/180.0;
+        double lon1=8.79114214 * M_PI/180.0;;
+        double lat2=49.01124701 * M_PI/180.0;;
+        double lon2=8.41126261 * M_PI/180.0;;
+        vbl=vinct(lat1,lon1,lat2,lon2);				*/
+double vincenty(double lat1, double lon1, double lat2, double lon2)
+{
+    double L, lambda, lambda0, cos_2sigma_m, cos2_alpha, sigma, t1, t2, sin_sigma, cos_sigma, sin_alpha, sin2_alpha;
+    double C, squares, braces, u2, A, B, z1, z2, z3, z4, DELTA_sigma, distance;
+    
+    static const double b = (1 - FE_WGS84) * RE_WGS84;	
+
+    double U1 = atan((1.0 - FE_WGS84) * tan(lat1));	
+    double U2 = atan((1.0 - FE_WGS84) * tan(lat2));	
+  
+    lambda = L  = lon2 - lon1; 
+    do {
+        lambda0 = lambda;
+        t1 = cos(U2)*sin(lambda);
+        t2 = cos(U1)*sin(U2) - sin(U1)*cos(U2)*cos(lambda);
+        sin_sigma = sqrt(t1*t1 + t2*t2);
+        cos_sigma = sin(U1)*sin(U2) + cos(U1)*cos(U2)*cos(lambda);
+        sigma = atan2(sin_sigma, cos_sigma);
+        sin_alpha = cos(U1)*cos(U2)*sin(lambda)/sin(sigma);
+        sin2_alpha = sin_alpha * sin_alpha;
+        cos2_alpha = 1.0 - sin2_alpha;
+        cos_2sigma_m = cos(sigma) - 2.0*sin(U1)*sin(U2)/cos2_alpha;
+        C = (1.0/16.0) * FE_WGS84 * cos2_alpha * (4.0 + FE_WGS84 * (4.0 - 3.0*cos2_alpha));
+        squares = cos_2sigma_m + C * cos(sigma) * (-1.0 + 2.0 * cos_2sigma_m * cos_2sigma_m);
+        braces = sigma + C * sin(sigma) * squares;
+        lambda = L + (1.0 - C) * FE_WGS84 * sin_alpha * braces;
+    } while (fabs(lambda0 - lambda) > 1.0e-12);
+
+    u2 = cos2_alpha * (RE_WGS84 - b) * (RE_WGS84 + b) / (b*b);
+    A = 1.0 + (u2 / 16384.0) * (
+        4096.0 + u2 * (-768.0 + u2*(320.0 - 175.0*u2))
+        );
+    B = (u2 / 1024.0) * (
+        256.0 + u2*(-128.0 + u2*(74.0 - 47.0*u2))
+        );
+    z1 = cos(sigma)*(-1.0 + 2.0*cos_2sigma_m*cos_2sigma_m);
+    z2 = -3.0 + 4.0 * sin(sigma)*sin(sigma);
+    z3 = -3.0 + 4.0 * cos_2sigma_m * cos_2sigma_m;
+    z4 = (B/6.0) * cos_2sigma_m * z2 * z3;
+    DELTA_sigma = B * sin(sigma) * (
+        cos_2sigma_m + (B/4.0) * (z1 - z4)
+        );
+        distance = b * A * (sigma - DELTA_sigma);
+    return distance;
+}
+
+
+
 /* initialize state and covariance -------------------------------------------*/
 static void initx(rtk_t *rtk, double xi, double var, int i)
 {
@@ -920,6 +988,7 @@ static void udstate(rtk_t *rtk, const obsd_t *obs, const int *sat,
                     const int *iu, const int *ir, int ns, const nav_t *nav)
 {
     double tt=rtk->tt,bl,dr[3];
+    double posu[3],posr[3];
     
     trace(3,"udstate : ns=%d\n",ns);
     
@@ -932,6 +1001,11 @@ static void udstate(rtk_t *rtk, const obsd_t *obs, const int *sat,
          (rtk->opt.ionoopt == IONOOPT_STEC) ) 
     {
         bl=baseline(rtk->x,rtk->rb,dr);
+
+        /* translate ecef pos to geodetic pos */
+        ecef2pos(rtk->x,posu); ecef2pos(rtk->rb,posr);
+        bl=vincenty(posu[0],posu[1],posr[0],posr[1]);  
+        
         udion(rtk,tt,bl,sat,ns);
     }
     /* temporal update of tropospheric parameters */
@@ -1222,13 +1296,18 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
     double bl,dr[3],posu[3],posr[3],didxi=0.0,didxj=0.0,*im,icb,threshadj;
     double *tropr,*tropu,*dtdxr,*dtdxu,*Ri,*Rj,lami,lamj,fi,fj,df,*Hi=NULL;
     int i,j,ii,jj,k,m,f,frq,code,nv=0,nb[NFREQ*4*2+2]={0},b=0,sysi,sysj,nf=NF(opt);
+    int iii,jjj,sysii;
+    gtime_t soltime;
     
     trace(3,"ddres   : dt=%.1f nx=%d ns=%d\n",dt,rtk->nx,ns);
     
     /* bl=distance from base to rover, dr=x,y,z components */
-    bl=baseline(x,rtk->rb,dr);
+    /* NOTE DONE for (i=0;i<3;i++) { printf("x[%d]=%f rb[%d]=%f dr[%d]=%f\n",i,x[i],i,rtk->rb[i],i,dr[i]); } */
+    bl=baseline(x,rtk->rb,dr);  /* NOTE DONE  printf("#DBG1: bl=%f\n",bl); */
+
     /* translate ecef pos to geodetic pos */
     ecef2pos(x,posu); ecef2pos(rtk->rb,posr);
+    bl=vincenty(posu[0],posu[1],posr[0],posr[1]); 	/* NOTE DONE printf("bl=%.3f vl=%.3f d=%.3f\n",bl,vl,fabs(bl-vl)); */
     
     Ri=mat(ns*nf*2+2,1); Rj=mat(ns*nf*2+2,1); im=mat(ns,1);
     tropu=mat(ns,1); tropr=mat(ns,1); dtdxu=mat(ns,3); dtdxr=mat(ns,3);
@@ -1260,14 +1339,28 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
             frq=f%nf;code=f<nf?0:1;
 
             /* find reference satellite with highest elevation, set to i */
-            for (i=-1,j=0;j<ns;j++) {
+            for (i=-1,j=0;j<ns;j++) {					/* NOTE DONE printf("#DBG2: ns=%d i=%d j=%d el=%.2f snr=%.2f\n",ns,i,j,R2D*azel[1+iu[i]*2],0.25*obs[iu[i]].SNR[frq]); */
                 sysi=rtk->ssat[sat[j]-1].sys;
                 if (!test_sys(sysi,m) || sysi==SYS_SBS) continue;
                 if (!validobs(iu[j],ir[j],f,nf,y)) continue;
-                if (i<0||azel[1+iu[j]*2]>=azel[1+iu[i]*2]) i=j;
+                if (i<0||azel[1+iu[j]*2]>=azel[1+iu[i]*2]) i=j;		
             }
             if (i<0) continue;
-        
+                                                                        /* NOTE DONE printf("#DBG3a: i=%d el_max=%.2f snr=    %.2f\n",i,R2D*azel[1+iu[i]*2],0.25*obs[iu[i]].SNR[frq]); */
+
+            /* find reference satellite with best signal-to-noise ratio, set to iii */
+            for (iii=-1,jjj=0;jjj<ns;jjj++) {				/* NOTE DONE printf("#DBG2: ns=%d i=%d j=%d el=%.2f snr=%.2f\n",ns,iii,jjj,R2D*azel[1+iu[iii]*2],0.25*obs[iu[iii]].SNR[frq]); */
+                sysii=rtk->ssat[sat[jjj]-1].sys;
+                if (!test_sys(sysii,m) || sysii==SYS_SBS) continue;
+                if (!validobs(iu[jjj],ir[jjj],f,nf,y)) continue;
+                if (iii<0||obs[iu[jjj]].SNR[frq]>=obs[iu[iii]].SNR[frq]) iii=jjj;
+            }
+            if (iii<0) continue;
+                                                                        /* NOTE DONE printf("#DBG3b: i=%d el=    %.2f snr_max=%.2f\n",iii,R2D*azel[1+iu[iii]*2],0.25*obs[iu[iii]].SNR[frq]); */
+            /* Update chronyd with timestamp */
+            soltime=gpst2utc(obs[iu[iii]].time);
+            upd_chrony(soltime,0,0,rtk);                               	/* reference link to chrony.c functions                  */
+            
             /* calculate double differences of residuals (code/phase) for each sat */
             for (j=0;j<ns;j++) {
                 if (i==j) continue;  /* skip ref sat */
@@ -1333,7 +1426,6 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                         }
                     }
                 }
-        
     
                 /* adjust double-difference for glonass sats */
                 if (sysi==SYS_GLO&&sysj==SYS_GLO) {
@@ -1410,6 +1502,7 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                 vflg[nv++]=(sat[i]<<16)|(sat[j]<<8)|((code?1:0)<<4)|(frq);
                 nb[b]++;
             }
+            /* NOTE DONE printf("DBG4: i=%i el=%.1f snr=%.2f b=%d\n",i,R2D*azel[1+iu[i]*2], 0.25 * rtk->ssat[sat[i]-1].snr_rover[frq],b); */
 
         #if 0 /* residuals referenced to reference satellite (2.4.2 p11) */
             /* restore single-differenced residuals assuming sum equal zero */
@@ -1690,7 +1783,11 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     int i,j,ny,nb,info,nx=rtk->nx,na=rtk->na;
     double *D,*DP,*y,*Qy,*b,*db,*Qb,*Qab,*QQ,s[2],var=0;
     double QQb[MAXSAT];
-    
+    double Fcv,mqr[2],FSc;
+    int df;
+    /* NOTE http://www.mymathlib.com/functions/probability/students_t_distribution.html 
+            https://matheguru.com/stochastik/t-test.html*/
+
     trace(3,"resamb_LAMBDA : nx=%d\n",nx);
     
     rtk->sol.ratio=0.0;
@@ -1717,6 +1814,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
         free(D);
         return -1; /* flag abort */
     }
+
     rtk->nb_ar=nb;
     /* nx=# of float states, na=# of fixed states, nb=# of double-diff phase biases */
     ny=na+nb; y=mat(ny,1); Qy=mat(ny,ny); DP=mat(ny,nx);
@@ -1741,18 +1839,57 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     
     /* lambda/mlambda integer least-square estimation */
     /* return best integer solutions */
-    /* b are best integer solutions, s are residuals */
+    /* nb   I number of float parameters
+       2    I number of fixed solutions to be calculated
+       y+na I float parameters (n x 1) (double-diff phase biases)
+       Qb   I covariance matrix of float parameters (n x n)
+       b    O are best integer (fixed) solutions, 
+       s    O are residuals (sum of squared residulas of fixed solutions (1 x m)) */
     if (!(info=lambda(nb,2,y+na,Qb,b,s))) {
         
         trace(3,"N(1)=     "); tracemat(3,b   ,1,nb,7,2);
         trace(3,"N(2)=     "); tracemat(3,b+nb,1,nb,7,2);
-        
         rtk->sol.ratio=s[0]>0?(float)(s[1]/s[0]):0.0f;
         if (rtk->sol.ratio>999.9) rtk->sol.ratio=999.9f;
+        /* NOTE THE GNSS AMBIGUITY RATIO-TEST REVISITED: A BETTER WAY OF USING IT, Survey Review, 41, 312 pp. 138-151 (April 2009) P.J.G. Teunissen and S. Verhagen
+                As to the distribution of the ratio-test, one can not make reference to the classical theory of hypothesis testing […] and assume that the quadratic
+                forms in the ratio of equation are Chi-squared distributed. This would be only true if a and a' were non-random, which they are not, since they are
+                both functions of the random float solution a'. Hence, it would be incorrect to determine the performance of the ratio-test on the basis of the
+                distributional results as provided by the classical theory of hypothesis testing […]
+                
+           NOTE State of the art is "Generalized Integer Aperture Estimation for Partial GNSS Ambiguity Fixing (GIAB),
+                see https://radionavlab.ae.utexas.edu/images/stories/files/papers/giabIAFocus_forDistribution.pdf for reference. */
+
+        df=(nb-1)*(2-1); 			/* Degrees of freedom for calculations based on Chi²- and F-distribution */
+        /* s[0,1]   = _weighted_ sum of the squared residuals 
+           / (n-2)  = Residualvarianz = MQR (Mittleres Quadrat der Residuen, n= Anzahl Residuen) -> Gilt eigentlich nur für ungewichtete Regression?!
+           sqr(MQR) = Standardfehler der Regression (-> Mittleres Quadrat der Residualvarianz) 
+                      => Ri is used for the squared norm of ambiguity residuals of the best (i = 1) and second-best (i = 2) integer solution,
+                      => the residuals should belong to a Student's t-distribution. Studentized residuals are useful in making a statistical
+                         test for an outlier when a particular residual appears to be excessively large.					*/
+        mqr[1]=s[1]/(nb-2); mqr[0]=s[0]/(nb-2);
+        FSc = mqr[1]/mqr[0];			/* F-Test: Quotient der Stichprobenvarianzen */
+        Fcv = F_cval(nb-1,df,0.95);		/* 	   Kritischer Wert der F-Verteilung 
+                                                   Die Nullhypothese (= Varianzen sind vergleichbar) wird abgelehnt für zu große Werte der Teststatistik. */
+        /* printf("DBG SJ: df=%d mqr1=%.2f mqr2=%.2f fsc=%.3f fcv=%.3f P=%.1f AR=%.1f dB=%.0f\n",df,mqr[1],mqr[0],FSc,Fcv,100*F_Distribution(FSc,nb-1,df),rtk->sol.ratio,fabs(b[1]-b[0])); */
+        
+        /* R[1]=sqrt(mqr[1]); R[0]=sqrt(mqr[0]);	/ Ri is used for the squared norm of ambiguity residuals of the best (i = 1) and second-best (i = 2) integer solution 
+           Ccv = X2_cval(df,0.95); printf("DBG Chi²: R1=%.4f R2=%.4f R1/R2=%.3f dR=%.2f ccv=%.3f P?=%.3f\n",R[1],R[0],R[1]/R[0],R[1]-R[0],Ccv,Chi_Square_Distribution(R[1]-R[0],df)); */
         
         rtk->sol.thres=(float)opt->thresar[0];
-        /* validation by popular ratio-test of residuals*/
-        if (s[0]<=0.0||s[1]/s[0]>=rtk->sol.thres) {
+        /* validation by popular ratio-test of residuals -> see E.7.18 (page 166) of RTKLIB manual:
+           "ratio of the weighted sum of the squared residuals by the second best solution to one by the best solution."
+           NOTE This test is referred to as the F-ratio test. choice of the critical value is not trivial. In practice,
+                it is often assumed that the test statistic has an F-distribution, so that the critical value can be based on
+                a choice of the level of significance. However, as mentioned in Teunissen (1998b) this is not CORRECT since
+                the variables of both runs are _NOT_ independent. Still, the test in (3.77) is often used and seems to work
+                satisfactorily.
+           NOTE Due to fact the GIAB method is far beyond my mathematical skills, only an F-Test could be implemented, which
+                is (statistically) more robust than a simple ratio check by a fixed value.					*/
+
+        rtk->sol.ratio_pr=100*F_Distribution(FSc,nb-1,df);   
+        if (s[0]<=0.0||F_Distribution(FSc,nb-1,df)>0.85) {
+        /* if (s[0]<=0.0||s[1]/s[0]>=rtk->sol.thres) { */
             
             /* init non phase-bias states and covariances with float solution values */
             for (i=0;i<na;i++) {
@@ -1785,8 +1922,10 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
             else nb=0;
         }
         else { /* validation failed */
-            errmsg(rtk,"ambiguity validation failed (nb=%d ratio=%.2f thresh=%.2f s=%.2f/%.2f)\n",
-                   nb,s[1]/s[0],rtk->sol.thres,s[0],s[1]);
+/*            errmsg(rtk,"ambiguity validation failed (nb=%d ratio=%.2f thresh=%.2f s=%.2f/%.2f)\n",
+                   nb,s[1]/s[0],rtk->sol.thres,s[0],s[1]);*/
+            errmsg(rtk,"ambiguity validation failed (nb=%d ratio=%.1f thresh=%.1f%% mqr=%.2f/%.2f)\n",
+                   nb,rtk->sol.ratio_pr,(float)85,mqr[0],mqr[1]);
             nb=0;
         }
     }
@@ -2012,6 +2151,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
         /* snr of base and rover receiver */
         rtk->ssat[sat[i]-1].snr_rover[j]=obs[iu[i]].SNR[j];
         rtk->ssat[sat[i]-1].snr_base[j] =obs[ir[i]].SNR[j]; 
+/* NOTE        printf("DBG6: i=%d j=%d snr=%.2f el=%.2f\n",i,j,0.25*obs[iu[i]].SNR[j],R2D*azel[1+iu[i]*2]); */
     }
     
     /* initialize Pp,xa to zero, xp to rtk->x */
@@ -2044,6 +2184,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
             stat=SOLQ_NONE;
             break;
         }
+
         /* calculate double-differenced residuals and create state matrix from sat angles 
                 O rtk->ssat[i].resp[j] = residual pseudorange error
                 O rtk->ssat[i].resc[j] = residual carrier phase error
@@ -2061,6 +2202,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
             stat=SOLQ_NONE;
             break;
         }
+        
         /* kalman filter measurement update, updates x,y,z,sat phase biases, etc
                 K=P*H*(H'*P*H+R)^-1
                 xp=x+K*v
@@ -2073,6 +2215,8 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
         }
         trace(4,"x(%d)=",i+1); tracemat(4,xp,1,NR(opt),13,4);
     }
+
+
     /* calc zero diff residuals again after kalman filter update */
     if (stat!=SOLQ_NONE&&zdres(0,obs,nu,rs,dts,var,svh,nav,xp,opt,0,y,e,azel)) {
         
@@ -2098,6 +2242,8 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
         }
         else stat=SOLQ_NONE;
     }
+    /* NOTE TBD printf("#DBG7 rover=%d base=%d comsat=%d ns=%d nfix=%d nv=%d\n",nu,nr,ns,rtk->sol.ns,rtk->nfix,nv); */
+
     /* NOT SUPPORTED: resolve integer ambiguity by WL-NL */
     if (stat!=SOLQ_NONE&&rtk->opt.modear==ARMODE_WLNL) {
         

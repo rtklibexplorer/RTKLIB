@@ -22,7 +22,7 @@ rtkrcv     : rtkrcv.o vt.o rtkcmn.o rtksvr.o rtkpos.o geoid.o solution.o lambda.
 rtkrcv     : sbas.o stream.o rcvraw.o rtcm.o preceph.o options.o pntpos.o ppp.o ppp_ar.o
 rtkrcv     : novatel.o ublox.o swiftnav.o crescent.o skytraq.o gw10.o javad.o nvs.o binex.o
 rtkrcv     : rt17.o ephemeris.o rinex.o ionex.o rtcm2.o rtcm3.o rtcm3e.o qzslex.o sirf.o
-rtkrcv     : ppp_corr.o tides.o septentrio.o cmr.o tersus.o comnav.o
+rtkrcv     : ppp_corr.o tides.o septentrio.o cmr.o tersus.o comnav.o chrony.o stat.o
 
 rtkrcv.o   : ../rtkrcv.c
 	$(CC) -c $(CFLAGS) ../rtkrcv.c
@@ -106,6 +106,10 @@ comnav.o   : $(SRC)/rcv/comnav.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/comnav.c
 sirf.o     : $(SRC)/rcv/sirf.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/sirf.c
+chrony.o     : $(SRC)/chrony.c
+	$(CC) -c $(CFLAGS) -std=gnu99 $(SRC)/chrony.c
+stat.o     : $(SRC)/stat.c
+	$(CC) -c $(CFLAGS) -std=gnu99 $(SRC)/stat.c
 
 rtkrcv.o   : $(SRC)/rtklib.h ../vt.h
 rtkcmn.o   : $(SRC)/rtklib.h
@@ -145,7 +149,8 @@ qzslex.o   : $(SRC)/rtklib.h
 tides.o    : $(SRC)/rtklib.h
 ppp_corr.o : $(SRC)/rtklib.h
 sirf.o     : $(SRC)/rtklib.h
-
+chrony.o   : $(SRC)/chrony.h
+stat.o     : $(SRC)/stat.h
 
 install:
 	cp rtkrcv $(BINDIR)

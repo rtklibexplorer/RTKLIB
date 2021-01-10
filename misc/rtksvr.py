@@ -247,16 +247,23 @@ while True:
                 finished=True
     # NOTE Garbage Collection every 60 Minutes
     delta=datetime.now()-CycleTime
-    if delta.seconds < 36: #00:
+    if delta.seconds < 3600: 
         time.sleep(0.8)
     else:
         print("INFO: RTK Data Garbage collection.")
         CycleTime=datetime.now()
         df=pd.read_csv(args.rtk,parse_dates=['Timestamp'],date_parser=lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
         LastRec=df['Timestamp'].iloc[-1] 
-        CutOff = LastRec + relativedelta( hours = -24 )
+        CutOff = LastRec + relativedelta( hours = -25 )
         df=df.loc[df['Timestamp'] >= CutOff]
         df.to_csv(args.rtk, index=False)
+
+        df=pd.read_csv(args.obs,parse_dates=['Timestamp'],date_parser=lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+        LastRec=df['Timestamp'].iloc[-1] 
+        CutOff = LastRec + relativedelta( hours = -25 )
+        df=df.loc[df['Timestamp'] >= CutOff]
+        df.to_csv(args.obs, index=False)
+        
 sys.exit(0)
 
 ##########################

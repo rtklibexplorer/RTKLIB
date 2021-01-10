@@ -955,6 +955,7 @@ typedef struct {        /* solution type */
     unsigned char ns;   /* number of valid satellites */
     float age;          /* age of differential (s) */
     float ratio;        /* AR ratio factor for valiation */
+    float ratio_pr;	/* F-Check Probability */
     float prev_ratio1;   /* previous initial AR ratio factor for validation */
     float prev_ratio2;   /* previous final AR ratio factor for validation */
     float thres;        /* AR ratio threshold for valiation */
@@ -1254,7 +1255,7 @@ typedef struct {        /* RTK control/result type */
     int nfix;           /* number of continuous fixes of ambiguity */
     int excsat;         /* index of next satellite to be excluded for partial ambiguity resolution */
     int nb_ar;          /* number of ambiguities used for AR last epoch */
-	double com_bias;    /* phase bias common between all sats (used to be distributed to all sats */
+    double com_bias;    /* phase bias common between all sats (used to be distributed to all sats */
     char holdamb;       /* set if fix-and-hold has occurred at least once */
     ambc_t ambc[MAXSAT]; /* ambiguity control */
     ssat_t ssat[MAXSAT]; /* satellite status */
@@ -1262,6 +1263,7 @@ typedef struct {        /* RTK control/result type */
     char errbuf[MAXERRMSG]; /* error message buffer */
     prcopt_t opt;       /* processing options */
     int initial_mode;   /* initial positioning mode */
+    double chrony_delta;/* Chrony Socket status */
 } rtk_t;
 
 typedef struct half_cyc_tag {  /* half-cycle correction list type */

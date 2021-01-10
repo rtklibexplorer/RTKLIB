@@ -13,26 +13,32 @@
 *           -DCPUTIME_IN_GPST cputime operated in gpst
 *
 * references :
-*     [1] IS-GPS-200D, Navstar GPS Space Segment/Navigation User Interfaces,
-*         7 March, 2006
-*     [2] RTCA/DO-229C, Minimum operational performanc standards for global
-*     [3] M.Rothacher, R.Schmid, ANTEX: The Antenna Exchange Format Version 1.4,
-*         15 September, 2010
-*     [4] A.Gelb ed., Applied Optimal Estimation, The M.I.T Press, 1974
-*     [5] A.E.Niell, Global mapping functions for the atmosphere delay at radio
-*         wavelengths, Jounal of geophysical research, 1996
-*     [6] W.Gurtner and L.Estey, RINEX The Receiver Independent Exchange Format
-*         Version 3.00, November 28, 2007
-*     [7] J.Kouba, A Guide to using International GNSS Service (IGS) products,
-*         May 2009
-*     [8] China Satellite Navigation Office, BeiDou navigation satellite system
-*         signal in space interface control document, open service signal B1I
-*         (version 1.0), Dec 2012
-*     [9] J.Boehm, A.Niell, P.Tregoning and H.Shuh, Global Mapping Function
-*         (GMF): A new empirical mapping function base on numerical weather
-*         model data, Geophysical Research Letters, 33, L07304, 2006
+*     [1]  IS-GPS-200D, Navstar GPS Space Segment/Navigation User Interfaces,
+*          7 March, 2006
+*     [2]  RTCA/DO-229C, Minimum operational performanc standards for global
+*     [3]  M.Rothacher, R.Schmid, ANTEX: The Antenna Exchange Format Version 1.4,
+*          15 September, 2010
+*     [4]  A.Gelb ed., Applied Optimal Estimation, The M.I.T Press, 1974
+*     [5]  A.E.Niell, Global mapping functions for the atmosphere delay at radio
+*          wavelengths, Jounal of geophysical research, 1996
+*     [6]  W.Gurtner and L.Estey, RINEX The Receiver Independent Exchange Format
+*          Version 3.00, November 28, 2007
+*     [7]  J.Kouba, A Guide to using International GNSS Service (IGS) products,
+*          May 2009
+*     [8]  China Satellite Navigation Office, BeiDou navigation satellite system
+*          signal in space interface control document, open service signal B1I
+*          (version 1.0), Dec 2012
+*     [9]  J.Boehm, A.Niell, P.Tregoning and H.Shuh, Global Mapping Function
+*          (GMF): A new empirical mapping function base on numerical weather
+*          model data, Geophysical Research Letters, 33, L07304, 2006
 *     [10] GLONASS/GPS/Galileo/Compass/SBAS NV08C receiver series BINR interface
-*         protocol specification ver.1.3, August, 2012
+*          protocol specification ver.1.3, August, 2012
+*     [11] Karl Osen. Accurate Conversion of Earth-Fixed Earth-Centered Coordinates
+*	   to Geodetic Coordinates. [Research Report] Norwegian University of
+*	   Science and Technology. 2017. ffhal-01704943v2f 
+*     [12] Thaddeus Vincenty. Direct and inverse solutions of geodesics on the
+*	   ellipsoid with application of nested equations. 
+*	   Survey Review XXII, 176, April 1975
 *
 * version : $Revision: 1.1 $ $Date: 2008/07/17 21:48:06 $
 * history : 2007/01/12 1.0 new
@@ -125,6 +131,7 @@
 *           2016/09/19 1.42 modify api deg2dms() to consider numerical error
 *           2017/04/11 1.43 delete EXPORT for global variables
 *           2018/10/10 1.44 modify api satexclude()
+*	    2021/01/02 1.45 improved accuracy of ecef2pos() and pos2ecef()
 *-----------------------------------------------------------------------------*/
 #define _POSIX_C_SOURCE 199506
 #include <stdarg.h>
@@ -1758,6 +1765,7 @@ extern double dms2deg(const double *dms)
     double sign=dms[0]<0.0?-1.0:1.0;
     return sign*(fabs(dms[0])+dms[1]/60.0+dms[2]/3600.0);
 }
+
 /* transform ecef to geodetic postion ------------------------------------------
 * transform ecef position to geodetic position
 * args   : double *r        I   ecef position {x,y,z} (m)
@@ -1765,10 +1773,11 @@ extern double dms2deg(const double *dms)
 * return : none
 * notes  : WGS84, ellipsoidal height
 *-----------------------------------------------------------------------------*/
-extern void ecef2pos(const double *r, double *pos)
+/* extern void ecef2pos(const double *r, double *pos)
 {
+    trace(4,"ecef2pos: rx=%.3f,ry=%.3f,rz=%.3f\n",r[0],r[1],r[2]);
     double e2=FE_WGS84*(2.0-FE_WGS84),r2=dot(r,r,2),z,zk,v=RE_WGS84,sinp;
-    
+     
     for (z=r[2],zk=0.0;fabs(z-zk)>=1E-4;) {
         zk=z;
         sinp=z/sqrt(r2+z*z);
@@ -1778,7 +1787,89 @@ extern void ecef2pos(const double *r, double *pos)
     pos[0]=r2>1E-12?atan(z/sqrt(r2)):(r[2]>0.0?PI/2.0:-PI/2.0);
     pos[1]=r2>1E-12?atan2(r[1],r[0]):0.0;
     pos[2]=sqrt(r2+z*z)-v;
+}*/
+extern void ecef2pos(const double *r, double *pos)
+{
+    const static double invaa 	 = +2.45817225764733181057e-0014; /* 1/(a^2) 		*/
+    const static double p1meedaa = +2.44171631847341700642e-0014; /* (1-(e^2))/(a^2)    */
+    const static double inv6 	 = +1.66666666666666666667e-0001; /* 1/6 		*/
+    const static double ll4 	 = +4.48147234524044602618e-0005; /* e^4 		*/
+    const static double ll 	 = +1.12036808631011150655e-0005; /* (e^4)/4 		*/
+    const static double Hmin 	 = +2.25010182030430273673e-0014; /* (e^12)/4 		*/
+    const static double inv3 	 = +3.33333333333333333333e-0001; /* 1/3 		*/
+    const static double p1mee 	 = +9.93305620009858682943e-0001; /* 1-(e^2) 		*/
+    const static double invcbrt2 = +7.93700525984099737380e-0001; /* 1/(2^(1/3)) 	*/
+    const static double l 	 = +3.34718999507065852867e-0003; /* (e^2)/2 		*/
+    double x, y, z;
+    double lat, lon, alt;
+    /* The variables below correspond to symbols used in the paper
+       "Accurate Conversion of Earth-Centered, Earth-Fixed Coordinates to Geodetic Coordinates" */
+    double beta, C, dFdt, dt, dw, dz, F, G, H, i, k, m, n, p, P, t, u, v, w;
+    /* Intermediate variables */
+    double j, g, da, t1, t2, t3, t4, t5, t6, t7;
+    double ww; 		/* w^2 		*/
+    double mpn; 	/* m+n 		*/
+    double tt; 		/* t^2 		*/
+    double ttt; 	/* t^3 		*/
+    double tttt; 	/* t^4 		*/
+    double zu; 		/* z * u 	*/
+    double wv; 		/* w * v 	*/
+    double invuv; 	/* 1 / (u * v) 	*/
+    x = r[0]; y = r[1]; z = r[2];
+    ww = x * x + y * y;
+    m = ww * invaa;
+    n = z * z * p1meedaa;
+    mpn = m + n;
+    p = inv6 * (mpn - ll4);
+    G = m * n * ll;
+    H = 2 * p * p * p + G;
+    if (H < Hmin) {  return;  }
+    C = pow(H + G + 2 * sqrt(H * G), inv3) * invcbrt2;
+    i = -ll - 0.5 * mpn;
+    P = p * p;
+    beta = inv3 * i - C - P / C;
+    k = ll * (ll - mpn);
+    /* Compute left part of t */
+    t1 = beta * beta - k;
+    t2 = sqrt(t1);
+    t3 = t2 - 0.5 * (beta + i);
+    t4 = sqrt(t3);
+    /* Compute right part of t */
+    t5 = 0.5 * (beta - i);
+    /* t5 may accidentally drop just below zero due to numeric turbulence
+       This only occurs at latitudes close to +- 45.3 degrees */
+    t5 = fabs(t5);
+    t6 = sqrt(t5);
+    t7 = (m < n) ? t6 : -t6;
+    /* Add left and right parts */
+    t = t4 + t7;
+    /* Use Newton-Raphson's method to compute t correction */
+    j = l * (m - n);
+    g = 2 * j;
+    tt = t * t;
+    ttt = tt * t;
+    tttt = tt * tt;
+    F = tttt + 2 * i * tt + g * t + k;
+    dFdt = 4 * ttt + 4 * i * t + g;
+    dt = -F / dFdt;
+    /* compute latitude (range -PI/2..PI/2) */
+    u = t + dt + l;
+    v = t + dt - l;
+    w = sqrt(ww);
+    zu = z * u;
+    wv = w * v;
+    lat = atan2(zu, wv);
+    /* compute altitude */
+    invuv = 1 / (u * v);
+    dw = w - wv * invuv;
+    dz = z - zu * p1mee * invuv;
+    da = sqrt(dw * dw + dz * dz);
+    alt = (u < 1) ? -da : da;
+    /* compute longitude (range -PI..PI)*/
+    lon = atan2(y, x);
+    pos[0]=lat; pos[1]=lon; pos[2]=alt;
 }
+
 /* transform geodetic to ecef position -----------------------------------------
 * transform geodetic position to ecef position
 * args   : double *pos      I   geodetic position {lat,lon,h} (rad,m)
@@ -1786,15 +1877,35 @@ extern void ecef2pos(const double *r, double *pos)
 * return : none
 * notes  : WGS84, ellipsoidal height
 *-----------------------------------------------------------------------------*/
-extern void pos2ecef(const double *pos, double *r)
+/*extern void pos2ecef(const double *pos, double *r)
 {
+    trace(4,"pos2ecef: lat=%.3f,lon=%.3f,h=%.3f\n",pos[0],pos[1],pos[2]);
     double sinp=sin(pos[0]),cosp=cos(pos[0]),sinl=sin(pos[1]),cosl=cos(pos[1]);
     double e2=FE_WGS84*(2.0-FE_WGS84),v=RE_WGS84/sqrt(1.0-e2*sinp*sinp);
     
     r[0]=(v+pos[2])*cosp*cosl;
     r[1]=(v+pos[2])*cosp*sinl;
     r[2]=(v*(1.0-e2)+pos[2])*sinp;
+} */
+extern void pos2ecef(const double *pos, double *r)
+{
+    const static double p1mee = +9.93305620009858682943e-0001; 	/* 1-(e^2)	*/
+    const static double aadc  = +7.79540464078689228919e+0007; 	/* (a^2)/c	*/
+    const static double bbdcc = +1.48379031586596594555e+0002; 	/* (b^2)/(c^2)	*/
+    double lat, lon, alt, N, d;
+    double coslon, sinlon, coslat, sinlat;
+    lat = pos[0]; lon = pos[1]; alt = pos[2]; 
+    coslat = cos(lat);
+    sinlat = sin(lat);
+    coslon = cos(lon);
+    sinlon = sin(lon);
+    N = aadc / sqrt(coslat * coslat + bbdcc);
+    d = (N + alt) * coslat;
+    r[0] = d * coslon; 			/* ecef->x = d * coslon; 		*/
+    r[1] = d * sinlon; 			/* ecef->y = d * sinlon; 		*/
+    r[2] = (p1mee * N + alt) * sinlat; 	/* ecef->z = (p1mee * N + alt) * sinlat;*/
 }
+
 /* ecef to local coordinate transfromation matrix ------------------------------
 * compute ecef to local coordinate transfromation matrix
 * args   : double *pos      I   geodetic position {lat,lon} (rad)
@@ -1833,6 +1944,7 @@ extern void ecef2enu(const double *pos, const double *r, double *e)
 *-----------------------------------------------------------------------------*/
 extern void enu2ecef(const double *pos, const double *e, double *r)
 {
+    trace(4,"enu2ecef\n");
     double E[9];
     
     xyz2enu(pos,E);
@@ -3411,15 +3523,18 @@ extern double satwavelen(int sat, int frq, const nav_t *nav)
 *-----------------------------------------------------------------------------*/
 extern double geodist(const double *rs, const double *rr, double *e)
 {
-    double r;
+    double r, dist;
     int i;
     
     if (norm(rs,3)<RE_WGS84) return -1.0;
     for (i=0;i<3;i++) e[i]=rs[i]-rr[i];
     r=norm(e,3);
     for (i=0;i<3;i++) e[i]/=r;
-    return r+OMGE*(rs[0]*rr[1]-rs[1]*rr[0])/CLIGHT;
+    dist = r+OMGE*(rs[0]*rr[1]-rs[1]*rr[0])/CLIGHT;
+    trace(3,"geodist:s1=%.3f,s2=%.3f,s3=%.3f,r1=%.3f,r2=%.3f,r3=%.3f,dist=%.3f\n",rs[0]/R2D,rs[1]/R2D,rs[2]/R2D,rr[0]/R2D,rr[1]/R2D,rr[2]/R2D,dist);
+    return dist;
 }
+
 /* satellite azimuth/elevation angle -------------------------------------------
 * compute satellite azimuth/elevation angle
 * args   : double *pos      I   geodetic position {lat,lon,h} (rad,m)

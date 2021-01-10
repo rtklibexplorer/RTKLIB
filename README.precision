@@ -1,0 +1,61 @@
+RTKLIB precision edition
+1) Replaced simple residual ratio test with F-Test (FIX solution if α>85%)
+2) Implemented socket support for chrony daemon in RTKRCV app.
+3) Completely rewrote ecef2pos and pos2ecef functions acc. to [4]
+4) Improved baseline calculations by using Vincenty's formula. [5]
+5) Minor asjustements of RTKSVR console to refelct above changes.
+
+Remarks
+=======
+1) Updated the ratio check to reflect a minimum of statistical hypothesis
+   testing, well-knowning that state of the art is a Generalized Integer
+   Aperture Estimation for Partial GNSS Ambiguity Fixing (GIAB) which is far
+   beyond my mathematical and programming skills.
+   -> see [1],[2],[3] for reference
+2) Chrony socket support
+   Add following line to /etc/chrony/chrony.conf ...
+   refclock SOCK /var/run/chrony.ttyRTK.sock delay 0.0 offset 0.0 poll 2 refid RTK precision 1e-9 prefer
+   .. and restart chrony by service chronyd restart. Comparing to the standard
+   NMEA approch (feeding chrony from gpsd which is feeded by str2str)
+   improvement could be realized. However I am not yet satisfied with the
+   result especially the source of the still high delay is unknow to me:
+
+MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+===============================================================================
+#? NMEA                          0   2   177     4   +203ms[ +203ms] +/-   14ms
+#x RTK                           0   2     6    11    +64ms[  +64ms] +/- 4433us
+^* ntp1.belwue.de                1   8   377   157   +600us[ +609us] +/- 4974us
+^+ ntp2.belwue.de                1  10   377    96   +426us[ +426us] +/- 5142us
+^+ ptbtime1.ptb.de               1  10   377  1031   +502us[ +505us] +/- 6450us
+^+ ptbtime2.ptb.de               1  10   377   803   +121us[ +138us] +/- 6601us
+^+ ptbtime3.ptb.de               1  10   377   911    -32us[  -15us] +/- 6746us
+^+ ntp1.m-online.net             2  10   377   696    +76us[  +94us] +/- 6985us
+^+ ntp2.m-online.net             2  10   377   232   +410us[ +419us] +/- 7765us
+^+ ntp3.m-online.net             2  10   377  1003   +334us[ +337us] +/- 7470us
+
+Name/IP Address            NP  NR  Span  Frequency  Freq Skew  Offset  Std Dev
+==============================================================================
+NMEA                       64  35   250     +1.997     29.488   +161ms  5516us
+RTK                        64  27   252     -1.776     63.595   +141us    12ms
+ntp1.belwue.de             13   8   51m     -0.005      0.052   +568us    41us
+ntp2.belwue.de              8   6  137m     +0.017      0.028   +462us    31us
+ptbtime1.ptb.de            12   8  189m     +0.011      0.020   +512us    51us
+ptbtime2.ptb.de            11   8  172m     +0.010      0.016   +169us    34us
+ptbtime3.ptb.de            10   7  154m     +0.027      0.056   +161us   100us
+ntp1.m-online.net           8   4  120m     +0.018      0.027   +114us    31us
+ntp2.m-online.net           7   5  103m     +0.028      0.070   +375us    64us
+ntp3.m-online.net           6   4   85m     -0.347      3.177  -1535us  1327us
+
+References
+[1] The GNSS integer ambiguities: estimation and validation, Sandra Verhagen
+    http://resolver.tudelft.nl/uuid:07c6f2be-3a70-42aa-97b3-894a5770454d
+[2] The GNSS Ambiguity Ratio-test Revisited: a Better Way of Using it.
+    https://www.researchgate.net/publication/228448482_The_GNSS_Ambiguity_Ratio-test_Revisited_a_Better_Way_of_Using_it
+[3] Data-Driven Generalized Integer Aperture Bootstrapping for High-Integrity Positioning
+    G. Nathan Green and Dr. Todd Humphreys, The University of Texas at Austin
+[4] Karl Osen. Accurate Conversion of Earth-Fixed Earth-Centered Coordinates
+    to Geodetic Coordinates. [Research Report] Norwegian University of
+    Science and Technology. 2017. ffhal-01704943v2f 
+[5] Thaddeus Vincenty. Direct and inverse solutions of geodesics on the
+    ellipsoid with application of nested equations. 
+    Survey Review XXII, 176, April 1975
