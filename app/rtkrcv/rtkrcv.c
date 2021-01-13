@@ -52,6 +52,8 @@
 #include <errno.h>
 #include "rtklib.h"
 #include "vt.h"
+#include "stat.h"       /* 2021-01-08 Added Statistical Calculation by S. Juhl */
+
 /* Externally Defined Routines */
 extern double vincenty(double lat1, double lon1, double lat2, double lon2);
 
@@ -627,60 +629,110 @@ static void prsolution(vt_t *vt, const sol_t *sol, const double *rb)
     vt_printf(vt,"\n");
 }
 
-/* NOTE Baseline calculation using Vincenty's formulae
-        Calculated by vincenty function:     28279.084(801)m
-        Verified by using online calculator: 28279.085     m
-    
-        double lat1=49.05895591 * M_PI/180.0;
-        double lon1=8.79114214 * M_PI/180.0;;
-        double lat2=49.01124701 * M_PI/180.0;;
-        double lon2=8.41126261 * M_PI/180.0;;
-        vbl=vinct(lat1,lon1,lat2,lon2);				*/
-double vincenty_o(double lat1, double lon1, double lat2, double lon2)
+/* print LGL status --------------------------------------------------------------*/
+static void lglstatus(vt_t *vt)
 {
-    double L, lambda, lambda0, cos_2sigma_m, cos2_alpha, sigma, t1, t2, sin_sigma, cos_sigma, sin_alpha, sin2_alpha;
-    double C, squares, braces, u2, A, B, z1, z2, z3, z4, DELTA_sigma, distance;
-    static const double b = (1 - FE_WGS84) * RE_WGS84;	
+    rtk_t rtk;
+    const char *sol[]={"-","fix","float","SBAS","DGPS","single","PPP",""};
+    const char *mode[]={
+         "single","DGPS","kinematic","static","static-start","moving-base","fixed",
+         "PPP-kinema","PPP-static"
+    };
+    gtime_t eventime={0};
+    rtcm_t rtcm[3];
+    int i,j,n,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
+    int cputime,nb[3]={0},nmsg[3][10]={{0}};
+    char tstr[64],tmstr[64];
+    double runtime,rt[3]={0},dop[4]={0};
+    double azel[MAXSAT*2],pos[3];
+    double vbl,posb[3],Sl=0,Sh=0;
 
-    double U1 = atan((1.0 - FE_WGS84) * tan(lat1));	
-    double U2 = atan((1.0 - FE_WGS84) * tan(lat2));	
-  
-    lambda = L  = lon2 - lon1; 
-    do {
-        lambda0 = lambda;
-        t1 = cos(U2)*sin(lambda);
-        t2 = cos(U1)*sin(U2) - sin(U1)*cos(U2)*cos(lambda);
-        sin_sigma = sqrt(t1*t1 + t2*t2);
-        cos_sigma = sin(U1)*sin(U2) + cos(U1)*cos(U2)*cos(lambda);
-        sigma = atan2(sin_sigma, cos_sigma);
-        sin_alpha = cos(U1)*cos(U2)*sin(lambda)/sin(sigma);
-        sin2_alpha = sin_alpha * sin_alpha;
-        cos2_alpha = 1.0 - sin2_alpha;
-        cos_2sigma_m = cos(sigma) - 2.0*sin(U1)*sin(U2)/cos2_alpha;
-        C = (1.0/16.0) * FE_WGS84 * cos2_alpha * (4.0 + FE_WGS84 * (4.0 - 3.0*cos2_alpha));
-        squares = cos_2sigma_m + C * cos(sigma) * (-1.0 + 2.0 * cos_2sigma_m * cos_2sigma_m);
-        braces = sigma + C * sin(sigma) * squares;
-        lambda = L + (1.0 - C) * FE_WGS84 * sin_alpha * braces;
-    } while (fabs(lambda0 - lambda) > 1.0e-12);
+    trace(4,"lglstatus:\n");
+    
+    rtksvrlock(&svr);
+    rtk=svr.rtk;
+    thread=(int)svr.thread;
+    cycle=svr.cycle;
+    state=svr.state;
+    rtkstat=svr.rtk.sol.stat;
+    nsat0=svr.obs[0][0].n;
+    nsat1=svr.obs[1][0].n;
+    rcvcount = svr.raw[0].obs.rcvcount;
+    tmcount = svr.raw[0].obs.tmcount;
+    cputime=svr.cputime;
+    prcout=svr.prcout;
+    nave=svr.nave;
+    for (i=0;i<3;i++) nb[i]=svr.nb[i];
+    for (i=0;i<3;i++) for (j=0;j<10;j++) {
+        nmsg[i][j]=svr.nmsg[i][j];
+    }
+    if (svr.state) {
+        runtime=(double)(tickget()-svr.tick)/1000.0;
+        rt[0]=floor(runtime/3600.0); runtime-=rt[0]*3600.0;
+        rt[1]=floor(runtime/60.0); rt[2]=runtime-rt[1]*60.0;
+    }
+    for (i=0;i<3;i++) rtcm[i]=svr.rtcm[i];
+    if (svr.raw[0].obs.data != NULL) {
+        timevalid = svr.raw[0].obs.data[0].timevalid;
+        eventime = svr.raw[0].obs.data[0].eventime;
+    }
+    time2str(eventime,tmstr,9);
+    rtksvrunlock(&svr);
+    
+    for (i=n=0;i<MAXSAT;i++) {
+        if (rtk.opt.mode==PMODE_SINGLE&&!rtk.ssat[i].vs) continue;
+        if (rtk.opt.mode!=PMODE_SINGLE&&!rtk.ssat[i].vsat[0]) continue;
+        azel[  n*2]=rtk.ssat[i].azel[0];
+        azel[1+n*2]=rtk.ssat[i].azel[1];
+        n++;
+    }
+    dops(n,azel,0.0,dop);
+    
+    vt_printf(vt,"\n%s%-28s: %s%s\n",ESC_BOLD,"Parameter","Value",ESC_RESET);
+    vt_printf(vt,"%-28s: %s","solution status",sol[rtkstat]);
+    if (rtkstat==1) vt_printf(vt," (%ds)",rtk.nfix);
+    time2str(rtk.sol.time,tstr,9);
+/*    vt_printf(vt,"\n%-28s: %s\n","time of receiver clock rover",rtk.sol.time.time?tstr:"-"); */
+    vt_printf(vt,"\n%-28s: %s","chrony update delta","");
+    if (rtk.chrony_delta < -99) { vt_printf(vt,"INACTIVE\n"); }
+    else { vt_printf(vt,"%+.9fs\n",rtk.chrony_delta); }
+    vt_printf(vt,"%-29s: %.2f (%.1f%%)\n","AR validation ratio (Fα)",rtk.sol.ratio,rtk.sol.ratio_pr);
+    vt_printf(vt,"%-28s: %d\n","# of valid satellites",rtk.sol.ns);
+    vt_printf(vt,"%-28s: %.1f/%.1f/%.1f/%.1f\n","GDOP/PDOP/HDOP/VDOP",dop[0],dop[1],dop[2],dop[3]);
+    vt_printf(vt,"%-28s: %.2f\n","Circ. Err. Probable R95 (cm)",
+            (rtkstat==1)?(rtk.Pa?100*SQRT(rtk.Pa[0]+rtk.Pa[1+1*rtk.na]):0):(rtk.P?100*SQRT(rtk.P[0]+rtk.P[1+1*rtk.nx]):0));
 
-    u2 = cos2_alpha * (RE_WGS84 - b) * (RE_WGS84 + b) / (b*b);
-    A = 1.0 + (u2 / 16384.0) * (
-        4096.0 + u2 * (-768.0 + u2*(320.0 - 175.0*u2))
-        );
-    B = (u2 / 1024.0) * (
-        256.0 + u2*(-128.0 + u2*(74.0 - 47.0*u2))
-        );
-    z1 = cos(sigma)*(-1.0 + 2.0*cos_2sigma_m*cos_2sigma_m);
-    z2 = -3.0 + 4.0 * sin(sigma)*sin(sigma);
-    z3 = -3.0 + 4.0 * cos_2sigma_m * cos_2sigma_m;
-    z4 = (B/6.0) * cos_2sigma_m * z2 * z3;
-    DELTA_sigma = B * sin(sigma) * (
-        cos_2sigma_m + (B/4.0) * (z1 - z4)
-        );
-        distance = b * A * (sigma - DELTA_sigma);
-    return distance;
+    /* Calculate baseline using Vincenty's formula */
+    if (norm(rtk.sol.rr,3)>0.0) ecef2pos(rtk.sol.rr,pos); else pos[0]=pos[1]=pos[2]=0.0;
+    if (norm(rtk.rb,3)>0.0) ecef2pos(rtk.rb,posb); else posb[0]=posb[1]=posb[2]=0.0;
+    vt_printf(vt,"%-28s: %6.2f/%6.2f/%6.2f/%6.2f (cm)\n","Basel.Std.Dev.(5/10/20/60m)",100*rtk.bl.sl[0],100*rtk.bl.sl[1],100*rtk.bl.sl[2],100*rtk.bl.sl[3]);
+    vt_printf(vt,"%-28s: %6.2f/%6.2f/%6.2f/%6.2f (cm)\n","Height.Std.Dev.(5/10/20/60m)",100*rtk.bl.sh[0],100*rtk.bl.sh[1],100*rtk.bl.sh[2],100*rtk.bl.sh[3]);
+    if (norm(rtk.sol.rr,3)>0.0 && norm(rtk.rb,3)>0.0) {
+        vbl=vincenty(pos[0],pos[1],posb[0],posb[1]);
+        vt_printf(vt,"%-28s: %.1f±%.2f (%.6f%%)\n","Vincenty's Distance (mm)",1000*vbl,1000*T_cval(rtk.bl.nmax-1,0.95)*rtk.bl.sl[3]/sqrt(rtk.bl.nmax),
+        100*rtk.bl.sl[3]/vbl);
+    }
+    
+    /* Messtechnik spezial 
+       6) DOKU: PDOP min max
+       min 5" Messung, 10s Intervall
+       Für 3 cm Lagegenauigkeit, 5 cm Höhengenauigkeit: Gute Messbedingungen: 10 Minuten Messdauer
+       Für 1 cm Lagegenauigkeit, 2 cm Höhengenauigkeit: Gute Messbedingungen: 2 x 60 Minuten Messdauer; > 3h Pause
+       Messmittel-Auflösung ...
+    */
+/*    vt_printf(vt,"\n%s%-28s: %s%s\n",ESC_BOLD,"Parameter","Value",ESC_RESET);*/
+    vt_printf(vt,"\nLGL-BW: LV-Vorschrift – VwVLV v. 10.12.2015\n");
+    vt_printf(vt,"===========================================\n");
+    vt_printf(vt,"%-28s: %s (n=%d)\n","Number of satellites >5",(rtk.sol.ns>=5)?" IO":"NIO",rtk.sol.ns);
+    vt_printf(vt,"%-28s: %s (%ds)\n","Fixed Ambiguity Mode",((rtkstat==1)&&(rtk.sol.ratio_pr>95)&&(rtk.nfix>60))?" IO":"NIO",rtk.nfix);
+    Sl=rtk.Pa?SQRT(rtk.Pa[0]+rtk.Pa[1+1*rtk.na]):0;Sh=rtk.Pa?SQRT(rtk.Pa[2+2*rtk.na]):0;
+    vt_printf(vt,"%-28s: %s (%6.4fm)\n","lateral std. dev.",(Sl!=0&&Sl<0.01)?" IO":"NIO",Sl);
+    vt_printf(vt,"%-28s: %s (%6.4fm)\n","horizontal std. dev.",(Sh!=0&&Sh<0.01)?" IO":"NIO",Sh);
+    vt_printf(vt,"%-28s: %s (%3.1f)\n","GDOP <4",(dop[0]!=0&&dop[0]<4)?" IO":"NIO",dop[0]);
+    vt_printf(vt,"%-28s: %s (%3.1f)\n","PDOP <4",(dop[1]!=0&&dop[1]<4)?" IO":"NIO",dop[1]);
+/*    vt_printf(vt,"%-28s: %d->%d\n","Baseline buffer",rtk.bl.n,rtk.bl.nmax);*/
+    vt_printf(vt,"%-28s: %d/%d\n","Mind.Anz.Messzyklen LQ/HQ",rtk.bl.lglbw[0],rtk.bl.lglbw[1]);
 }
-
 /* print status --------------------------------------------------------------*/
 static void prstatus(vt_t *vt)
 {
@@ -699,9 +751,7 @@ static void prstatus(vt_t *vt)
     char tstr[64],tmstr[64],s[1024],*p;
     double runtime,rt[3]={0},dop[4]={0},rr[3],bl1=0.0,bl2=0.0;
     double azel[MAXSAT*2],pos[3],vel[3],*del;
-    gtime_t sysclock;
-    char sc_str[64];
-    double toff, vbl, posb[3];
+    double vbl, posb[3];
     
     trace(4,"prstatus:\n");
     
@@ -786,21 +836,17 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %s","chrony update delta","");
     if (rtk.chrony_delta < -99) { vt_printf(vt,"INACTIVE\n"); }
     else { vt_printf(vt,"%+.9fs\n",rtk.chrony_delta); }
-/*    sysclock=utc2gpst(timeget()); 
-    time2str(sysclock,sc_str,9);
-    vt_printf(vt,"%-28s: %s\n","System clock",sc_str);
-    toff=timediff(sysclock,rtk.sol.time);
-    vt_printf(vt,"%-28s: %.3f\n","TOffset",toff); */
-    
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f,%.3f\n","time sys offset (ns)",rtk.sol.dtr[1]*1e9,
               rtk.sol.dtr[2]*1e9,rtk.sol.dtr[3]*1e9,rtk.sol.dtr[4]*1e9);
     vt_printf(vt,"%-28s: %.3f\n","solution interval (s)",rtk.tt);
     vt_printf(vt,"%-28s: %.3f\n","age of differential (s)",rtk.sol.age);
-    vt_printf(vt,"%-28s: %.2f (%.1f%%)\n","ar validation ratio (Fα=95%)",rtk.sol.ratio,rtk.sol.ratio_pr);
+    vt_printf(vt,"%-29s: %.2f (%.1f%%)\n","AR validation ratio (Fα)",rtk.sol.ratio,rtk.sol.ratio_pr);
     vt_printf(vt,"%-28s: %d\n","# of satellites rover",nsat0);
     vt_printf(vt,"%-28s: %d\n","# of satellites base",nsat1);
     vt_printf(vt,"%-28s: %d\n","# of valid satellites",rtk.sol.ns);
     vt_printf(vt,"%-28s: %.1f,%.1f,%.1f,%.1f\n","GDOP/PDOP/HDOP/VDOP",dop[0],dop[1],dop[2],dop[3]);
+    vt_printf(vt,"%-28s: %.2f\n","Circ. Err. Probable R95 (cm)",
+            (rtkstat==1)?(rtk.Pa?100*SQRT(rtk.Pa[0]+rtk.Pa[1+1*rtk.na]):0):(rtk.P?100*SQRT(rtk.P[0]+rtk.P[1+1*rtk.nx]):0));
     vt_printf(vt,"%-28s: %d\n","# of real estimated states",rtk.na);
     vt_printf(vt,"%-28s: %d\n","# of all estimated states",rtk.nx);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","pos xyz single (m) rover",
@@ -847,7 +893,8 @@ static void prstatus(vt_t *vt)
     if (norm(rtk.rb,3)>0.0) ecef2pos(rtk.rb,posb); else posb[0]=posb[1]=posb[2]=0.0;
     if (norm(rtk.sol.rr,3)>0.0 && norm(rtk.rb,3)>0.0) {
         vbl=vincenty(pos[0],pos[1],posb[0],posb[1]);
-        vt_printf(vt,"%-28s: %.3f\n","Vincenty's Distance (m)",vbl);
+        vt_printf(vt,"%-28s: %.4f±%.5f (%.6f%%)\n","Vincenty's Distance (m)",vbl,T_cval(rtk.bl.nmax-1,0.95)*rtk.bl.sl[3]/sqrt(rtk.bl.nmax),
+        100*rtk.bl.sl[3]/vbl);
     }
     vt_printf(vt,"%-28s: %.3f\n","baseline length float (m)",bl1);
     vt_printf(vt,"%-28s: %.3f\n","baseline length fixed (m)",bl2);
@@ -1134,6 +1181,22 @@ static void cmd_status(char **args, int narg, vt_t *vt)
     while (!vt_chkbrk(vt)) {
         if (cycle>0) vt_printf(vt,ESC_CLEAR);
         prstatus(vt);
+        if (cycle>0) sleepms(cycle); else return;
+    }
+    vt_printf(vt,"\n");
+}
+/* status command ------------------------------------------------------------*/
+static void cmd_lglstatus(char **args, int narg, vt_t *vt)
+{
+    int cycle=0;
+    
+    trace(3,"cmd_lglstatus:\n");
+    
+    if (narg>1) cycle=(int)(atof(args[1])*1000.0);
+    
+    while (!vt_chkbrk(vt)) {
+        if (cycle>0) vt_printf(vt,ESC_CLEAR);
+        lglstatus(vt);
         if (cycle>0) sleepms(cycle); else return;
     }
     vt_printf(vt,"\n");
@@ -1425,7 +1488,7 @@ static void *con_thread(void *arg)
     const char *cmds[]={
         "start","stop","restart","solution","status","satellite","observ",
         "navidata","stream","ssr","error","option","set","load","save","log",
-        "help","?","exit","shutdown",""
+        "help","?","exit","shutdown","lglstat",""
     };
     con_t *con=(con_t *)arg;
     int i,j,narg;
@@ -1476,6 +1539,7 @@ static void *con_thread(void *arg)
             case  2: cmd_restart  (args,narg,con->vt); break;
             case  3: cmd_solution (args,narg,con->vt); break;
             case  4: cmd_status   (args,narg,con->vt); break;
+            case 20: cmd_lglstatus (args,narg,con->vt); break;
             case  5: cmd_satellite(args,narg,con->vt); break;
             case  6: cmd_observ   (args,narg,con->vt); break;
             case  7: cmd_navidata (args,narg,con->vt); break;

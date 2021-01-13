@@ -672,7 +672,62 @@ double X2_cval(int nu, double pr) {
    return t;
 }
 
+double Student_t_Distribution(double x, int n)
+{
+   double a = (double) n / 2.0;
+   double beta = Beta_Distribution( 1.0 / (1.0 + x * x / n), a, 0.5);
 
+   if ( x > 0.0 ) return 1.0 - 0.5 * beta;
+   else if ( x < 0.0) return 0.5 * beta;
+   return 0.5;
+}
+
+double Student_t_Density( double x, int n )
+{
+   double ln_density;
+
+   ln_density = -(double)(n+1)/2.0 * log(1.0 + x * x /(double)n)
+                - 0.5*log((double)n)
+                - Ln_Beta_Function(0.5 * (double)n, 0.5);
+
+   return exp(ln_density);
+}
+
+double T_cval(int nu, double pr) {
+   double t0 = 0.0;
+   double t = 2.0;
+   double diff;
+   double delta = 0.1;
+   double p;
+   int n = 0;
+
+   t = 0.0;
+   while ( (p = Student_t_Distribution(t,nu)) < pr) {
+      t += delta;
+      if (p > 0.99999999) {
+         delta /= 10.0;
+         t = (t - delta) / 10;
+      }
+   }   
+   t0 = t - delta;
+   while ( (p = Student_t_Distribution(t0,nu)) > pr) {
+      t0 -= delta;
+      if (p < 0.001) {
+         delta /= 10.0;
+         t0 = (t0 + delta) / 10;
+      }   
+   }
+   while (fabs(t - t0) > 1.e-6) {
+      diff = Student_t_Distribution(t, nu) - pr;
+      diff /= Student_t_Density(t,nu);
+      diff /= 2.0;
+      t0 = t;
+      t -= diff;
+      n++;
+      if (n > 40) exit(0);
+   }
+   return t;
+}
 
 /* NOTE main() 
 https://blog.minitab.com/blog/adventures-in-statistics-2/the-american-statistical-associations-statement-on-the-use-of-p-values
@@ -681,8 +736,12 @@ T() Die folgende Tabelle zeigt ausgewählte Werte der inversen Verteilungsfunkti
 */
 void amain(int argc, char *argv[]) {
    int ndof, ddof;
-   double p,F1;
+   double p,F1,t;
    p=0.95; ndof=2; ddof=5; F1=F_cval(ndof,ddof,p);
    printf("p=%f n1=%d n2=%d F=%.3f\n",p,ndof,ddof,F1);
    printf("p=%f n1=%d n2=%d F=%.3f\n",p,ndof,ddof,F_Distribution(F1,ndof,ddof));   
+   ndof = 10; t = abs_val(T_cval(ndof,p)); // 1.812
+   printf("p=%.2f n=%d t=%.3f\n",p,ndof,t);		  // Einseitig
+   printf("t=%.3f df=%d Verify_P=%.3f\n",t,ndof,Student_t_Distribution(t,ndof));
+
 }

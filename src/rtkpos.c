@@ -1005,6 +1005,7 @@ static void udstate(rtk_t *rtk, const obsd_t *obs, const int *sat,
         /* translate ecef pos to geodetic pos */
         ecef2pos(rtk->x,posu); ecef2pos(rtk->rb,posr);
         bl=vincenty(posu[0],posu[1],posr[0],posr[1]);  
+        printf("DBG: B-baseline=%.2f\n",bl);
         
         udion(rtk,tt,bl,sat,ns);
     }
@@ -1296,7 +1297,8 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
     double bl,dr[3],posu[3],posr[3],didxi=0.0,didxj=0.0,*im,icb,threshadj;
     double *tropr,*tropu,*dtdxr,*dtdxu,*Ri,*Rj,lami,lamj,fi,fj,df,*Hi=NULL;
     int i,j,ii,jj,k,m,f,frq,code,nv=0,nb[NFREQ*4*2+2]={0},b=0,sysi,sysj,nf=NF(opt);
-    int iii,jjj,sysii;
+    int iii,jjj,sysii,li,ai;
+    long double sx1,sx2,sd,hsx1,hsx2,hsd;
     gtime_t soltime;
     
     trace(3,"ddres   : dt=%.1f nx=%d ns=%d\n",dt,rtk->nx,ns);
@@ -1307,7 +1309,33 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
 
     /* translate ecef pos to geodetic pos */
     ecef2pos(x,posu); ecef2pos(rtk->rb,posr);
-    bl=vincenty(posu[0],posu[1],posr[0],posr[1]); 	/* NOTE DONE printf("bl=%.3f vl=%.3f d=%.3f\n",bl,vl,fabs(bl-vl)); */
+    bl=vincenty(posu[0],posu[1],posr[0],posr[1]); 	/* NOTE DONE  printf("BG: A-baseline=%.3f vl=%.3f d=%.3f\n",bl,vl,fabs(bl-vl)); */
+    /* NOTE Float solution only? */
+    /* printf("DBG: size=%ld n=%d nfix=%d",sizeof(rtk->bl.val)/sizeof(rtk->bl.val[0]),rtk->bl.n,rtk->nfix); */
+
+    /* Calculate standard deviation of baseline */
+    if (H&&P) {
+        rtk->bl.h[rtk->bl.n]=posu[2]; rtk->bl.val[rtk->bl.n++]=bl; 
+        if (rtk->bl.nmax < sizeof(rtk->bl.val)/sizeof(rtk->bl.val[0]))  rtk->bl.nmax++;
+        if (rtk->bl.n    >= sizeof(rtk->bl.val)/sizeof(rtk->bl.val[0])) rtk->bl.n=0;
+        sd=sx1=sx2=0; hsd=hsx1=hsx2=0; rtk->bl.lglbw[0]=rtk->bl.lglbw[1]=sizeof(rtk->bl.val)/sizeof(rtk->bl.val[0]);
+        for (li=0;li<rtk->bl.nmax;li++) {
+            ai=rtk->bl.n-li-1; ai+=(ai<0)?rtk->bl.nmax:0;
+            sx1+=rtk->bl.val[ai]*rtk->bl.val[ai]; sx2+=rtk->bl.val[ai]; 
+            hsx1+=rtk->bl.h[ai]*rtk->bl.h[ai]; hsx2+=rtk->bl.h[ai]; 
+            sd=(li<3)?0:sqrt((sx1-sx2*sx2/((double)li+1))/(double)li);
+            hsd=(li<3)?0:sqrt((hsx1-hsx2*hsx2/((double)li+1))/(double)li);
+            if (li==300)  { rtk->bl.sl[0]=sd; rtk->bl.sh[0]=hsd; }
+            if (li==600)  { rtk->bl.sl[1]=sd; rtk->bl.sh[1]=hsd; }
+            if (li==1200) { rtk->bl.sl[2]=sd; rtk->bl.sh[2]=hsd; }
+            /* Für 3 cm Lagegenauigkeit, 5 cm Höhengenauigkeit: Gute Messbedingungen: 10 Minuten Messdauer
+               Für 1 cm Lagegenauigkeit, 2 cm Höhengenauigkeit: Gute Messbedingungen: 2 x 60 Minuten Messdauer; > 3h Pause */
+            if ((li>59)&&(100*sd<3)&&(100*hsd<5)&&(rtk->bl.lglbw[0]>li)) rtk->bl.lglbw[0]=li;
+            if ((li>59)&&(100*sd<1)&&(100*hsd<2)&&(rtk->bl.lglbw[1]>li)) rtk->bl.lglbw[1]=li;
+            /* printf("[%d]val[%d]=%.1f sx1=%.Lf sx2=%.Lf s=%.5Lf\n",li,ai,rtk->bl.val[ai],sx1,sx2,sd); */
+            }
+        rtk->bl.sl[3]=sd; rtk->bl.sh[3]=hsd;
+    }
     
     Ri=mat(ns*nf*2+2,1); Rj=mat(ns*nf*2+2,1); im=mat(ns,1);
     tropu=mat(ns,1); tropr=mat(ns,1); dtdxu=mat(ns,3); dtdxr=mat(ns,3);
@@ -1810,7 +1838,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
           used to translate phase biases to double difference */
     D=zeros(nx,nx);
     if ((nb=ddmat(rtk,D,gps,glo,sbs))<(rtk->opt.minfixsats-1)) {  /* nb is sat pairs */
-        errmsg(rtk,"not enough valid double-differences\n");
+        errmsg(rtk,"not enough valid double-differences (%d<%d)\n",nb,rtk->opt.minfixsats);
         free(D);
         return -1; /* flag abort */
     }
@@ -1888,7 +1916,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
                 is (statistically) more robust than a simple ratio check by a fixed value.					*/
 
         rtk->sol.ratio_pr=100*F_Distribution(FSc,nb-1,df);   
-        if (s[0]<=0.0||F_Distribution(FSc,nb-1,df)>0.85) {
+        if (s[0]<=0.0||F_Distribution(FSc,nb-1,df)>0.80) {
         /* if (s[0]<=0.0||s[1]/s[0]>=rtk->sol.thres) { */
             
             /* init non phase-bias states and covariances with float solution values */
@@ -2242,7 +2270,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
         }
         else stat=SOLQ_NONE;
     }
-    /* NOTE TBD printf("#DBG7 rover=%d base=%d comsat=%d ns=%d nfix=%d nv=%d\n",nu,nr,ns,rtk->sol.ns,rtk->nfix,nv); */
+    /* NOTE TBD  printf("#DBG7 rover=%d base=%d comsat=%d ns=%d nfix=%d nv=%d\n",nu,nr,ns,rtk->sol.ns,rtk->nfix,nv); */
 
     /* NOT SUPPORTED: resolve integer ambiguity by WL-NL */
     if (stat!=SOLQ_NONE&&rtk->opt.modear==ARMODE_WLNL) {

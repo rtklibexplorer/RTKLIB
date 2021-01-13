@@ -972,6 +972,15 @@ typedef struct {        /* solution buffer type */
     int nb;             /* number of byte in message buffer */
 } solbuf_t;
 
+typedef struct {
+    int n,nmax;		/* number of baselines 			*/
+    double val[3600];   /* baseline array 3600 = 10 Minuten	*/
+    double h[3600];
+    double sl[4];	/* 5m,10m,20m,60m			*/
+    double sh[4];	/* 5m,10m,20m,60m			*/
+    int lglbw[2];
+} blbuf_t;
+
 typedef struct {        /* solution status type */
     gtime_t time;       /* time (GPST) */
     unsigned char sat;  /* satellite number */
@@ -1264,6 +1273,7 @@ typedef struct {        /* RTK control/result type */
     prcopt_t opt;       /* processing options */
     int initial_mode;   /* initial positioning mode */
     double chrony_delta;/* Chrony Socket status */
+    blbuf_t bl;		/* baseline stats */
 } rtk_t;
 
 typedef struct half_cyc_tag {  /* half-cycle correction list type */
