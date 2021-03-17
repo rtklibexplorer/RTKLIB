@@ -233,11 +233,19 @@ static double sisa_value(int sisa)
 /* Galileo SISA value (m) to SISA index --------------------------------------*/
 static int sisa_index(double value)
 {
+    /* 
+     * kudos to https://core.ac.uk/download/pdf/328854682.pdf for this ...
+     * Signal-in-Space Accuracy : SISA flag is a prediction at 1-sigma standard deviation of the quality of
+     * the transmitted signal.The flag can take values from 0 to 255. The transmitted standard index is 107 that
+     * corresponds to a SISA value of 3.12m.If the prediction is not available, the transmitted index is 255 and
+     * corresponds to No Accurate Prediction Available(NAPA).NAPA is an indicator of a potential anomalous
+     * signal-in-space[6].Please notice that SISA flag refers to the dual-frequency signal combinations.
+     */
     if (value<0.0 || value>6.0) return 255; /* unknown or NAPA */
     else if (value<=0.5) return (int)(value/0.01);
     else if (value<=1.0) return (int)((value-0.5)/0.02)+50;
     else if (value<=2.0) return (int)((value-1.0)/0.04)+75;
-    return ((int)(value-2.0)/0.16)+100;
+    return (int)((value-2.0)/0.16)+100; // Sanity? value=3.12, return is 107, as per comment above
 }
 /* initialize station parameter ----------------------------------------------*/
 static void init_sta(sta_t *sta)
