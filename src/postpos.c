@@ -213,8 +213,7 @@ static void update_rtcm_ssr(gtime_t time)
         strcpy(rtcm_path,path);
         
         if (fp_rtcm) fclose(fp_rtcm);
-        fp_rtcm=fopen(path,"rb");
-        if (fp_rtcm) {
+        if((errno_t)0 == fopen_s(&fp_rtcm,path,"rb")) {
             rtcm.time=time;
             input_rtcm3f(&rtcm,fp_rtcm);
             trace(2,"rtcm file open: %s\n",path);
@@ -794,7 +793,7 @@ static int getstapos(const char *file, char *name, double *r)
     
     trace(3,"getstapos: file=%s name=%s\n",file,name);
     
-    if (!(fp=fopen(file,"r"))) {
+    if ((errno_t)0 != fopen_s(&fp,file,"r")) {
         trace(1,"station position file open error: %s\n",file);
         return 0;
     }
@@ -866,8 +865,6 @@ static int antpos(prcopt_t *opt, int rcvno, const obs_t *obs, const nav_t *nav,
 static int openses(const prcopt_t *popt, const solopt_t *sopt,
                    const filopt_t *fopt, nav_t *nav, pcvs_t *pcvs, pcvs_t *pcvr)
 {
-    int i;
-    
     trace(3,"openses :\n");
     
     /* read satellite antenna parameters */
@@ -974,7 +971,7 @@ static int outhead(const char *outfile, char **infile, int n,
     if (*outfile) {
         createdir(outfile);
         
-        if (!(fp=fopen(outfile,"wb"))) {
+        if ((errno_t)0 != fopen_s(&fp,outfile,"wb")) {
             showmsg("error : open output file %s",outfile);
             return 0;
         }
@@ -991,7 +988,22 @@ static FILE *openfile(const char *outfile)
 {
     trace(3,"openfile: outfile=%s\n",outfile);
     
-    return !*outfile?stdout:fopen(outfile,"ab");
+    if (!*outfile)
+    {
+        return stdout;
+    }
+    else
+    {
+        FILE* fp;
+        if ((errno_t)0 != fopen_s(&fp, outfile, "ab"))
+        {
+            return stdout;
+        }
+        else
+        {
+            return fp;
+        }
+    }
 }
 /* Name time marks file ------------------------------------------------------*/
 static void namefiletm(char *outfiletm, const char *outfile)

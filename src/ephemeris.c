@@ -576,7 +576,7 @@ static int ephpos(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
 static int satpos_sbas(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
                         double *rs, double *dts, double *var, int *svh)
 {
-    const sbssatp_t *sbs;
+    const sbssatp_t *sbs = NULL;
     int i;
     
     trace(4,"satpos_sbas: time=%s sat=%2d\n",time_str(time,3),sat);

@@ -299,7 +299,7 @@ extern void readtec(const char *file, nav_t *nav, int opt)
     n=expath(file,efiles,MAXEXFILE);
     
     for (i=0;i<n;i++) {
-        if (!(fp=fopen(efiles[i],"r"))) {
+        if ((errno_t)0 != fopen_s(&fp,efiles[i],"r")) {
             trace(2,"ionex file open error %s\n",efiles[i]);
             continue;
         }

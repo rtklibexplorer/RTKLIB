@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31105.61
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rnx2rtkp", "rnx2rtkp.vcxproj", "{2912E3C4-F938-4CF7-99E8-2B4A29F7B377}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2912E3C4-F938-4CF7-99E8-2B4A29F7B377}.Debug|x64.ActiveCfg = Debug|x64
+		{2912E3C4-F938-4CF7-99E8-2B4A29F7B377}.Debug|x64.Build.0 = Debug|x64
+		{2912E3C4-F938-4CF7-99E8-2B4A29F7B377}.Release|x64.ActiveCfg = Release|x64
+		{2912E3C4-F938-4CF7-99E8-2B4A29F7B377}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C411E435-4946-4868-8337-13BF21F4A896}
+	EndGlobalSection
+EndGlobal

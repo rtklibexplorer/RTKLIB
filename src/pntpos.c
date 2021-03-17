@@ -270,7 +270,7 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
                    double *azel, int *vsat, double *resp, int *ns)
 {
     gtime_t time;
-    double r,freq,dion,dtrp,vmeas,vion,vtrp,rr[3],pos[3],dtr,e[3],P;
+    double r,freq,dion=0.0,dtrp=0.0,vmeas,vion=0.0,vtrp=0.0,rr[3],pos[3],dtr,e[3],P;
     double snr_rover = (ssat) ? SNR_UNIT * ssat->snr_rover[0] : opt->err[5];
     int i,j,nv=0,sat,sys,mask[NX-3]={0};
     
@@ -300,7 +300,7 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
         if ((r=geodist(rs+i*6,rr,e))<=0.0) continue;
         if (satazel(pos,e,azel+i*2)<opt->elmin) continue;
         
-        if (iter>0) {
+        if (iter>=0) {
             /* test SNR mask */
             if (!snrmask(obs+i,azel+i*2,opt)) continue;
         
@@ -314,8 +314,8 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
         
             /* tropospheric correction */
             if (!tropcorr(time,nav,pos,azel+i*2,opt->tropopt,&dtrp,&vtrp)) {
-            continue;
-        }
+                continue;
+            }
         }
         /* psendorange with code bias correction */
         if ((P=prange(obs+i,nav,opt,&vmeas))==0.0) continue;

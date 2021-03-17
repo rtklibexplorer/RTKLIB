@@ -2351,6 +2351,7 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
         }
 
         /* set trace level to 1 generate CSV file of raw observations   */
+#ifdef TRACE
         if (gettracelevel()==1) {
             trace(1,",%16.2f,%3d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%1d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%1d\n",
                 obs[0].time.time + obs[0].time.sec, obs[ind[i]].sat,
@@ -2359,6 +2360,7 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
                 obs[ind[i]].P[1], obs[ind[i]].L[1], obs[ind[i]].D[1],
                 obs[ind[i]].SNR[1]*0.25, obs[ind[i]].LLI[1], obs[ind[i]].qualL[1]);
         }
+#endif
 
         if (opt->rnxver>=300&&fprintf(fp,"\n")==EOF) return 0;
     }

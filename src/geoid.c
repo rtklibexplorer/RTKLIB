@@ -50,7 +50,7 @@ static double geoidh_emb(const double *pos)
 /* get 2 byte signed integer from file ---------------------------------------*/
 static int16_t fget2b(FILE *fp, int32_t off)
 {
-    uint8_t v[2];
+    uint8_t v[2] = { 0x00 };
     if (fseek(fp,off,SEEK_SET)==EOF||fread(v,2,1,fp)<1) {
         trace(2,"geoid data file range error: off=%ld\n",off);
     }
@@ -145,7 +145,7 @@ static double fgetgsi(FILE *fp, int nlon, int nlat, int i, int j)
         trace(2,"out of range for gsi geoid: i=%d j=%d\n",i,j);
         return 0.0;
     }
-    if (sscanf(buff,"%lf",&v)<1) {
+    if (sscanf_s(buff,"%lf",&v)<1) {
         trace(2,"gsi geoid data format error: i=%d j=%d buff=%s\n",i,j,buff);
         return 0.0;
     }
@@ -208,7 +208,7 @@ extern int opengeoid(int model, const char *file)
         trace(2,"invalid geoid model: model=%d file=%s\n",model,file);
         return 0;
     }
-    if (!(fp_geoid=fopen(file,"rb"))) {
+    if ((errno_t)0!=fopen_s(&fp_geoid,file,"rb")) {
         trace(2,"geoid model file open error: model=%d file=%s\n",model,file);
         return 0;
     }

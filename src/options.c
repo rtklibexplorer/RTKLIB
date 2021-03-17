@@ -331,7 +331,7 @@ extern int loadopts(const char *file, opt_t *opts)
     
     trace(3,"loadopts: file=%s\n",file);
     
-    if (!(fp=fopen(file,"r"))) {
+    if ((errno_t)0 != fopen_s(&fp,file,"r")) {
         trace(1,"loadopts: options file open error (%s)\n",file);
         return 0;
     }
@@ -376,7 +376,7 @@ extern int saveopts(const char *file, const char *mode, const char *comment,
     
     trace(3,"saveopts: file=%s mode=%s\n",file,mode);
     
-    if (!(fp=fopen(file,mode))) {
+    if ((errno_t)0 != fopen_s(&fp,file,mode)) {
         trace(1,"saveopts: options file open error (%s)\n",file);
         return 0;
     }
