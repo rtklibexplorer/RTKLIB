@@ -789,8 +789,10 @@ static int decode_sbf(raw_t *raw)
     uint32_t week,tow;
     char tstr[32];
     int type=U2(p+4)&0x1fff;
+    uint16_t crc;
     
-    if (rtk_crc16(p+4,raw->len-4)!=U2(p+2)) {
+    crc=rtk_crc16(p+4,raw->len-4);
+    if (crc!=U2(p+2)||crc==0) {
         trace(2,"sbf crc error: type=%d len=%d\n",type,raw->len);
         return -1;
     }
@@ -911,7 +913,7 @@ extern int input_sbff(raw_t *raw, FILE *fp)
         raw->nbyte=0;
         return -1;
     }
-    if (fread(raw->buff+8,raw->len-8,1,fp)<1) return -2;
+    if (raw->len!=0&&fread(raw->buff+8,raw->len-8,1,fp)<1) return -2;
     raw->nbyte=0;
     
     /* decode SBF block */
