@@ -98,7 +98,7 @@ static int readsp3h(FILE *fp, gtime_t *time, char *type, int *sats,
             }
         }
         else if (i==2*nl+2) {/* %c */
-            strncpy(tsys,buff+9,3); tsys[3]='\0';
+            strncpy_s(tsys,4,buff+9,3); // tsys[3]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
         }
         else if (i==2*nl+4) {/* %f */
             bfact[0]=str2num(buff, 3,10);

@@ -708,7 +708,7 @@ static int decode_obsepoch(FILE *fp, char *buff, double ver, gtime_t *time,
                            int *flag, int *sats)
 {
     int i,j,n;
-    char satid[8]="";
+    char satid[8] = {'\0'};
     
     trace(4,"decode_obsepoch: ver=%.2f\n",ver);
     
@@ -735,7 +735,7 @@ static int decode_obsepoch(FILE *fp, char *buff, double ver, gtime_t *time,
                 j=32;
             }
             if (i<MAXOBS) {
-                strncpy(satid,buff+j,3);
+                strncpy_s(satid,4,buff+j,3); // See https://en.cppreference.com/w/c/string/byte/strncpy
                 sats[i]=satid2no(satid);
             }
         }
@@ -1519,7 +1519,7 @@ static int readrnxclk(FILE *fp, const char *opt, int index, nav_t *nav)
             trace(2,"rinex clk invalid epoch: %34.34s\n",buff);
             continue;
         }
-        strncpy(satid,buff+3,4);
+        strncpy_s(satid,5,buff+3,4); // See https://en.cppreference.com/w/c/string/byte/strncpy
         
         /* only read AS (satellite clock) record */
         if (strncmp(buff,"AS",2)||!(sat=satid2no(satid))) continue;

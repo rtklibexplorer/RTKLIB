@@ -528,7 +528,7 @@ static int decode_type1007(rtcm_t *rtcm)
     if (!test_staid(rtcm,staid)) return -1;
     
     sprintf(rtcm->sta.name,"%04d",staid);
-    strncpy(rtcm->sta.antdes,des,n); rtcm->sta.antdes[n]='\0';
+    strncpy_s(rtcm->sta.antdes,(rsize_t)n+1,des,n); // rtcm->sta.antdes[n]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
     rtcm->sta.antsetup=setup;
     rtcm->sta.antsno[0]='\0';
     return 5;
@@ -565,9 +565,9 @@ static int decode_type1008(rtcm_t *rtcm)
     if (!test_staid(rtcm,staid)) return -1;
     
     sprintf(rtcm->sta.name,"%04d",staid);
-    strncpy(rtcm->sta.antdes,des,n); rtcm->sta.antdes[n]='\0';
+    strncpy_s(rtcm->sta.antdes,(rsize_t)n+1,des,n); // rtcm->sta.antdes[n]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
     rtcm->sta.antsetup=setup;
-    strncpy(rtcm->sta.antsno,sno,m); rtcm->sta.antsno[m]='\0';
+    strncpy_s(rtcm->sta.antsno,(rsize_t)m+1,sno,m); // rtcm->sta.antsno[m]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
     return 5;
 }
 /* decode type 1009-1012 message header --------------------------------------*/
@@ -1013,12 +1013,12 @@ static int decode_type1033(rtcm_t *rtcm)
     if (!test_staid(rtcm,staid)) return -1;
     
     sprintf(rtcm->sta.name,"%04d",staid);
-    strncpy(rtcm->sta.antdes, des,n ); rtcm->sta.antdes [n] ='\0';
+    strncpy_s(rtcm->sta.antdes,(rsize_t)n+1,des,n); // rtcm->sta.antdes [n] ='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
     rtcm->sta.antsetup=setup;
-    strncpy(rtcm->sta.antsno, sno,m ); rtcm->sta.antsno [m] ='\0';
-    strncpy(rtcm->sta.rectype,rec,n1); rtcm->sta.rectype[n1]='\0';
-    strncpy(rtcm->sta.recver, ver,n2); rtcm->sta.recver [n2]='\0';
-    strncpy(rtcm->sta.recsno, rsn,n3); rtcm->sta.recsno [n3]='\0';
+    strncpy_s(rtcm->sta.antsno,(rsize_t)m+1,sno,m); // rtcm->sta.antsno [m] ='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
+    strncpy_s(rtcm->sta.rectype,(rsize_t)n1+1,rec,n1); // rtcm->sta.rectype[n1]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
+    strncpy_s(rtcm->sta.recver,(rsize_t)n2+1,ver,n2); // rtcm->sta.recver [n2]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
+    strncpy_s(rtcm->sta.recsno,(rsize_t)n3+1,rsn,n3); // rtcm->sta.recsno [n3]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
     
     trace(3,"rtcm3 1033: ant=%s:%s rec=%s:%s:%s\n",des,sno,rec,ver,rsn);
     return 5;

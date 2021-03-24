@@ -9,5 +9,9 @@ Debug
 Debug_Build
 __history
 __astcache
-/app/consapp/rnx2rtkp/vs2019/rnx2rtkp/.vs/rnx2rtkp/v16
+/app/consapp/rnx2rtkp/vs2019/rnx2rtkp/.vs/
 /app/winapp/rtkconv/rtkconv.stat
+x64
+/app/consapp/rnx2rtkp/vs2019/rnx2rtkp/rnx2rtkp.vcxproj.user
+
+app/consapp/rnx2rtkp/vs2019/rnx2rtkp/rnx2rtkp.vcxproj.user

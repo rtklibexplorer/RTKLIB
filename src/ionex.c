@@ -55,38 +55,46 @@ static tec_t *addtec(const double *lats, const double *lons, const double *hgts,
     ndata[0]=nitem(lats);
     ndata[1]=nitem(lons);
     ndata[2]=nitem(hgts);
-    if (ndata[0]<=1||ndata[1]<=1||ndata[2]<=0) return NULL;
-    
-    if (nav->nt>=nav->ntmax) {
-        nav->ntmax+=256;
-        if (!(nav_tec=(tec_t *)realloc(nav->tec,sizeof(tec_t)*nav->ntmax))) {
-            trace(1,"readionex malloc error ntmax=%d\n",nav->ntmax);
-            free(nav->tec); nav->tec=NULL; nav->nt=nav->ntmax=0;
+    if (ndata[0] > 1 && ndata[1] > 1 && ndata[2] > 0)
+    {
+        if (nav->nt >= nav->ntmax) {
+            nav->ntmax += 256;
+            if (!(nav_tec = (tec_t*)realloc(nav->tec, sizeof(tec_t) * nav->ntmax))) {
+                trace(1, "readionex malloc error ntmax=%d\n", nav->ntmax);
+                free(nav->tec); nav->tec = NULL; nav->nt = nav->ntmax = 0;
+                return NULL;
+            }
+            for (int indx = nav->ntmax - 1; indx >= nav->ntmax - 256; indx--)
+                memset(&nav_tec[indx], 0, sizeof(tec_t));
+            nav->tec = nav_tec;
+        }
+        p = nav->tec + nav->nt;
+        p->time = time0;
+        p->rb = rb;
+        for (i = 0; i < 3; i++) {
+            p->ndata[i] = ndata[i];
+            p->lats[i] = lats[i];
+            p->lons[i] = lons[i];
+            p->hgts[i] = hgts[i];
+        }
+        n = ndata[0] * ndata[1] * ndata[2];
+
+        if (!(p->data = (double*)malloc(sizeof(double) * n)) ||
+            !(p->rms = (float*)malloc(sizeof(float) * n))) {
             return NULL;
         }
-        nav->tec=nav_tec;
+        for (i = 0; i < n; i++) {
+#pragma warning( disable : 6386 )
+            // Thanks to 'if (ndata[0]>1 && ndata[1]>1 && ndata[2]>0)' we know analysis is wrong - disable 6386
+            p->data[i] = 0.0;
+            p->rms[i] = 0.0f;
+#pragma warning( default : 6386 )
+        }
+        nav->nt++;
+        return p;
     }
-    p=nav->tec+nav->nt;
-    p->time=time0;
-    p->rb=rb;
-    for (i=0;i<3;i++) {
-        p->ndata[i]=ndata[i];
-        p->lats[i]=lats[i];
-        p->lons[i]=lons[i];
-        p->hgts[i]=hgts[i];
-    }
-    n=ndata[0]*ndata[1]*ndata[2];
-    
-    if (!(p->data=(double *)malloc(sizeof(double)*n))||
-        !(p->rms =(float  *)malloc(sizeof(float )*n))) {
+    else
         return NULL;
-    }
-    for (i=0;i<n;i++) {
-        p->data[i]=0.0;
-        p->rms [i]=0.0f;
-    }
-    nav->nt++;
-    return p;
 }
 /* read ionex dcb aux data ----------------------------------------------------*/
 static void readionexdcb(FILE *fp, double *dcb, double *rms)
@@ -104,8 +112,8 @@ static void readionexdcb(FILE *fp, double *dcb, double *rms)
         
         if (strstr(label,"PRN / BIAS / RMS")==label) {
             
-            strncpy(id,buff+3,3); id[3]='\0';
-            
+            strncpy_s(id, 4, buff + 3, 3); // id[3] = '\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
+
             if (!(sat=satid2no(id))) {
                 trace(2,"ionex invalid satellite: %s\n",id);
                 continue;

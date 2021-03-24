@@ -572,7 +572,7 @@ static int encode_type1006(rtcm_t *rtcm, int sync)
 static int encode_type1007(rtcm_t *rtcm, int sync)
 {
     int i=24,j,antsetup=rtcm->sta.antsetup;
-    int n=MIN(strlen(rtcm->sta.antdes),31);
+    int n=MIN((int)strlen(rtcm->sta.antdes),31);
     
     trace(3,"encode_type1007: sync=%d\n",sync);
     
@@ -592,8 +592,8 @@ static int encode_type1007(rtcm_t *rtcm, int sync)
 static int encode_type1008(rtcm_t *rtcm, int sync)
 {
     int i=24,j,antsetup=rtcm->sta.antsetup;
-    int n=MIN(strlen(rtcm->sta.antdes),31);
-    int m=MIN(strlen(rtcm->sta.antsno),31);
+    int n=MIN((int)strlen(rtcm->sta.antdes),31);
+    int m=MIN((int)strlen(rtcm->sta.antsno),31);
     
     trace(3,"encode_type1008: sync=%d\n",sync);
     
@@ -925,11 +925,11 @@ static int encode_type1020(rtcm_t *rtcm, int sync)
 static int encode_type1033(rtcm_t *rtcm, int sync)
 {
     int i=24,j,antsetup=rtcm->sta.antsetup;
-    int n=MIN(strlen(rtcm->sta.antdes ),31);
-    int m=MIN(strlen(rtcm->sta.antsno ),31);
-    int I=MIN(strlen(rtcm->sta.rectype),31);
-    int J=MIN(strlen(rtcm->sta.recver ),31);
-    int K=MIN(strlen(rtcm->sta.recsno ),31);
+    int n=MIN((int)strlen(rtcm->sta.antdes ),31);
+    int m=MIN((int)strlen(rtcm->sta.antsno ),31);
+    int I=MIN((int)strlen(rtcm->sta.rectype),31);
+    int J=MIN((int)strlen(rtcm->sta.recver ),31);
+    int K=MIN((int)strlen(rtcm->sta.recsno ),31);
     
     trace(3,"encode_type1033: sync=%d\n",sync);
     

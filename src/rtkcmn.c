@@ -1661,7 +1661,7 @@ static int read_leaps_usno(FILE *fp)
         "JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"
     };
     double jd,tai_utc;
-    char buff[256],month[32],ls[MAXLEAPS][7]={{0}};
+    char buff[256], month[32] = {'\0'}, ls[MAXLEAPS][7] = { {0} };
     int i,j,y,m,d,n=0;
     
     rewind(fp);
@@ -2321,7 +2321,7 @@ static int readngspcv(const char *file, pcvs_t *pcvs)
         if (buff[0]!=' ') n=0; /* start line */
         if (++n==1) {
             pcv=pcv0;
-            strncpy(pcv.type,buff,61); pcv.type[61]='\0';
+            strncpy_s(pcv.type,62,buff,61); // pcv.type[61]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
         }
         else if (n==2) {
             if (decodef(buff,3,neu)<3) continue;
@@ -2378,8 +2378,8 @@ static int readantex(const char *file, pcvs_t *pcvs)
         if (!state) continue;
         
         if (strstr(buff+60,"TYPE / SERIAL NO")) {
-            strncpy(pcv.type,buff   ,20); pcv.type[20]='\0';
-            strncpy(pcv.code,buff+20,20); pcv.code[20]='\0';
+            strncpy_s(pcv.type,21,buff   ,20); // pcv.type[20]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
+            strncpy_s(pcv.code,21,buff+20,20); // pcv.code[20]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
             if (!strncmp(pcv.code+3,"        ",8)) {
                 pcv.sat=satid2no(pcv.code);
             }
@@ -2568,7 +2568,7 @@ extern int readblq(const char *file, const char *sta, double *odisp)
     char buff[256],staname[32]="",name[32],*p;
     
     /* station name to upper case */
-    sscanf(sta,"%16s",staname);
+    (void)sscanf(sta,"%16s",staname);
     for (p=staname;(*p=(char)toupper((int)(*p)));p++) ;
     
     if (!(fp=fopen(file,"r"))) {
@@ -2895,7 +2895,7 @@ extern int readnav(const char *file, nav_t *nav)
         if (!strncmp(buff,"IONUTC",6)) {
             for (i=0;i<8;i++) nav->ion_gps[i]=0.0;
             for (i=0;i<8;i++) nav->utc_gps[i]=0.0;
-            sscanf(buff,"IONUTC,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",
+            (void)sscanf(buff,"IONUTC,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",
                    &nav->ion_gps[0],&nav->ion_gps[1],&nav->ion_gps[2],&nav->ion_gps[3],
                    &nav->ion_gps[4],&nav->ion_gps[5],&nav->ion_gps[6],&nav->ion_gps[7],
                    &nav->utc_gps[0],&nav->utc_gps[1],&nav->utc_gps[2],&nav->utc_gps[3],
@@ -2908,7 +2908,7 @@ extern int readnav(const char *file, nav_t *nav)
             nav->geph[prn-1]=geph0;
             nav->geph[prn-1].sat=sat;
             toe_time=tof_time=0;
-            sscanf(p+1,"%d,%d,%d,%d,%d,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
+            (void)sscanf(p+1,"%d,%d,%d,%d,%d,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
                         "%lf,%lf,%lf,%lf",
                    &nav->geph[prn-1].iode,&nav->geph[prn-1].frq,&nav->geph[prn-1].svh,
                    &nav->geph[prn-1].sva,&nav->geph[prn-1].age,
@@ -2924,7 +2924,7 @@ extern int readnav(const char *file, nav_t *nav)
             nav->eph[sat-1]=eph0;
             nav->eph[sat-1].sat=sat;
             toe_time=toc_time=ttr_time=0;
-            sscanf(p+1,"%d,%d,%d,%d,%ld,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
+            (void)sscanf(p+1,"%d,%d,%d,%d,%ld,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
                         "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d",
                    &nav->eph[sat-1].iode,&nav->eph[sat-1].iodc,&nav->eph[sat-1].sva ,
                    &nav->eph[sat-1].svh ,
@@ -3288,16 +3288,16 @@ extern int expath(const char *path, char *paths[], int nmax)
     trace(3,"expath  : path=%s nmax=%d\n",path,nmax);
     
     if ((p=strrchr(path,'\\'))) {
-        strncpy(dir,path,p-path+1); dir[p-path+1]='\0';
+        strncpy_s(dir,p-path+2,path,p-path+1); // dir[p-path+1]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
     }
     if ((h=FindFirstFile((LPCTSTR)path,&file))==INVALID_HANDLE_VALUE) {
         strcpy(paths[0],path);
         return 1;
     }
-    sprintf(paths[n++],"%s%s",dir,file.cFileName);
+    sprintf(paths[n++],"%s%ws",dir,file.cFileName);
     while (FindNextFile(h,&file)&&n<nmax) {
         if (file.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) continue;
-        sprintf(paths[n++],"%s%s",dir,file.cFileName);
+        sprintf(paths[n++],"%s%ws",dir,file.cFileName);
     }
     FindClose(h);
 #else
@@ -3403,11 +3403,11 @@ extern void createdir(const char *path)
 static int repstr(char *str, const char *pat, const char *rep)
 {
     int len=(int)strlen(pat);
-    char buff[1024],*p,*q,*r;
+    char buff[1024]={'\0'},*p,*q,*r;
     
     for (p=str,r=buff;*p;p=q+len) {
         if (!(q=strstr(p,pat))) break;
-        strncpy(r,p,q-p);
+        strncpy_s(r,q-p,p,q-p);
         r+=q-p;
         r+=sprintf(r,"%s",rep);
     }

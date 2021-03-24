@@ -218,7 +218,7 @@ static int enum2str(char *s, const char *comment, int val)
         strcpy(s,p+n);
         return (int)strlen(p+n);
     }
-    strncpy(s,p+n,q-p-n); s[q-p-n]='\0';
+    strncpy_s(s,q-p-n+1,p+n,q-p-n); // s[q-p-n]='\0'; // See https://en.cppreference.com/w/c/string/byte/strncpy
     return (int)(q-p-n);
 }
 /* string to enum ------------------------------------------------------------*/
