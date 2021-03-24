@@ -62,11 +62,30 @@
 #define SQR(x)     ((x)<0.0?-(x)*(x):(x)*(x))
 #define SQRT(x)    ((x)<0.0||(x)!=(x)?0.0:sqrt(x))
 
-#define NMEA_TID   "GN"         /* NMEA talker ID for RMC and GGA sentences */
+// https://gpsd.gitlab.io/gpsd/NMEA.html#_talker_ids
+// Says ...
+//      GA    ~    Galileo Positioning System
+//      GB    ~    BeiDou(China)
+//      GI    ~    NavIC, IRNSS(India)
+//      GL    ~    GLONASS, according to IEIC 61162 - 1
+//      GN    ~    Combination of multiple satellite systems(NMEA 1083)
+//      GP    ~    Global Positioning System receiver
+//      GQ    ~    QZSS regional GPS augmentation system(Japan)
+// 
+// https://talk.newagtalk.com/forums/thread-view.asp?tid=877179&mid=7732209#M7732209
+// Says "The industry pretty much standardized on using GPxxx regardless of what 
+//       constellations are being used in the solution. To be completely NMEA compliant 
+//       the second letter should correspond to the constellations being used. Don't 
+//       forget Galileo and Beidou have their own unique letters too."
+//
+// And rnx2rtkp GNxxx output is not plotted by RTKPLOT, whereas GPxxx output is 
+//
+// So, This NMEA Talker ID used to be "GN" but now its "GP"
+#define NMEA_TID   "GP"         /* NMEA talker ID for RMC and GGA sentences */
 #define MAXFIELD   64           /* max number of fields in a record */
 #define MAXNMEA    256          /* max length of nmea sentence */
 
-#define KNOT2M     0.514444444  /* m/knot */
+#define KNOT2M     0.514444444  /* m/sec --> knot */
 
 static const int nmea_sys[]={ /* NMEA systems */
     SYS_GPS|SYS_SBS,SYS_GLO,SYS_GAL,SYS_CMP,SYS_QZS,SYS_IRN,0
