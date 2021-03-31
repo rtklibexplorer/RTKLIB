@@ -1695,7 +1695,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
         nb=0;
     }
     free(ix);
-    free(y); free(DP); free(b); free(db); free(Qb); free(Qab); free(QQ); free(Qbb);
+    free(y); free(DP); free(b); free(db); free(Qb); free(Qab); free(QQ); free(QQb);
     
     return nb; /* number of ambiguities */
 }
