@@ -165,27 +165,42 @@ static double R8(uint8_t *p) {
   return value;
 }
 /* svid to satellite number ([1] 4.1.9) --------------------------------------*/
-static int svid2sat(int svid)
-{
-    if (svid<= 37) return satno(SYS_GPS,svid);
-    if (svid<= 61) return satno(SYS_GLO,svid-37);
-    if (svid<= 62) return 0; /* glonass unknown slot */
-    if (svid<= 68) return satno(SYS_GLO,svid-38);
-    if (svid<= 70) return 0;
-    if (svid<=106) return satno(SYS_GAL,svid-70);
-    if (svid<=119) return 0;
-    if (svid<=140) return satno(SYS_SBS,svid);
-    if (svid<=180) return satno(SYS_CMP,svid-140);
-    if (svid<=187) return satno(SYS_QZS,svid-180+192);
-    if (svid<=190) return 0;
-    if (svid<=197) return satno(SYS_IRN,svid-190);
-    if (svid<=215) return satno(SYS_SBS,svid-57);
-    if (svid<=222) return satno(SYS_IRN,svid-208);
-    if (svid<=245) return satno(SYS_CMP,svid-182);
-    return 0; /* error */
+static int svid2sat(int svid) {
+  if (svid <= 37)
+    return satno(SYS_GPS, svid);
+  if (svid <= 61)
+    return satno(SYS_GLO, svid - 37);
+  if (svid <= 62)
+    return 0; /* glonass unknown slot */
+  if (svid <= 68)
+    return satno(SYS_GLO, svid - 38);
+  if (svid <= 70)
+    return 0;
+  if (svid <= 106)
+    return satno(SYS_GAL, svid - 70);
+  if (svid <= 119)
+    return 0;
+  if (svid <= 140)
+    return satno(SYS_SBS, svid);
+  if (svid <= 180)
+    return satno(SYS_CMP, svid - 140);
+  if (svid <= 187)
+    return satno(SYS_QZS, svid - 180 + 192);
+  if (svid <= 190)
+    return 0;
+  if (svid <= 197)
+    return satno(SYS_IRN, svid - 190);
+  if (svid <= 215)
+    return satno(SYS_SBS, svid - 57);
+  if (svid <= 222)
+    return satno(SYS_IRN, svid - 208);
+  if (svid <= 245)
+    return satno(SYS_CMP, svid - 182);
+  return 0; /* error */
 }
 /* signal number table ([1] 4.1.10) ------------------------------------------*/
-static uint8_t sig_tbl[SBF_MAXSIG+1][2]={ /* system, obs-code */
+static uint8_t sig_tbl[SBF_MAXSIG + 1][2] = {
+    /* system, obs-code */
     {SYS_GPS, CODE_L1C}, /*  0: GPS L1C/A */
     {SYS_GPS, CODE_L1W}, /*  1: GPS L1P */
     {SYS_GPS, CODE_L2W}, /*  2: GPS L2P */
@@ -202,14 +217,14 @@ static uint8_t sig_tbl[SBF_MAXSIG+1][2]={ /* system, obs-code */
     {SYS_CMP, CODE_L1P}, /* 13: BDS B1C */
     {SYS_CMP, CODE_L5P}, /* 14: BDS B2a */
     {SYS_IRN, CODE_L5A}, /* 15: IRN L5 */
-    {      0,        0}, /* 16: reserved */
+    {0, 0},              /* 16: reserved */
     {SYS_GAL, CODE_L1C}, /* 17: GAL E1(L1BC) */
-    {      0,        0}, /* 18: reserved */
+    {0, 0},              /* 18: reserved */
     {SYS_GAL, CODE_L6C}, /* 19: GAL E6(E6BC) */
     {SYS_GAL, CODE_L5Q}, /* 20: GAL E5a */
     {SYS_GAL, CODE_L7Q}, /* 21: GAL E5b */
     {SYS_GAL, CODE_L8Q}, /* 22: GAL E5 AltBoc */
-    {      0,        0}, /* 23: LBand */
+    {0, 0},              /* 23: LBand */
     {SYS_SBS, CODE_L1C}, /* 24: SBS L1C/A */
     {SYS_SBS, CODE_L5I}, /* 25: SBS L5 */
     {SYS_QZS, CODE_L5Q}, /* 26: QZS L5 */
@@ -217,195 +232,216 @@ static uint8_t sig_tbl[SBF_MAXSIG+1][2]={ /* system, obs-code */
     {SYS_CMP, CODE_L2I}, /* 28: BDS B1I */
     {SYS_CMP, CODE_L7I}, /* 29: BDS B2I */
     {SYS_CMP, CODE_L6I}, /* 30: BDS B3I */
-    {      0,        0}, /* 31: reserved */
+    {0, 0},              /* 31: reserved */
     {SYS_QZS, CODE_L1L}, /* 32: QZS L1C */
     {SYS_QZS, CODE_L1Z}, /* 33: QZS L1S */
     {SYS_CMP, CODE_L7D}, /* 34: BDS B2b */
-    {      0,        0}, /* 35: reserved */
+    {0, 0},              /* 35: reserved */
     {SYS_IRN, CODE_L9A}  /* 36: IRN S */
 };
 /* signal number to freq-index and code --------------------------------------*/
-static int sig2idx(int sat, int sig, const char *opt, uint8_t *code)
-{
-    int idx,sys=satsys(sat,NULL),nex=NEXOBS;
-    
-    if (sig<0||sig>SBF_MAXSIG||sig_tbl[sig][0]!=sys) return -1;
-    *code=sig_tbl[sig][1];
-    idx=code2idx(sys,*code);
-    
-    /* resolve code priority in a freq-index */
-    if (sys==SYS_GPS) {
-        if (strstr(opt,"-GL1W")&&idx==0) return (*code==CODE_L1W)?0:-1;
-        if (strstr(opt,"-GL1L")&&idx==0) return (*code==CODE_L1L)?0:-1;
-        if (strstr(opt,"-GL2L")&&idx==1) return (*code==CODE_L2L)?1:-1;
-        if (*code==CODE_L1W) return (nex<1)?-1:NFREQ;
-        if (*code==CODE_L2L) return (nex<2)?-1:NFREQ+1;
-        if (*code==CODE_L1L) return (nex<3)?-1:NFREQ+2;
-    }
-    else if (sys==SYS_GLO) {
-        if (strstr(opt,"-RL1P")&&idx==0) return (*code==CODE_L1P)?0:-1;
-        if (strstr(opt,"-RL2C")&&idx==1) return (*code==CODE_L2C)?1:-1;
-        if (*code==CODE_L1P) return (nex<1)?-1:NFREQ;
-        if (*code==CODE_L2C) return (nex<2)?-1:NFREQ+1;
-    }
-    else if (sys==SYS_QZS) {
-        if (strstr(opt,"-JL1L")&&idx==0) return (*code==CODE_L1L)?0:-1;
-        if (strstr(opt,"-JL1Z")&&idx==0) return (*code==CODE_L1Z)?0:-1;
-        if (*code==CODE_L1L) return (nex<1)?-1:NFREQ;
-        if (*code==CODE_L1Z) return (nex<2)?-1:NFREQ+1;
-    }
-    else if (sys==SYS_CMP) {
-        if (strstr(opt,"-CL1P")&&idx==0) return (*code==CODE_L1P)?0:-1;
-        if (*code==CODE_L1P) return (nex<1)?-1:NFREQ;
-    }
-    return (idx<NFREQ)?idx:-1;
+static int sig2idx(int sat, int sig, const char *opt, uint8_t *code) {
+  int idx, sys = satsys(sat, NULL), nex = NEXOBS;
+
+  if (sig < 0 || sig > SBF_MAXSIG || sig_tbl[sig][0] != sys)
+    return -1;
+  *code = sig_tbl[sig][1];
+  idx = code2idx(sys, *code);
+
+  /* resolve code priority in a freq-index */
+  if (sys == SYS_GPS) {
+    if (strstr(opt, "-GL1W") && idx == 0)
+      return (*code == CODE_L1W) ? 0 : -1;
+    if (strstr(opt, "-GL1L") && idx == 0)
+      return (*code == CODE_L1L) ? 0 : -1;
+    if (strstr(opt, "-GL2L") && idx == 1)
+      return (*code == CODE_L2L) ? 1 : -1;
+    if (*code == CODE_L1W)
+      return (nex < 1) ? -1 : NFREQ;
+    if (*code == CODE_L2L)
+      return (nex < 2) ? -1 : NFREQ + 1;
+    if (*code == CODE_L1L)
+      return (nex < 3) ? -1 : NFREQ + 2;
+  } else if (sys == SYS_GLO) {
+    if (strstr(opt, "-RL1P") && idx == 0)
+      return (*code == CODE_L1P) ? 0 : -1;
+    if (strstr(opt, "-RL2C") && idx == 1)
+      return (*code == CODE_L2C) ? 1 : -1;
+    if (*code == CODE_L1P)
+      return (nex < 1) ? -1 : NFREQ;
+    if (*code == CODE_L2C)
+      return (nex < 2) ? -1 : NFREQ + 1;
+  } else if (sys == SYS_QZS) {
+    if (strstr(opt, "-JL1L") && idx == 0)
+      return (*code == CODE_L1L) ? 0 : -1;
+    if (strstr(opt, "-JL1Z") && idx == 0)
+      return (*code == CODE_L1Z) ? 0 : -1;
+    if (*code == CODE_L1L)
+      return (nex < 1) ? -1 : NFREQ;
+    if (*code == CODE_L1Z)
+      return (nex < 2) ? -1 : NFREQ + 1;
+  } else if (sys == SYS_CMP) {
+    if (strstr(opt, "-CL1P") && idx == 0)
+      return (*code == CODE_L1P) ? 0 : -1;
+    if (*code == CODE_L1P)
+      return (nex < 1) ? -1 : NFREQ;
+  }
+  return (idx < NFREQ) ? idx : -1;
 }
 /* initialize obs data fields ------------------------------------------------*/
-static void init_obsd(gtime_t time, int sat, obsd_t *data)
-{
-    int i;
-    
-    data->time=time;
-    data->sat=(uint8_t)sat;
-    
-    for (i=0;i<NFREQ+NEXOBS;i++) {
-        data->L[i]=data->P[i]=0.0;
-        data->D[i]=0.0f;
-        data->SNR[i]=(uint16_t)0;
-        data->LLI[i]=(uint8_t)0;
-        data->code[i]=CODE_NONE;
-    }
+static void init_obsd(gtime_t time, int sat, obsd_t *data) {
+  int i;
+
+  data->time = time;
+  data->sat = (uint8_t)sat;
+
+  for (i = 0; i < NFREQ + NEXOBS; i++) {
+    data->L[i] = data->P[i] = 0.0;
+    data->D[i] = 0.0f;
+    data->SNR[i] = (uint16_t)0;
+    data->LLI[i] = (uint8_t)0;
+    data->code[i] = CODE_NONE;
+  }
 }
 /* decode SBF GNSS measurements ----------------------------------------------*/
-static int decode_measepoch(raw_t *raw)
-{
-    uint8_t *p=raw->buff+14,code;
-    double P1,P2,L1,L2,D1,D2,S1,S2,freq1,freq2;
-    int i,j,idx,n,n1,n2,len1,len2,sig,ant,svid,info,sat,sys,lock,fcn,LLI;
-    int ant_sel=0; /* antenna selection (0:main) */
-    
-    if      (strstr(raw->opt,"-AUX1")) ant_sel=1;
-    else if (strstr(raw->opt,"-AUX2")) ant_sel=2;
-    
-    if (raw->len<20) {
-        trace(2,"sbf measepoch length error: len=%d\n",raw->len);
-        return -1;
+static int decode_measepoch(raw_t *raw) {
+  uint8_t *p = raw->buff + 14, code;
+  double P1, P2, L1, L2, D1, D2, S1, S2, freq1, freq2;
+  int i, j, idx, n, n1, n2, len1, len2, sig, ant, svid, info, sat, sys, lock,
+      fcn, LLI;
+  int ant_sel = 0; /* antenna selection (0:main) */
+
+  if (strstr(raw->opt, "-AUX1"))
+    ant_sel = 1;
+  else if (strstr(raw->opt, "-AUX2"))
+    ant_sel = 2;
+
+  if (raw->len < 20) {
+    trace(2, "sbf measepoch length error: len=%d\n", raw->len);
+    return -1;
+  }
+  n1 = U1(p);
+  len1 = U1(p + 1);
+  len2 = U1(p + 2);
+
+  if (U1(p + 3) & 0x80) {
+    trace(2, "sbf measepoch scrambled\n");
+    return -1;
+  }
+  if (raw->outtype) {
+    sprintf(raw->msgtype + strlen(raw->msgtype), " nsat=%d", n1);
+  }
+  for (i = n = 0, p += 6;
+       i < n1 && n < MAXOBS && p + 20 <= raw->buff + raw->len; i++) {
+    svid = U1(p + 2);
+    ant = U1(p + 1) >> 5;
+    sig = U1(p + 1) & 0x1f;
+    info = U1(p + 18);
+    n2 = U1(p + 19);
+    fcn = 0;
+    if (sig == 31)
+      sig += (info >> 3) * 32;
+    else if (sig >= 8 && sig <= 11)
+      fcn = (info >> 3) - 8;
+
+    if (ant != ant_sel) {
+      trace(3, "sbf measepoch ant error: svid=%d ant=%d\n", svid, ant);
+      p += len1 + len2 * n2;
+      continue;
     }
-    n1  =U1(p);
-    len1=U1(p+1);
-    len2=U1(p+2);
-    
-    if (U1(p+3)&0x80) {
-        trace(2,"sbf measepoch scrambled\n");
-        return -1;
+    if (!(sat = svid2sat(svid))) {
+      trace(4, "sbf measepoch svid error: svid=%d\n", svid);
+      p += len1 + len2 * n2;
+      continue;
     }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," nsat=%d",n1);
+    if ((idx = sig2idx(sat, sig, raw->opt, &code)) < 0) {
+      trace(2, "sbf measepoch sig error: sat=%d sig=%d\n", sat, sig);
+      p += len1 + len2 * n2;
+      continue;
     }
-    for (i=n=0,p+=6;i<n1&&n<MAXOBS&&p+20<=raw->buff+raw->len;i++) {
-        svid=U1(p+2);
-        ant =U1(p+1)>>5;
-        sig =U1(p+1)&0x1f;
-        info=U1(p+18);
-        n2  =U1(p+19);
-        fcn =0;
-        if (sig==31) sig+=(info>>3)*32;
-        else if (sig>=8&&sig<=11) fcn=(info>>3)-8;
-        
-        if (ant!=ant_sel) {
-            trace(3,"sbf measepoch ant error: svid=%d ant=%d\n",svid,ant);
-            p+=len1+len2*n2;
-            continue;
-        }
-        if (!(sat=svid2sat(svid))) {
-            trace(3,"sbf measepoch svid error: svid=%d\n",svid);
-            p+=len1+len2*n2;
-            continue;
-        }
-        if ((idx=sig2idx(sat,sig,raw->opt,&code))<0) {
-            trace(2,"sbf measepoch sig error: sat=%d sig=%d\n",sat,sig);
-            p+=len1+len2*n2;
-            continue;
-        }
-        init_obsd(raw->time,sat,raw->obs.data+n);
-        P1=D1=0.0;
-        sys=satsys(sat,NULL);
-        freq1=code2freq(sys,code,fcn);
-        
-        if ((U1(p+3)&0x1f)!=0||U4(p+4)!=0) {
-            P1=(U1(p+3)&0x0f)*4294967.296+U4(p+4)*0.001;
-            raw->obs.data[n].P[idx]=P1;
-        }
-        if (I4(p+8)!=-2147483648) {
-            D1=I4(p+8)*0.0001;
-            raw->obs.data[n].D[idx]=(float)D1;
-        }
-        lock=U2(p+16);
-        if (P1!=0.0&&freq1>0.0&&lock!=65535&&(I1(p+14)!=-128||U2(p+12)!=0)) {
-            L1=I1(p+14)*65.536+U2(p+12)*0.001;
-            raw->obs.data[n].L[idx]=P1*freq1/CLIGHT+L1;
-            LLI=(lock<raw->lockt[sat-1][idx]?1:0)+((info&(1<<2))?2:0);
-            raw->obs.data[n].LLI[idx]=(uint8_t)LLI;
-            raw->lockt[sat-1][idx]=lock;
-        }
-        if (U1(p+15)!=255) {
-            S1=U1(p+15)*0.25+((sig==1||sig==2)?0.0:10.0);
-            raw->obs.data[n].SNR[idx]=(uint16_t)(S1/SNR_UNIT+0.5);
-        }
-        raw->obs.data[n].code[idx]=code;
-        
-        for (j=0,p+=len1;j<n2&&p+12<=raw->buff+raw->len;j++,p+=len2) {
-            sig =U1(p)&0x1f;
-            ant =U1(p)>>5;
-            info=U1(p+5);
-            if (sig==31) sig+=(info>>3)*32;
-            
-            if (ant!=ant_sel) {
-                trace(3,"sbf measepoch ant error: sat=%d ant=%d\n",sat,ant);
-                continue;
-            }
-            if ((idx=sig2idx(sat,sig,raw->opt,&code))<0) {
-                trace(3,"sbf measepoch sig error: sat=%d sig=%d\n",sat,sig);
-                continue;
-            }
-            P2=0.0;
-            freq2=code2freq(sys,code,fcn);
-            
-            if (P1!=0.0&&(getbits(p+3,5,3)!=-4||U2(p+6)!=0)) {
-                P2=P1+getbits(p+3,5,3)*65.536+U2(p+6)*0.001;
-                raw->obs.data[n].P[idx]=P2;
-            }
-            if (P2!=0.0&&freq2>0.0&&(I1(p+4)!=-128||U2(p+8)!=0)) {
-                L2=I1(p+4)*65.536+U2(p+8)*0.001;
-                raw->obs.data[n].L[idx]=P2*freq2/CLIGHT+L2;
-            }
-            if (D1!=0.0&&freq1>0.0&&freq2>0.0&&
-                (getbits(p+3,0,5)!=-16||U2(p+10)!=0)) {
-                D2=getbits(p+3,0,5)*6.5536+U2(p+10)*0.0001;
-                raw->obs.data[n].D[idx]=(float)(D1*freq2/freq1)+D2;
-            }
-            lock=U1(p+1);
-            if (lock!=255) {
-                LLI=(lock<raw->lockt[sat-1][idx]?1:0)+((info&(1<<2))?2:0);
-                raw->obs.data[n].LLI[idx]=(uint8_t)LLI;
-                raw->lockt[sat-1][idx]=lock;
-            }
-            if (U1(p+2)!=255) {
-                S2=U1(p+2)*0.25+((sig==1||sig==2)?0.0:10.0);
-                raw->obs.data[n].SNR[idx]=(uint16_t)(S2/SNR_UNIT+0.5);
-            }
-            raw->obs.data[n].code[idx]=code;
-        }
-        n++;
+    init_obsd(raw->time, sat, raw->obs.data + n);
+    P1 = D1 = 0.0;
+    sys = satsys(sat, NULL);
+    freq1 = code2freq(sys, code, fcn);
+
+    if ((U1(p + 3) & 0x1f) != 0 || U4(p + 4) != 0) {
+      P1 = (U1(p + 3) & 0x0f) * 4294967.296 + U4(p + 4) * 0.001;
+      raw->obs.data[n].P[idx] = P1;
     }
-    raw->obs.n=n;
-    return 1;
+    if (I4(p + 8) != -2147483648) {
+      D1 = I4(p + 8) * 0.0001;
+      raw->obs.data[n].D[idx] = (float)D1;
+    }
+    lock = U2(p + 16);
+    if (P1 != 0.0 && freq1 > 0.0 && lock != 65535 &&
+        (I1(p + 14) != -128 || U2(p + 12) != 0)) {
+      L1 = I1(p + 14) * 65.536 + U2(p + 12) * 0.001;
+      raw->obs.data[n].L[idx] = P1 * freq1 / CLIGHT + L1;
+      LLI = (lock < raw->lockt[sat - 1][idx] ? 1 : 0) +
+            ((info & (1 << 2)) ? 2 : 0);
+      raw->obs.data[n].LLI[idx] = (uint8_t)LLI;
+      raw->lockt[sat - 1][idx] = lock;
+    }
+    if (U1(p + 15) != 255) {
+      S1 = U1(p + 15) * 0.25 + ((sig == 1 || sig == 2) ? 0.0 : 10.0);
+      raw->obs.data[n].SNR[idx] = (uint16_t)(S1 / SNR_UNIT + 0.5);
+    }
+    raw->obs.data[n].code[idx] = code;
+
+    for (j = 0, p += len1; j < n2 && p + 12 <= raw->buff + raw->len;
+         j++, p += len2) {
+      sig = U1(p) & 0x1f;
+      ant = U1(p) >> 5;
+      info = U1(p + 5);
+      if (sig == 31)
+        sig += (info >> 3) * 32;
+
+      if (ant != ant_sel) {
+        trace(3, "sbf measepoch ant error: sat=%d ant=%d\n", sat, ant);
+        continue;
+      }
+      if ((idx = sig2idx(sat, sig, raw->opt, &code)) < 0) {
+        trace(3, "sbf measepoch sig error: sat=%d sig=%d\n", sat, sig);
+        continue;
+      }
+      P2 = 0.0;
+      freq2 = code2freq(sys, code, fcn);
+
+      if (P1 != 0.0 && (getbits(p + 3, 5, 3) != -4 || U2(p + 6) != 0)) {
+        P2 = P1 + getbits(p + 3, 5, 3) * 65.536 + U2(p + 6) * 0.001;
+        raw->obs.data[n].P[idx] = P2;
+      }
+      if (P2 != 0.0 && freq2 > 0.0 && (I1(p + 4) != -128 || U2(p + 8) != 0)) {
+        L2 = I1(p + 4) * 65.536 + U2(p + 8) * 0.001;
+        raw->obs.data[n].L[idx] = P2 * freq2 / CLIGHT + L2;
+      }
+      if (D1 != 0.0 && freq1 > 0.0 && freq2 > 0.0 &&
+          (getbits(p + 3, 0, 5) != -16 || U2(p + 10) != 0)) {
+        D2 = getbits(p + 3, 0, 5) * 6.5536 + U2(p + 10) * 0.0001;
+        raw->obs.data[n].D[idx] = (float)(D1 * freq2 / freq1) + D2;
+      }
+      lock = U1(p + 1);
+      if (lock != 255) {
+        LLI = (lock < raw->lockt[sat - 1][idx] ? 1 : 0) +
+              ((info & (1 << 2)) ? 2 : 0);
+        raw->obs.data[n].LLI[idx] = (uint8_t)LLI;
+        raw->lockt[sat - 1][idx] = lock;
+      }
+      if (U1(p + 2) != 255) {
+        S2 = U1(p + 2) * 0.25 + ((sig == 1 || sig == 2) ? 0.0 : 10.0);
+        raw->obs.data[n].SNR[idx] = (uint16_t)(S2 / SNR_UNIT + 0.5);
+      }
+      raw->obs.data[n].code[idx] = code;
+    }
+    n++;
+  }
+  raw->obs.n = n;
+  return 1;
 }
 /* decode SBF GNSS measurements extra info -----------------------------------*/
-static int decode_measextra(raw_t *raw)
-{
-    /* not yet supported */
-    return 0;
+static int decode_measextra(raw_t *raw) {
+  /* not yet supported */
+  return 0;
 }
 /* decode ephemeris ----------------------------------------------------------*/
 static int decode_eph(raw_t *raw, int sat)
