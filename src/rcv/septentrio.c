@@ -311,6 +311,7 @@ static int decode_measepoch(raw_t *raw) {
       fcn, LLI;
   int ant_sel = 0; /* antenna selection (0:main) */
 
+  trace(4, "SBF decode_measepoch: len=%d\n", raw->len);
   if (strstr(raw->opt, "-AUX1"))
     ant_sel = 1;
   else if (strstr(raw->opt, "-AUX2"))
@@ -359,6 +360,7 @@ static int decode_measepoch(raw_t *raw) {
       p += len1 + len2 * n2;
       continue;
     }
+    trace(4, "signal type = %2d, \n", sig);
     init_obsd(raw->time, sat, raw->obs.data + n);
     P1 = D1 = 0.0;
     sys = satsys(sat, NULL);
@@ -1340,6 +1342,34 @@ static int decode_rawnav(raw_t *raw, int sys) {
   trace(4, "SBF, decode_gpsrawcanav: sat=%2d\n", sat);
   return 0;
 }
+
+/* decode SBF gpsutc --------------------------------------------------------*/
+static int decode_gpsutc(raw_t *raw) {
+  int leaps;
+  uint8_t *p = (raw->buff) + 8; /* points at TOW location */
+
+  trace(4, "SBF decode_gpsutc: len=%d\n", raw->len);
+
+  if (raw->len < 37) {
+    trace(1, "SBF decode_gpsutc: Block too short\n");
+    return -1;
+  }
+
+  /* GPS delta-UTC parameters */
+  raw->nav.utc_gps[1] = R4(p + 8);             /*   A1 */
+  raw->nav.utc_gps[0] = R8(p + 12);            /*   A0 */
+  raw->nav.utc_gps[2] = U4(p + 20);            /*  tot */
+  /* raw->nav.utc_gps[3] = U1(p + 24); */      /*  WNt */
+  raw->nav.utc_gps[3] = adjgpsweek(U2(p + 4)); /*   WN */
+  leaps = I1(p + 25);                          /* Dtls */
+
+  /*NOTE. it is kind of strange that I have to use U1(p+4) and not U1(p+24)
+          in fact if I take U1(p+24) I do not seem to ge the correct W in
+          the header of RINEX nav file, line DELTA-UTC: A0,A1,T,W
+  */
+  return 9;
+}
+
 /* decode SBF nav message for GPS (navigation data) --------------------------*/
 static int decode_gpsnav(raw_t *raw) {
 
@@ -1505,6 +1535,7 @@ static int decode_sbf(raw_t *raw) {
     time2str(raw->time, tstr, 2);
     sprintf(raw->msgtype, "SBF %4d (%4d): %s", type, raw->len, tstr);
   }
+  trace(3, "decode_sbf: type=%04x len=%d\n", type, raw->len);
   switch (type) {
   case SBF_MEASEPOCH:
     return decode_measepoch(raw);
@@ -1722,6 +1753,7 @@ extern int input_sbf(raw_t *raw, uint8_t data) {
  *-----------------------------------------------------------------------------*/
 extern int input_sbff(raw_t *raw, FILE *fp) {
   int i, data;
+  int lenToRead;
 
   trace(4, "input_sbff:\n");
 
@@ -1735,8 +1767,10 @@ extern int input_sbff(raw_t *raw, FILE *fp) {
         return 0;
     }
   }
-  if (fread(raw->buff + 2, 1, 6, fp) < 6)
+  if (fread(raw->buff + 2, 1, 6, fp) < 6) {
+    trace(2, "sbf fread failed\n");
     return -2;
+  }
   raw->nbyte = 8;
 
   if ((raw->len = U2(raw->buff + 6)) > MAXRAWLEN) {
@@ -1744,8 +1778,17 @@ extern int input_sbff(raw_t *raw, FILE *fp) {
     raw->nbyte = 0;
     return -1;
   }
-  if (raw->len != 0 && fread(raw->buff + 8, raw->len - 8, 1, fp) < 1)
+  if (raw->len <= 8) {
+    /* Corrupt length */
+    trace(2, "sbf corrupt length error: len=%d\n", raw->len);
+    raw->nbyte = 0;
+    return -1;
+  }
+  lenToRead = raw->len - 8;
+  if (raw->len != 0 && fread(raw->buff + 8, lenToRead, 1, fp) != lenToRead) {
+    trace(2, "sbf fread failed 2 \n");
     return -2;
+  }
   raw->nbyte = 0;
 
   /* decode SBF block */
