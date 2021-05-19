@@ -1,58 +1,133 @@
 /*------------------------------------------------------------------------------
-* septentrio.c : Septentrio Binary Format (SBF) decoder
-*
-*          Copyright (C) 2020 by Tomoji TAKASU
-*
-* reference :
-*     [1] Septentrio, mosaic-X5 reference guide applicable to version 4.8.0 of
-*         the firmware, June 4, 2020
-*
-* version : $Revision:$
-*
-* history : 2013/07/17  1.0  begin writing
-*           2013/10/24  1.1  GPS L1 working
-*           2013/11/02  1.2  modified by TTAKASU
-*           2015/01/26  1.3  fix some problems by Jens Reimann
-*           2016/02/04  1.4  by Jens Reimann
-*                           - added more sanity checks
-*                           - added galileon raw decoding
-*                           - added usage of decoded SBAS messages for testing
-*                           - add QZSS and Compass/Beidou navigation messages
-*                           - fixed code and Doppler for 2nd and following frequency
-*                           - fixed bug in glonass ephemeris
-*                           - fixed decoding of galileo ephemeris
-*                           - fixed lost lock indicator
-*                           - fixed sbas decoding
-*                           - cleanups
-*           2016/03/03  1.5 - fixed TOW in SBAS messages
-*           2016/03/12  1.6 - respect code priorities
-*                           - fixed bug in carrier phase calculation of type2 data
-*                           - unify frequency determination
-*                           - improve lock handling
-*                           - various bug fixes
-*           2016/05/25  1.7  rtk_crc24q() -> crc24q() by T.T
-*           2016/07/29  1.8  crc24q() -> rtk_crc24q() by T.T
-*           2017/04/11  1.9  (char *) -> (signed char *) by T.T
-*           2017/09/01  1.10 suppress warnings
-*
-*           2020/11/30  1.11 rewritten from scratch to support mosaic-X5 [1]
-*-----------------------------------------------------------------------------*/
+ * septentrio.c : Septentrio Binary Format (SBF) decoder
+ *
+ *          Copyright (C) 2020 by Tomoji TAKASU
+ *
+ * reference :
+ *     [1] Septentrio, mosaic-X5 reference guide applicable to version 4.8.0 of
+ *         the firmware, June 4, 2020
+ *
+ * version : $Revision:$
+ *
+ * history : 2013/07/17  1.0  begin writing
+ *           2013/10/24  1.1  GPS L1 working
+ *           2013/11/02  1.2  modified by TTAKASU
+ *           2015/01/26  1.3  fix some problems by Jens Reimann
+ *           2016/02/04  1.4  by Jens Reimann
+ *                           - added more sanity checks
+ *                           - added galileon raw decoding
+ *                           - added usage of decoded SBAS messages for testing
+ *                           - add QZSS and Compass/Beidou navigation messages
+ *                           - fixed code and Doppler for 2nd and following
+ *frequency
+ *                           - fixed bug in glonass ephemeris
+ *                           - fixed decoding of galileo ephemeris
+ *                           - fixed lost lock indicator
+ *                           - fixed sbas decoding
+ *                           - cleanups
+ *           2016/03/03  1.5 - fixed TOW in SBAS messages
+ *           2016/03/12  1.6 - respect code priorities
+ *                           - fixed bug in carrier phase calculation of type2
+ *data
+ *                           - unify frequency determination
+ *                           - improve lock handling
+ *                           - various bug fixes
+ *           2016/05/25  1.7  rtk_crc24q() -> crc24q() by T.T
+ *           2016/07/29  1.8  crc24q() -> rtk_crc24q() by T.T
+ *           2017/04/11  1.9  (char *) -> (signed char *) by T.T
+ *           2017/09/01  1.10 suppress warnings
+ *
+ *           2020/11/30  1.11 rewritten from scratch to support mosaic-X5 [1]
+ *           2021/05/19  1.12 Bring across all the removed code in 1.11
+ *-----------------------------------------------------------------------------*/
+
 #include "rtklib.h"
 
-#define SBF_SYNC1       0x24    /* SBF block header 1 */
-#define SBF_SYNC2       0x40    /* SBF block header 2 */
-#define SBF_MAXSIG      36      /* SBF max signal number */
+#define SBF_SYNC1 0x24 /* SBF block header 1 */
+#define SBF_SYNC2 0x40 /* SBF block header 2 */
+#define SBF_MAXSIG 36  /* SBF max signal number */
 
-#define SBF_MEASEPOCH   4027    /* SBF GNSS measurements */
-#define SBF_MEASEXTRA   4000    /* SBF GNSS measurements extra info */
-#define SBF_GPSRAWCA    4017    /* SBF GPS C/A subframe */
-#define SBF_GLORAWCA    4026    /* SBF GLONASS L1CA or L2CA navigation string */
-#define SBF_GALRAWFNAV  4022    /* SBF Galileo F/NAV navigation page */
-#define SBF_GALRAWINAV  4023    /* SBF Galileo I/NAV navigation page */
-#define SBF_GEORAWL1    4020    /* SBF SBAS L1 navigation frame */
-#define SBF_BDSRAW      4047    /* SBF BDS navigation page */
-#define SBF_QZSRAWL1CA  4066    /* SBF QZSS C/A subframe */
-#define SBF_NAVICRAW    4093    /* SBF NavIC/IRNSS subframe */
+#define SBF_MEASEPOCH 4027  /* SBF GNSS measurements */
+#define SBF_MEASEXTRA 4000  /* SBF GNSS measurements extra info */
+#define SBF_GPSRAWCA 4017   /* SBF GPS C/A subframe */
+#define SBF_GLORAWCA 4026   /* SBF GLONASS L1CA or L2CA navigation string */
+#define SBF_GALRAWFNAV 4022 /* SBF Galileo F/NAV navigation page */
+#define SBF_GALRAWINAV 4023 /* SBF Galileo I/NAV navigation page */
+#define SBF_GEORAWL1 4020   /* SBF SBAS L1 navigation frame */
+#define SBF_BDSRAW 4047     /* SBF BDS navigation page */
+#define SBF_QZSRAWL1CA 4066 /* SBF QZSS C/A subframe */
+#define SBF_NAVICRAW 4093   /* SBF NavIC/IRNSS subframe */
+#define SBF_PVTGEOD                                                            \
+  4007 /* SBF message id: Rx Position Velocity and Time data in Geodetic       \
+          coordinates */
+#define SBF_DOP 4001 /* SBF message id: Dilution of Precision data */
+#define SBF_MEASEPOCH_END                                                      \
+  5922 /* SBF message id: end of SBF range measurememts */
+
+#define SBF_ENDOFPVT 5921 /* SBF message id: End of any PVT block */
+#define SBF_CHNSTATUS                                                          \
+  4013 /* SBF message id: Status of the receiver channels                      \
+        */
+#define SBF_BASEVECGEOD                                                        \
+  4028 /* SBF message id: Base station vector                                  \
+        */
+#define SBF_ATTEULER                                                           \
+  5938 /* SBF message id: Euler Angles of attitude                             \
+        */
+#define SBF_POSCOVGEO                                                          \
+  5906 /* SBF message id: Position covariance matrix                           \
+        */
+
+#define SBF_GEONAV 5896          /* SBF message id:  SBAS navigation message */
+#define SBF_GEOALM 5897          /* SBF message id:  SBAS satellite almanac */
+#define SBF_GEOSERVICELEVEL 5917 /* SBF message id:  SBAS Service Message */
+#define SBF_GEONETWORKTIME                                                     \
+  5918 /* SBF message id:  SBAS Network Time/UTC offset parameters */
+#define SBF_GEOMT00                                                            \
+  5925 /* SBF message id:  SBAS: Don't use for safety application */
+#define SBF_GEOPRNMASK 5926   /* SBF message id:  PRN Mask assignments */
+#define SBF_GEOFASTCORR 5927  /* SBF message id:  Fast Corrections */
+#define SBF_GEOINTEGRITY 5928 /* SBF message id:  Integrity information */
+#define SBF_GEOFASTCORRDEGR                                                    \
+  5929 /* SBF message id:  fast correction degradation factor */
+#define SBF_GEODEGRFACTORS 5930 /* SBF message id:  Degration factors */
+#define SBF_GEOIGPMASK 5931 /* SBF message id:  Ionospheric grid point mask */
+#define SBF_GEOLONGTERMCOR                                                     \
+  5932 /* SBF message id:  Long term satellite error corrections */
+#define SBF_GEOIONODELAY                                                       \
+  5933 /* SBF message id:  Inospheric delay correction                         \
+        */
+#define SBF_GEOCLOCKEPHCOVMATRIX                                               \
+  5934 /* SBF message id:  Clock-Ephemeris Covariance Matrix l*/
+
+#define SBF_QUALITY_IND 4082 /* SBF message id:  Quality Indicators*/
+#define SBF_PVTSUPPORT 4076  /* SBF message id: PVT support params*/
+#define SBF_GPSRAWL2C                                                          \
+  4018 /* SBF message id: GPS raw navigation page or frame */
+
+#define SBF_GPSNAV 5891 /* SBF message id: GPS navigation data */
+#define SBF_GPSALM 5892 /* SBF message id: GPS almanac */
+#define SBF_GPSION                                                             \
+  5893 /* SBF message id: GPS ionosphere data, Klobuchar coefficients */
+#define SBF_GPSUTC 5894 /* SBF message id: GPS UTC data */
+
+#define SBF_GLONAV 4004  /* SBF message id: GLONASS navigation data */
+#define SBF_GLOALM 4005  /* SBF message id: GLONASS almanac */
+#define SBF_GLOTIME 4036 /* SBF message id: GLONASS time data */
+
+#define SBF_GALNAV 4002 /* SBF message id: Galileo navigation data */
+#define SBF_GALALM 4003 /* SBF message id: Galileo almanac */
+#define SBF_GALION                                                             \
+  4030 /* SBF message id: Galileo ionosphere data, Klobuchar coefficients */
+#define SBF_GALUTC 4031 /* SBF message id: Galileo UTC data */
+
+#define SBF_CMPNAV 4081  /* SBF message id: Compass navigation data */
+#define SBF_QZSSNAV 4095 /* SBF message id: QZSS navigation data */
+
+#define SBF_GALGSTGPS 4032 /* SBF message id: Galileo GPS time offset */
+#define SBF_GPSRAWL5                                                           \
+  4019 /* SBF message id: GPS raw navigation page or frame                     \
+        */
 
 /* get fields (little-endian) ------------------------------------------------*/
 #define U1(p) (*((uint8_t *)(p)))
