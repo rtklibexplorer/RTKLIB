@@ -1320,6 +1320,83 @@ static int decode_rawnav(raw_t *raw, int sys) {
       adj_utcweek(raw->time, raw->nav.utc_qzs);
     }
     }
+/* decode SBF nav message for GPS (navigation data) --------------------------*/
+static int decode_gpsnav(raw_t *raw) {
+
+  uint8_t *puiTmp = (raw->buff) + 6;
+  eph_t eph = {0};
+  double toc;
+  uint8_t prn, sat;
+  uint16_t week;
+
+  trace(4, "SBF decode_gpsnav: len=%d\n", raw->len);
+
+  if ((raw->len) < 120) {
+    trace(2, "SBF decode_gpsnav frame length error: len=%d\n", raw->len);
+    return -1;
+  }
+
+  prn = U1(puiTmp + 8);
+  sat = satno(SYS_GPS, prn);
+
+  if (sat == 0)
+    return -1;
+
+  if (!((prn >= 1) && (prn <= 37))) {
+    trace(2, "SBF decode_gpsnav prn error: sat=%d\n", prn);
+    return -1;
+  }
+
+  eph.crs = R4(puiTmp + 42);
+  eph.deln = R4(puiTmp + 46) * PI;
+  eph.M0 = R8(puiTmp + 50) * PI;
+  eph.cuc = R4(puiTmp + 58);
+  eph.e = R8(puiTmp + 62);
+  eph.cus = R4(puiTmp + 70);
+  eph.A = pow(R8(puiTmp + 74), 2);
+  eph.toes = U4(puiTmp + 82);
+  eph.cic = R4(puiTmp + 86);
+  eph.OMG0 = R8(puiTmp + 90) * PI;
+  eph.cis = R4(puiTmp + 98);
+  eph.i0 = R8(puiTmp + 102) * PI;
+  eph.crc = R4(puiTmp + 110);
+  eph.omg = R8(puiTmp + 114) * PI;
+  eph.OMGd = R4(puiTmp + 122) * PI;
+  eph.idot = R4(puiTmp + 126) * PI;
+  eph.tgd[0] = R4(puiTmp + 22);
+  toc = U4(puiTmp + 26);
+  eph.f2 = R4(puiTmp + 30);
+  eph.f1 = R4(puiTmp + 34);
+  eph.f0 = R4(puiTmp + 38);
+  eph.sva = U1(puiTmp + 13); /* URA */
+  eph.iodc = U2(puiTmp + 16);
+  eph.iode = U1(puiTmp + 18);
+  eph.code = U1(puiTmp + 12);
+  eph.flag = U1(puiTmp + 15);
+  eph.fit = U1(puiTmp + 20) ? 0 : 4;
+  week = U2(puiTmp + 10); /* WN */
+
+  if (week >= 4096) {
+    trace(2, "SBF gps ephemeris week error: sat=%2d week=%d\n", sat, week);
+    return -1;
+  }
+
+  eph.week = adjgpsweek(week);
+  eph.toe = gpst2time(eph.week, eph.toes);
+  eph.toc = gpst2time(eph.week, toc);
+  eph.ttr = raw->time;
+
+  if (!strstr(raw->opt, "-EPHALL")) {
+    if ((eph.iode == raw->nav.eph[sat - 1].iode) &&
+        (eph.iodc == raw->nav.eph[sat - 1].iodc))
+      return 0;
+  }
+
+  eph.sat = sat;
+  raw->nav.eph[sat - 1] = eph;
+  raw->ephsat = sat;
+  return 2;
+}
 /* decode SBF gpsion --------------------------------------------------------*/
 static int decode_gpsion(raw_t *raw) {
   uint8_t *p = (raw->buff) + 8; /* points at TOW location */
