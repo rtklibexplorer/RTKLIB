@@ -131,11 +131,39 @@
 
 /* get fields (little-endian) ------------------------------------------------*/
 #define U1(p) (*((uint8_t *)(p)))
-#define I1(p) (*((int8_t  *)(p)))
-static uint16_t U2(uint8_t *p) {uint16_t a; memcpy(&a,p,2); return a;}
-static uint32_t U4(uint8_t *p) {uint32_t a; memcpy(&a,p,4); return a;}
-static int32_t  I4(uint8_t *p) {int32_t  a; memcpy(&a,p,4); return a;}
+#define I1(p) (*((int8_t *)(p)))
+static uint16_t U2(uint8_t *p) {
+  uint16_t a;
+  memcpy(&a, p, 2);
+  return a;
+}
+static uint32_t U4(uint8_t *p) {
+  uint32_t a;
+  memcpy(&a, p, 4);
+  return a;
+}
+static int32_t I4(uint8_t *p) {
+  int32_t a;
+  memcpy(&a, p, 4);
+  return a;
+}
 
+static float R4(uint8_t *p) {
+  float value;
+  uint8_t *q = (uint8_t *)&value + 3;
+  int i;
+  for (i = 0; i < 4; i++)
+    *q-- = *p++;
+  return value;
+}
+static double R8(uint8_t *p) {
+  double value;
+  uint8_t *q = (uint8_t *)&value + 7;
+  int i;
+  for (i = 0; i < 8; i++)
+    *q-- = *p++;
+  return value;
+}
 /* svid to satellite number ([1] 4.1.9) --------------------------------------*/
 static int svid2sat(int svid)
 {
