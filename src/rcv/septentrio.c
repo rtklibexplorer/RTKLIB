@@ -444,104 +444,104 @@ static int decode_measextra(raw_t *raw) {
   return 0;
 }
 /* decode ephemeris ----------------------------------------------------------*/
-static int decode_eph(raw_t *raw, int sat)
-{
-    eph_t eph={0};
-    
-    if (!decode_frame(raw->subfrm[sat-1],&eph,NULL,NULL,NULL)) return 0;
-    
-    if (!strstr(raw->opt,"-EPHALL")) {
-        if (eph.iode==raw->nav.eph[sat-1].iode&&
-            eph.iodc==raw->nav.eph[sat-1].iodc&&
-            timediff(eph.toe,raw->nav.eph[sat-1].toe)==0.0&&
-            timediff(eph.toc,raw->nav.eph[sat-1].toc)==0.0) return 0;
-    }
-    eph.sat=sat;
-    raw->nav.eph[sat-1]=eph;
-    raw->ephsat=sat;
-    raw->ephset=0;
-    return 2;
+static int decode_eph(raw_t *raw, int sat) {
+  eph_t eph = {0};
+
+  if (!decode_frame(raw->subfrm[sat - 1], &eph, NULL, NULL, NULL))
+    return 0;
+
+  if (!strstr(raw->opt, "-EPHALL")) {
+    if (eph.iode == raw->nav.eph[sat - 1].iode &&
+        eph.iodc == raw->nav.eph[sat - 1].iodc &&
+        timediff(eph.toe, raw->nav.eph[sat - 1].toe) == 0.0 &&
+        timediff(eph.toc, raw->nav.eph[sat - 1].toc) == 0.0)
+      return 0;
+  }
+  eph.sat = sat;
+  raw->nav.eph[sat - 1] = eph;
+  raw->ephsat = sat;
+  raw->ephset = 0;
+  return 2;
 }
 /* UTC 8-bit week -> full week -----------------------------------------------*/
-static void adj_utcweek(gtime_t time, double *utc)
-{
-    int week;
-    
-    time2gpst(time,&week);
-    utc[3]+=week/256*256;
-    if      (utc[3]<week-127) utc[3]+=256.0;
-    else if (utc[3]>week+127) utc[3]-=256.0;
-    utc[5]+=utc[3]/256*256;
-    if      (utc[5]<utc[3]-127) utc[5]+=256.0;
-    else if (utc[5]>utc[3]+127) utc[5]-=256.0;
+static void adj_utcweek(gtime_t time, double *utc) {
+  int week;
+
+  time2gpst(time, &week);
+  utc[3] += week / 256 * 256;
+  if (utc[3] < week - 127)
+    utc[3] += 256.0;
+  else if (utc[3] > week + 127)
+    utc[3] -= 256.0;
+  utc[5] += utc[3] / 256 * 256;
+  if (utc[5] < utc[3] - 127)
+    utc[5] += 256.0;
+  else if (utc[5] > utc[3] + 127)
+    utc[5] -= 256.0;
 }
 /* decode ION/UTC parameters -------------------------------------------------*/
-static int decode_ionutc(raw_t *raw, int sat)
-{
-    double ion[8],utc[8];
-    int sys=satsys(sat,NULL);
-    
-    if (!decode_frame(raw->subfrm[sat-1],NULL,NULL,ion,utc)) return 0;
-    
-    adj_utcweek(raw->time,utc);
-    if (sys==SYS_QZS) {
-        matcpy(raw->nav.ion_qzs,ion,8,1);
-        matcpy(raw->nav.utc_qzs,utc,8,1);
-    }
-    else {
-        matcpy(raw->nav.ion_gps,ion,8,1);
-        matcpy(raw->nav.utc_gps,utc,8,1);
-    }
-    return 1;
+static int decode_ionutc(raw_t *raw, int sat) {
+  double ion[8], utc[8];
+  int sys = satsys(sat, NULL);
+
+  if (!decode_frame(raw->subfrm[sat - 1], NULL, NULL, ion, utc))
+    return 0;
+
+  adj_utcweek(raw->time, utc);
+  if (sys == SYS_QZS) {
+    matcpy(raw->nav.ion_qzs, ion, 8, 1);
+    matcpy(raw->nav.utc_qzs, utc, 8, 1);
+  } else {
+    matcpy(raw->nav.ion_gps, ion, 8, 1);
+    matcpy(raw->nav.utc_gps, utc, 8, 1);
+  }
+  return 1;
 }
 /* decode SBF raw C/A subframe -----------------------------------------------*/
-static int decode_rawca(raw_t *raw, int sys)
-{
-    uint8_t *p=raw->buff+14,buff[30];
-    int i,svid,sat,prn,id,ret;
-    
-    if (raw->len<60) {
-        trace(2,"sbf rawca length error: sys=%d len=%d\n",sys,raw->len);
-        return -1;
-    }
-    svid=U1(p);
-    if (!(sat=svid2sat(svid))||satsys(sat,&prn)!=sys) {
-        trace(2,"sbf rawca svid error: sys=%d svid=%d\n",sys,svid);
-        return -1;
-    }
-    if (!U1(p+1)) {
-        trace(3,"sbf rawca parity/crc error: sys=%d prn=%d\n",sys,prn);
-        return 0;
-    }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," prn=%d",prn);
-    }
-    for (i=0,p+=6;i<10;i++,p+=4) { /* 24 x 10 bits w/o parity */
-        setbitu(buff,24*i,24,U4(p)>>6);
-    }
-    id=getbitu(buff,43,3);
+static int decode_rawca(raw_t *raw, int sys) {
+  uint8_t *p = raw->buff + 14, buff[30];
+  int i, svid, sat, prn, id, ret;
 
-    if (id<1||id>5) {
-        trace(2,"sbf rawca subframe id error: sys=%d prn=%d id=%d\n",sys,prn,id);
-        return -1;
-    }
-    memcpy(raw->subfrm[sat-1]+(id-1)*30,buff,30);
-
-    if (id==3) {
-        return decode_eph(raw,sat);
-    }
-    if (id==4||id==5) {
-        ret=decode_ionutc(raw,sat);
-        memset(raw->subfrm[sat-1]+id*30,0,30);
-        return ret;
-    }
+  if (raw->len < 60) {
+    trace(2, "sbf rawca length error: sys=%d len=%d\n", sys, raw->len);
+    return -1;
+  }
+  svid = U1(p);
+  if (!(sat = svid2sat(svid)) || satsys(sat, &prn) != sys) {
+    trace(2, "sbf rawca svid error: sys=%d svid=%d\n", sys, svid);
+    return -1;
+  }
+  if (!U1(p + 1)) {
+    trace(3, "sbf rawca parity/crc error: sys=%d prn=%d\n", sys, prn);
     return 0;
+  }
+  if (raw->outtype) {
+    sprintf(raw->msgtype + strlen(raw->msgtype), " prn=%d", prn);
+  }
+  for (i = 0, p += 6; i < 10; i++, p += 4) { /* 24 x 10 bits w/o parity */
+    setbitu(buff, 24 * i, 24, U4(p) >> 6);
+  }
+  id = getbitu(buff, 43, 3);
+
+  if (id < 1 || id > 5) {
+    trace(2, "sbf rawca subframe id error: sys=%d prn=%d id=%d\n", sys, prn,
+          id);
+    return -1;
+  }
+  memcpy(raw->subfrm[sat - 1] + (id - 1) * 30, buff, 30);
+
+  if (id == 3) {
+    return decode_eph(raw, sat);
+  }
+  if (id == 4 || id == 5) {
+    ret = decode_ionutc(raw, sat);
+    memset(raw->subfrm[sat - 1] + id * 30, 0, 30);
+    return ret;
+  }
+  return 0;
 }
 /* decode SBF GPS C/A subframe -----------------------------------------------*/
-static int decode_gpsrawca(raw_t *raw)
-{
-    return decode_rawca(raw,SYS_GPS);
-}
+static int decode_gpsrawca(raw_t *raw) { return decode_rawca(raw, SYS_GPS); }
 /* decode SBF GLONASS L1CA or L2CA navigation string -------------------------*/
 static int decode_glorawca(raw_t *raw)
 {
