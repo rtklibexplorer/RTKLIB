@@ -1320,6 +1320,28 @@ static int decode_rawnav(raw_t *raw, int sys) {
       adj_utcweek(raw->time, raw->nav.utc_qzs);
     }
     }
+/* decode SBF gpsion --------------------------------------------------------*/
+static int decode_gpsion(raw_t *raw) {
+  uint8_t *p = (raw->buff) + 8; /* points at TOW location */
+
+  trace(4, "SBF decode_gpsion: len=%d\n", raw->len);
+
+  if (raw->len < 48) {
+    trace(1, "SBF decode_gpsion: Block too short\n");
+    return -1;
+  }
+
+  raw->nav.ion_gps[0] = R4(p + 8);
+  raw->nav.ion_gps[1] = R4(p + 12);
+  raw->nav.ion_gps[2] = R4(p + 16);
+  raw->nav.ion_gps[3] = R4(p + 20);
+  raw->nav.ion_gps[4] = R4(p + 24);
+  raw->nav.ion_gps[5] = R4(p + 28);
+  raw->nav.ion_gps[6] = R4(p + 32);
+  raw->nav.ion_gps[7] = R4(p + 36);
+
+  return 9;
+}
 /* decode SBF gloutc --------------------------------------------------------*/
 static int decode_gloutc(raw_t *raw) {
   uint8_t *p = (raw->buff) + 8; /* points at TOW location */
