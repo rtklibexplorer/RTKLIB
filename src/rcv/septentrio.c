@@ -1320,6 +1320,25 @@ static int decode_rawnav(raw_t *raw, int sys) {
       adj_utcweek(raw->time, raw->nav.utc_qzs);
     }
     }
+/* decode SBF gloutc --------------------------------------------------------*/
+static int decode_gloutc(raw_t *raw) {
+  uint8_t *p = (raw->buff) + 8; /* points at TOW location */
+
+  trace(4, "SBF decode_gloutc: len=%d\n", raw->len);
+
+  if (raw->len < 40) {
+    trace(1, "SBF decode_gloutc: Block too short\n");
+    return -1;
+  }
+
+  /* GPS delta-UTC parameters */
+  raw->nav.utc_glo[0] = R8(p + 16); /*  tau_c */
+  raw->nav.utc_glo[1] = U4(p + 24); /*  B1 */
+  raw->nav.utc_glo[2] = R4(p + 28); /*  B2 */
+  raw->nav.utc_glo[3] = R4(p + 12); /*  tau_GPS */
+
+  return 9;
+}
 /* decode SBF galion --------------------------------------------------------*/
 static int decode_galion(raw_t *raw) {
   uint8_t *p = (raw->buff) + 6; /* points at TOW location */
