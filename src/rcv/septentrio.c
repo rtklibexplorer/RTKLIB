@@ -929,52 +929,516 @@ static int decode_navicraw(raw_t *raw) {
   }
   return 0;
 }
-    }
 }
-/* decode SBF block ----------------------------------------------------------*/
-static int decode_sbf(raw_t *raw)
-{
-    uint8_t *p=raw->buff;
-    uint32_t week,tow;
-    char tstr[32];
-    int type=U2(p+4)&0x1fff;
-    uint16_t crc;
-    
-    crc=rtk_crc16(p+4,raw->len-4);
-    if (crc!=U2(p+2)||crc==0) {
-        trace(2,"sbf crc error: type=%d len=%d\n",type,raw->len);
-        return -1;
+  return 9;
+}
+/* decode SBF gpsalm --------------------------------------------------------*/
+static int decode_gpsalm(raw_t *raw) {
+  uint8_t *p = (raw->buff) + 8; /* points at TOW location */
+  alm_t alm;
+
+  trace(4, "SBF decode_gpsalm: len=%d\n", raw->len);
+
+  if (raw->len < 60) {
+    trace(1, "SBF decode_gpsalm: Block too short\n");
+    return -1;
+  }
+
+  alm.sat = satno(SYS_GPS, U1(p + 6));
+  alm.e = R4(p + 8);
+  alm.toas = U4(p + 12);
+  alm.i0 = R4(p + 16);
+  alm.OMGd = R4(p + 20);
+  alm.A = pow(R4(p + 24), 2);
+  alm.OMG0 = R4(p + 28);
+  alm.omg = R4(p + 32);
+  alm.M0 = R4(p + 36);
+  alm.f1 = R4(p + 40);
+  alm.f0 = R4(p + 44);
+  alm.week = U1(p + 48);
+  alm.toa = gpst2time(alm.week, alm.toas);
+  alm.svconf = U1(p + 49);
+  alm.svh = U1(p + 50);
+
+  if (alm.sat == 0)
+    return -1;
+
+  raw->nav.alm[alm.sat - 1] = alm;
+
+  return 9;
+}
+
+/* decode SBF nav message for Galileo (navigation data)
+ * --------------------------*/
+static int decode_galnav(raw_t *raw) {
+
+  uint8_t *puiTmp = (raw->buff) + 6;
+  eph_t eph = {0};
+  double toc;
+  int prn, sat;
+  uint16_t week_oe, week_oc;
+  uint32_t tow;
+
+  trace(4, "SBF decode_galnav: len=%d\n", raw->len);
+
+  if ((raw->len) < 152) {
+    trace(2, "SBF decode_galnav frame length error: len=%d\n", raw->len);
+    return -1;
+  }
+
+  prn = U1(puiTmp + 8) - 70;
+  sat = satno(SYS_GAL, prn);
+
+  if (sat == 0)
+    return -1;
+
+  if (!((prn >= 1) && (prn <= 36))) {
+    trace(2, "SBF decode_galnav prn error: sat=%d\n", prn);
+    return -1;
+  }
+
+  tow = U4(puiTmp + 2);
+  eph.week = U2(puiTmp + 6);              /* GAL week number */
+  eph.code = U1(puiTmp + 9) == 2 ? 0 : 1; /* 0:INAV,1:FNAV */
+  eph.A = pow(R8(puiTmp + 10), 2);
+  eph.M0 = R8(puiTmp + 18) * PI;
+  eph.e = R8(puiTmp + 26);
+  eph.i0 = R8(puiTmp + 34) * PI;
+  eph.omg = R8(puiTmp + 42) * PI;
+  eph.OMG0 = R8(puiTmp + 50) * PI;
+  eph.OMGd = R4(puiTmp + 58) * PI;
+  eph.idot = R4(puiTmp + 62) * PI;
+  eph.deln = R4(puiTmp + 66) * PI;
+  eph.cuc = R4(puiTmp + 70);
+  eph.cus = R4(puiTmp + 74);
+  eph.crc = R4(puiTmp + 78);
+  eph.crs = R4(puiTmp + 82);
+  eph.cic = R4(puiTmp + 86);
+  eph.cis = R4(puiTmp + 90);
+  eph.toes = U4(puiTmp + 94);
+  toc = U4(puiTmp + 98);
+  eph.f2 = R4(puiTmp + 102);
+  eph.f1 = R4(puiTmp + 106);
+  eph.f0 = R8(puiTmp + 110);
+  week_oe = U2(puiTmp + 118); /* WNt_oc */
+  week_oc = U2(puiTmp + 120);
+  eph.iode = eph.iodc = U2(puiTmp + 122);
+  if (eph.code == 0) /* INAV */
+  {
+    eph.sva = U1(puiTmp + 128);
+    eph.svh = (U2(puiTmp + 124) & 0x00ff) ^ 0x0011;
+  } else { /* FNAV */
+    eph.sva = U1(puiTmp + 127);
+    eph.svh = (U2(puiTmp + 124) & 0x0f0f) ^ 0x0101;
+  }
+
+  eph.tgd[0] = R4(puiTmp + 130);
+  eph.tgd[1] = R4(puiTmp + 134);
+  eph.fit = 0;
+
+  week_oe = adjgpsweek(week_oe);
+  week_oc = adjgpsweek(week_oc);
+  eph.toe = gpst2time(week_oe, eph.toes);
+  eph.toc = gpst2time(week_oc, toc);
+  eph.ttr = gpst2time(eph.week, tow / 1000);
+
+  if (!strstr(raw->opt, "-EPHALL")) {
+    if (eph.iode == raw->nav.eph[sat - 1].iode)
+      return 0;
+  }
+
+  if (sat == 0)
+    return -1;
+
+  eph.sat = sat;
+  raw->nav.eph[sat - 1] = eph;
+  raw->ephsat = sat;
+  return 2;
+}
+
+/* decode SBF nav message for glonass (navigation data) ----------------------*/
+static int decode_glonav(raw_t *raw) {
+
+  uint8_t *puiTmp = (raw->buff) + 6;
+  geph_t eph = {0};
+  int prn, sat;
+  uint16_t week;
+
+  trace(4, "SBF decode_glonav: len=%d\n", raw->len);
+
+  if ((raw->len) < 96) {
+    trace(2, "SBF decode_glonav frame length error: len=%d\n", raw->len);
+    return -1;
+  }
+  prn = U1(puiTmp + 8) - 37;
+  sat = satno(SYS_GLO, prn);
+
+  if (sat == 0)
+    return -1;
+
+  if (!((prn >= 1) && (prn <= 24))) {
+    trace(2, "SBF decode_glonav prn error: sat=%d\n", prn);
+    return -1;
+  }
+
+  eph.frq = U1(puiTmp + 9) - 8;
+  eph.pos[0] = R8(puiTmp + 10) * 1000;
+  eph.pos[1] = R8(puiTmp + 18) * 1000;
+  eph.pos[2] = R8(puiTmp + 26) * 1000;
+  eph.vel[0] = R4(puiTmp + 34) * 1000;
+  eph.vel[1] = R4(puiTmp + 38) * 1000;
+  eph.vel[2] = R4(puiTmp + 42) * 1000;
+  eph.acc[0] = R4(puiTmp + 46) * 1000;
+  eph.acc[1] = R4(puiTmp + 50) * 1000;
+  eph.acc[2] = R4(puiTmp + 54) * 1000;
+  eph.gamn = R4(puiTmp + 58);
+  eph.taun = R4(puiTmp + 62);
+  eph.dtaun = R4(puiTmp + 66);
+  week = U2(puiTmp + 74); /* WN_toe modulo 1024 */
+  week = adjgpsweek(week);
+
+  eph.toe = gpst2time(week, U4(puiTmp + 70));
+  eph.tof = raw->time;
+  eph.age = U1(puiTmp + 78);
+  eph.svh = U1(puiTmp + 79);
+  eph.iode = U2(puiTmp + 80);
+  eph.sva = U2(puiTmp + 88);
+
+  if (!strstr(raw->opt, "-EPHALL")) {
+    if (eph.iode == raw->nav.geph[prn - 1].iode)
+      return 0;
+  }
+
+  eph.sat = sat;
+  raw->nav.geph[prn - 1] = eph;
+  raw->ephsat = sat;
+  raw->nav.glo_fcn[prn - 1] = eph.frq + 8; /* savbe frequency number */
+
+  return 2;
+}
+
+/* adjust daily rollover of time ---------------------------------------------*/
+static gtime_t adjday(gtime_t time, double tod) {
+  double ep[6], tod_p;
+  time2epoch(time, ep);
+  tod_p = ep[3] * 3600.0 + ep[4] * 60.0 + ep[5];
+  if (tod < tod_p - 43200.0)
+    tod += 86400.0;
+  else if (tod > tod_p + 43200.0)
+    tod -= 86400.0;
+  ep[3] = ep[4] = ep[5] = 0.0;
+  return timeadd(epoch2time(ep), tod);
+}
+
+/* decode SBF nav message for sbas (navigation data) ----------------------*/
+static int decode_sbasnav(raw_t *raw) {
+
+  uint8_t *puiTmp = (raw->buff) + 6;
+  seph_t eph = {0};
+  int prn, sat;
+  uint16_t week;
+  uint32_t tod, tow;
+
+  trace(4, "SBF decode_sbasnav: len=%d\n", raw->len);
+
+  if ((raw->len) < 104) {
+    trace(2, "SBF decode_sbasnav frame length error: len=%d\n", raw->len);
+    return -1;
+  }
+  prn = U1(puiTmp + 8);
+  sat = satno(SYS_SBS, prn);
+
+  if (!((prn >= 120) && (prn <= 140))) {
+    trace(2, "SBF decode_sbasnav prn error: sat=%d\n", prn);
+    return -1;
+  }
+
+  if (sat == 0)
+    return -1;
+
+  week = U2(puiTmp + 6);
+  tow = U4(puiTmp + 2) / 1000;
+  tod = U4(puiTmp + 14);
+  eph.tof = gpst2time(adjgpsweek(week), tow);
+  eph.t0 = adjday(eph.tof, tod);
+  eph.sva = U2(puiTmp + 12);
+  eph.svh = eph.sva == 15 ? 1 : 0;
+  eph.pos[0] = R8(puiTmp + 18);
+  eph.pos[1] = R8(puiTmp + 26);
+  eph.pos[2] = R8(puiTmp + 34);
+  eph.vel[0] = R8(puiTmp + 42);
+  eph.vel[1] = R8(puiTmp + 50);
+  eph.vel[2] = R8(puiTmp + 58);
+  eph.acc[0] = R8(puiTmp + 66);
+  eph.acc[1] = R8(puiTmp + 74);
+  eph.acc[2] = R8(puiTmp + 82);
+  eph.af0 = R4(puiTmp + 90);
+  eph.af1 = R4(puiTmp + 94);
+
+  /* debug */
+  trace(2, "sat=%2d, week=%d, tow=%f\n", sat, week, U4(puiTmp + 2) / 1000);
+
+  if (!strstr(raw->opt, "-EPHALL")) {
+    if (fabs(timediff(eph.t0, raw->nav.seph[prn - 120].t0)) < 1.0 &&
+        eph.sva == raw->nav.seph[prn - 120].sva)
+      return 0;
+  }
+
+  eph.sat = sat;
+  raw->nav.seph[prn - 120] = eph;
+  raw->ephsat = eph.sat;
+  return 2;
+}
+
+/* decode SBF raw nav message (raw navigation data) --------------------------*/
+static int decode_rawnav(raw_t *raw, int sys) {
+
+  /* NOTE. This function works quite well but it somestimes fails in line:
+   * if (resp>5 || resp<=0){
+   * To debug the problem an understanding of the whole RTK code is needed
+   */
+
+  uint8_t *p = (raw->buff) + 6, id;
+  eph_t eph = {0};
+  int sat, prn;
+  uint8_t _buf[30] = {0};
+  int i = 0, ii = 0;
+
+  trace(3, "SBF decode_gpsrawcanav: len=%d\n", raw->len);
+
+  if (raw->len < 58) {
+    trace(2, "SBF decode_gpsrawcanav block length error: len=%d\n", raw->len);
+    return -1;
+  }
+
+  /* get GPS satellite number */
+  prn = U1(p + 8);
+  if (sys == SYS_QZS)
+    prn -= 180;
+
+  sat = satno(sys, prn);
+  if (sat == 0)
+    return -1;
+
+  /* clean up subframe from Septentrio. This is a little bit of work because
+   * Septentrio Rx add some parity bits to this message.
+   * We have to throw away the reserved bits as well as the parity bits.
+   */
+
+  /*   | 2bits |         24bits        |  6bits  |       <- SBF 32-bit word
+      ------------------------------------------
+               | byte1 | bite2 | byte3 |                 <- sat nav message
+  */
+
+  for (i = 0; i < 40; i += 4) {
+    _buf[ii] = ((U4(p + 14 + i) >> 22) & 0x000000FF);     /* take first byte  */
+    _buf[1 + ii] = ((U4(p + 14 + i) >> 14) & 0x000000FF); /* take second byte */
+    _buf[2 + ii] = ((U4(p + 14 + i) >> 6) & 0x000000FF);  /* take third byte  */
+    ii = ii + 3;
+  }
+
+  /* Now that we have a classic subframe we call the generic function */
+  id = getbitu(_buf, 43, 3); /* get subframe id */
+  if ((id < 1) || (id > 5))
+    return -1;
+
+  memcpy(raw->subfrm[sat - 1] + (id - 1) * 30, _buf, 30);
+
+  if (decode_frame(raw->subfrm[sat - 1], &eph, NULL, NULL, NULL) == 1 &&
+      decode_frame(raw->subfrm[sat - 1] + 30, &eph, NULL, NULL, NULL) == 2 &&
+      decode_frame(raw->subfrm[sat - 1] + 60, &eph, NULL, NULL, NULL) == 3) {
+
+    if (!strstr(raw->opt, "-EPHALL")) {
+      if ((eph.iode == raw->nav.eph[sat - 1].iode) &&
+          (eph.iodc == raw->nav.eph[sat - 1].iodc))
+        return 0;
     }
-    if (raw->len<14) {
-        trace(2,"sbf length error: type=%d len=%d\n",type,raw->len);
-        return -1;
+  if (id == 4) {
+    if (sys == SYS_GPS) {
+      decode_frame(raw->subfrm[sat - 1] + 90, NULL, raw->nav.alm,
+                   raw->nav.ion_gps, raw->nav.utc_gps);
+      adj_utcweek(raw->time, raw->nav.utc_gps);
+    } else if (sys == SYS_QZS) {
+      decode_frame(raw->subfrm[sat - 1] + 90, NULL, raw->nav.alm,
+                   raw->nav.ion_qzs, raw->nav.utc_qzs);
+      adj_utcweek(raw->time, raw->nav.utc_qzs);
     }
-    tow =U4(p+8);
-    week=U2(p+12);
-    if (tow==4294967295u||week==65535u) {
-        trace(2,"sbf tow/week error: type=%d len=%d\n",type,raw->len);
-        return -1;
     }
-    raw->time=gpst2time(week,tow*0.001);
-    
-    if (raw->outtype) {
-        time2str(raw->time,tstr,2);
-        sprintf(raw->msgtype,"SBF %4d (%4d): %s",type,raw->len,tstr);
-    }
-    switch (type) {
-        case SBF_MEASEPOCH : return decode_measepoch (raw);
-        case SBF_MEASEXTRA : return decode_measextra (raw);
-        case SBF_GPSRAWCA  : return decode_gpsrawca  (raw);
-        case SBF_GLORAWCA  : return decode_glorawca  (raw);
-        case SBF_GALRAWFNAV: return decode_galrawfnav(raw);
-        case SBF_GALRAWINAV: return decode_galrawinav(raw);
-        case SBF_GEORAWL1  : return decode_georawl1  (raw);
-        case SBF_BDSRAW    : return decode_bdsraw    (raw);
-        case SBF_QZSRAWL1CA: return decode_qzsrawl1ca(raw);
-        case SBF_NAVICRAW  : return decode_navicraw  (raw);
-    }
-    trace(3,"sbf unsupported message: type=%d\n",type);
+static int decode_sbf(raw_t *raw) {
+  uint8_t *p = raw->buff;
+  uint32_t week, tow;
+  char tstr[32];
+  int type = U2(p + 4) & 0x1fff;
+  uint16_t crc;
+
+  crc = rtk_crc16(p + 4, raw->len - 4);
+  if (crc != U2(p + 2) || crc == 0) {
+    trace(2, "sbf crc error: type=%d len=%d\n", type, raw->len);
+    return -1;
+  }
+  if (raw->len < 14) {
+    trace(2, "sbf length error: type=%d len=%d\n", type, raw->len);
+    return -1;
+  }
+  tow = U4(p + 8);
+  week = U2(p + 12);
+  if (tow == 4294967295u || week == 65535u) {
+    trace(2, "sbf tow/week error: type=%d len=%d\n", type, raw->len);
+    return -1;
+  }
+  raw->time = gpst2time(week, tow * 0.001);
+
+  if (raw->outtype) {
+    time2str(raw->time, tstr, 2);
+    sprintf(raw->msgtype, "SBF %4d (%4d): %s", type, raw->len, tstr);
+  }
+  switch (type) {
+  case SBF_MEASEPOCH:
+    return decode_measepoch(raw);
+  case SBF_MEASEXTRA:
+    return decode_measextra(raw);
+  case SBF_GPSRAWCA:
+    return decode_gpsrawca(raw);
+  case SBF_GLORAWCA:
+    return decode_glorawca(raw);
+  case SBF_GALRAWFNAV:
+    return decode_galrawfnav(raw);
+  case SBF_GALRAWINAV:
+    return decode_galrawinav(raw);
+  case SBF_GEORAWL1:
+    /*  case SBF_GEORAWL5: Needs testing*/
+    return decode_georawl1(raw);
+  case SBF_BDSRAW:
+    return decode_bdsraw(raw);
+  case SBF_QZSRAWL1CA:
+    return decode_qzsrawl1ca(raw);
+  case SBF_NAVICRAW:
+    return decode_navicraw(raw);
+
+  case SBF_GPSNAV:
+    return decode_gpsnav(raw);
+  case SBF_GPSION:
+    return decode_gpsion(raw);
+  case SBF_GPSUTC:
+    return decode_gpsutc(raw);
+  case SBF_GPSALM:
+    return decode_gpsalm(raw);
+  case SBF_GPSRAWL2C:
+  case SBF_GPSRAWL5:
+    return decode_rawnav(raw, SYS_GPS);
+
+  case SBF_GEONAV:
+    return decode_sbasnav(raw);
+  case SBF_GLONAV:
+    return decode_glonav(raw);
+  case SBF_GLOTIME:
+    return decode_gloutc(raw);
+  case SBF_GALNAV:
+    return decode_galnav(raw);
+  case SBF_GALION:
+    return decode_galion(raw);
+  case SBF_GALUTC:
+    return decode_galutc(raw);
+  case SBF_GALALM:
+    return decode_galalm(raw);
+
+    /* Ones we _know_ we wont handle*/
+  case SBF_PVTGEOD:
+    trace(4, "sbf unused message - PVT Geodetic\n");
     return 0;
+  case SBF_DOP:
+    trace(4, "sbf unused message - Dop\n");
+    return 0;
+  case SBF_MEASEPOCH_END:
+    trace(4, "sbf unused message - End of measurements\n");
+    return 0;
+  case SBF_ENDOFPVT:
+    trace(4, "sbf unused message - End of PVT\n");
+    return 0;
+  case SBF_CHNSTATUS:
+    trace(4, "sbf unused message - receiver channels status\n");
+    return 0;
+  case SBF_BASEVECGEOD:
+    trace(4, "sbf unused message - base station vector\n");
+    return 0;
+  case SBF_ATTEULER:
+    trace(4, "sbf unused message - euler angles\n");
+    return 0;
+  case SBF_POSCOVGEO:
+    trace(4, "sbf unused message - position covariance matrix\n");
+    return 0;
+
+  case SBF_GEOALM:
+    trace(4, "sbf unused message - SBAS satellite almanac \n");
+    return 0;
+
+  case SBF_GEOSERVICELEVEL:
+    trace(4, "sbf unused message - SBAS Service Message \n");
+    return 0;
+
+  case SBF_GEONETWORKTIME:
+    trace(4, "sbf unused message - SBAS Network Time/UTC offset parameters \n");
+    return 0;
+
+  case SBF_GEOMT00:
+    trace(4, "sbf unused message - SBAS: Don't use for safety application \n");
+    return 0;
+
+  case SBF_GEOPRNMASK:
+    trace(4, "sbf unused message - PRN Mask assignments \n");
+    return 0;
+
+  case SBF_GEOFASTCORR:
+    trace(4, "sbf unused message - Fast Corrections \n");
+    return 0;
+
+  case SBF_GEOINTEGRITY:
+    trace(4, "sbf unused message - Integrity information \n");
+    return 0;
+
+  case SBF_GEOFASTCORRDEGR:
+    trace(4, "sbf unused message - fast correction degradation factor \n");
+    return 0;
+
+  case SBF_GEODEGRFACTORS:
+    trace(4, "sbf unused message - Degration factors \n");
+    return 0;
+
+  case SBF_GEOIGPMASK:
+    trace(4, "sbf unused message - Ionospheric grid point mask \n");
+    return 0;
+
+  case SBF_GEOLONGTERMCOR:
+    trace(4, "sbf unused message - Long term satellite error corrections \n");
+    return 0;
+
+  case SBF_GEOIONODELAY:
+    trace(4, "sbf unused message - Inospheric delay correction \n");
+    return 0;
+
+  case SBF_GEOCLOCKEPHCOVMATRIX:
+    trace(4, "sbf unused message - Clock-Ephemeris Covariance Matrix\n");
+    return 0;
+  case SBF_QUALITY_IND:
+    trace(4, "sbf unused message - Quality Indicators\n");
+    return 0;
+  case SBF_PVTSUPPORT:
+    trace(4, "sbf unused message - PVT support params\n");
+    return 0;
+  case 4090:
+  case 4014:
+  case 4053:
+  case 4092:
+  case 4201:
+  case 4105:
+  case 4079:
+  case 5924:
+  case 4059:
+  case 4091:
+    return 0;
+  }
+  trace(3, "sbf unsupported message: type=%d\n", type);
+  return 0;
 }
 /* synchronize SBF block header ----------------------------------------------*/
 static int sync_sbf(uint8_t *buff, uint8_t data) {
