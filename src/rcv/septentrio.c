@@ -929,6 +929,39 @@ static int decode_navicraw(raw_t *raw) {
   }
   return 0;
 }
+/* decode SBF galalm --------------------------------------------------------*/
+static int decode_galalm(raw_t *raw) {
+  uint8_t *p = (raw->buff) + 8; /* points at TOW location */
+  alm_t alm;
+
+  trace(4, "SBF decode_galalm: len=%d\n", raw->len);
+
+  if (raw->len < 62) {
+    trace(1, "SBF decode_galalm: Block too short\n");
+    return -1;
+  }
+
+  alm.sat = satno(SYS_GAL, U1(p + 49) - 70);
+  alm.e = R4(p + 8);
+  alm.toas = U4(p + 12);
+  alm.i0 = R4(p + 16) + 0.3;
+  alm.OMGd = R4(p + 20);
+  alm.A = pow(R4(p + 24), 2);
+  alm.OMG0 = R4(p + 28);
+  alm.omg = R4(p + 32);
+  alm.M0 = R4(p + 36);
+  alm.f1 = R4(p + 40);
+  alm.f0 = R4(p + 44);
+  alm.week = U1(p + 48);
+  alm.toa = gpst2time(alm.week, alm.toas);
+  alm.svconf = 0;
+  alm.svh = 0;
+
+  if (alm.sat == 0)
+    return -1;
+  raw->nav.alm[alm.sat - 1] = alm;
+
+  return 9;
 }
   return 9;
 }
