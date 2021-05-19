@@ -1309,6 +1309,11 @@ static int decode_rawnav(raw_t *raw, int sys) {
           (eph.iodc == raw->nav.eph[sat - 1].iodc))
         return 0;
     }
+    eph.sat = sat;
+    raw->nav.eph[sat - 1] = eph;
+    raw->ephsat = sat;
+    return 2;
+  }
   if (id == 4) {
     if (sys == SYS_GPS) {
       decode_frame(raw->subfrm[sat - 1] + 90, NULL, raw->nav.alm,
@@ -1319,7 +1324,22 @@ static int decode_rawnav(raw_t *raw, int sys) {
                    raw->nav.ion_qzs, raw->nav.utc_qzs);
       adj_utcweek(raw->time, raw->nav.utc_qzs);
     }
+    return 9;
+  };
+  if (id == 5) {
+    if (sys == SYS_GPS) {
+      decode_frame(raw->subfrm[sat - 1] + 120, NULL, raw->nav.alm, NULL, NULL);
+    } else if (sys == SYS_QZS) {
+      decode_frame(raw->subfrm[sat - 1] + 120, NULL, raw->nav.alm,
+                   raw->nav.ion_qzs, raw->nav.utc_qzs);
+      adj_utcweek(raw->time, raw->nav.utc_qzs);
     }
+    return 9;
+  };
+
+  trace(4, "SBF, decode_gpsrawcanav: sat=%2d\n", sat);
+  return 0;
+}
 /* decode SBF nav message for GPS (navigation data) --------------------------*/
 static int decode_gpsnav(raw_t *raw) {
 
