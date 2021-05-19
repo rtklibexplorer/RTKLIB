@@ -1785,7 +1785,7 @@ extern int input_sbff(raw_t *raw, FILE *fp) {
     return -1;
   }
   lenToRead = raw->len - 8;
-  if (raw->len != 0 && fread(raw->buff + 8, lenToRead, 1, fp) != lenToRead) {
+  if (raw->len != 0 && fread(raw->buff + 8, lenToRead, 1, fp) < 1) {
     trace(2, "sbf fread failed 2 \n");
     return -2;
   }
