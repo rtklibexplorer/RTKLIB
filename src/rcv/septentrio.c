@@ -856,70 +856,68 @@ static int decode_bdsraw(raw_t *raw)
     return 2;
 }
 /* decode SBF QZS C/A subframe -----------------------------------------------*/
-static int decode_qzsrawl1ca(raw_t *raw)
-{
-    return decode_rawca(raw,SYS_QZS);
-}
+static int decode_qzsrawl1ca(raw_t *raw) { return decode_rawca(raw, SYS_QZS); }
 /* decode SBF NavIC/IRNSS subframe -------------------------------------------*/
-static int decode_navicraw(raw_t *raw)
-{
-    eph_t eph={0};
-    double ion[8],utc[9];
-    uint8_t *p=raw->buff+14,buff[40];
-    int i,id,svid,sat,prn,ret=0;
-    
-    if (raw->len<52) {
-        trace(2,"sbf navicraw length error: len=%d\n",raw->len);
-        return -1;
-    }
-    svid=U1(p);
-    if (!(sat=svid2sat(svid))||satsys(sat,&prn)!=SYS_IRN) {
-        trace(2,"sbf navicraw svid error: svid=%d\n",svid);
-        return -1;
-    }
-    if (!U1(p+1)) {
-        trace(3,"sbf navicraw parity/crc error: prn=%d err=%d\n",prn,U1(p+2));
-        return 0;
-    }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," prn=%d",prn);
-    }
-    for (i=0,p+=6;i<10;i++,p+=4) {
-        setbitu(buff,32*i,32,U4(p));
-    }
-    id=getbitu(buff,27,2); /* subframe ID (0-3) */
-    
-    memcpy(raw->subfrm[sat-1]+id*37,buff,37);
-    
-    if (id==1) { /* subframe 2 */
-        if (!decode_irn_nav(raw->subfrm[sat-1],&eph,NULL,NULL)) return 0;
-        
-        if (!strstr(raw->opt,"-EPHALL")) {
-            if (eph.iode==raw->nav.eph[sat-1].iode&&
-                timediff(eph.toe,raw->nav.eph[sat-1].toe)==0.0) {
-                return 0;
-            }
-        }
-        eph.sat=sat;
-        raw->nav.eph[sat-1]=eph;
-        raw->ephsat=sat;
-        raw->ephset=0;
-        return 2;
-    }
-    else if (id==2||id==3) { /* subframe 3 or 4 */
-        if (decode_irn_nav(raw->subfrm[sat-1],NULL,ion,NULL)) {
-            matcpy(raw->nav.ion_irn,ion,8,1);
-            ret=9;
-        }
-        if (decode_irn_nav(raw->subfrm[sat-1],NULL,NULL,utc)) {
-            adj_utcweek(raw->time,utc);
-            matcpy(raw->nav.utc_irn,utc,9,1);
-            ret=9;
-        }
-        memset(raw->subfrm[sat-1]+id*37,0,37);
-        return ret;
-    }
+static int decode_navicraw(raw_t *raw) {
+  eph_t eph = {0};
+  double ion[8], utc[9];
+  uint8_t *p = raw->buff + 14, buff[40];
+  int i, id, svid, sat, prn, ret = 0;
+
+  if (raw->len < 52) {
+    trace(2, "sbf navicraw length error: len=%d\n", raw->len);
+    return -1;
+  }
+  svid = U1(p);
+  if (!(sat = svid2sat(svid)) || satsys(sat, &prn) != SYS_IRN) {
+    trace(2, "sbf navicraw svid error: svid=%d\n", svid);
+    return -1;
+  }
+  if (!U1(p + 1)) {
+    trace(3, "sbf navicraw parity/crc error: prn=%d err=%d\n", prn, U1(p + 2));
     return 0;
+  }
+  if (raw->outtype) {
+    sprintf(raw->msgtype + strlen(raw->msgtype), " prn=%d", prn);
+  }
+  for (i = 0, p += 6; i < 10; i++, p += 4) {
+    setbitu(buff, 32 * i, 32, U4(p));
+  }
+  id = getbitu(buff, 27, 2); /* subframe ID (0-3) */
+
+  memcpy(raw->subfrm[sat - 1] + id * 37, buff, 37);
+
+  if (id == 1) { /* subframe 2 */
+    if (!decode_irn_nav(raw->subfrm[sat - 1], &eph, NULL, NULL))
+      return 0;
+
+    if (!strstr(raw->opt, "-EPHALL")) {
+      if (eph.iode == raw->nav.eph[sat - 1].iode &&
+          timediff(eph.toe, raw->nav.eph[sat - 1].toe) == 0.0) {
+        return 0;
+      }
+    }
+    eph.sat = sat;
+    raw->nav.eph[sat - 1] = eph;
+    raw->ephsat = sat;
+    raw->ephset = 0;
+    return 2;
+  } else if (id == 2 || id == 3) { /* subframe 3 or 4 */
+    if (decode_irn_nav(raw->subfrm[sat - 1], NULL, ion, NULL)) {
+      matcpy(raw->nav.ion_irn, ion, 8, 1);
+      ret = 9;
+    }
+    if (decode_irn_nav(raw->subfrm[sat - 1], NULL, NULL, utc)) {
+      adj_utcweek(raw->time, utc);
+      matcpy(raw->nav.utc_irn, utc, 9, 1);
+      ret = 9;
+    }
+    memset(raw->subfrm[sat - 1] + id * 37, 0, 37);
+    return ret;
+  }
+  return 0;
+}
+    }
 }
 /* decode SBF block ----------------------------------------------------------*/
 static int decode_sbf(raw_t *raw)
@@ -967,95 +965,100 @@ static int decode_sbf(raw_t *raw)
     return 0;
 }
 /* synchronize SBF block header ----------------------------------------------*/
-static int sync_sbf(uint8_t *buff, uint8_t data)
-{
-    buff[0]=buff[1]; buff[1]=data;
-    return buff[0]==SBF_SYNC1&&buff[1]==SBF_SYNC2;
+static int sync_sbf(uint8_t *buff, uint8_t data) {
+  buff[0] = buff[1];
+  buff[1] = data;
+  return buff[0] == SBF_SYNC1 && buff[1] == SBF_SYNC2;
 }
 /* input SBF raw data from stream ----------------------------------------------
-* fetch next SBF raw data and input a mesasge from stream
-* args   : raw_t *raw       IO  receiver raw data control struct
-*          uint_t data      I   stream data (1 byte)
-* return : status (-1: error message, 0: no message, 1: input observation data,
-*                  2: input ephemeris, 3: input sbas message,
-*                  9: input ion/utc parameter)
-*
-* notes  : supported SBF block (block ID):
-*
-*           MEASEPOCH(4027), GPSRAWCA(4017), GLORAWCA(4026), GALRAWFNAV(4022),
-*           GALRAWINAV(4023), GEORAWL1(4020), BDSRAW(4047), QZSRAWL1CA(4066),
-*           NAVICRAW(4093)
-*
-*          to specify input options for sbf, set raw->opt to the following
-*          option strings separated by spaces.
-*
-*          -EPHALL : input all ephemerides
-*          -AUX1   : select antenna Aux1  (default: main)
-*          -AUX2   : select antenna Aux2  (default: main)
-*          -GL1W   : select 1W for GPS L1 (default: 1C)
-*          -GL1L   : select 1L for GPS L1 (default: 1C)
-*          -GL2L   : select 2L for GPS L2 (default: 2W)
-*          -RL1P   : select 1P for GLO G1 (default: 1C)
-*          -RL2C   : select 2C for GLO G2 (default: 2P)
-*          -JL1L   : select 1L for QZS L1 (default: 1C)
-*          -JL1Z   : select 1Z for QZS L1 (default: 1C)
-*          -CL1P   : select 1P for BDS B1 (default: 2I)
-*          -GALINAV: select I/NAV for Galileo ephemeris (default: all)
-*          -GALFNAV: select F/NAV for Galileo ephemeris (default: all)
-*-----------------------------------------------------------------------------*/
-extern int input_sbf(raw_t *raw, uint8_t data)
-{
-    trace(5,"input_sbf: data=%02x\n",data);
-    
-    if (raw->nbyte==0) {
-        if (sync_sbf(raw->buff,data)) raw->nbyte=2;
-        return 0;
-    }
-    raw->buff[raw->nbyte++]=data;
-    if (raw->nbyte<8) return 0;
-    
-    if ((raw->len=U2(raw->buff+6))>MAXRAWLEN) {
-        trace(2,"sbf length error: len=%d\n",raw->len);
-        raw->nbyte=0;
-        return -1;
-    }
-    if (raw->nbyte<raw->len) return 0;
-    raw->nbyte=0;
-    
-    /* decode SBF block */
-    return decode_sbf(raw);
+ * fetch next SBF raw data and input a mesasge from stream
+ * args   : raw_t *raw       IO  receiver raw data control struct
+ *          uint_t data      I   stream data (1 byte)
+ * return : status (-1: error message, 0: no message, 1: input observation data,
+ *                  2: input ephemeris, 3: input sbas message,
+ *                  9: input ion/utc parameter)
+ *
+ * notes  : supported SBF block (block ID):
+ *
+ *           MEASEPOCH(4027), GPSRAWCA(4017), GLORAWCA(4026), GALRAWFNAV(4022),
+ *           GALRAWINAV(4023), GEORAWL1(4020), BDSRAW(4047), QZSRAWL1CA(4066),
+ *           NAVICRAW(4093)
+ *
+ *          to specify input options for sbf, set raw->opt to the following
+ *          option strings separated by spaces.
+ *
+ *          -EPHALL : input all ephemerides
+ *          -AUX1   : select antenna Aux1  (default: main)
+ *          -AUX2   : select antenna Aux2  (default: main)
+ *          -GL1W   : select 1W for GPS L1 (default: 1C)
+ *          -GL1L   : select 1L for GPS L1 (default: 1C)
+ *          -GL2L   : select 2L for GPS L2 (default: 2W)
+ *          -RL1P   : select 1P for GLO G1 (default: 1C)
+ *          -RL2C   : select 2C for GLO G2 (default: 2P)
+ *          -JL1L   : select 1L for QZS L1 (default: 1C)
+ *          -JL1Z   : select 1Z for QZS L1 (default: 1C)
+ *          -CL1P   : select 1P for BDS B1 (default: 2I)
+ *          -GALINAV: select I/NAV for Galileo ephemeris (default: all)
+ *          -GALFNAV: select F/NAV for Galileo ephemeris (default: all)
+ *-----------------------------------------------------------------------------*/
+extern int input_sbf(raw_t *raw, uint8_t data) {
+  trace(5, "input_sbf: data=%02x\n", data);
+
+  if (raw->nbyte == 0) {
+    if (sync_sbf(raw->buff, data))
+      raw->nbyte = 2;
+    return 0;
+  }
+  raw->buff[raw->nbyte++] = data;
+  if (raw->nbyte < 8)
+    return 0;
+
+  if ((raw->len = U2(raw->buff + 6)) > MAXRAWLEN) {
+    trace(2, "sbf length error: len=%d\n", raw->len);
+    raw->nbyte = 0;
+    return -1;
+  }
+  if (raw->nbyte < raw->len)
+    return 0;
+  raw->nbyte = 0;
+
+  /* decode SBF block */
+  return decode_sbf(raw);
 }
 /* input SBF raw data from file ------------------------------------------------
-* fetch next SBF raw data and input a message from file
-* args   : raw_t *raw       IO  receiver raw data control struct
-*          FILE  *fp        I   file pointer
-* return : status(-2: end of file, -1...9: same as above)
-*-----------------------------------------------------------------------------*/
-extern int input_sbff(raw_t *raw, FILE *fp)
-{
-    int i,data;
-    
-    trace(4,"input_sbff:\n");
-    
-    if (raw->nbyte==0) {
-        for (i=0;;i++) {
-            if ((data=fgetc(fp))==EOF) return -2;
-            if (sync_sbf(raw->buff,(uint8_t)data)) break;
-            if (i>=4096) return 0;
-        }
-    }
-    if (fread(raw->buff+2,1,6,fp)<6) return -2;
-    raw->nbyte=8;
-    
-    if ((raw->len=U2(raw->buff+6))>MAXRAWLEN) {
-        trace(2,"sbf length error: len=%d\n",raw->len);
-        raw->nbyte=0;
-        return -1;
-    }
-    if (raw->len!=0&&fread(raw->buff+8,raw->len-8,1,fp)<1) return -2;
-    raw->nbyte=0;
-    
-    /* decode SBF block */
-    return decode_sbf(raw);
-}
+ * fetch next SBF raw data and input a message from file
+ * args   : raw_t *raw       IO  receiver raw data control struct
+ *          FILE  *fp        I   file pointer
+ * return : status(-2: end of file, -1...9: same as above)
+ *-----------------------------------------------------------------------------*/
+extern int input_sbff(raw_t *raw, FILE *fp) {
+  int i, data;
 
+  trace(4, "input_sbff:\n");
+
+  if (raw->nbyte == 0) {
+    for (i = 0;; i++) {
+      if ((data = fgetc(fp)) == EOF)
+        return -2;
+      if (sync_sbf(raw->buff, (uint8_t)data))
+        break;
+      if (i >= 4096)
+        return 0;
+    }
+  }
+  if (fread(raw->buff + 2, 1, 6, fp) < 6)
+    return -2;
+  raw->nbyte = 8;
+
+  if ((raw->len = U2(raw->buff + 6)) > MAXRAWLEN) {
+    trace(2, "sbf length error: len=%d\n", raw->len);
+    raw->nbyte = 0;
+    return -1;
+  }
+  if (raw->len != 0 && fread(raw->buff + 8, raw->len - 8, 1, fp) < 1)
+    return -2;
+  raw->nbyte = 0;
+
+  /* decode SBF block */
+  return decode_sbf(raw);
+}
