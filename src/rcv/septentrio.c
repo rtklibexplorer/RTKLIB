@@ -963,6 +963,29 @@ static int decode_galalm(raw_t *raw) {
 
   return 9;
 }
+/* decode SBF galutc --------------------------------------------------------*/
+static int decode_galutc(raw_t *raw) {
+  int leaps;
+  uint8_t *p = (raw->buff) + 8; /* points at TOW location */
+
+  trace(4, "SBF decode_galutc: len=%d\n", raw->len);
+
+  if (raw->len < 36) {
+    trace(1, "SBF decode_galutc: Block too short\n");
+    return -1;
+  }
+
+  /* GPS delta-UTC parameters */
+  raw->nav.utc_gal[1] = R4(p + 8);             /*   A1 */
+  raw->nav.utc_gal[0] = R8(p + 12);            /*   A0 */
+  raw->nav.utc_gal[2] = U4(p + 20);            /*  tot */
+  raw->nav.utc_gal[3] = adjgpsweek(U2(p + 4)); /*   WN */
+  leaps = I1(p + 25);                          /* Dtls */
+
+  /*NOTE. it is kind of strange that I have to use U1(p+4) and not U1(p+24)
+          in fact if I take U1(p+24) I do not seem to ge the correct W in
+          the header of RINEX nav file, line DELTA-UTC: A0,A1,T,W
+  */
   return 9;
 }
 /* decode SBF gpsalm --------------------------------------------------------*/
