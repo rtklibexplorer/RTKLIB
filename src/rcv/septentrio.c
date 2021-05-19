@@ -543,317 +543,329 @@ static int decode_rawca(raw_t *raw, int sys) {
 /* decode SBF GPS C/A subframe -----------------------------------------------*/
 static int decode_gpsrawca(raw_t *raw) { return decode_rawca(raw, SYS_GPS); }
 /* decode SBF GLONASS L1CA or L2CA navigation string -------------------------*/
-static int decode_glorawca(raw_t *raw)
-{
-    geph_t geph={0};
-    gtime_t *time;
-    double utc[8]={0};
-    uint8_t *p=raw->buff+14,buff[12];
-    int i,svid,sat,prn,m;
-    
-    if (raw->len<32) {
-        trace(2,"sbf glorawca length error: len=%d\n",raw->len);
-        return -1;
-    }
-    svid=U1(p);
-    if (!(sat=svid2sat(svid))||satsys(sat,&prn)!=SYS_GLO) {
-        trace(3,"sbf glorawca svid error: svid=%d\n",svid);
-        return (svid==62)?0:-1; /* svid=62: slot unknown */
-    }
-    if (!U1(p+1)) {
-        trace(3,"sbf glorawca parity/crc error: prn=%d\n",prn);
-        return 0;
-    }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," prn=%d",prn);
-    }
-    for (i=0;i<3;i++) {
-        setbitu(buff,32*i,32,U4(p+6+4*i)); /* 85 bits */
-    }
-    m=getbitu(buff,1,4);
-    if (m<1||m>15) {
-        trace(2,"sbf glorawca string number error: prn=%d m=%d\n",prn,m);
-        return -1;
-    }
-    time=(gtime_t *)(raw->subfrm[sat-1]+150);
-    if (fabs(timediff(raw->time,*time))>30.0) {
-        memset(raw->subfrm[sat-1],0,40);
-        memcpy(time,&raw->time,sizeof(gtime_t));
-    }
-    memcpy(raw->subfrm[sat-1]+(m-1)*10,buff,10);
-    if (m!=4) return 0;
-    
-    geph.tof=raw->time;
-    if (!decode_glostr(raw->subfrm[sat-1],&geph,utc)) return 0;
-    
-    matcpy(raw->nav.utc_glo,utc,8,1);
+static int decode_glorawca(raw_t *raw) {
+  geph_t geph = {0};
+  gtime_t *time;
+  double utc[8] = {0};
+  uint8_t *p = raw->buff + 14, buff[12];
+  int i, svid, sat, prn, m;
 
-    if (geph.sat!=sat) {
-        trace(2,"sbf glorawca satellite error: sat=%d %d\n",sat,geph.sat);
-        return -1;
-    }
-    geph.frq=(int)U1(p+4)-8;
-    
-    if (!strstr(raw->opt,"-EPHALL")) {
-        if (geph.iode==raw->nav.geph[prn-1].iode&&
-            timediff(geph.toe,raw->nav.geph[prn-1].toe)==0.0) return 0;
-    }
-    raw->nav.geph[prn-1]=geph;
-    raw->ephsat=sat;
-    raw->ephset=0;
-    return 2;
+  if (raw->len < 32) {
+    trace(2, "sbf glorawca length error: len=%d\n", raw->len);
+    return -1;
+  }
+  svid = U1(p);
+  if (!(sat = svid2sat(svid)) || satsys(sat, &prn) != SYS_GLO) {
+    trace(3, "sbf glorawca svid error: svid=%d\n", svid);
+    return (svid == 62) ? 0 : -1; /* svid=62: slot unknown */
+  }
+  /*if (!U1(p + 1)) {
+    trace(3, "sbf glorawca parity/crc error: prn=%d\n", prn);
+    return 0;
+  }*/
+  if (raw->outtype) {
+    sprintf(raw->msgtype + strlen(raw->msgtype), " prn=%d", prn);
+  }
+  for (i = 0; i < 3; i++) {
+    setbitu(buff, 32 * i, 32, U4(p + 6 + 4 * i)); /* 85 bits */
+  }
+  m = getbitu(buff, 1, 4);
+  if (m < 1 || m > 15) {
+    trace(2, "sbf glorawca string number error: prn=%d m=%d\n", prn, m);
+    return -1;
+  }
+  time = (gtime_t *)(raw->subfrm[sat - 1] + 150);
+  if (fabs(timediff(raw->time, *time)) > 30.0) {
+    memset(raw->subfrm[sat - 1], 0, 40);
+    memcpy(time, &raw->time, sizeof(gtime_t));
+  }
+  memcpy(raw->subfrm[sat - 1] + (m - 1) * 10, buff, 10);
+  if (m != 4)
+    return 0;
+
+  geph.tof = raw->time;
+  if (!decode_glostr(raw->subfrm[sat - 1], &geph, utc))
+    return 0;
+
+  matcpy(raw->nav.utc_glo, utc, 8, 1);
+
+  if (geph.sat != sat) {
+    trace(2, "sbf glorawca satellite error: sat=%d %d\n", sat, geph.sat);
+    return -1;
+  }
+  geph.frq = (int)U1(p + 4) - 8;
+
+  if (!strstr(raw->opt, "-EPHALL")) {
+    if (geph.iode == raw->nav.geph[prn - 1].iode &&
+        timediff(geph.toe, raw->nav.geph[prn - 1].toe) == 0.0)
+      return 0;
+  }
+  raw->nav.geph[prn - 1] = geph;
+  raw->ephsat = sat;
+  raw->ephset = 0;
+  return 2;
 }
 /* decode SBF Galileo F/NAV navigation page ----------------------------------*/
-static int decode_galrawfnav(raw_t *raw)
-{
-    eph_t eph={0};
-    double ion[4]={0},utc[8]={0};
-    uint8_t *p=raw->buff+14,buff[32];
-    int i,svid,src,sat,prn,type;
-    
-    if (strstr(raw->opt,"-GALINAV")) return 0;
-    
-    if (raw->len<52) {
-        trace(2,"sbf galrawfnav length error: len=%d\n",raw->len);
-        return -1;
-    }
-    svid=U1(p);
-    src =U1(p+3)&0x1f;
-    
-    if (!(sat=svid2sat(svid))||satsys(sat,&prn)!=SYS_GAL) {
-        trace(2,"sbf galrawfnav svid error: svid=%d src=%d\n",svid,src);
-        return -1;
-    }
-    if (!U1(p+1)) {
-        trace(3,"sbf galrawfnav parity/crc error: prn=%d src=%d\n",prn,src);
-        return 0;
-    }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," prn=%d src=%d",prn,src);
-    }
-    if (src!=20&&src!=22) { /* E5a or E5 AltBOC */
-        trace(2,"sbf galrawfnav source error: prn=%d src=%d\n",prn,src);
-        return -1;
-    }
-    for (i=0;i<8;i++) {
-        setbitu(buff,32*i,32,U4(p+6+4*i)); /* 244 bits page */
-    }
-    type=getbitu(buff,0,6); /* page type */
-    
-    if (type==63) return 0; /* dummy page */
-    if (type<1||type>6) {
-        trace(2,"sbf galrawfnav page type error: prn=%d type=%d\n",prn,type);
-        return -1;
-    }
-    /* save 244 bits page (31 bytes * 6 page) */
-    memcpy(raw->subfrm[sat-1]+128+(type-1)*31,buff,31);
-    
-    if (type!=4) return 0;
-    if (!decode_gal_fnav(raw->subfrm[sat-1]+128,&eph,ion,utc)) return 0;
-    
-    if (eph.sat!=sat) {
-        trace(2,"sbf galrawfnav satellite error: sat=%d %d\n",sat,eph.sat);
-        return -1;
-    }
-    eph.code|=(1<<1); /* data source: E5a */
-    
-    adj_utcweek(raw->time,utc);
-    matcpy(raw->nav.ion_gal,ion,4,1);
-    matcpy(raw->nav.utc_gal,utc,8,1);
-    
-    if (!strstr(raw->opt,"-EPHALL")) {
-        if (eph.iode==raw->nav.eph[sat-1+MAXSAT].iode&&
-            timediff(eph.toe,raw->nav.eph[sat-1+MAXSAT].toe)==0.0&&
-            timediff(eph.toc,raw->nav.eph[sat-1+MAXSAT].toc)==0.0) return 0;
-    }
-    raw->nav.eph[sat-1+MAXSAT]=eph;
-    raw->ephsat=sat;
-    raw->ephset=1; /* 1:F/NAV */
-    return 2;
+static int decode_galrawfnav(raw_t *raw) {
+  eph_t eph = {0};
+  double ion[4] = {0}, utc[8] = {0};
+  uint8_t *p = raw->buff + 14, buff[32];
+  int i, svid, src, sat, prn, type;
+
+  if (strstr(raw->opt, "-GALINAV"))
+    return 0;
+
+  if (raw->len < 52) {
+    trace(2, "sbf galrawfnav length error: len=%d\n", raw->len);
+    return -1;
+  }
+  svid = U1(p);
+  src = U1(p + 3) & 0x1f;
+
+  if (!(sat = svid2sat(svid)) || satsys(sat, &prn) != SYS_GAL) {
+    trace(2, "sbf galrawfnav svid error: svid=%d src=%d\n", svid, src);
+    return -1;
+  }
+  if (!U1(p + 1)) {
+    trace(3, "sbf galrawfnav parity/crc error: prn=%d src=%d\n", prn, src);
+    return 0;
+  }
+  if (raw->outtype) {
+    sprintf(raw->msgtype + strlen(raw->msgtype), " prn=%d src=%d", prn, src);
+  }
+  if (src != 20 && src != 22) { /* E5a or E5 AltBOC */
+    trace(2, "sbf galrawfnav source error: prn=%d src=%d\n", prn, src);
+    return -1;
+  }
+  for (i = 0; i < 8; i++) {
+    setbitu(buff, 32 * i, 32, U4(p + 6 + 4 * i)); /* 244 bits page */
+  }
+  type = getbitu(buff, 0, 6); /* page type */
+
+  if (type == 63)
+    return 0; /* dummy page */
+  if (type < 1 || type > 6) {
+    trace(2, "sbf galrawfnav page type error: prn=%d type=%d\n", prn, type);
+    return -1;
+  }
+  /* save 244 bits page (31 bytes * 6 page) */
+  memcpy(raw->subfrm[sat - 1] + 128 + (type - 1) * 31, buff, 31);
+
+  if (type != 4)
+    return 0;
+  if (!decode_gal_fnav(raw->subfrm[sat - 1] + 128, &eph, ion, utc))
+    return 0;
+
+  if (eph.sat != sat) {
+    trace(2, "sbf galrawfnav satellite error: sat=%d %d\n", sat, eph.sat);
+    return -1;
+  }
+  eph.code |= (1 << 1); /* data source: E5a */
+
+  adj_utcweek(raw->time, utc);
+  matcpy(raw->nav.ion_gal, ion, 4, 1);
+  matcpy(raw->nav.utc_gal, utc, 8, 1);
+
+  if (!strstr(raw->opt, "-EPHALL")) {
+    if (eph.iode == raw->nav.eph[sat - 1 + MAXSAT].iode &&
+        timediff(eph.toe, raw->nav.eph[sat - 1 + MAXSAT].toe) == 0.0 &&
+        timediff(eph.toc, raw->nav.eph[sat - 1 + MAXSAT].toc) == 0.0)
+      return 0;
+  }
+  raw->nav.eph[sat - 1 + MAXSAT] = eph;
+  raw->ephsat = sat;
+  raw->ephset = 1; /* 1:F/NAV */
+  return 2;
 }
 /* decode SBF Galileo I/NAV navigation page ----------------------------------*/
-static int decode_galrawinav(raw_t *raw)
-{
-    eph_t eph={0};
-    double ion[4]={0},utc[8]={0};
-    uint8_t *p=raw->buff+14,buff[32],type,part1,part2,page1,page2;
-    int i,j,svid,src,sat,prn;
-    
-    if (strstr(raw->opt,"-GALFNAV")) return 0;
-    
-    if (raw->len<52) {
-        trace(2,"sbf galrawinav length error: len=%d\n",raw->len);
-        return -1;
-    }
-    svid=U1(p);
-    src =U1(p+3)&0x1f;
-    
-    if (!(sat=svid2sat(svid))||satsys(sat,&prn)!=SYS_GAL) {
-        trace(2,"sbf galrawinav svid error: svid=%d src=%d\n",svid,src);
-        return -1;
-    }
-    if (!U1(p+1)) {
-        trace(3,"sbf galrawinav parity/crc error: prn=%d src=%d\n",prn,src);
-        return 0;
-    }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," prn=%d src=%d",prn,src);
-    }
-    if (src!=17&&src!=21&&src!=22) { /* E1, E5b or E5 AltBOC */
-        trace(2,"sbf galrawinav source error: prn=%d src=%d\n",prn,src);
-        return -1;
-    }
-    for (i=0,p+=6;i<8;i++,p+=4) {
-        setbitu(buff,32*i,32,U4(p)); /* 114(even) + 120(odd) bits */
-    }
-    part1=getbitu(buff,  0,1);
-    page1=getbitu(buff,  1,1);
-    part2=getbitu(buff,114,1);
-    page2=getbitu(buff,115,1);
+static int decode_galrawinav(raw_t *raw) {
+  eph_t eph = {0};
+  double ion[4] = {0}, utc[8] = {0};
+  uint8_t *p = raw->buff + 14, buff[32], type, part1, part2, page1, page2;
+  int i, j, svid, src, sat, prn;
 
-    if (part1!=0||part2!=1) {
-        trace(3,"sbf galrawinav part error: prn=%d even/odd=%d %d\n",prn,part1,
-              part2);
-        return -1;
-    }
-    if (page1==1||page2==1) return 0; /* alert page */
-    
-    type=getbitu(buff,2,6); /* word type */
-    
-    if (type>6) return 0;
-    
-    /* save 128 (112:even+16:odd) bits word (16 bytes * 7 word) */
-    for (i=0,j=2;i<14;i++,j+=8) {
-        raw->subfrm[sat-1][type*16+i]=getbitu(buff,j,8);
-    }
-    for (i=14,j=116;i<16;i++,j+=8) {
-        raw->subfrm[sat-1][type*16+i]=getbitu(buff,j,8);
-    }
-    if (type!=5) return 0;
-    if (!decode_gal_inav(raw->subfrm[sat-1],&eph,ion,utc)) return 0;
-    
-    if (eph.sat!=sat) {
-        trace(2,"sbf galrawinav satellite error: sat=%d %d\n",sat,eph.sat);
-        return -1;
-    }
-    eph.code|=(src==17)?(1<<0):(1<<2); /* data source: E1 or E5b */
-    
-    adj_utcweek(raw->time,utc);
-    matcpy(raw->nav.ion_gal,ion,4,1);
-    matcpy(raw->nav.utc_gal,utc,8,1);
-    
-    if (!strstr(raw->opt,"-EPHALL")) {
-        if (eph.iode==raw->nav.eph[sat-1].iode&&
-            timediff(eph.toe,raw->nav.eph[sat-1].toe)==0.0&&
-            timediff(eph.toc,raw->nav.eph[sat-1].toc)==0.0) return 0;
-    }
-    raw->nav.eph[sat-1]=eph;
-    raw->ephsat=sat;
-    raw->ephset=0; /* 0:I/NAV */
-    return 2;
+  if (strstr(raw->opt, "-GALFNAV"))
+    return 0;
+
+  if (raw->len < 52) {
+    trace(2, "sbf galrawinav length error: len=%d\n", raw->len);
+    return -1;
+  }
+  svid = U1(p);
+  src = U1(p + 3) & 0x1f;
+
+  if (!(sat = svid2sat(svid)) || satsys(sat, &prn) != SYS_GAL) {
+    trace(2, "sbf galrawinav svid error: svid=%d src=%d\n", svid, src);
+    return -1;
+  }
+  if (!U1(p + 1)) {
+    trace(3, "sbf galrawinav parity/crc error: prn=%d src=%d\n", prn, src);
+    return 0;
+  }
+  if (raw->outtype) {
+    sprintf(raw->msgtype + strlen(raw->msgtype), " prn=%d src=%d", prn, src);
+  }
+  if (src != 17 && src != 21 && src != 22) { /* E1, E5b or E5 AltBOC */
+    trace(2, "sbf galrawinav source error: prn=%d src=%d\n", prn, src);
+    return -1;
+  }
+  for (i = 0, p += 6; i < 8; i++, p += 4) {
+    setbitu(buff, 32 * i, 32, U4(p)); /* 114(even) + 120(odd) bits */
+  }
+  part1 = getbitu(buff, 0, 1);
+  page1 = getbitu(buff, 1, 1);
+  part2 = getbitu(buff, 114, 1);
+  page2 = getbitu(buff, 115, 1);
+
+  if (part1 != 0 || part2 != 1) {
+    trace(3, "sbf galrawinav part error: prn=%d even/odd=%d %d\n", prn, part1,
+          part2);
+    return -1;
+  }
+  if (page1 == 1 || page2 == 1)
+    return 0; /* alert page */
+
+  type = getbitu(buff, 2, 6); /* word type */
+
+  if (type > 6)
+    return 0;
+
+  /* save 128 (112:even+16:odd) bits word (16 bytes * 7 word) */
+  for (i = 0, j = 2; i < 14; i++, j += 8) {
+    raw->subfrm[sat - 1][type * 16 + i] = getbitu(buff, j, 8);
+  }
+  for (i = 14, j = 116; i < 16; i++, j += 8) {
+    raw->subfrm[sat - 1][type * 16 + i] = getbitu(buff, j, 8);
+  }
+  if (type != 5)
+    return 0;
+  if (!decode_gal_inav(raw->subfrm[sat - 1], &eph, ion, utc))
+    return 0;
+
+  if (eph.sat != sat) {
+    trace(2, "sbf galrawinav satellite error: sat=%d %d\n", sat, eph.sat);
+    return -1;
+  }
+  eph.code |= (src == 17) ? (1 << 0) : (1 << 2); /* data source: E1 or E5b */
+
+  adj_utcweek(raw->time, utc);
+  matcpy(raw->nav.ion_gal, ion, 4, 1);
+  matcpy(raw->nav.utc_gal, utc, 8, 1);
+
+  if (!strstr(raw->opt, "-EPHALL")) {
+    if (eph.iode == raw->nav.eph[sat - 1].iode &&
+        timediff(eph.toe, raw->nav.eph[sat - 1].toe) == 0.0 &&
+        timediff(eph.toc, raw->nav.eph[sat - 1].toc) == 0.0)
+      return 0;
+  }
+  raw->nav.eph[sat - 1] = eph;
+  raw->ephsat = sat;
+  raw->ephset = 0; /* 0:I/NAV */
+  return 2;
 }
 /* decode SBF SBAS L1 navigation frame ---------------------------------------*/
-static int decode_georawl1(raw_t *raw)
-{
-    uint8_t *p=raw->buff+14,buff[32];
-    int i,svid,sat,prn;
-    
-    if (raw->len<52) {
-        trace(2,"sbf georawl1 length error: len=%d\n",raw->len);
-        return -1;
-    }
-    svid=U1(p);
-    if (!(sat=svid2sat(svid))||satsys(sat,&prn)!=SYS_SBS) {
-        trace(2,"sbf georawl1 svid error: svid=%d\n",svid);
-        return -1;
-    }
-    if (!U1(p+1)) {
-        trace(3,"sbf georawl1 parity/crc error: prn=%d err=%d\n",prn,U1(p+2));
-        return 0;
-    }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," prn=%d",prn);
-    }
-    raw->sbsmsg.tow=(int)time2gpst(raw->time,&raw->sbsmsg.week);
-    raw->sbsmsg.prn=prn;
-    
-    for (i=0;i<8;i++) {
-        setbitu(buff,32*i,32,U4(p+6+4*i));
-    }
-    memcpy(raw->sbsmsg.msg,buff,29); /* 226 bits w/o CRC */
-    raw->sbsmsg.msg[28]&=0xC0;
-    return 3;
+static int decode_georawl1(raw_t *raw) {
+  uint8_t *p = raw->buff + 14, buff[32];
+  int i, svid, sat, prn;
+
+  if (raw->len < 52) {
+    trace(2, "sbf georawl1 length error: len=%d\n", raw->len);
+    return -1;
+  }
+  svid = U1(p);
+  if (!(sat = svid2sat(svid)) || satsys(sat, &prn) != SYS_SBS) {
+    trace(2, "sbf georawl1 svid error: svid=%d\n", svid);
+    return -1;
+  }
+  if (!U1(p + 1)) {
+    trace(3, "sbf georawl1 parity/crc error: prn=%d err=%d\n", prn, U1(p + 2));
+    return 0;
+  }
+  if (raw->outtype) {
+    sprintf(raw->msgtype + strlen(raw->msgtype), " prn=%d", prn);
+  }
+  raw->sbsmsg.tow = (int)time2gpst(raw->time, &raw->sbsmsg.week);
+  raw->sbsmsg.prn = prn;
+
+  for (i = 0; i < 8; i++) {
+    setbitu(buff, 32 * i, 32, U4(p + 6 + 4 * i));
+  }
+  memcpy(raw->sbsmsg.msg, buff, 29); /* 226 bits w/o CRC */
+  raw->sbsmsg.msg[28] &= 0xC0;
+  return 3;
 }
 /* decode SBF BDS navigation frame -------------------------------------------*/
-static int decode_bdsraw(raw_t *raw)
-{
-    eph_t eph={0};
-    double ion[8],utc[8];
-    uint8_t *p=raw->buff+14,buff[40];
-    int i,id,svid,sat,prn,pgn;
-    
-    if (raw->len<52) {
-        trace(2,"sbf bdsraw length error: len=%d\n",raw->len);
-        return -1;
-    }
-    svid=U1(p);
-    if (!(sat=svid2sat(svid))||satsys(sat,&prn)!=SYS_CMP) {
-        trace(2,"sbf bdsraw svid error: svid=%d\n",svid);
-        return -1;
-    }
-    if (!U1(p+1)) {
-        trace(3,"sbf bdsraw parity/crc error: prn=%d\n",prn);
+static int decode_bdsraw(raw_t *raw) {
+  eph_t eph = {0};
+  double ion[8], utc[8];
+  uint8_t *p = raw->buff + 14, buff[40];
+  int i, id, svid, sat, prn, pgn;
+
+  if (raw->len < 52) {
+    trace(2, "sbf bdsraw length error: len=%d\n", raw->len);
+    return -1;
+  }
+  svid = U1(p);
+  if (!(sat = svid2sat(svid)) || satsys(sat, &prn) != SYS_CMP) {
+    trace(2, "sbf bdsraw svid error: svid=%d\n", svid);
+    return -1;
+  }
+  if (!U1(p + 1)) {
+    trace(3, "sbf bdsraw parity/crc error: prn=%d\n", prn);
+    return 0;
+  }
+  if (raw->outtype) {
+    sprintf(raw->msgtype + strlen(raw->msgtype), " prn=%d", prn);
+  }
+  for (i = 0, p += 6; i < 10; i++, p += 4) {
+    setbitu(buff, 32 * i, 32, U4(p));
+  }
+  id = getbitu(buff, 15, 3); /* subframe ID */
+  if (id < 1 || id > 5) {
+    trace(2, "sbf bdsraw id error: prn=%d id=%d\n", prn, id);
+    return -1;
+  }
+  if (prn >= 6 && prn <= 58) { /* IGSO/MEO */
+    memcpy(raw->subfrm[sat - 1] + (id - 1) * 38, buff, 38);
+
+    if (id == 3) {
+      if (!decode_bds_d1(raw->subfrm[sat - 1], &eph, NULL, NULL))
         return 0;
-    }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," prn=%d",prn);
-    }
-    for (i=0,p+=6;i<10;i++,p+=4) {
-        setbitu(buff,32*i,32,U4(p));
-    }
-    id=getbitu(buff,15,3); /* subframe ID */
-    if (id<1||id>5) {
-        trace(2,"sbf bdsraw id error: prn=%d id=%d\n",prn,id);
-        return -1;
-    }
-    if (prn>=6&&prn<=58) { /* IGSO/MEO */
-        memcpy(raw->subfrm[sat-1]+(id-1)*38,buff,38);
-        
-        if (id==3) {
-            if (!decode_bds_d1(raw->subfrm[sat-1],&eph,NULL,NULL)) return 0;
-        }
-        else if (id==5) {
-            if (!decode_bds_d1(raw->subfrm[sat-1],NULL,ion,utc)) return 0;
-            matcpy(raw->nav.ion_cmp,ion,8,1);
-            matcpy(raw->nav.utc_cmp,utc,8,1);
-            return 9;
-        }
-        else return 0;
-    }
-    else { /* GEO */
-        pgn=getbitu(buff,42,4); /* page number */
-        
-        if (id==1&&pgn>=1&&pgn<=10) {
-            memcpy(raw->subfrm[sat-1]+(pgn-1)*38,buff,38);
-            if (pgn!=10) return 0;
-            if (!decode_bds_d2(raw->subfrm[sat-1],&eph,NULL)) return 0;
-        }
-        else if (id==1&&pgn==102) {
-            memcpy(raw->subfrm[sat-1]+10*38,buff,38);
-            if (!decode_bds_d2(raw->subfrm[sat-1],NULL,utc)) return 0;
-            matcpy(raw->nav.utc_cmp,utc,8,1);
-            return 9;
-        }
-        else return 0;
-    }
-    if (!strstr(raw->opt,"-EPHALL")) {
-        if (timediff(eph.toe,raw->nav.eph[sat-1].toe)==0.0) return 0;
-    }
-    eph.sat=sat;
-    raw->nav.eph[sat-1]=eph;
-    raw->ephsat=sat;
-    raw->ephset=0;
-    return 2;
+    } else if (id == 5) {
+      if (!decode_bds_d1(raw->subfrm[sat - 1], NULL, ion, utc))
+        return 0;
+      matcpy(raw->nav.ion_cmp, ion, 8, 1);
+      matcpy(raw->nav.utc_cmp, utc, 8, 1);
+      return 9;
+    } else
+      return 0;
+  } else {                      /* GEO */
+    pgn = getbitu(buff, 42, 4); /* page number */
+
+    if (id == 1 && pgn >= 1 && pgn <= 10) {
+      memcpy(raw->subfrm[sat - 1] + (pgn - 1) * 38, buff, 38);
+      if (pgn != 10)
+        return 0;
+      if (!decode_bds_d2(raw->subfrm[sat - 1], &eph, NULL))
+        return 0;
+    } else if (id == 1 && pgn == 102) {
+      memcpy(raw->subfrm[sat - 1] + 10 * 38, buff, 38);
+      if (!decode_bds_d2(raw->subfrm[sat - 1], NULL, utc))
+        return 0;
+      matcpy(raw->nav.utc_cmp, utc, 8, 1);
+      return 9;
+    } else
+      return 0;
+  }
+  if (!strstr(raw->opt, "-EPHALL")) {
+    if (timediff(eph.toe, raw->nav.eph[sat - 1].toe) == 0.0)
+      return 0;
+  }
+  eph.sat = sat;
+  raw->nav.eph[sat - 1] = eph;
+  raw->ephsat = sat;
+  raw->ephset = 0;
+  return 2;
 }
 /* decode SBF QZS C/A subframe -----------------------------------------------*/
 static int decode_qzsrawl1ca(raw_t *raw) { return decode_rawca(raw, SYS_QZS); }
