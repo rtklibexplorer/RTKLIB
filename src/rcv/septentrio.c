@@ -1320,6 +1320,25 @@ static int decode_rawnav(raw_t *raw, int sys) {
       adj_utcweek(raw->time, raw->nav.utc_qzs);
     }
     }
+/* decode SBF galion --------------------------------------------------------*/
+static int decode_galion(raw_t *raw) {
+  uint8_t *p = (raw->buff) + 6; /* points at TOW location */
+
+  trace(4, "SBF decode_galion: len=%d\n", raw->len);
+
+  if (raw->len < 29) {
+    trace(1, "SBF decode_galion: Block too short\n");
+    return -1;
+  }
+
+  raw->nav.ion_gal[0] = R4(p + 10);
+  raw->nav.ion_gal[1] = R4(p + 14);
+  raw->nav.ion_gal[2] = R4(p + 18);
+  raw->nav.ion_gal[3] = 0;
+
+  return 9;
+}
+/* decode SBF block ----------------------------------------------------------*/
 static int decode_sbf(raw_t *raw) {
   uint8_t *p = raw->buff;
   uint32_t week, tow;
