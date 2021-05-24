@@ -412,14 +412,14 @@ static double gfobs_L1L5(const obsd_t *obs, int i, int j, const double *lam)
 
 /* single-differenced measurement error variance -----------------------------*/
 static double varerr(int sat, int sys, double el, double snr_rover, double snr_base, 
-                     double bl, double dt, int f, const prcopt_t *opt, const obsd_t *obs)
+                     double bl, double dt, int f, const prcopt_t *opt, const obsd_t *obs, rtk_t *rtk)
 {
     double a, b, c = opt->err[3] * bl / 1E4;
     double snr_max = opt->err[5];
     double d = CLIGHT * opt->sclkstab * dt;
     double fact = 1.0;
-    double sinel = sin(el);
-    int i, nf = NF(opt), frq, code;
+    double sinel = sin(el), W;
+    int i, nf = NF(opt), frq, code, ELV;
 
     frq=f%nf;code=f<nf?0:1;
 
@@ -463,18 +463,43 @@ static double varerr(int sat, int sys, double el, double snr_rover, double snr_b
         a = fact * opt->err[1];
         b = fact * opt->err[2];
     }
+
+    /* SNR and carrier phase stats */    
+    if (code) {
+/*        printf("DBG: sat=%d cp[%d]=%d pr[%d]=%d snr=%.1f el=%.1f ELV=%d\n",obs->sat,frq,obs->qualL[frq],frq,obs->qualP[frq],(float)obs->SNR[frq]/4,el*R2D,ELV);
+        printf("DBG: n=%d prsd=%d cno=%d",rtk->el[ELV].n,rtk->el[ELV].prsd,rtk->el[ELV].cno); */
+        ELV=abs(el*R2D/2); rtk->el[ELV].n++;
+        rtk->el[ELV].sd+=obs->qualL[frq]; 	/* Carrier Phase Std. Dev */
+        rtk->el[ELV].snr+=(int)obs->SNR[frq]/4;
+        if ((int)obs->SNR[frq]/4 < rtk->el[ELV].min||rtk->el[ELV].min==0) rtk->el[ELV].min=(int)obs->SNR[frq]/4;
+        if ((int)obs->SNR[frq]/4 > rtk->el[ELV].max) rtk->el[ELV].max=(int)obs->SNR[frq]/4;
+    }
     
     /* note: SQR(3.0) is approximated scale factor for error variance 
        in the case of iono-free combination */
     fact = (opt->ionoopt == IONOOPT_IFLC) ? SQR(3.0) : 1.0;
     switch (opt->weightmode) {
-        case WEIGHTOPT_ELEVATION: return fact * 2.0 * ( SQR(a) + SQR(b / sinel) + SQR(c) ) + SQR(d);
-        case WEIGHTOPT_SNR      : return fact * ( SQR(a) * 
+        case WEIGHTOPT_ELEVATION: W = fact * 2.0 * ( SQR(a) + SQR(b / sinel) + SQR(c) ) + SQR(d); break;
+        case WEIGHTOPT_SNR      : W = fact * ( SQR(a) * 
                                                   (pow(10, 0.1 * MAX(snr_max - snr_rover, 0)) + 
-                                                   pow(10, 0.1 * MAX(snr_max - snr_base,  0))) + SQR(c) ) + SQR(d);
-        default: return 0;
+                                                   pow(10, 0.1 * MAX(snr_max - snr_base,  0))) + SQR(c) ) + SQR(d); break;
+        default: W=0;
     }
+    W = fact * ( SQR(a) * (pow(10, 0.1 * MAX(snr_max - (snr_rover-(20*obs->qualL[frq]/5)), 0)) + 
+                           pow(10, 0.1 * MAX(snr_max - snr_base,  0))) + SQR(c) ) + SQR(d); 
+    return W;
 }
+
+/* locktime ms Carrier phase locktime counter (maximum 64500ms)
+   cno 	     dBHz Carrier-to-noise density ratio (signal strength) 
+   prStdev      m Estimated pseudorange measurement standard deviation 
+   cpSt    Cycles Estimated carrier phase measurement standard deviation 
+   raw->obs.data[j].qualL[f-1]=cpstd;
+   raw->obs.data[j].qualP[f-1]=prstd;
+   raw->obs.data[j].SNR[f-1]=(unsigned char)(cn0*4);
+
+   
+   */
 /* baseline length -----------------------------------------------------------*/
 static double baseline(const double *ru, const double *rb, double *dr)
 {
@@ -1389,7 +1414,9 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
             soltime=gpst2utc(obs[iu[iii]].time);
             upd_chrony(soltime,0,0,rtk);                               	/* reference link to chrony.c functions                  */
             
-            /* calculate double differences of residuals (code/phase) for each sat */
+            /* calculate double differences of residuals (code/phase) for each sat 
+               i  reference sat 
+               ns number of sats */
             for (j=0;j<ns;j++) {
                 if (i==j) continue;  /* skip ref sat */
                 sysi=rtk->ssat[sat[i]-1].sys;
@@ -1493,6 +1520,7 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                 /* adjust threshold by error stdev ratio unless one of the phase biases was just initialized*/
                 threshadj=code||(rtk->P[ii+rtk->nx*ii]>SQR(rtk->opt.std[0]/2))||
                           (rtk->P[jj+rtk->nx*jj]>SQR(rtk->opt.std[0]/2))?opt->eratio[frq]:1;
+/*                if (!code) printf("DBG: tadj=%f v[%d]=%f Pi=%.2f O=%.0f Pj=%.2f O=%.0f\n",threshadj,nv,v[nv],rtk->P[ii+rtk->nx*ii],rtk->opt.std[0]/2,rtk->P[jj+rtk->nx*jj],rtk->opt.std[0]/2); */
                 if (opt->maxinno>0.0&&fabs(v[nv])>opt->maxinno*threshadj) {
                        rtk->ssat[sat[j]-1].vsat[frq]=0;
                        rtk->ssat[sat[j]-1].rejc[frq]++;
@@ -1505,11 +1533,12 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                 Ri[nv] = varerr(sat[i], sysi, azel[1+iu[i]*2], 
                                 0.25 * rtk->ssat[sat[i]-1].snr_rover[frq],
                                 0.25 * rtk->ssat[sat[i]-1].snr_base[frq],
-                                bl, dt, f, opt,&obs[iu[i]]);
+                                bl, dt, f, opt,&obs[iu[i]],rtk);
                 Rj[nv] = varerr(sat[j], sysj, azel[1+iu[j]*2], 
                                 0.25 * rtk->ssat[sat[j]-1].snr_rover[frq],
                                 0.25 * rtk->ssat[sat[j]-1].snr_base[frq],
-                                bl, dt, f, opt,&obs[iu[j]]);
+                                bl, dt, f, opt,&obs[iu[j]],rtk);
+/*                if (code) printf("DBG Pi=%.1f Ri[%d]=%.1f Pj=%.1f Rj[%d]=%.1f\n",rtk->P[ii+rtk->nx*ii],nv,Ri[nv], rtk->P[jj+rtk->nx*jj],nv,Rj[nv]);*/
             
                 /* set valid data flags */
                 if (opt->mode>PMODE_DGPS) {
@@ -2094,7 +2123,7 @@ static int valpos(rtk_t *rtk, const double *v, const double *R, const int *vflg,
         
         if (vv>chisqr[nv-NP(opt)-1]) {
             errmsg(rtk,"residuals validation failed (nv=%d np=%d vv=%.2f cs=%.2f)\n",
-                   nv,NP(opt),vv,chisqr[nv-NP(opt)-1]);
+                   nv,NP(opt),vv,chisqr[nv-NP(opt)-1]); /* -> X2_cval(nv-NP(opt),0.999) */
             stat=0;
         }
         else {
@@ -2122,6 +2151,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     int info,vflg[MAXOBS*NFREQ*2+1],svh[MAXOBS*2];
     int stat=rtk->opt.mode<=PMODE_DGPS?SOLQ_DGPS:SOLQ_FLOAT;
     int nf=opt->ionoopt==IONOOPT_IFLC?1:opt->nf;
+    double vv=0.0, RR=0.0;
     
     trace(3,"relpos  : nx=%d nu=%d nr=%d\n",rtk->nx,nu,nr);
     
@@ -2145,11 +2175,47 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
             rtk->ssat[i].snr_base[j] =0;
         }
     }
-    /* compute satellite positions, velocities and clocks */
+    /* compute satellite positions, velocities and clocks 
+       refrenced from ../../../src/ephemeris.c
+          rs [(0:2)+i*6]= obs[i] sat position {x,y,z} (m)
+          rs [(3:5)+i*6]= obs[i] sat velocity {vx,vy,vz} (m/s)
+          dts[(0:1)+i*2]= obs[i] sat clock {bias,drift} (s|s/s)
+          var[i]        = obs[i] sat position and clock error variance (m^2)
+          svh[i]        = obs[i] sat health flag
+          if no navigation data, set 0 to rs[], dts[], var[] and svh[]
+          satellite position and clock are values at signal transmission time
+          satellite position is referenced to antenna phase center
+          satellite clock does not include code bias correction (tgd or bgd)
+          any pseudorange and broadcast ephemeris are always needed to get
+          signal transmission time 
+       args   : gtime_t teph     I   time to select ephemeris (gpst)
+       obsd_t *obs      I   observation data
+       int    n         I   number of observation data
+       nav_t  *nav      I   navigation data
+       int    ephopt    I   ephemeris option (EPHOPT_???)
+       double *rs       O   satellite positions and velocities (ecef)
+       double *dts      O   satellite clocks
+       double *var      O   sat position and clock error variances (m^2)
+       int    *svh      O   sat health flag (-1:correction not available)*/
     satposs(time,obs,n,nav,opt->sateph,rs,dts,var,svh);
     
     /* calculate [range - measured pseudorange] for base station (phase and code)
-         output is in y[nu:nu+nr], see call for rover below for more details                                                 */
+         output is in y[nu:nu+nr], see call for rover below for more details
+          calculate zero diff residuals [observed pseudorange - range] 
+        output is in y[0:nu-1], only shared input with base is nav 
+ args:  I   base:  0=base,1=rover 
+        I   obs  = sat observations
+        I   n    = # of sats
+        I   rs [(0:2)+i*6]= sat position {x,y,z} (m)
+        I   dts[(0:1)+i*2]= sat clock {bias,drift} (s|s/s)
+        I   svh  = sat health flags
+        I   nav  = sat nav data
+        I   rr   = rcvr pos (x,y,z)
+        I   opt  = options
+        I   index: 0=base,1=rover 
+        O   y[(0:1)+i*2] = zero diff residuals {phase,code} (m)
+        O   e    = line of sight unit vectors to sats
+        O   azel = [az, el] to sats                                           */
     trace(3,"base station:\n");
     if (!zdres(1,obs+nu,nr,rs+nu*6,dts+nu*2,var+nu,svh+nu,nav,rtk->rb,opt,1,
                y+nu*nf*2,e+nu*3,azel+nu*2)) {
@@ -2162,7 +2228,13 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     if (opt->intpref) {
         dt=intpres(time,obs+nu,nr,nav,rtk,y+nu*nf*2);
     }
-    /* select common satellites between rover and base-station */
+    /* select common satellites between rover and base-station 
+       I obs   = observation data
+       I azel  = azimuth-elevation matrix
+       I nu,nr = user and ref number of satellites
+       I opt   = Options (elmin)
+       I sat   = list of common sats
+       I iu,ir = user and ref indices to sats */
     if ((ns=selsat(obs,azel,nu,nr,opt,sat,iu,ir))<=0) {
         errmsg(rtk,"no common satellite\n");
         
@@ -2251,6 +2323,17 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
         /* calc double diff residuals again after kalman filter update for float solution */
         nv=ddres(rtk,nav,obs,dt,xp,Pp,sat,y,e,azel,iu,ir,ns,v,NULL,R,vflg);
         
+        /* NOTE Chi² check of minimum normalized squared residuals 
+           NOTE To compare the residuals per epoch, the sum of the squared residuals per epoch is used. The
+                sum of the squared residuals based on the manipulations is subtracted from the sum of the squared
+                residuals based on the original observations. This is done for both the pseudorange and the
+                carrierphase observation. The flaw in this comparison is that when there are more satellites used, 
+                thus 𝑚 > then the sum of the squared error is expected to be higher.	*/
+        /* for (i=0;i<nv;i++) { 
+            vv+=v[i]*v[i]/R[i+i*nv]; RR+=R[i+i*nv]; /* printf("DBG: v[%d]=%f R[%d]=%f\n",i,v[i],i*i*nv,R[i+i*nv]); */
+/*        }  printf("DBG: nv=%d>%d RR/nv=%.3f vv=%.2f chi=%.2f P=%.3f\n",nv,NP(opt),(float)RR/nv,vv,X2_cval(nv-NP(opt),0.999),Chi_Square_Distribution(vv, nv-NP(opt)));
+ */       
+
         /* validation of float solution, always returns 1, msg to trace file if large residual */
         if (valpos(rtk,v,R,vflg,nv,4.0)) {
             
@@ -2319,8 +2402,8 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     /* save solution status (fixed or float) */
     if (stat==SOLQ_FIX) {
         for (i=0;i<3;i++) {
-            rtk->sol.rr[i]=rtk->xa[i];
-            rtk->sol.qr[i]=(float)rtk->Pa[i+i*rtk->na];
+            rtk->sol.rr[i]=rtk->xa[i];				/* rr position/velocity (m|m/s)          {x,y,z,vx,vy,vz} or {e,n,u,ve,vn,vu} */
+            rtk->sol.qr[i]=(float)rtk->Pa[i+i*rtk->na];		/* qr position variance/covariance (m^2) {c_xx,c_yy,c_zz,c_xy,c_yz,c_zx} or {c_ee,c_nn,c_uu,c_en,c_nu,c_ue} */
         }
         rtk->sol.qr[3]=(float)rtk->Pa[1];
         rtk->sol.qr[4]=(float)rtk->Pa[1+2*rtk->na];
@@ -2329,7 +2412,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
         if (rtk->opt.dynamics) { /* velocity and covariance */
             for (i=3;i<6;i++) {
                 rtk->sol.rr[i]=rtk->xa[i];
-                rtk->sol.qv[i-3]=(float)rtk->Pa[i+i*rtk->na];
+                rtk->sol.qv[i-3]=(float)rtk->Pa[i+i*rtk->na];	/* velocity variance/covariance (m^2/s^2) */
     }
             rtk->sol.qv[3]=(float)rtk->Pa[4+3*rtk->na];
             rtk->sol.qv[4]=(float)rtk->Pa[5+4*rtk->na];

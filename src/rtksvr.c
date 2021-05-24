@@ -345,6 +345,10 @@ static int decoderaw(rtksvr_t *svr, int index)
                   time_str(obs->data[0].time,0),obs->n);
         }
 #endif
+
+        /* Apply Hatch Carrier Smoothing filter */
+        if (svr->hatchep>0) csmooth(obs,svr->hatchep);
+
         /* update cmr rover observations cache */
         if (svr->format[1]==STRFMT_CMR&&index==0&&ret==1) {
             update_cmr(&svr->raw[1],svr,obs);
@@ -844,6 +848,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     svr->nsbs=0;
     svr->nsol=0;
     svr->prcout=0;
+    svr->hatchep=0;
     rtkfree(&svr->rtk);
     rtkinit(&svr->rtk,prcopt);
     

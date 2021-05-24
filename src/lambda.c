@@ -7,8 +7,10 @@
 *     [1] P.J.G.Teunissen, The least-square ambiguity decorrelation adjustment:
 *         a method for fast GPS ambiguity estimation, J.Geodesy, Vol.70, 65-82,
 *         1995
+*	  https://www.researchgate.net/publication/224969472_The_least-squares_ambiguity_decorrelation_adjustment_A_method_for_fast_GPS_integer_ambiguity_estimation
 *     [2] X.-W.Chang, X.Yang, T.Zhou, MLAMBDA: A modified LAMBDA method for
 *         integer least-squares estimation, J.Geodesy, Vol.79, 552-565, 2005
+*	  https://www.researchgate.net/publication/225518977_MLAMBDA_a_modified_LAMBDA_method_for_integer_least-squares_estimation
 *
 * version : $Revision: 1.1 $ $Date: 2008/07/17 21:48:06 $
 * history : 2007/01/13 1.0 new
@@ -70,7 +72,13 @@ static void perm(int n, double *L, double *D, int j, double del, double *Z)
     for (k=j+2;k<n;k++) SWAP(L[k+j*n],L[k+(j+1)*n]);
     for (k=0;k<n;k++) SWAP(Z[k+j*n],Z[k+(j+1)*n]);
 }
-/* lambda reduction (z=Z'*a, Qz=Z'*Q*Z=L'*diag(D)*L) (ref.[1]) ---------------*/
+/* lambda reduction (z=Z'*a, Qz=Z'*Q*Z=L'*diag(D)*L) (ref.[1]) ---------------
+#https://www.ignss2020.unsw.edu.au/sites/ignss2020/files/uploads/proceedings/papers/paper_27.pdf
+After the procedure of integer Z transformation, DD ambiguities are sorted according to their variance. 
+D = diagonal matrix
+ variance matrix after integer transformation
+= LT D L, where Q is the ambiguity variance matrix
+*/
 static void reduction(int n, double *L, double *D, double *Z)
 {
     int i,j,k;
@@ -86,6 +94,11 @@ static void reduction(int n, double *L, double *D, double *Z)
         }
         else j--;
     }
+    printf("DBG: Lambda reduction\r\n");
+    for (i=0;i<n;i++) { 
+        printf("[%d] D=%.f Z=%.2f L=%f\r\n",i,D[i],Z[i],L[i]);
+    }
+
 }
 /* modified lambda (mlambda) search (ref. [2]) -------------------------------
 * args   : n      I  number of float parameters
@@ -157,6 +170,13 @@ static int search(int n, int m, const double *L, const double *D,
             for (k=0;k<n;k++) SWAP(zn[k+i*n],zn[k+j*n]);
         }
     }
+    printf("DBG Sum of Res m=%d ",m); for (i=0;i<m-1;i++) {
+        printf("s[%d]=%.2f zn[0...%d]=",i,s[i],n);
+        for (k=0;k<n;k++) {
+        printf("%.2f; ",zn[k+i*n]);
+        }
+    }
+    printf("\r\n");
     free(S); free(dist); free(zb); free(z); free(step);
     
     if (c>=LOOPMAX) {

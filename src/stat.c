@@ -7,6 +7,7 @@
 #include <math.h>                    // required for powl(), fabsl(), expl() and logl().
 #include <float.h>                   // required for LDBL_EPSILON.
 #include <limits.h>
+#include <rtklib.h>
 
 static long double const pi 		  = 3.14159265358979323846264338L;
 static double max_double_arg 		  = 171.0;
@@ -745,3 +746,4 @@ void amain(int argc, char *argv[]) {
    printf("t=%.3f df=%d Verify_P=%.3f\n",t,ndof,Student_t_Distribution(t,ndof));
 
 }
+

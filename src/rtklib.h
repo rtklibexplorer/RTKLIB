@@ -981,6 +981,13 @@ typedef struct {
     int lglbw[2];
 } blbuf_t;
 
+typedef struct {
+    int n;		/* Number of obersvations 	*/
+    int min,max;	/* Min und max			*/
+    int sd;		/* sum of pseudo range std.dev  */
+    int snr; 		/* sum of signar to nose-ratio	*/
+} elbuf_t;
+
 typedef struct {        /* solution status type */
     gtime_t time;       /* time (GPST) */
     unsigned char sat;  /* satellite number */
@@ -1254,6 +1261,7 @@ typedef struct {        /* ambiguity control type */
     char flags[MAXSAT]; /* fix flags */
 } ambc_t;
 
+
 typedef struct {        /* RTK control/result type */
     sol_t  sol;         /* RTK solution */
     double rb[6];       /* base position/velocity (ecef) (m|m/s) */
@@ -1274,6 +1282,7 @@ typedef struct {        /* RTK control/result type */
     int initial_mode;   /* initial positioning mode */
     double chrony_delta;/* Chrony Socket status */
     blbuf_t bl;		/* baseline stats */
+    elbuf_t el[91];	/* elevation stats */
 } rtk_t;
 
 typedef struct half_cyc_tag {  /* half-cycle correction list type */
@@ -1406,6 +1415,7 @@ typedef struct {        /* RTK server type */
     char cmd_reset[MAXRCVCMD]; /* reset command */
     double bl_reset;    /* baseline length to reset (km) */
     lock_t lock;        /* lock flag */
+    int hatchep;	/* number of epochs for hatch smoothing filter 0 to disable */
 } rtksvr_t;
 
 typedef struct {        /* gis data point type */

@@ -151,6 +151,7 @@ static const char *helptxt[]={
     "status [cycle]        : show rtk status",
     "satellite [-n] [cycle]: show satellite status",
     "observ [-n] [cycle]   : show observation data",
+    "hatch [epochs]	   : number of epochs for hatch filter (0 to disable carrier smoothing)",
     "navidata [cycle]      : show navigation data",
     "stream [cycle]        : show stream status",
     "ssr [cycle]           : show ssr corrections",
@@ -634,10 +635,10 @@ static void lglstatus(vt_t *vt)
 {
     rtk_t rtk;
     const char *sol[]={"-","fix","float","SBAS","DGPS","single","PPP",""};
-    const char *mode[]={
+/*    const char *mode[]={
          "single","DGPS","kinematic","static","static-start","moving-base","fixed",
-         "PPP-kinema","PPP-static"
-    };
+         "PPP-kinema","PPP-static" 
+    }; */
     gtime_t eventime={0};
     rtcm_t rtcm[3];
     int i,j,n,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
@@ -646,6 +647,7 @@ static void lglstatus(vt_t *vt)
     double runtime,rt[3]={0},dop[4]={0};
     double azel[MAXSAT*2],pos[3];
     double vbl,posb[3],Sl=0,Sh=0;
+    double dmajor,HPL,VPL;
 
     trace(4,"lglstatus:\n");
     
@@ -699,8 +701,21 @@ static void lglstatus(vt_t *vt)
     vt_printf(vt,"%-29s: %.2f (%.1f%%)\n","AR validation ratio (Fα)",rtk.sol.ratio,rtk.sol.ratio_pr);
     vt_printf(vt,"%-28s: %d\n","# of valid satellites",rtk.sol.ns);
     vt_printf(vt,"%-28s: %.1f/%.1f/%.1f/%.1f\n","GDOP/PDOP/HDOP/VDOP",dop[0],dop[1],dop[2],dop[3]);
-    vt_printf(vt,"%-28s: %.2f\n","Circ. Err. Probable R95 (cm)",
-            (rtkstat==1)?(rtk.Pa?100*SQRT(rtk.Pa[0]+rtk.Pa[1+1*rtk.na]):0):(rtk.P?100*SQRT(rtk.P[0]+rtk.P[1+1*rtk.nx]):0));
+/*    vt_printf(vt,"%-28s: %.2f\n","Circ. Err. Probable R95 (cm)", 
+      WRONG: (rtkstat==1)?(rtk.Pa?100*SQRT(rtk.Pa[0]+rtk.Pa[1+1*rtk.na]):0):(rtk.P?100*SQRT(rtk.P[0]+rtk.P[1+1*rtk.nx]):0)); */
+    vt_printf(vt,"%-28s: %.2f\n","Circ. Err. Probable R95 (cm)",2.08*(56*SQRT(rtk.sol.qr[0])+62*SQRT(rtk.sol.qr[1])) );
+
+    /* Compute the WAAS protections levels as defined in Appendix J of the WAAS MOPS:
+    * RTCA DO-229D, Minimum operational performance standards [MOPS] for global
+    * positioning system/wide area augmentation system [WAAS] airborne equipment,
+    * RTCA inc, December 13, 2006
+    *
+    * Slides     https://geod.bme.hu/sites/default/files/page/ea_v05.pdf 
+    * Background https://web.stanford.edu/group/scpnt/gpslab/pubs/papers/integrity.pdf
+    * Spec       https://www.gps.gov/technical/ps/2020-civil-monitoring-performance-specification.pdf */
+    dmajor=SQRT((rtk.sol.qr[0]+rtk.sol.qr[1])/2+SQRT((rtk.sol.qr[0]-rtk.sol.qr[1])/2+rtk.sol.qr[3]*rtk.sol.qr[3]));
+    HPL=6*dmajor; VPL=5.33*SQRT(rtk.sol.qr[2]);
+    vt_printf(vt,"%-28s: %.2f/%.2f\n","RTCA MOPS DO-229-C HPL/VPL",HPL,VPL);
 
     /* Calculate baseline using Vincenty's formula */
     if (norm(rtk.sol.rr,3)>0.0) ecef2pos(rtk.sol.rr,pos); else pos[0]=pos[1]=pos[2]=0.0;
@@ -749,7 +764,7 @@ static void prstatus(vt_t *vt)
     int i,j,n,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
     int cputime,nb[3]={0},nmsg[3][10]={{0}};
     char tstr[64],tmstr[64],s[1024],*p;
-    double runtime,rt[3]={0},dop[4]={0},rr[3],bl1=0.0,bl2=0.0;
+    double runtime,rt[3]={0},dop[5]={0},rr[3],bl1=0.0,bl2=0.0;
     double azel[MAXSAT*2],pos[3],vel[3],*del;
     double vbl, posb[3];
     
@@ -844,7 +859,7 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %d\n","# of satellites rover",nsat0);
     vt_printf(vt,"%-28s: %d\n","# of satellites base",nsat1);
     vt_printf(vt,"%-28s: %d\n","# of valid satellites",rtk.sol.ns);
-    vt_printf(vt,"%-28s: %.1f,%.1f,%.1f,%.1f\n","GDOP/PDOP/HDOP/VDOP",dop[0],dop[1],dop[2],dop[3]);
+    vt_printf(vt,"%-28s: %.1f,%.1f,%.1f,%.1f,%.1f\n","GDOP/PDOP/HDOP/VDOP/TDOP",dop[0],dop[1],dop[2],dop[3],dop[4]);
     vt_printf(vt,"%-28s: %.2f\n","Circ. Err. Probable R95 (cm)",
             (rtkstat==1)?(rtk.Pa?100*SQRT(rtk.Pa[0]+rtk.Pa[1+1*rtk.na]):0):(rtk.P?100*SQRT(rtk.P[0]+rtk.P[1+1*rtk.nx]):0));
     vt_printf(vt,"%-28s: %d\n","# of real estimated states",rtk.na);
@@ -902,6 +917,10 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %s\n","last time mark",tmcount ? tmstr : "-");
     vt_printf(vt,"%-28s: %d\n","receiver time mark count",rcvcount);
     vt_printf(vt,"%-28s: %d\n","rtklib time mark count",tmcount);
+    
+    for (i=90/2;i>0;i--) {
+        if (rtk.el[i].n > 0) vt_printf(vt,"%-28s: %2d-%2d: n=%5d cn0=%4.0f-%4.1f-%4.0f d=%2.0f  pr=%.1f\n", "Elevation", i*2-1, i*2, rtk.el[i].n, (float)rtk.el[i].min,(float)rtk.el[i].snr/rtk.el[i].n, (float)rtk.el[i].max,(float)rtk.el[i].max-(float)rtk.el[i].min,(float)rtk.el[i].sd/rtk.el[i].n);
+    }
 }
 /* print satellite -----------------------------------------------------------*/
 static void prsatellite(vt_t *vt, int nf)
@@ -1201,6 +1220,25 @@ static void cmd_lglstatus(char **args, int narg, vt_t *vt)
     }
     vt_printf(vt,"\n");
 }
+/* hatch smoothing control ----------------------------------------------------*/
+static void cmd_hatch(char **args, int narg, vt_t *vt)
+{
+    int hatch;
+    trace(3,"cmd_hatch:\n");
+    if (narg==2) { 
+        hatch=(int)(atof(args[1])); 
+        rtksvrlock(&svr);
+        svr.hatchep=hatch;
+        rtksvrunlock(&svr);
+    }
+    else {
+        rtksvrlock(&svr);
+        hatch=svr.hatchep;
+        rtksvrunlock(&svr); 
+    }
+    vt_printf(vt,"hatch=%d\n",hatch);
+}
+
 /* satellite command ---------------------------------------------------------*/
 static void cmd_satellite(char **args, int narg, vt_t *vt)
 {
@@ -1488,7 +1526,7 @@ static void *con_thread(void *arg)
     const char *cmds[]={
         "start","stop","restart","solution","status","satellite","observ",
         "navidata","stream","ssr","error","option","set","load","save","log",
-        "help","?","exit","shutdown","lglstat",""
+        "help","?","exit","shutdown","lglstat","hatch",""
     };
     con_t *con=(con_t *)arg;
     int i,j,narg;
@@ -1540,6 +1578,7 @@ static void *con_thread(void *arg)
             case  3: cmd_solution (args,narg,con->vt); break;
             case  4: cmd_status   (args,narg,con->vt); break;
             case 20: cmd_lglstatus (args,narg,con->vt); break;
+            case 21: cmd_hatch    (args,narg,con->vt); break;
             case  5: cmd_satellite(args,narg,con->vt); break;
             case  6: cmd_observ   (args,narg,con->vt); break;
             case  7: cmd_navidata (args,narg,con->vt); break;

@@ -3577,19 +3577,20 @@ extern void dops(int ns, const double *azel, double elmin, double *dop)
         if (azel[1+i*2]<elmin||azel[1+i*2]<=0.0) continue;
         cosel=cos(azel[1+i*2]);
         sinel=sin(azel[1+i*2]);
-        H[  4*n]=cosel*sin(azel[i*2]);
-        H[1+4*n]=cosel*cos(azel[i*2]);
-        H[2+4*n]=sinel;
-        H[3+4*n++]=1.0;
+        H[  4*n]=cosel*sin(azel[i*2]);	    /* Geometry Matrix G^T */
+        H[1+4*n]=cosel*cos(azel[i*2]);	    /* Reference: esa GNSS Data Processing */
+        H[2+4*n]=sinel;			    /* Volume I: Fundamentals and Algorithms */ 
+        H[3+4*n++]=1.0;			    /* Formula: B.14  */
     }
     if (n<4) return;
     
-    matmul("NT",4,4,n,1.0,H,H,0.0,Q);
+    matmul("NT",4,4,n,1.0,H,H,0.0,Q);	    /* cofactor matrix */
     if (!matinv(Q,4)) {
         dop[0]=SQRT(Q[0]+Q[5]+Q[10]+Q[15]); /* GDOP */
         dop[1]=SQRT(Q[0]+Q[5]+Q[10]);       /* PDOP */
         dop[2]=SQRT(Q[0]+Q[5]);             /* HDOP */
         dop[3]=SQRT(Q[10]);                 /* VDOP */
+        dop[4]=SQRT(Q[15]);		    /* TDOP */
     }
 }
 /* ionosphere model ------------------------------------------------------------
