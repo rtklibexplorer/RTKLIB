@@ -110,6 +110,18 @@ static const char *help[]={
 " -t  level         trace level [0]",
 " -fl file          log file [str2str.trace]",
 " -h                print help",
+"",
+"  command file cheat sheet:",
+"    - # begins a comment, empty lines are ignored",
+"    - @ separates sections: first startup commands, then stop commands, then periodic commands
+"    - binary commands begin with !",
+"      - WAIT sleep for milliseconds (max 3 seconds)",
+"      - BRATE set the bitrate, defaults to 115200",
+"      - UBX send a UBX command (space separated; messages like CFG-MSG, followed by integer decimal (not hex) arguments)",
+"      - STQ send Skytraq commands",
+"      - NVS send Nvs commands",
+"      - HEX send hex messages",
+"    - other string lines (like NMEA commands) are send as is",
 };
 /* print help ----------------------------------------------------------------*/
 static void printhelp(void)
