@@ -30,14 +30,14 @@
 !UBX CFG-NAV5 1 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
 # turn off extra messages default messages
-# NMEA GGA
-!UBX CFG-MSG 240 0 0 0 0 0 0 0
+# NMEA GGA - Enable for GPSD!
+!UBX CFG-MSG 240 0 0 0 0 1 0 0
 # NMEA GLL
 !UBX CFG-MSG 240 1 0 0 0 0 0 0
 # NMEA GSA
 !UBX CFG-MSG 240 2 0 0 0 0 0 0
 # NMEA GSV
-!UBX CFG-MSG 240 3 0 0 0 0 0 0
+!UBX CFG-MSG 240 3 0 0 0 1 0 0
 # NMEA RMC
 !UBX CFG-MSG 240 4 0 0 0 0 0 0
 # NMEA VTG
@@ -58,11 +58,12 @@
 !UBX CFG-MSG 04 02 0 0 0 0 0 0
 !UBX CFG-MSG 10 38 0 0 0 0 0 0
 
+# Try to enable NAV(HP)POSECEF
+!UBX CFG-MSG 1 1 0 0 0 1 0 0
+!UBX CFG-MSG 1 19 0 0 0 1 0 0
+
 # Set sample rate to 5 Hz
 !UBX CFG-RATE 200 1 1
-
-
-
 
 @
 !UBX CFG-RATE 1000 1 1

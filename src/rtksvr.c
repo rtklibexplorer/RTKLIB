@@ -39,6 +39,7 @@
 *           2017/04/11  1.21 add rtkfree() in rtksvrfree()
 *-----------------------------------------------------------------------------*/
 #include "rtklib.h"
+/* #include "chrony.h"	/ 2021-01-05 Added Chrony Integration by S. Juhl */
 
 #define MIN_INT_RESET   30000   /* mininum interval of reset command (ms) */
 
@@ -344,6 +345,10 @@ static int decoderaw(rtksvr_t *svr, int index)
                   time_str(obs->data[0].time,0),obs->n);
         }
 #endif
+
+        /* Apply Hatch Carrier Smoothing filter */
+        if (svr->hatchep>0) csmooth(obs,svr->hatchep);
+
         /* update cmr rover observations cache */
         if (svr->format[1]==STRFMT_CMR&&index==0&&ret==1) {
             update_cmr(&svr->raw[1],svr,obs);
@@ -526,6 +531,7 @@ static void send_nmea(rtksvr_t *svr, unsigned int *tickreset)
 			   sol_nmea.rr[2]);
 	}
 }
+
 /* rtk server thread ---------------------------------------------------------*/
 #ifdef WIN32
 static DWORD WINAPI rtksvrthread(void *arg)
@@ -536,12 +542,16 @@ static void *rtksvrthread(void *arg)
     rtksvr_t *svr=(rtksvr_t *)arg;
     obs_t obs;
     obsd_t data[MAXOBS*2];
+    cpha_t cpha[MAXSAT*MAXFREQ];
     sol_t sol={{0}};
-    double tt;
+    double tt,td;
     unsigned int tick,ticknmea,tick1hz,tickreset;
     unsigned char *p,*q;
     char msg[128];
-    int i,j,n,fobs[3]={0},cycle,cputime;
+    int i,j,n,fobs[3]={0},cycle,cputime,x;
+    gtime_t soltime;
+     char tstr[64];
+     const char *solst[]={"-","fix","float","SBAS","DGPS","single","PPP",""};
     
     tracet(3,"rtksvrthread:\n");
     
@@ -610,15 +620,25 @@ static void *rtksvrthread(void *arg)
             rtkpos(&svr->rtk,obs.data,obs.n,&svr->nav);
             rtksvrunlock(svr);
             
+/* DONE     soltime=gpst2utc(timeadd(obs.data[0].eventime,tt)); */
+
             if (svr->rtk.sol.stat!=SOLQ_NONE) {
                 
                 /* adjust current time */
-                tt=(int)(tickget()-tick)/1000.0+DTTOL;
-                timeset(gpst2utc(timeadd(svr->rtk.sol.time,tt)));
+                tt=(int)(tickget()-tick)/1000.0+DTTOL;			/* default: 0.025 */
+                timeset(gpst2utc(timeadd(svr->rtk.sol.time,tt))); 	/* RTC should be adjusted by chrony deamon _ONLY_!? */
+
+                /* Objective: Calculate time offset and send to chrony socket 
+                   NOTE Delta obs.data[0] & svr->rtk.sol.time ~ 0,002s             	
+                   NOTE for each rover observation data = immer EIN Durchlauf!	*/
+/*                soltime=gpst2utc(timeadd(svr->rtk.sol.time,tt));
+                upd_chrony(soltime,tick,0);				/* reference link to chrony.c			*/
                 
                 /* write solution */
                 writesol(svr,i);
             }
+/* DONE       printf("float=%d fixed=%d amb=%d nsol=%d so=%ld mode=%s\n",svr->rtk.nx, svr->rtk.na, svr->rtk.nb_ar, svr->nsol,sizeof(svr->rtk.sol),solst[svr->rtk.sol.stat]);*/
+
             /* if cpu overload, inclement obs outage counter and break */
             if ((int)(tickget()-tick)>=svr->cycle) {
                 svr->prcout+=fobs[0]-i-1;
@@ -627,6 +647,7 @@ static void *rtksvrthread(void *arg)
 #endif
             }
         }
+
         /* send null solution if no solution (1hz) */
         if (svr->rtk.sol.stat==SOLQ_NONE&&(int)(tick-tick1hz)>=1000) {
             writesol(svr,0);
@@ -828,6 +849,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     svr->nsbs=0;
     svr->nsol=0;
     svr->prcout=0;
+    svr->hatchep=0;
     rtkfree(&svr->rtk);
     rtkinit(&svr->rtk,prcopt);
     

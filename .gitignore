@@ -1,8 +1,15 @@
+*~
+*.bin
 *.o
 *.obs
 *.ini
 *.local
+*.trace
+*.nav
 Release
 Release_Build
 Debug_Build
 __history
+a.out
+*.org
+DEADJOE

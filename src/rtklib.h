@@ -28,6 +28,7 @@
 *           2011/05/27 1.9  rtklib ver.2.4.1
 *           2013/03/28 1.10 rtklib ver.2.4.2
 *           2016/01/26 1.11 rtklib ver.2.4.3
+*	    2019/10/28 1.12 readded SiRF
 *-----------------------------------------------------------------------------*/
 #ifndef RTKLIB_H
 #define RTKLIB_H
@@ -53,6 +54,7 @@ extern "C" {
 #else
 #define EXPORT
 #endif
+#include <sys/types.h>	/* Necessary for ring buffer */
 
 /* constants -----------------------------------------------------------------*/
 
@@ -460,6 +462,7 @@ extern "C" {
 #define STRFMT_RNXCLK 19                /* stream format: RINEX CLK */
 #define STRFMT_SBAS  20                 /* stream format: SBAS messages */
 #define STRFMT_NMEA  21                 /* stream format: NMEA 0183 */
+#define STRFMT_SIRF  22			/* stream format: SiRF */
 #ifndef EXTLEX
 #define MAXRCVFMT    15                 /* max number of receiver format */
 #else
@@ -571,6 +574,16 @@ typedef struct {        /* observation data */
     int tmcount;        /* time mark count */
     obsd_t *data;       /* observation data records */
 } obs_t;
+
+/* Ring buffer implementation */
+typedef struct {
+	int8_t* buffer;
+	int8_t* buffer_end;
+	int8_t* data_start;
+	int8_t* data_end;
+	int64_t count;
+	int64_t size;
+ } ring_buffer_t;
 
 typedef struct {        /* earth rotation parameter data type */
     double mjd;         /* mjd (days) */
@@ -953,6 +966,7 @@ typedef struct {        /* solution type */
     unsigned char ns;   /* number of valid satellites */
     float age;          /* age of differential (s) */
     float ratio;        /* AR ratio factor for valiation */
+    float ratio_pr;	/* F-Check Probability */
     float prev_ratio1;   /* previous initial AR ratio factor for validation */
     float prev_ratio2;   /* previous final AR ratio factor for validation */
     float thres;        /* AR ratio threshold for valiation */
@@ -968,6 +982,22 @@ typedef struct {        /* solution buffer type */
     unsigned char buff[MAXSOLMSG+1]; /* message buffer */
     int nb;             /* number of byte in message buffer */
 } solbuf_t;
+
+typedef struct {
+    int n,nmax;		/* number of baselines 			*/
+    double val[3600];   /* baseline array 3600 = 10 Minuten	*/
+    double h[3600];
+    double sl[4];	/* 5m,10m,20m,60m			*/
+    double sh[4];	/* 5m,10m,20m,60m			*/
+    int lglbw[2];
+} blbuf_t;
+
+typedef struct {
+    int n;		/* Number of obersvations 	*/
+    int min,max;	/* Min und max			*/
+    int sd;		/* sum of pseudo range std.dev  */
+    int snr; 		/* sum of signar to nose-ratio	*/
+} elbuf_t;
 
 typedef struct {        /* solution status type */
     gtime_t time;       /* time (GPST) */
@@ -1242,6 +1272,7 @@ typedef struct {        /* ambiguity control type */
     char flags[MAXSAT]; /* fix flags */
 } ambc_t;
 
+
 typedef struct {        /* RTK control/result type */
     sol_t  sol;         /* RTK solution */
     double rb[6];       /* base position/velocity (ecef) (m|m/s) */
@@ -1252,7 +1283,7 @@ typedef struct {        /* RTK control/result type */
     int nfix;           /* number of continuous fixes of ambiguity */
     int excsat;         /* index of next satellite to be excluded for partial ambiguity resolution */
     int nb_ar;          /* number of ambiguities used for AR last epoch */
-	double com_bias;    /* phase bias common between all sats (used to be distributed to all sats */
+    double com_bias;    /* phase bias common between all sats (used to be distributed to all sats */
     char holdamb;       /* set if fix-and-hold has occurred at least once */
     ambc_t ambc[MAXSAT]; /* ambiguity control */
     ssat_t ssat[MAXSAT]; /* satellite status */
@@ -1260,6 +1291,9 @@ typedef struct {        /* RTK control/result type */
     char errbuf[MAXERRMSG]; /* error message buffer */
     prcopt_t opt;       /* processing options */
     int initial_mode;   /* initial positioning mode */
+    double chrony_delta;/* Chrony Socket status */
+    blbuf_t bl;		/* baseline stats */
+    elbuf_t el[91];	/* elevation stats */
 } rtk_t;
 
 typedef struct half_cyc_tag {  /* half-cycle correction list type */
@@ -1276,6 +1310,7 @@ typedef struct {        /* receiver raw data control type */
     gtime_t tobs[MAXSAT][NFREQ+NEXOBS]; /* observation data time */
     obs_t obs;          /* observation data */
     obs_t obuf;         /* observation data buffer */
+    ring_buffer_t* cphase[MAXSAT][NFREQ+NEXOBS];	/* Carrier Phase Ring buffer */
     nav_t nav;          /* satellite ephemerides */
     sta_t sta;          /* station parameters */
     int ephsat;         /* sat number of update ephemeris (0:no satellite) */
@@ -1392,6 +1427,7 @@ typedef struct {        /* RTK server type */
     char cmd_reset[MAXRCVCMD]; /* reset command */
     double bl_reset;    /* baseline length to reset (km) */
     lock_t lock;        /* lock flag */
+    int hatchep;	/* number of epochs for hatch smoothing filter 0 to disable */
 } rtksvr_t;
 
 typedef struct {        /* gis data point type */
@@ -1725,6 +1761,7 @@ EXPORT int input_sbf   (raw_t *raw, unsigned char data);
 EXPORT int input_cmr   (raw_t *raw, unsigned char data);
 EXPORT int input_tersus(raw_t *raw, unsigned char data);
 EXPORT int input_lexr  (raw_t *raw, unsigned char data);
+EXPORT int input_sirf  (raw_t *raw, unsigned char data);
 EXPORT int input_oem4f (raw_t *raw, FILE *fp);
 EXPORT int input_cnavf (raw_t *raw, FILE *fp);
 EXPORT int input_ubxf  (raw_t *raw, FILE *fp);
@@ -1740,6 +1777,7 @@ EXPORT int input_sbff  (raw_t *raw, FILE *fp);
 EXPORT int input_cmrf  (raw_t *raw, FILE *fp);
 EXPORT int input_tersusf(raw_t *raw, FILE *fp);
 EXPORT int input_lexrf (raw_t *raw, FILE *fp);
+extern int input_sirff (raw_t *raw, FILE *fp);
 
 EXPORT int gen_ubx (const char *msg, unsigned char *buff);
 EXPORT int gen_stq (const char *msg, unsigned char *buff);

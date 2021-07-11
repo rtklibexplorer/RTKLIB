@@ -22,7 +22,7 @@ all  : convbin
 
 convbin    : convbin.o rtkcmn.o rinex.o sbas.o preceph.o rcvraw.o convrnx.o
 convbin    : rtcm.o rtcm2.o rtcm3.o rtcm3e.o pntpos.o ephemeris.o ionex.o
-convbin    : novatel.o swiftnav.o tersus.o comnav.o ublox.o crescent.o skytraq.o gw10.o javad.o nvs.o
+convbin    : novatel.o sirf.o swiftnav.o tersus.o comnav.o ublox.o crescent.o skytraq.o gw10.o javad.o nvs.o
 convbin    : binex.o rt17.o qzslex.o septentrio.o cmr.o
 
 convbin.o  : ../convbin.c
@@ -83,6 +83,8 @@ tersus.o   : $(SRC)/rcv/tersus.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/tersus.c
 comnav.o   : $(SRC)/rcv/comnav.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/comnav.c
+sirf.o     : $(SRC)/rcv/sirf.c
+	$(CC) -c $(CFLAGS) $(SRC)/rcv/sirf.c
 
 convbin.o  : $(SRC)/rtklib.h
 rtkcmn.o   : $(SRC)/rtklib.h

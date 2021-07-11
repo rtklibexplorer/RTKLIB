@@ -298,7 +298,7 @@ static int decode_rxmraw(raw_t *raw)
         raw->obs.data[n].SNR[0]=(unsigned char)(I1(p+22)*4.0+0.5);
         raw->obs.data[n].LLI[0]=U1(p+23);
         raw->obs.data[n].code[0]=CODE_L1C;
-        
+
         /* phase polarity flip option (-INVCP) */
         if (strstr(raw->opt,"-INVCP")) {
             raw->obs.data[n].L[0]=-raw->obs.data[n].L[0];

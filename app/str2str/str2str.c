@@ -27,6 +27,7 @@
 *           2016/09/06  1.15 add reload soure table by USR2 signal
 *           2016/09/17  1.16 add option -b
 *           2017/05/26  1.17 add input format tersus
+*	    2019/10/28  1.18 readded SiRF option
 *-----------------------------------------------------------------------------*/
 #include <signal.h>
 #include <unistd.h>
@@ -37,7 +38,7 @@
 #define TRFILE      "str2str.trace"    /* trace file */
 
 /* global variables ----------------------------------------------------------*/
-static strsvr_t strsvr;                /* stream server */
+strsvr_t strsvr;                /* stream server */
 static volatile int intrflg=0;         /* interrupt flag */
 static char srctbl[1024]="";           /* source table file */
 
@@ -67,6 +68,8 @@ static const char *help[]={
 "    serial       : serial://port[:brate[:bsize[:parity[:stopb[:fctr]]]]]",
 "    tcp server   : tcpsvr://:port",
 "    tcp client   : tcpcli://addr[:port]",
+"    udp server   : udpsvr://:port",
+"    udp client   : udpcli://addr[:port]",
 "    ntrip client : ntrip://[user[:passwd]@]addr[:port][/mntpnt]",
 "    ntrip server : ntrips://[:passwd@]addr[:port]/mntpnt[:str] (only out)",
 "    ntrip caster server: ntripc_s://[:passwd@][:port] (only in)",
@@ -79,6 +82,7 @@ static const char *help[]={
 "    nov          : NovAtel OEMV/4/6,OEMStar (only in)",
 "    cnav         : ComNav (only in)",
 "    ubx          : ublox LEA-4T/5T/6T (only in)",
+"    sirf         : SiRF Star II/III/IV (only in)",
 "    swiftnav     : SwiftNav Piksi Multi",
 "    hemis        : Hemisphere Eclipse/Crescent (only in)",
 "    stq          : SkyTraq S1315F (only in)",
@@ -148,6 +152,7 @@ static void decodefmt(char *path, int *fmt)
         else if (!strcmp(p,"#nov"  )) *fmt=STRFMT_OEM4;
         else if (!strcmp(p,"#cnav" )) *fmt=STRFMT_CNAV;
         else if (!strcmp(p,"#ubx"  )) *fmt=STRFMT_UBX;
+        else if (!strcmp(p,"#sirf" )) *fmt=STRFMT_SIRF;
         else if (!strcmp(p,"#swift")) *fmt=STRFMT_SBP;
         else if (!strcmp(p,"#hemis")) *fmt=STRFMT_CRES;
         else if (!strcmp(p,"#stq"  )) *fmt=STRFMT_STQ;
@@ -187,8 +192,11 @@ static int decodepath(const char *path, int *type, char *strpath, int *fmt)
     else if (!strncmp(path,"ntrips",  6)) *type=STR_NTRIPSVR;
     else if (!strncmp(path,"ntrip",   5)) *type=STR_NTRIPCLI;
     else if (!strncmp(path,"file",    4)) *type=STR_FILE;
+    else if (!strncmp(path,"udpcli",  6)) *type=STR_UDPCLI;
+    else if (!strncmp(path,"udpsvr",  6)) *type=STR_UDPSVR;
+
     else {
-        fprintf(stderr,"stream path error: %s\n",buff);
+        fprintf(stderr,"!!stream path error: %s\n",buff);
         return 0;
     }
     strcpy(strpath,p+3);
@@ -230,7 +238,7 @@ int main(int argc, char **argv)
     int types[MAXSTR]={STR_FILE,STR_FILE},stat[MAXSTR]={0},byte[MAXSTR]={0};
     int bps[MAXSTR]={0},fmts[MAXSTR]={0},sta=0;
     
-    for (i=0;i<MAXSTR;i++) {
+    for (i=0;i<=MAXSTR;i++) {
         paths[i]=s[i];
         cmds[i]=cmd_strs[i];
         cmds_periodic[i]=cmd_periodic_strs[i];
@@ -239,7 +247,7 @@ int main(int argc, char **argv)
         if (!strcmp(argv[i],"-in")&&i+1<argc) {
             if (!decodepath(argv[++i],types,paths[0],fmts)) return -1;
         }
-        else if (!strcmp(argv[i],"-out")&&i+1<argc&&n<MAXSTR-1) {
+        else if (!strcmp(argv[i],"-out")&&i+1<argc&&n<MAXSTR-1) { 
             if (!decodepath(argv[++i],types+n+1,paths[n+1],fmts+n+1)) return -1;
             n++;
         }
@@ -336,6 +344,7 @@ int main(int argc, char **argv)
         fprintf(stderr,"stream server start error\n");
         return -1;
     }
+
     /* read and set ntrip source table */
     if (*srctbl) {
         strsvrsetsrctbl(&strsvr,srctbl);
