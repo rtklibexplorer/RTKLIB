@@ -849,6 +849,7 @@ extern int decode_frame(const unsigned char *buff, eph_t *eph, alm_t *alm,
     }
     return 0;
 }
+
 /* initialize receiver raw data control ----------------------------------------
 * initialize receiver raw data control struct and reallocate obsevation and
 * epheris buffer
@@ -881,6 +882,8 @@ extern int init_raw(raw_t *raw, int format)
             raw->tobs [i][j]=time0;
             raw->lockt[i][j]=0.0;
             raw->halfc[i][j]=0;
+            raw->cphase[i][j] = (ring_buffer_t *) malloc(sizeof(ring_buffer_t));
+            RB_init(raw->cphase[i][j],37);	/* NOTE Checking carrier frequency Ephemeris data should be present after 36 seconds? */
         }
         raw->icpp[i]=raw->off[i]=raw->prCA[i]=raw->dpCA[i]=0.0;
     }

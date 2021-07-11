@@ -778,8 +778,8 @@ static void detslp_ll(rtk_t *rtk, const obsd_t *obs, int i, int rcv)
         /* detect slip by cycle slip flag in LLI */
         if (rtk->tt>=0.0) { /* forward */
             if (obs[i].LLI[f]&1) {
-                errmsg(rtk,"slip detected forward (sat=%2d rcv=%d F=%d LLI=%x)\n",
-                       sat,rcv,f+1,obs[i].LLI[f]);
+                errmsg(rtk,"slip detected forward (sat=%2d rcv=%d F=%d LLI=%x dt=%.2f)\n",
+                       sat,rcv,f+1,obs[i].LLI[f],rtk->tt);
             }
             slip=obs[i].LLI[f];
         }
@@ -895,7 +895,7 @@ static void udbias(rtk_t *rtk, double tt, const obsd_t *obs, const int *sat,
         /* detect cycle slip by LLI */
         for (f=0;f<rtk->opt.nf;f++) rtk->ssat[sat[i]-1].slip[f]&=0xFC;
         detslp_ll(rtk,obs,iu[i],1);
-        detslp_ll(rtk,obs,ir[i],2);
+        detslp_ll(rtk,obs,ir[i],2); /* RESEARCH */ 
         
         /* detect cycle slip by geometry-free phase jump */
         detslp_gf_L1L2(rtk,obs,iu[i],ir[i],nav);
@@ -1707,6 +1707,54 @@ static int ddmat(rtk_t *rtk, double *D,int gps,int glo,int sbs)
     }
     return nb;
 }
+/* index for SD to DD transformation matrix D --------------------------------*/
+static int ddidx(rtk_t *rtk, int *ix)
+{
+    int i,j,k,m,f,nb=0,na=rtk->na,nf=NF(&rtk->opt),nofix;
+    
+    trace(3,"ddidx   :\n");
+    
+    for (i=0;i<MAXSAT;i++) for (j=0;j<NFREQ;j++) {
+        rtk->ssat[i].fix[j]=0;
+    }
+    for (m=0;m<6;m++) { /* m=0:GPS/SBS,1:GLO,2:GAL,3:BDS,4:QZS,5:IRN */
+        
+        nofix=(m==1&&rtk->opt.glomodear==0)||(m==3&&rtk->opt.bdsmodear==0);
+        
+        for (f=0,k=na;f<nf;f++,k+=MAXSAT) {
+            
+            for (i=k;i<k+MAXSAT;i++) {
+                if (rtk->x[i]==0.0||!test_sys(rtk->ssat[i-k].sys,m)||
+                    !rtk->ssat[i-k].vsat[f]||!rtk->ssat[i-k].half[f]) {
+                    continue;
+                }
+                if (rtk->ssat[i-k].lock[f]>0&&!(rtk->ssat[i-k].slip[f]&2)&&
+                    rtk->ssat[i-k].azel[1]>=rtk->opt.elmaskar&&!nofix) {
+                    rtk->ssat[i-k].fix[f]=2; /* fix */
+                    break;
+                }
+                else rtk->ssat[i-k].fix[f]=1;
+            }
+            for (j=k;j<k+MAXSAT;j++) {
+                if (i==j||rtk->x[j]==0.0||!test_sys(rtk->ssat[j-k].sys,m)||
+                    !rtk->ssat[j-k].vsat[f]) {
+                    continue;
+                }
+                if (rtk->ssat[j-k].lock[f]>0&&!(rtk->ssat[j-k].slip[f]&2)&&
+                    rtk->ssat[i-k].vsat[f]&&
+                    rtk->ssat[j-k].azel[1]>=rtk->opt.elmaskar&&!nofix) {
+                    ix[nb*2  ]=i; /* state index of ref bias */
+                    ix[nb*2+1]=j; /* state index of target bias */
+                    nb++;
+                    rtk->ssat[j-k].fix[f]=2; /* fix */
+                }
+                else rtk->ssat[j-k].fix[f]=1;
+            }
+        }
+    }
+    return nb;
+}
+
 /* translate double diff fixed phase-bias values to single diff fix phase-bias values */
 static void restamb(rtk_t *rtk, const double *bias, int nb, double *xa)
 {
@@ -1842,6 +1890,8 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     double QQb[MAXSAT];
     double Fcv,mqr[2],FSc;
     int df;
+    int *ix;
+    
     /* NOTE http://www.mymathlib.com/functions/probability/students_t_distribution.html 
             https://matheguru.com/stochastik/t-test.html*/
 
@@ -1854,42 +1904,68 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
         rtk->nb_ar=0;
         return 0;
     }
+    
     /* skip AR if position variance too high to avoid false fix */
     for (i=0;i<3;i++) var+=rtk->P[i+i*rtk->nx];
     var=var/3.0; /* maintain compatibility with previous code */ 
     trace(3,"posvar=%.6f\n",var);
     if (var>rtk->opt.thresar[1]) {
-        errmsg(rtk,"position variance too large:  %.4f\n",var);
+        errmsg(rtk,"position variance too large:  %.4f > %.4f\n",var,rtk->opt.thresar[1]);
         rtk->nb_ar=0;
         return 0;
     }
     /* Create single to double-difference transformation matrix (D')
           used to translate phase biases to double difference */
-    D=zeros(nx,nx);
-    if ((nb=ddmat(rtk,D,gps,glo,sbs))<(rtk->opt.minfixsats-1)) {  /* nb is sat pairs */
+    /*D=zeros(nx,nx);
+    if ((nb=ddmat(rtk,D,gps,glo,sbs))<(rtk->opt.minfixsats-1)) {  /* nb is sat pairs 
         errmsg(rtk,"not enough valid double-differences (%d<%d)\n",nb,rtk->opt.minfixsats);
         free(D);
-        return -1; /* flag abort */
-    }
+        return -1; /* flag abort 
+    } 
 
     rtk->nb_ar=nb;
-    /* nx=# of float states, na=# of fixed states, nb=# of double-diff phase biases */
+    /* nx=# of float states, na=# of fixed states, nb=# of double-diff phase biases 
     ny=na+nb; y=mat(ny,1); Qy=mat(ny,ny); DP=mat(ny,nx);
-    b=mat(nb,2); db=mat(nb,1); Qb=mat(nb,nb); Qab=mat(na,nb); QQ=mat(na,nb);
+    b=mat(nb,2); db=mat(nb,1); Qb=mat(nb,nb); Qab=mat(na,nb); QQ=mat(na,nb); */
+
+    /* index of SD to DD transformation matrix D */
+    ix=imat(nx,2);
+    if ((nb=ddidx(rtk,ix))<=0) {
+        errmsg(rtk,"no valid double-difference\n");
+        free(ix);
+        return 0;
+    }
+    y=mat(nb,1); DP=mat(nb,nx-na); b=mat(nb,2); db=mat(nb,1); Qb=mat(nb,nb);
+    Qab=mat(na,nb); QQ=mat(na,nb);
+    rtk->nb_ar=nb;
     
-    /* transform single to double-differenced phase-bias (y=D'*x, Qy=D'*P*D) */
-    matmul("TN",ny, 1,nx,1.0,D ,rtk->x,0.0,y );   /* y=D'*x */
-    matmul("TN",ny,nx,nx,1.0,D ,rtk->P,0.0,DP);   /* DP=D'*P */
+    /* transform single to double-differenced phase-bias (y=D'*x, Qy=D'*P*D) 
+    matmul("TN",ny, 1,nx,1.0,D ,rtk->x,0.0,y );   /* y=D'*x 
+    matmul("TN",ny,nx,nx,1.0,D ,rtk->P,0.0,DP);   /* DP=D'*P
     matmul("NN",ny,ny,nx,1.0,DP,D     ,0.0,Qy);   /* Qy=DP'*D */
     
-    /* phase-bias covariance (Qb) and real-parameters to bias covariance (Qab) */
+    /* phase-bias covariance (Qb) and real-parameters to bias covariance (Qab) 
     for (i=0;i<nb;i++) {
         QQb[i]= Qy[na+i+(na+i)*ny];
         for (j=0;j<nb;j++) {
             Qb [i+j*nb]=Qy[na+i+(na+j)*ny];
         }
     }
-    for (i=0;i<na;i++) for (j=0;j<nb;j++) Qab[i+j*na]=Qy[   i+(na+j)*ny];
+    for (i=0;i<na;i++) for (j=0;j<nb;j++) Qab[i+j*na]=Qy[   i+(na+j)*ny]; */
+
+    /* y=D*xc, Qb=D*Qc*D', Qab=Qac*D' */
+    for (i=0;i<nb;i++) {
+        y[i]=rtk->x[ix[i*2]]-rtk->x[ix[i*2+1]];
+    }
+    for (j=0;j<nx-na;j++) for (i=0;i<nb;i++) {
+        DP[i+j*nb]=rtk->P[ix[i*2]+(na+j)*nx]-rtk->P[ix[i*2+1]+(na+j)*nx];
+    }
+    for (j=0;j<nb;j++) for (i=0;i<nb;i++) {
+        Qb[i+j*nb]=DP[i+(ix[j*2]-na)*nb]-DP[i+(ix[j*2+1]-na)*nb];
+    }
+    for (j=0;j<nb;j++) for (i=0;i<na;i++) {
+        Qab[i+j*na]=rtk->P[i+ix[j*2]*nx]-rtk->P[i+ix[j*2+1]*nx];
+    }
     
     trace(3,"N(0)=     "); tracemat(3,y+na,1,nb,7,2);
     trace(3,"Qb  =     "); tracemat(3,QQb,1,nb,7,5);
@@ -1902,10 +1978,15 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
        Qb   I covariance matrix of float parameters (n x n)
        b    O are best integer (fixed) solutions, 
        s    O are residuals (sum of squared residulas of fixed solutions (1 x m)) */
-    if (!(info=lambda(nb,2,y+na,Qb,b,s))) {
-        
+
+    /* LAMBDA/MLAMBDA ILS (integer least-square) estimation */
+    /* if (!(info=lambda(nb,2,y+na,Qb,b,s))) {
         trace(3,"N(1)=     "); tracemat(3,b   ,1,nb,7,2);
-        trace(3,"N(2)=     "); tracemat(3,b+nb,1,nb,7,2);
+        trace(3,"N(2)=     "); tracemat(3,b+nb,1,nb,7,2); */
+    if (!(info=lambda(nb,2,y,Qb,b,s))) {
+        trace(4,"N(1)="); tracemat(4,b   ,1,nb,10,3);
+        trace(4,"N(2)="); tracemat(4,b+nb,1,nb,10,3);
+    
         rtk->sol.ratio=s[0]>0?(float)(s[1]/s[0]):0.0f;
         if (rtk->sol.ratio>999.9) rtk->sol.ratio=999.9f;
         /* NOTE THE GNSS AMBIGUITY RATIO-TEST REVISITED: A BETTER WAY OF USING IT, Survey Review, 41, 312 pp. 138-151 (April 2009) P.J.G. Teunissen and S. Verhagen
@@ -1947,7 +2028,10 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
         rtk->sol.ratio_pr=100*F_Distribution(FSc,nb-1,df);   
         if (s[0]<=0.0||F_Distribution(FSc,nb-1,df)>0.80) {
         /* if (s[0]<=0.0||s[1]/s[0]>=rtk->sol.thres) { */
-            
+        /* validation by popular ratio-test 
+           if (s[0]<=0.0||s[1]/s[0]>=opt->thresar[0]) { */
+   
+            /* transform float to fixed solution (xa=xa-Qab*Qb\(b0-b)) */
             /* init non phase-bias states and covariances with float solution values */
             for (i=0;i<na;i++) {
                 rtk->xa[i]=rtk->x[i];
@@ -1957,20 +2041,26 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
                bias = fixed dd phase-biases   */
             for (i=0;i<nb;i++) {
                 bias[i]=b[i];
-                y[na+i]-=b[i];
+                /* y[na+i]-=b[i]; */
+                y[i]-=b[i];
             }
+
             /* adjust non phase-bias states and covariances using fixed solution values */
             if (!matinv(Qb,nb)) {  /* returns 0 if inverse successful */
                 /* rtk->xa = rtk->x-Qab*Qb^-1*(b0-b) */
-                matmul("NN",nb,1,nb, 1.0,Qb ,y+na,0.0,db); /* db = Qb^-1*(b0-b) */
-                matmul("NN",na,1,nb,-1.0,Qab,db  ,1.0,rtk->xa); /* rtk->xa = rtk->x-Qab*db */
+                /* matmul("NN",nb,1,nb, 1.0,Qb ,y+na,0.0,db); /* db = Qb^-1*(b0-b) */
+                matmul("NN",nb,1,nb, 1.0,Qb ,y,0.0,db);
+                matmul("NN",na,1,nb,-1.0,Qab,db,1.0,rtk->xa); /* rtk->xa = rtk->x-Qab*db */
                 
+                /* covariance of fixed solution (Qa=Qa-Qab*Qb^-1*Qab') */
                 /* rtk->Pa=rtk->P-Qab*Qb^-1*Qab') */
                 matmul("NN",na,nb,nb, 1.0,Qab,Qb ,0.0,QQ);  /* QQ = Qab*Qb^-1 */
                 matmul("NT",na,na,nb,-1.0,QQ ,Qab,1.0,rtk->Pa); /* rtk->Pa = rtk->P-QQ*Qab' */
                 
-                trace(3,"resamb : validation ok (nb=%d ratio=%.2f thresh=%.2f s=%.2f/%.2f)\n",
-                      nb,s[0]==0.0?0.0:s[1]/s[0],rtk->sol.thres,s[0],s[1]);
+                /* trace(3,"resamb : validation ok (nb=%d ratio=%.2f thresh=%.2f s=%.2f/%.2f)\n",
+                      nb,s[0]==0.0?0.0:s[1]/s[0],rtk->sol.thres,s[0],s[1]); */
+                trace(3,"resamb : validation ok (nb=%d ratio=%.2f s=%.2f/%.2f)\n",
+                      nb,s[0]==0.0?0.0:s[1]/s[0],s[0],s[1]);
                 
                 /* translate double diff fixed phase-bias values to single diff 
                 fix phase-bias values, result in xa */
@@ -1983,6 +2073,8 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
                    nb,s[1]/s[0],rtk->sol.thres,s[0],s[1]);*/
             errmsg(rtk,"ambiguity validation failed (nb=%d ratio=%.1f thresh=%.1f%% mqr=%.2f/%.2f)\n",
                    nb,rtk->sol.ratio_pr,(float)85,mqr[0],mqr[1]);
+            errmsg(rtk,"b34: ambiguity validation failed (nb=%d ratio=%.2f s=%.2f/%.2f)\n",
+                   nb,s[1]/s[0],s[0],s[1]);
             nb=0;
         }
     }
@@ -1992,6 +2084,8 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     }
     free(D); free(y); free(Qy); free(DP);
     free(b); free(db); free(Qb); free(Qab); free(QQ);
+    free(ix);
+    free(y); free(DP); free(b); free(db); free(Qb); free(Qab); free(QQ);
     
     return nb; /* number of ambiguities */
 }
@@ -2151,7 +2245,6 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     int info,vflg[MAXOBS*NFREQ*2+1],svh[MAXOBS*2];
     int stat=rtk->opt.mode<=PMODE_DGPS?SOLQ_DGPS:SOLQ_FLOAT;
     int nf=opt->ionoopt==IONOOPT_IFLC?1:opt->nf;
-    double vv=0.0, RR=0.0;
     
     trace(3,"relpos  : nx=%d nu=%d nr=%d\n",rtk->nx,nu,nr);
     

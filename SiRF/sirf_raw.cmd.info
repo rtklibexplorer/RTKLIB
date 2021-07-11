@@ -1,0 +1,9 @@
+# MID 136
+#                   XX XX
+#                         Degraded Mode         03 = 2 SV navigation, freeze clock drift. Does not allow 1-SV solution
+#                            Position Calc Mode 00 = fast time sync disabled
+#                               XX XX XX
+#                                        Alt Hold Mode      02 = force all fixes to be 3D
+#                                           Alt Hold Source 00 = used last computed alt
+#                                              XX XX XX (Degraded)
+#							Measurement and Track Smooting 04 = Software Tracking Loop disable

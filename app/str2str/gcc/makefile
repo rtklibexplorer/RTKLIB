@@ -21,7 +21,7 @@ all        : str2str
 str2str    : str2str.o stream.o rtkcmn.o solution.o sbas.o geoid.o
 str2str    : rcvraw.o novatel.o ublox.o swiftnav.o crescent.o skytraq.o gw10.o javad.o
 str2str    : nvs.o binex.o rt17.o rtcm.o rtcm2.o rtcm3.o rtcm3e.o preceph.o streamsvr.o
-str2str    : sirf.o septentrio.o cmr.o tersus.o comnav.o
+str2str    : sirf.o septentrio.o cmr.o tersus.o comnav.o stat.o
 
 str2str.o  : ../str2str.c
 	$(CC) -c $(CFLAGS) ../str2str.c
@@ -79,7 +79,8 @@ comnav.o   : $(SRC)/rcv/comnav.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/comnav.c
 sirf.o     : $(SRC)/rcv/sirf.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/sirf.c
-
+stat.o     : $(SRC)/stat.c
+	$(CC) -c $(CFLAGS) -std=gnu99 -lm $(SRC)/stat.c
 
 str2str.o  : $(SRC)/rtklib.h
 stream.o   : $(SRC)/rtklib.h
@@ -109,6 +110,7 @@ cmr.o      : $(SRC)/rtklib.h
 tersus.o   : $(SRC)/rtklib.h
 comnav.o   : $(SRC)/rtklib.h
 sirf.o     : $(SRC)/rtklib.h
+stat.o     : $(SRC)/rtklib.h
 
 install:
 	cp str2str $(BINDIR)

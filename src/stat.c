@@ -8,6 +8,7 @@
 #include <float.h>                   // required for LDBL_EPSILON.
 #include <limits.h>
 #include <rtklib.h>
+#include <stdbool.h>		     // required for bool
 
 static long double const pi 		  = 3.14159265358979323846264338L;
 static double max_double_arg 		  = 171.0;
@@ -46,7 +47,14 @@ static long double const a[] = {
                                  +1.08314836272589368860689e-4L
                               };
 
-//                         Internally Defined Routines                        //
+/* Nalimov - critical values
+    http://www.statistics4u.info/fundstat_germ/ee_nalimov_outliertest.html */
+static float const nalimov[] = { 1.409, 1.645, 1.757, 1.814, 1.848, 1.870, 1.885, 1.895, 1.903, 1.910,
+				 1.916, 1.920, 1.923, 1.926, 1.928, 1.931, 1.933, 1.935, 1.936, 1.937,
+				 1.939, 1.940, 1.940, 1.941, 1.942, 1.943, 1.942, 1.944, 1.944, 1.945,
+				 1.946, 1.946, 1.947, 1.947, 1.948  };
+
+/*                         Internally Defined Routines                        */
 
 static long double xGamma(long double x);
 
@@ -303,8 +311,6 @@ double F_cval(int v1, int v2, double pr) {
 }
 
 /* Needed for X2-Test, Values ... */
-
-
 static long double const factorials[] = {
        1.000000000000000000000e+0L,          //   0!
        1.000000000000000000000e+0L,          //   1!
@@ -480,8 +486,6 @@ static long double const factorials[] = {
                                         };
 
 static const int N = sizeof(factorials) / sizeof(long double);
-
-
 
 long double xFactorial(int n) {
    if ( n < 0 ) return 0.0L;
@@ -730,11 +734,102 @@ double T_cval(int nu, double pr) {
    return t;
 }
 
+ 
+void	RB_free(ring_buffer_t* rb) { free(rb->buffer); }
+bool	RB_full(ring_buffer_t* rb) { return rb->count == rb->size; }
+int64_t	RB_size(ring_buffer_t* rb) { return rb->count; }
+void	RB_init(ring_buffer_t* rb, int64_t size) {
+	rb->buffer	= calloc(0,sizeof(int8_t) * size);
+	rb->buffer_end	= rb->buffer + size;
+	rb->size 	= size;
+	rb->data_start 	= rb->data_end = rb->buffer;
+	rb->count 	= 0; }
+
+bool RB_push(ring_buffer_t* rb, int8_t xstar, double *SDev ) {
+	int n; 
+	double xq,var,q,s=0;
+	int8_t* RData;
+	bool SlipDet = false;
+	if (rb == NULL || rb->buffer == NULL) return SlipDet;
+
+	*rb->data_end = xstar; rb->data_end++;
+	if (rb->data_end == rb->buffer_end)			rb->data_end = rb->buffer;
+	if (RB_full(rb)) {
+        	if ((rb->data_start + 1) == rb->buffer_end)	rb->data_start = rb->buffer;
+        	else 				           	rb->data_start++;
+	} else {						rb->count++; }
+	
+	if (rb->count>3) {
+		/* Mittelwert */ 
+		RData = rb->data_start;
+		for (xq=n=0;n<rb->count-1;n++) { 
+			if (RData == rb->buffer_end) RData = rb->buffer;
+			xq+=*RData++; }
+		xq/=n; 					/* printf("x*=%d xq=%.2f n=%d ",xstar,xq,n); */
+		
+		/* Standardabweichung der Stichprobe */
+		RData = rb->data_start;
+		for (var=n=0;n<rb->count-1;n++) { 
+			if (RData == rb->buffer_end) RData = rb->buffer;
+			var+=pow(xq-*RData++,2); }
+		var/=(n-1); s=*SDev=sqrtf(var); 	/* fprintf(stderr,"cnt=%ld var=%.2f s=%.2f SD=%.2f ",rb->count,var,s,*SDev);	*/
+		
+		
+		/* Ausreißertest nach Nalimov */
+		q = fabs(xstar-xq)/s*sqrtf(n/(n-1)); 	/* printf("q=%.2f f=%d k=%.3f\n",q,n-2,nalimov[n-3]);	*/
+		SlipDet=q>nalimov[n-3]?true:false; 	/* printf("Ausreißer!"); */
+	}
+	return SlipDet;	
+}
+
+double RB_pop(ring_buffer_t* rb) {
+    if (rb == NULL || rb->buffer == NULL || rb->count<1) return false;
+    int8_t data = *rb->data_start;
+    rb->data_start++;
+    if (rb->data_start == rb->buffer_end) 
+        rb->data_start = rb->buffer;
+    rb->count--;
+    return data;
+}
+
+/* Struct Example for reference
+typedef struct {        
+    int sat;            
+    [...]
+    ring_buffer* rbo;	// WORKING!!
+} auxData_t; */
+
+/* Working Code example 
+int main(void)
+{
+	int i=1; 
+	double sd=0.0;
+	auxData_t AuxData[3];
+	bool RetStat;
+	ring_buffer* rboo = (ring_buffer *) calloc(0, sizeof(ring_buffer));
+	AuxData[1].sat = 1;
+	AuxData[1].rbo = (ring_buffer *) calloc(0, sizeof(ring_buffer));
+	
+	ring_buffer* rbo = AuxData[1].rbo; 
+	
+	double * buffer  = malloc(EXAMPLE_BUFFER_SIZE * sizeof(double));
+	RB_init(rbo,4);
+	RetStat=RB_push(rbo,1,&sd);
+//	RB_push(AuxData[1].rbo,2);
+	RetStat=RB_push(rbo,4,&sd);
+	RetStat=RB_push(rbo,5,&sd);
+	RetStat=RB_push(rbo,6,&sd);
+	RetStat=RB_push(rbo,10,&sd);
+	printf("#sd=%.2f %d=%d\n",sd,i++,RB_pop(rbo));
+	printf("#%d=%d\n",i++,RB_pop(rbo));
+	printf("#%d=%d\n",i++,RB_pop(rbo));
+	printf("#%d=%d\n",i++,RB_pop(rbo));
+	return 0; }	*/
+
 /* NOTE main() 
 https://blog.minitab.com/blog/adventures-in-statistics-2/the-american-statistical-associations-statement-on-the-use-of-p-values
 T() Die folgende Tabelle zeigt ausgewählte Werte der inversen Verteilungsfunktion der T-Verteilung: T(1-a|df). 
 
-*/
 void amain(int argc, char *argv[]) {
    int ndof, ddof;
    double p,F1,t;
@@ -745,5 +840,5 @@ void amain(int argc, char *argv[]) {
    printf("p=%.2f n=%d t=%.3f\n",p,ndof,t);		  // Einseitig
    printf("t=%.3f df=%d Verify_P=%.3f\n",t,ndof,Student_t_Distribution(t,ndof));
 
-}
+} */
 

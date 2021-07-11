@@ -542,6 +542,7 @@ static void *rtksvrthread(void *arg)
     rtksvr_t *svr=(rtksvr_t *)arg;
     obs_t obs;
     obsd_t data[MAXOBS*2];
+    cpha_t cpha[MAXSAT*MAXFREQ];
     sol_t sol={{0}};
     double tt,td;
     unsigned int tick,ticknmea,tick1hz,tickreset;

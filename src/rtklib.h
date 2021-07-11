@@ -54,6 +54,7 @@ extern "C" {
 #else
 #define EXPORT
 #endif
+#include <sys/types.h>	/* Necessary for ring buffer */
 
 /* constants -----------------------------------------------------------------*/
 
@@ -573,6 +574,16 @@ typedef struct {        /* observation data */
     int tmcount;        /* time mark count */
     obsd_t *data;       /* observation data records */
 } obs_t;
+
+/* Ring buffer implementation */
+typedef struct {
+	int8_t* buffer;
+	int8_t* buffer_end;
+	int8_t* data_start;
+	int8_t* data_end;
+	int64_t count;
+	int64_t size;
+ } ring_buffer_t;
 
 typedef struct {        /* earth rotation parameter data type */
     double mjd;         /* mjd (days) */
@@ -1299,6 +1310,7 @@ typedef struct {        /* receiver raw data control type */
     gtime_t tobs[MAXSAT][NFREQ+NEXOBS]; /* observation data time */
     obs_t obs;          /* observation data */
     obs_t obuf;         /* observation data buffer */
+    ring_buffer_t* cphase[MAXSAT][NFREQ+NEXOBS];	/* Carrier Phase Ring buffer */
     nav_t nav;          /* satellite ephemerides */
     sta_t sta;          /* station parameters */
     int ephsat;         /* sat number of update ephemeris (0:no satellite) */

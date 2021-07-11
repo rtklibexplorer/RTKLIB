@@ -229,19 +229,19 @@ static void init_chrony_socket(struct gps_device_t *session, rtk_t *rtk)
     }
 
     if (access(chrony_path, F_OK) != 0) {
-        printf(	"PPS:%s chrony socket %s doesn't exist\n",
+        /*printf(	"PPS:%s chrony socket %s doesn't exist\n",
 		*session->gpsdata.dev.path, chrony_path); 
-	printf("PPS: Chrony RTK socket doesn't exist\n");
+	printf("PPS: Chrony RTK socket doesn't exist\n"); */
     } else {
 	session->chronyfd = netlib_localsocket(chrony_path, SOCK_DGRAM);
-	if (session->chronyfd < 0)
-            printf("PPS:%s connect chrony socket failed: %s, error: %d, errno: %d/%s\n",
+	if (session->chronyfd < 0) {
+            /* printf("PPS:%s connect chrony socket failed: %s, error: %d, errno: %d/%s\n",
 		     *session->gpsdata.dev.path, 
-		     chrony_path, session->chronyfd, errno, strerror(errno));
-	else {
-            printf(  "PPS:%s using chrony socket: %s\n",
+		     chrony_path, session->chronyfd, errno, strerror(errno));  */
+	} else {
+            /* printf(  "PPS:%s using chrony socket: %s\n",
                      *session->gpsdata.dev.path, 
-		     chrony_path);
+		     chrony_path); */
             rtk->chrony_delta = -100;
         }
     }

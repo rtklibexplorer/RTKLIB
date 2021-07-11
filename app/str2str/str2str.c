@@ -38,7 +38,7 @@
 #define TRFILE      "str2str.trace"    /* trace file */
 
 /* global variables ----------------------------------------------------------*/
-static strsvr_t strsvr;                /* stream server */
+strsvr_t strsvr;                /* stream server */
 static volatile int intrflg=0;         /* interrupt flag */
 static char srctbl[1024]="";           /* source table file */
 

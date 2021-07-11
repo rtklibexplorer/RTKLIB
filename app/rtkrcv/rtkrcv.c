@@ -52,7 +52,7 @@
 #include <errno.h>
 #include "rtklib.h"
 #include "vt.h"
-#include "stat.h"       /* 2021-01-08 Added Statistical Calculation by S. Juhl */
+#include "stat.h"       	/* 2021-01-08 Added Statistical Calculation by S. Juhl  */
 
 /* Externally Defined Routines */
 extern double vincenty(double lat1, double lon1, double lat2, double lon2);

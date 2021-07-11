@@ -243,7 +243,7 @@ while True:
                              csvfileB.close
                 finished=True
             if retrycnt == 10:
-                print("ERROR: Gave up after 10 times")
+                print("ERROR: Gave up looking for gpsd socket after 10 times")
                 finished=True
     # NOTE Garbage Collection every 60 Minutes
     delta=datetime.now()-CycleTime
@@ -252,14 +252,20 @@ while True:
     else:
         print("INFO: RTK Data Garbage collection.")
         CycleTime=datetime.now()
-        df=pd.read_csv(args.rtk,parse_dates=['Timestamp'],date_parser=lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
-        LastRec=df['Timestamp'].iloc[-1] 
+        try:
+            df=pd.read_csv(args.rtk,parse_dates=['Timestamp'],date_parser=lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+        except:
+            df=pd.read_csv(args.rtk,skiprows=1,parse_dates=['Timestamp'],date_parser=lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+        LastRec=df['Timestamp'].iloc[-2] 
         CutOff = LastRec + relativedelta( hours = -25 )
         df=df.loc[df['Timestamp'] >= CutOff]
         df.to_csv(args.rtk, index=False)
 
-        df=pd.read_csv(args.obs,parse_dates=['Timestamp'],date_parser=lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
-        LastRec=df['Timestamp'].iloc[-1] 
+        try:
+            df=pd.read_csv(args.obs,parse_dates=['Timestamp'],date_parser=lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+        except:
+            df=pd.read_csv(args.obs,skiprows=1,parse_dates=['Timestamp'],date_parser=lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+        LastRec=df['Timestamp'].iloc[-2] 
         CutOff = LastRec + relativedelta( hours = -25 )
         df=df.loc[df['Timestamp'] >= CutOff]
         df.to_csv(args.obs, index=False)
