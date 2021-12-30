@@ -50,6 +50,7 @@
 #include <QMimeData>
 #include <QFileSystemModel>
 #include <QCompleter>
+#include <QRegularExpression>
 
 #include "rtklib.h"
 #include "postmain.h"
@@ -399,7 +400,7 @@ void  MainForm::dragEnterEvent(QDragEnterEvent *event)
 }
 void  MainForm::dropEvent(QDropEvent *event)
 {
-    QPoint point=event->pos();
+    QPoint point=event->position().toPoint();
     int top;
     
     if (!event->mimeData()->hasFormat("text/uri-list")) return;
@@ -489,10 +490,10 @@ void MainForm::BtnExecClick()
         OutputFile_Text.contains(".gnav",Qt::CaseInsensitive)||
         OutputFile_Text.contains(".gz",Qt::CaseInsensitive)||
         OutputFile_Text.contains(".Z",Qt::CaseInsensitive)||
-        OutputFile_Text.contains(QRegExp(".??o",Qt::CaseInsensitive))||
-        OutputFile_Text.contains(QRegExp(".??d",Qt::CaseInsensitive))||
-        OutputFile_Text.contains(QRegExp(".??n",Qt::CaseInsensitive))||
-        OutputFile_Text.contains(QRegExp(".??g",Qt::CaseInsensitive))){
+        OutputFile_Text.contains(QRegularExpression(".??o",QRegularExpression::CaseInsensitiveOption))||
+        OutputFile_Text.contains(QRegularExpression(".??d",QRegularExpression::CaseInsensitiveOption))||
+        OutputFile_Text.contains(QRegularExpression(".??n",QRegularExpression::CaseInsensitiveOption))||
+        OutputFile_Text.contains(QRegularExpression(".??g",QRegularExpression::CaseInsensitiveOption))){
         showmsg("error : invalid extension of output file (%s)",qPrintable(OutputFile_Text));
         return;
     }
@@ -1138,7 +1139,7 @@ gtime_t MainForm::GetTime1(void)
     QDateTime time(dateTime1->dateTime());
 
     gtime_t t;
-    t.time=time.toTime_t();t.sec=time.time().msec()/1000;
+    t.time=time.toSecsSinceEpoch();t.sec=time.time().msec()/1000;
 
     return t;
 }
@@ -1148,20 +1149,20 @@ gtime_t MainForm::GetTime2(void)
     QDateTime time(dateTime2->dateTime());
 
     gtime_t t;
-    t.time=time.toTime_t();t.sec=time.time().msec()/1000;
+    t.time=time.toSecsSinceEpoch();t.sec=time.time().msec()/1000;
 
     return t;
 }
 // set time to time-1 -------------------------------------------------------
 void MainForm::SetTime1(gtime_t time)
 {
-    QDateTime t=QDateTime::fromTime_t(time.time); t=t.addMSecs(time.sec*1000);
+    QDateTime t=QDateTime::fromSecsSinceEpoch(time.time); t=t.addMSecs(time.sec*1000);
     dateTime1->setDateTime(t);
 }
 // set time to time-2 -------------------------------------------------------
 void MainForm::SetTime2(gtime_t time)
 {
-    QDateTime t=QDateTime::fromTime_t(time.time); t=t.addMSecs(time.sec*1000);
+    QDateTime t=QDateTime::fromSecsSinceEpoch(time.time); t=t.addMSecs(time.sec*1000);
     dateTime2->setDateTime(t);
 }
 // update enable/disable of widgets -----------------------------------------
