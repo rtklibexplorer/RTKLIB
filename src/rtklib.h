@@ -1327,13 +1327,13 @@ typedef struct {        /* GIS type */
 typedef void fatalfunc_t(const char *); /* fatal callback function type */
 
 /* global variables ----------------------------------------------------------*/
-extern const double chisqr[];        /* chi-sqr(n) table (alpha=0.001) */
-extern const prcopt_t prcopt_default; /* default positioning options */
-extern const solopt_t solopt_default; /* default solution output options */
-extern const sbsigpband_t igpband1[9][8]; /* SBAS IGP band 0-8 */
-extern const sbsigpband_t igpband2[2][5]; /* SBAS IGP band 9-10 */
-extern const char *formatstrs[];     /* stream format strings */
-extern opt_t sysopts[];              /* system options table */
+EXPORT extern const double chisqr[];        /* chi-sqr(n) table (alpha=0.001) */
+EXPORT extern const prcopt_t prcopt_default; /* default positioning options */
+EXPORT extern const solopt_t solopt_default; /* default solution output options */
+EXPORT extern const sbsigpband_t igpband1[9][8]; /* SBAS IGP band 0-8 */
+EXPORT extern const sbsigpband_t igpband2[2][5]; /* SBAS IGP band 9-10 */
+EXPORT extern const char *formatstrs[];     /* stream format strings */
+EXPORT extern opt_t sysopts[];              /* system options table */
 
 /* satellites, systems, codes functions --------------------------------------*/
 EXPORT int  satno   (int sys, int prn);
@@ -1816,9 +1816,9 @@ EXPORT int gis_read(const char *file, gis_t *gis, int layer);
 EXPORT void gis_free(gis_t *gis);
 
 /* application defined functions ---------------------------------------------*/
-extern int showmsg(const char *format,...);
-extern void settspan(gtime_t ts, gtime_t te);
-extern void settime(gtime_t time);
+EXPORT extern int showmsg(const char *format,...);
+EXPORT extern void settspan(gtime_t ts, gtime_t te);
+EXPORT extern void settime(gtime_t time);
 
 #ifdef __cplusplus
 }
