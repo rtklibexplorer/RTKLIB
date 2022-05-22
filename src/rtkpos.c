@@ -526,7 +526,7 @@ double vincenty(double lat1, double lon1, double lat2, double lon2)
 
     double U1 = atan((1.0 - FE_WGS84) * tan(lat1));	
     double U2 = atan((1.0 - FE_WGS84) * tan(lat2));	
-  
+
     lambda = L  = lon2 - lon1; 
     do {
         lambda0 = lambda;

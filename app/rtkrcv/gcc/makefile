@@ -6,16 +6,20 @@ SRC    = ../../../src
 # for beagleboard
 #CTARGET= -mfpu=neon -mfloat-abi=softfp -ffast-math
 CTARGET= -DENAGLO -DENAQZS -DENACMP -DENAGAL -DENAIRN -DNFREQ=3 -DNEXOBS=3 -DSVR_REUSEADDR
+#-std=gnu99/gnu89	# Necessary to get json-c linked ... inline;
 
-
-CFLAGS = -Wall -O3 -ansi -pedantic -Wno-unused-but-set-variable -I$(SRC) -I.. -DTRACE $(CTARGET) -g
+CFLAGS = -Wall -O3 -ansi -pedantic -Wno-unused-but-set-variable -I$(SRC) -I.. -DTRACE $(CTARGET) -g -std=gnu89
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S), Darwin)
-	LDLIBS  = -lm -lpthread
+	LDLIBS  = -lm -lpthread -ljson-c
 else
-	LDLIBS  = -lm -lrt -lpthread
+	LDLIBS  = -lm -lrt -lpthread -ljson-c
 endif
+
+CFLAGS += $(shell pkg-config --cflags json-c)
+#LDFLAGS += $(shell pkg-config --libs json-c)
+LDLIBS += $(shell pkg-config --libs json-c)
 
 all        : rtkrcv
 rtkrcv     : rtkrcv.o vt.o rtkcmn.o rtksvr.o rtkpos.o geoid.o solution.o lambda.o
@@ -30,8 +34,8 @@ vt.o       : ../vt.c
 	$(CC) -c $(CFLAGS) ../vt.c
 rtkcmn.o   : $(SRC)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
-rtksvr.o   : $(SRC)/rtksvr.c
-	$(CC) -c $(CFLAGS) $(SRC)/rtksvr.c
+rtksvr.o   : $(SRC)/rtksvr.c 
+	$(CC) -c $(CFLAGS) $(SRC)/rtksvr.c 
 rtkpos.o   : $(SRC)/rtkpos.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkpos.c
 geoid.o    : $(SRC)/geoid.c

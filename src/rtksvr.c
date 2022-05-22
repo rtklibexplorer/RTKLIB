@@ -39,9 +39,14 @@
 *           2017/04/11  1.21 add rtkfree() in rtksvrfree()
 *-----------------------------------------------------------------------------*/
 #include "rtklib.h"
-/* #include "chrony.h"	/ 2021-01-05 Added Chrony Integration by S. Juhl */
+/* #include "chrony.h"	/  2021-01-05 Added Chrony Integration by S. Juhl */
+#include <json.h>	/* 2022-01-16 Added JSON Output by S. Juhl	  */
 
 #define MIN_INT_RESET   30000   /* mininum interval of reset command (ms) */
+
+/* Externally Defined Routines */
+extern double vincenty(double lat1, double lon1, double lat2, double lon2);
+extern double T_cval(int nu, double pr);
 
 /* write solution header to output stream ------------------------------------*/
 static void writesolhead(stream_t *stream, const solopt_t *solopt)
@@ -63,12 +68,30 @@ static void saveoutbuf(rtksvr_t *svr, unsigned char *buff, int n, int index)
     
     rtksvrunlock(svr);
 }
+void json_object_array_append(json_object *dest, json_object *src) {
+    int i;
+    int src_size = json_object_array_length(src);
+    for (i = 0; i < src_size; ++i) {
+        json_object *src_item = json_object_array_get_idx(src, i);
+        json_object_get(src_item); // increment reference count
+        json_object_array_add(dest, src_item); // add to dest array
+    }
+}
+
 /* write solution to output stream -------------------------------------------*/
 static void writesol(rtksvr_t *svr, int index)
 {
     solopt_t solopt=solopt_default;
     unsigned char buff[MAXSOLMSG+1];
     int i,n;
+    const char *sol[]={"none","fix","float","SBAS","DGPS","single","PPP",""};
+    int rtkstat,j,m;
+    double sx,sy,sz,sdxy,sdyz,sdzx,R95,RNF;
+    double dop[5]={0};
+    double azel[MAXSAT*2];
+    double dmajor,HPL,VPL;
+    double vbl,unc,pos[3],posb[3],vvvv;
+    double vincdist;
     
     tracet(4,"writesol: index=%d\n",index);
     
@@ -101,6 +124,112 @@ static void writesol(rtksvr_t *svr, int index)
     if (svr->moni) {
         n=outsols(buff,&svr->rtk.sol,svr->rtk.rb,&solopt);
         strwrite(svr->moni,buff,n);
+    }
+    /* NOTE TBD ADD JSON Output */
+    if (*svr->jsonpath) {
+        rtkstat=svr->rtk.sol.stat;  /* fprintf(stderr,"STAT: %s \n",rtkstat,sol[rtkstat]); */
+        json_object *rtkstatus = json_object_new_string(sol[rtkstat]);	/* Solution Type */
+
+        json_object *jecefx = json_object_new_double(svr->rtk.sol.rr[0]);
+        json_object *jecefy = json_object_new_double(svr->rtk.sol.rr[1]);
+        json_object *jecefz = json_object_new_double(svr->rtk.sol.rr[2]);
+
+        json_object *jecefxa  = json_object_new_array();	/* Creating a json array*/
+        json_object *jecefya  = json_object_new_array();	/* Creating a json array*/
+        json_object *jecefza  = json_object_new_array();	/* Creating a json array*/
+        json_object * ecefobj = json_object_new_object();  	/* Creating a json object*/
+
+        json_object_object_add(ecefobj,"X", jecefx); 		/* Form the json object*/
+        json_object_object_add(ecefobj,"Y", jecefy); 		/* Form the json object*/
+        json_object_object_add(ecefobj,"Z", jecefz); 		/* Form the json object*/
+
+        sx = sqrt(svr->rtk.sol.qr[0]);
+        sy = sqrt(svr->rtk.sol.qr[1]);
+        sz = sqrt(svr->rtk.sol.qr[2]);
+        sdxy,sdyz,sdzx = sqrt(svr->rtk.sol.qr[3]),sqrt(svr->rtk.sol.qr[4]),sqrt(svr->rtk.sol.qr[5]);
+        RNF=(double)2.0789*2*(62*sy+56*sx);			/* 2σ = 95,45% [cm] Calculation of R95 according to Novatel APN-029 GPS Position Accuracy Measures */
+
+        for (j=m=0;j<MAXSAT;j++) {
+            if (svr->rtk.opt.mode==PMODE_SINGLE&&!svr->rtk.ssat[j].vs) continue;
+            if (svr->rtk.opt.mode!=PMODE_SINGLE&&!svr->rtk.ssat[j].vsat[0]) continue;
+            azel[  m*2]=svr->rtk.ssat[j].azel[0];
+            azel[1+m*2]=svr->rtk.ssat[j].azel[1];
+            m++;
+        }
+        dops(m,azel,0.0,dop);
+
+        json_object *gdop = json_object_new_double(dop[0]);
+        json_object *pdop = json_object_new_double(dop[1]);
+        json_object *hdop = json_object_new_double(dop[2]);
+        json_object *vdop = json_object_new_double(dop[3]);
+        json_object *tdop = json_object_new_double(dop[4]);
+        json_object *rnf  = json_object_new_double(RNF);
+        json_object *nsat = json_object_new_int(svr->rtk.sol.ns);
+        json_object *latsd = json_object_new_double(svr->rtk.Pa?sqrt(svr->rtk.Pa[0]+svr->rtk.Pa[1+1*svr->rtk.na]):0);
+        json_object *horsd = json_object_new_double(svr->rtk.Pa?sqrt(svr->rtk.Pa[2+2*svr->rtk.na]):0);
+        json_object * dopsobj = json_object_new_object();  	/* Creating a json object*/
+        json_object_object_add(dopsobj,"GDOP", gdop); 		/* Form the json object*/
+        json_object_object_add(dopsobj,"PDOP", pdop); 		/* Form the json object*/
+        json_object_object_add(dopsobj,"HDOP", hdop); 		/* Form the json object*/
+        json_object_object_add(dopsobj,"VDOP", vdop); 		/* Form the json object*/
+        json_object_object_add(dopsobj,"TDOP", tdop); 		/* Form the json object*/
+        json_object_object_add(dopsobj,"R95", rnf); 		/* Form the json object*/
+        json_object_object_add(dopsobj,"NSAT", nsat); 		/* Form the json object*/
+        json_object_object_add(dopsobj,"LATSD", latsd); 	/* Form the json object*/
+        json_object_object_add(dopsobj,"HORSD", horsd); 	/* Form the json object*/
+
+        /* Compute the WAAS protections levels as defined in Appendix J of the WAAS MOPS:
+         * RTCA DO-229D, Minimum operational performance standards [MOPS] for global
+         * positioning system/wide area augmentation system [WAAS] airborne equipment,
+         * RTCA inc, December 13, 2006
+         *
+         * Slides     https://geod.bme.hu/sites/default/files/page/ea_v05.pdf 
+         * Background https://web.stanford.edu/group/scpnt/gpslab/pubs/papers/integrity.pdf
+         * Spec       https://www.gps.gov/technical/ps/2020-civil-monitoring-performance-specification.pdf */
+        dmajor=(double)sqrt((svr->rtk.sol.qr[0]+svr->rtk.sol.qr[1])/2+sqrt((svr->rtk.sol.qr[0]-svr->rtk.sol.qr[1])/2+svr->rtk.sol.qr[3]*svr->rtk.sol.qr[3]));
+        HPL=(double)6*dmajor; VPL=(double)5.33*sqrt(svr->rtk.sol.qr[2]);	/* vt_printf(vt,"%-28s: %.2f/%.2f\n","RTCA MOPS DO-229-C HPL/VPL",HPL,VPL);*/
+
+        json_object *hpl = json_object_new_double(HPL);
+        json_object *vpl = json_object_new_double(VPL);
+        json_object * mopsobj = json_object_new_object();  	/* Creating a json object*/
+        json_object_object_add(mopsobj,"HPL", hpl); 		/* Form the json object*/
+        json_object_object_add(mopsobj,"VPL", vpl); 		/* Form the json object*/
+
+        if (norm(svr->rtk.sol.rr,3)>0.0) ecef2pos(svr->rtk.sol.rr,pos ); else pos[0] = pos[1]= pos[2]=0.0;
+        if (norm(svr->rtk.rb,3)>0.0) 	 ecef2pos(svr->rtk.rb,    posb); else posb[0]=posb[1]=posb[2]=0.0;
+        if (norm(svr->rtk.sol.rr,3)>0.0 && norm(svr->rtk.rb,3)>0.0) {
+            vbl=1000*vincenty(pos[0],pos[1],posb[0],posb[1]);
+            unc=1000*T_cval(svr->rtk.bl.nmax-1,0.95)*svr->rtk.bl.sl[3]/sqrt(svr->rtk.bl.nmax);
+        } 
+        json_object *basel = json_object_new_double(vbl);
+        json_object *blunc = json_object_new_double(unc);
+        json_object * blobj = json_object_new_object();  	/* Creating a json object*/
+        json_object_object_add(blobj,"length", basel); 		/* Form the json object*/
+        json_object_object_add(blobj,"unc",    blunc); 		/* Form the json object*/
+
+        json_object * jobj = json_object_new_object();  	/* Creating a json object*/
+
+        json_object_object_add(jobj,"Status", rtkstatus); /*Form the json object*/
+        if (rtkstat >0) {
+            json_object_object_add(jobj,"ECEF", ecefobj); /*Form the json object*/
+            json_object_object_add(jobj,"DOP", dopsobj); /*Form the json object*/
+            json_object_object_add(jobj,"MOPS", mopsobj); /*Form the json object*/
+            json_object_object_add(jobj,"BASELINE", blobj); /*Form the json object*/
+        }
+        /*Now printing the json object*/
+        /*fprintf(stderr,"The json object created: %s\n",json_object_to_json_string(jobj));*/
+        
+        FILE *fptr;				// creating file pointer to work with files
+        fptr = fopen(svr->jsonpath, "w");	// opening file in writing mode
+
+        // exiting program 
+        if (fptr == NULL) {
+            printf("Error!");
+            exit(1);
+        }
+        fprintf(fptr, "%s", json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY)); 
+        fclose(fptr);
+
     }
     /* save solution buffer */
     if (svr->nsol<MAXSOLBUF) {
@@ -542,7 +671,7 @@ static void *rtksvrthread(void *arg)
     rtksvr_t *svr=(rtksvr_t *)arg;
     obs_t obs;
     obsd_t data[MAXOBS*2];
-    cpha_t cpha[MAXSAT*MAXFREQ];
+/*    cpha_t cpha[MAXSAT*MAXFREQ];*/
     sol_t sol={{0}};
     double tt,td;
     unsigned int tick,ticknmea,tick1hz,tickreset;
@@ -639,7 +768,7 @@ static void *rtksvrthread(void *arg)
             }
 /* DONE       printf("float=%d fixed=%d amb=%d nsol=%d so=%ld mode=%s\n",svr->rtk.nx, svr->rtk.na, svr->rtk.nb_ar, svr->nsol,sizeof(svr->rtk.sol),solst[svr->rtk.sol.stat]);*/
 
-            /* if cpu overload, inclement obs outage counter and break */
+            /* if cpu overload, increment obs outage counter and break */
             if ((int)(tickget()-tick)>=svr->cycle) {
                 svr->prcout+=fobs[0]-i-1;
 #if 0 /* omitted v.2.4.1 */

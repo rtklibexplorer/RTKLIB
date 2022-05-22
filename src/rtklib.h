@@ -1428,6 +1428,7 @@ typedef struct {        /* RTK server type */
     double bl_reset;    /* baseline length to reset (km) */
     lock_t lock;        /* lock flag */
     int hatchep;	/* number of epochs for hatch smoothing filter 0 to disable */
+    char jsonpath[MAXSTRPATH]; /* postion json path */
 } rtksvr_t;
 
 typedef struct {        /* gis data point type */

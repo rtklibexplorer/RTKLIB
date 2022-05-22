@@ -131,7 +131,7 @@ static filopt_t filopt  ={""};          /* file options */
 
 /* help text -----------------------------------------------------------------*/
 static const char *usage[]={
-    "usage: rtkrcv [-s][-p port][-d dev][-o file][-w pwd][-r level][-t level][-sta sta]",
+    "usage: rtkrcv [-s][-p port][-d dev][-o file][-w pwd][-r level][-t level][-sta sta][-j file]",
     "options",
     "  -s         start RTK server on program startup",
     "  -p port    port number for telnet console",
@@ -141,7 +141,8 @@ static const char *usage[]={
     "  -w pwd     login password for remote console (\"\": no password)",
     "  -r level   output solution status file (0:off,1:states,2:residuals)",
     "  -t level   debug trace level (0:off,1-5:on)",
-    "  -sta sta   station name for receiver dcb"
+    "  -sta sta   station name for receiver dcb",
+    "  -j file    output solution as json file"
 };
 static const char *helptxt[]={
     "start                 : start rtk server",
@@ -703,7 +704,7 @@ static void lglstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %.1f/%.1f/%.1f/%.1f\n","GDOP/PDOP/HDOP/VDOP",dop[0],dop[1],dop[2],dop[3]);
 /*    vt_printf(vt,"%-28s: %.2f\n","Circ. Err. Probable R95 (cm)", 
       WRONG: (rtkstat==1)?(rtk.Pa?100*SQRT(rtk.Pa[0]+rtk.Pa[1+1*rtk.na]):0):(rtk.P?100*SQRT(rtk.P[0]+rtk.P[1+1*rtk.nx]):0)); */
-    vt_printf(vt,"%-28s: %.2f\n","Circ. Err. Probable R95 (cm)",2.08*(56*SQRT(rtk.sol.qr[0])+62*SQRT(rtk.sol.qr[1])) );
+    vt_printf(vt,"%-28s: %.2f\n","Circ. Err. Probable R95 (cm)",2.08*2*(56*SQRT(rtk.sol.qr[0])+62*SQRT(rtk.sol.qr[1])) );
 
     /* Compute the WAAS protections levels as defined in Appendix J of the WAAS MOPS:
     * RTCA DO-229D, Minimum operational performance standards [MOPS] for global
@@ -1608,7 +1609,7 @@ static void *con_thread(void *arg)
                 break;
         }
     }
-    vt_close(con->vt);
+    vt_close(con->vt);  
     return 0;
 }
 /* open console --------------------------------------------------------------*/
@@ -1814,7 +1815,7 @@ int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
     int i,port=0,outstat=0,trace=0,sock=0;
-    char *dev="",file[MAXSTR]="";
+    char *dev="",file[MAXSTR]="",posfile[MAXSTR]="";
     
     for (i=1;i<argc;i++) {
         if      (!strcmp(argv[i],"-s")) start=1;
@@ -1826,6 +1827,7 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-sta")&&i+1<argc) strcpy(sta_name,argv[++i]);
+        else if (!strcmp(argv[i],"-j")&&i+1<argc) strcpy(posfile,argv[++i]);
         else printusage();
     }
     if (trace>0) {
@@ -1852,6 +1854,12 @@ int main(int argc, char **argv)
     if (outstat>0) {
         rtkopenstat(STATFILE,outstat);
     }
+    /* NOTE POSFILE */
+    if (*posfile) {
+        strcpy(svr.jsonpath,posfile);
+        fprintf(stderr,"** writing json position data to %s **\n",svr.jsonpath);
+    }
+
     /* open monitor port */
     if (moniport>0&&!openmoni(moniport)) {
         fprintf(stderr,"monitor port open error: %d\n",moniport);
