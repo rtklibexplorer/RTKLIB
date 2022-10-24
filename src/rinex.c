@@ -2271,7 +2271,7 @@ static void outrinexevent(FILE *fp, const rnxopt_t *opt, const obsd_t *obs,
     time2epoch(obs[0].eventime,epe);
     n = obs->timevalid ? 0 : 1;
 
-    if (opt->rnxver<=2.99) { /* ver.2 */
+    if (opt->rnxver<=299) { /* ver.2 */
         if (epdiff < 0) fprintf(fp,"\n");
         fprintf(fp," %02d %2.0f %2.0f %2.0f %2.0f%11.7f  %d%3d",
                 (int)epe[0]%100,epe[1],epe[2],epe[3],epe[4],epe[5],5,n);
