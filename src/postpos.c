@@ -194,7 +194,7 @@ static int nextobsb(const obs_t *obs, int *i, int rcv)
     double tt;
     int n;
     
-    for (;*i>=0;(*i)--) if (obs->data[*i].rcv==rcv) break;
+    for (;*i>0;(*i)--) if (obs->data[*i].rcv==rcv) break;
     for (n=0;*i-n>=0;n++) {
         tt=timediff(obs->data[*i-n].time,obs->data[*i].time);
         if (obs->data[*i-n].rcv!=rcv||tt<-DTTOL) break;
