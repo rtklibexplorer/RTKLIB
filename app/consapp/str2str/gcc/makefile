@@ -13,7 +13,7 @@ LDLIBS  = -lm -lrt -lpthread
 
 all        : str2str
 str2str    : str2str.o stream.o rtkcmn.o solution.o sbas.o geoid.o
-str2str    : rcvraw.o novatel.o ublox.o crescent.o skytraq.o javad.o
+str2str    : rcvraw.o novatel.o ublox.o crescent.o skytraq.o allystar.o javad.o
 str2str    : nvs.o binex.o rt17.o rtcm.o rtcm2.o rtcm3.o rtcm3e.o preceph.o streamsvr.o
 str2str    : septentrio.o swiftnav.o
 
@@ -43,6 +43,8 @@ crescent.o : $(SRC)/rcv/crescent.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/crescent.c
 skytraq.o  : $(SRC)/rcv/skytraq.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/skytraq.c
+allystar.o  : $(SRC)/rcv/allystar.c
+	$(CC) -c $(CFLAGS) $(SRC)/rcv/allystar.c
 javad.o    : $(SRC)/rcv/javad.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/javad.c
 nvs.o      : $(SRC)/rcv/nvs.c
@@ -76,6 +78,7 @@ geoid.o    : $(SRC)/rtklib.h
 rcvraw.o   : $(SRC)/rtklib.h
 novatel.o  : $(SRC)/rtklib.h
 ublox.o    : $(SRC)/rtklib.h
+allystar.o : $(SRC)/rtklib.h
 ss2.o      : $(SRC)/rtklib.h
 crescent.o : $(SRC)/rtklib.h
 skytraq.o  : $(SRC)/rtklib.h
