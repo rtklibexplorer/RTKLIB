@@ -3195,6 +3195,9 @@ extern void strsendcmd(stream_t *str, const char *cmd)
             else if (!strncmp(msg+1,"STQ",3)) { /* skytraq */
                 if ((m=gen_stq(msg+4,buff))>0) strwrite(str,buff,m);
             }
+		else if (!strncmp(msg+1,"ALLYSTAR",8)) { /* allystar */
+                if ((m=gen_ally(msg+9,buff))>0) strwrite(str,buff,m);
+            }
             else if (!strncmp(msg+1,"NVS",3)) { /* nvs */
                 if ((m=gen_nvs(msg+4,buff))>0) strwrite(str,buff,m);
             }
