@@ -469,8 +469,8 @@ void OptDialog::GetOpt(void)
     ElMaskAR->setValue(PrcOpt.elmaskar * R2D);
     ElMaskHold->setValue(PrcOpt.elmaskhold * R2D);
     MaxAgeDiff->setValue(PrcOpt.maxtdiff);
-    RejectGdop->setValue(PrcOpt.maxgdop);
-    RejectThres->setValue(PrcOpt.maxinno);
+    RejectCode->setValue(PrcOpt.maxinno[1]);
+    RejectPhase->setValue(PrcOpt.maxinno[0]);
     SlipThres->setValue(PrcOpt.thresslip);
     NumIter->setValue(PrcOpt.niter);
     SyncSol->setCurrentIndex(PrcOpt.syncsol);
@@ -597,8 +597,8 @@ void OptDialog::SetOpt(void)
     PrcOpt.elmaskar = ElMaskAR->value() * D2R;
     PrcOpt.elmaskhold = ElMaskHold->value() * D2R;
     PrcOpt.maxtdiff = MaxAgeDiff->value();
-    PrcOpt.maxgdop = RejectGdop->value();
-    PrcOpt.maxinno = RejectThres->value();
+    PrcOpt.maxinno[0] = RejectPhase->value();
+    PrcOpt.maxinno[1] = RejectCode->value();
     PrcOpt.thresslip = SlipThres->value();
     PrcOpt.niter = NumIter->value();
     PrcOpt.syncsol = SyncSol->currentIndex();
@@ -782,8 +782,8 @@ void OptDialog::LoadOpt(const QString &file)
     ElMaskAR->setValue(prcopt.elmaskar * R2D);
     ElMaskHold->setValue(prcopt.elmaskhold * R2D);
     MaxAgeDiff->setValue(prcopt.maxtdiff);
-    RejectGdop->setValue(prcopt.maxgdop);
-    RejectThres->setValue(prcopt.maxinno);
+    RejectCode->setValue(prcopt.maxinno[1]);
+    RejectPhase->setValue(prcopt.maxinno[0]);
     SlipThres->setValue(prcopt.thresslip);
     NumIter->setValue(prcopt.niter);
     SyncSol->setCurrentIndex(prcopt.syncsol);
@@ -997,8 +997,8 @@ void OptDialog::SaveOpt(const QString &file)
     prcopt.elmaskar = ElMaskAR->value() * D2R;
     prcopt.elmaskhold = ElMaskHold->value() * D2R;
     prcopt.maxtdiff = MaxAgeDiff->value();
-    prcopt.maxgdop = RejectGdop->value();
-    prcopt.maxinno = RejectThres->value();
+    prcopt.maxinno[1] = RejectCode->value();
+    prcopt.maxinno[0] = RejectPhase->value();
     prcopt.thresslip = SlipThres->value();
     prcopt.niter = NumIter->value();
     prcopt.syncsol = SyncSol->currentIndex();
@@ -1100,7 +1100,7 @@ void OptDialog::UpdateEnable(void)
     ElMaskHold->setEnabled(ar && AmbRes->currentIndex() == 3);
     SlipThres->setEnabled(ar || ppp);
     MaxAgeDiff->setEnabled(rel);
-    RejectThres->setEnabled(rel || ppp);
+    RejectPhase->setEnabled(rel || ppp);
     NumIter->setEnabled(rel || ppp);
     SyncSol->setEnabled(rel || ppp);
     BaselineConst->setEnabled(PosMode->currentIndex() == PMODE_MOVEB);

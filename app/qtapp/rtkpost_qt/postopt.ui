@@ -952,7 +952,7 @@
         </widget>
        </item>
        <item row="14" column="1" colspan="2">
-        <widget class="QDoubleSpinBox" name="RejectGdop">
+        <widget class="QDoubleSpinBox" name="RejectCode">
          <property name="suffix">
           <string> m</string>
          </property>
@@ -968,7 +968,7 @@
         </widget>
        </item>
        <item row="14" column="3" colspan="2">
-        <widget class="QDoubleSpinBox" name="RejectThres">
+        <widget class="QDoubleSpinBox" name="RejectPhase">
          <property name="decimals">
           <number>1</number>
          </property>
@@ -3506,8 +3506,8 @@
   <tabstop>SlipThres</tabstop>
   <tabstop>MaxAgeDiff</tabstop>
   <tabstop>SyncSol</tabstop>
-  <tabstop>RejectGdop</tabstop>
-  <tabstop>RejectThres</tabstop>
+  <tabstop>RejectCode</tabstop>
+  <tabstop>RejectPhase</tabstop>
   <tabstop>ARIter</tabstop>
   <tabstop>NumIter</tabstop>
   <tabstop>BaselineConst</tabstop>

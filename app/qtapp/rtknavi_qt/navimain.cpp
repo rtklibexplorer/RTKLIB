@@ -2422,8 +2422,8 @@ void MainWindow::LoadOpt(void)
     PrcOpt.elmaskhold = settings.value("prcopt/elmaskhold", 0.0).toDouble();
     PrcOpt.thresslip = settings.value("prcopt/thresslip", 0.05).toDouble();
     PrcOpt.maxtdiff = settings.value("prcopt/maxtdiff", 30.0).toDouble();
-    PrcOpt.maxgdop = settings.value("prcopt/maxgdop", 30.0).toDouble();
-    PrcOpt.maxinno = settings.value("prcopt/maxinno", 30.0).toDouble();
+    PrcOpt.maxinno[0] = settings.value("prcopt/maxinno1", 30.0).toDouble();
+    PrcOpt.maxinno[1] = settings.value("prcopt/maxinno2", 30.0).toDouble();
     PrcOpt.syncsol = settings.value("prcopt/syncsol", 0).toInt();
     ExSats = settings.value("prcopt/exsats", "").toString();
     PrcOpt.navsys = settings.value("prcopt/navsys", SYS_GPS).toInt();
@@ -2445,8 +2445,9 @@ void MainWindow::LoadOpt(void)
     SolOpt.timef = settings.value("solopt/timef", 1).toInt();
     SolOpt.timeu = settings.value("solopt/timeu", 3).toInt();
     SolOpt.degf = settings.value("solopt/degf", 0).toInt();
-    s = settings.value("solopt/sep", " ").toString();
-    strcpy(SolOpt.sep, qPrintable(s));
+//    s = settings.value("solopt/sep", " ").toString();
+//    strcpy(SolOpt.sep, qPrintable(s));
+    SolOpt.sep[0] = settings.value("solopt/sep", " ").toString()[0].toLatin1();
     SolOpt.outhead = settings.value("solop/outhead", 0).toInt();
     SolOpt.outopt = settings.value("solopt/outopt", 0).toInt();
     SolOpt.outvel = settings.value("solopt/outvel", 0).toInt();
@@ -2636,8 +2637,8 @@ void MainWindow::SaveOpt(void)
     settings.setValue("prcopt/elmaskhold", PrcOpt.elmaskhold);
     settings.setValue("prcopt/thresslip", PrcOpt.thresslip);
     settings.setValue("prcopt/maxtdiff", PrcOpt.maxtdiff);
-    settings.setValue("prcopt/maxgdop", PrcOpt.maxgdop);
-    settings.setValue("prcopt/maxinno", PrcOpt.maxinno);
+    settings.setValue("prcopt/maxinno1", PrcOpt.maxinno[0]);
+    settings.setValue("prcopt/maxinno2", PrcOpt.maxinno[1]);
     settings.setValue("prcopt/syncsol", PrcOpt.syncsol);
     settings.setValue("prcopt/exsats", ExSats);
     settings.setValue("prcopt/navsys", PrcOpt.navsys);
@@ -2659,7 +2660,7 @@ void MainWindow::SaveOpt(void)
     settings.setValue("solopt/timef", SolOpt.timef);
     settings.setValue("solopt/timeu", SolOpt.timeu);
     settings.setValue("solopt/degf", SolOpt.degf);
-    settings.setValue("solopt/sep", SolOpt.sep);
+    settings.setValue("solopt/sep", SolOpt.sep[0]);
     settings.setValue("solopt/outhead", SolOpt.outhead);
     settings.setValue("solopt/outopt", SolOpt.outopt);
     settings.setValue("solopt/outvel", SolOpt.outvel);

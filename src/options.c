@@ -128,7 +128,7 @@ EXPORT opt_t sysopts[]={
     {"out-timeform",    3,  (void *)&solopt_.timef,      TFTOPT },
     {"out-timendec",    0,  (void *)&solopt_.timeu,      ""     },
     {"out-degform",     3,  (void *)&solopt_.degf,       DFTOPT },
-    {"out-fieldsep",    2,  (void *) solopt_.sep,        ""     },
+    {"out-fieldsep",    2,  (void *)&solopt_.sep,        ""     },
     {"out-outsingle",   3,  (void *)&prcopt_.outsingle,  SWTOPT },
     {"out-maxsolstd",   1,  (void *)&solopt_.maxsolstd,  "m"    },
     {"out-height",      3,  (void *)&solopt_.height,     HGTOPT },

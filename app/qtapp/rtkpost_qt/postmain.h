@@ -143,7 +143,7 @@ public:
     int SbasCorr, SbasCorr1, SbasCorr2, SbasCorr3, SbasCorr4, TimeDecimal;
     int SolStatic, SbasSat, MapFunc;
 	int PosOpt[6];
-    double ElMask, MaxAgeDiff, RejectThres, RejectGdop;
+    double ElMask, MaxAgeDiff, RejectPhase, RejectCode;
     double MeasErrR1, MeasErrR2, MeasErr2, MeasErr3, MeasErr4, MeasErr5;
     double SatClkStab, RovAntE, RovAntN, RovAntU, RefAntE, RefAntN, RefAntU;
     double PrNoise1, PrNoise2, PrNoise3, PrNoise4, PrNoise5;

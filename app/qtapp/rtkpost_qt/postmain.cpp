@@ -186,7 +186,7 @@ MainForm::MainForm(QWidget *parent)
     DynamicModel=IonoOpt=TropOpt=RovAntPcv=RefAntPcv=AmbRes=0;
     RovPosType=RefPosType=0;
     OutCntResetAmb=5; LockCntFixAmb=5; FixCntHoldAmb=10;
-    MaxAgeDiff=30.0; RejectThres=30.0; RejectGdop=30.0;
+    MaxAgeDiff=30.0; RejectPhase=30.0; RejectCode=30.0;
     MeasErrR1=MeasErrR2=100.0; MeasErr2=0.004; MeasErr3=0.003; MeasErr4=1.0;
     SatClkStab=1E-11; ValidThresAR=3.0;
     RovAntE=RovAntN=RovAntU=RefAntE=RefAntN=RefAntU=0.0;
@@ -946,8 +946,8 @@ int MainForm::GetOption(prcopt_t &prcopt, solopt_t &solopt,
     prcopt.elmaskhold=ElMaskHold*D2R;
     prcopt.thresslip=SlipThres;
     prcopt.maxtdiff =MaxAgeDiff;
-    prcopt.maxgdop  =RejectGdop;
-    prcopt.maxinno  =RejectThres;
+    prcopt.maxinno[1]  =RejectCode;
+    prcopt.maxinno[0]  =RejectPhase;
     prcopt.outsingle=OutputSingle;
     if (BaseLineConst) {
         prcopt.baseline[0]=BaseLine[0];
@@ -1263,8 +1263,8 @@ void MainForm::LoadOpt(void)
     OutCntResetAmb     =ini.value("opt/outcntresetbias",5).toInt();
     SlipThres          =ini.value  ("opt/slipthres",   0.05).toDouble();
     MaxAgeDiff         =ini.value  ("opt/maxagediff",  30.0).toDouble();
-    RejectThres        =ini.value  ("opt/rejectthres", 30.0).toDouble();
-    RejectGdop         =ini.value  ("opt/rejectgdop",  30.0).toDouble();
+    RejectPhase        =ini.value  ("opt/rejectthres", 30.0).toDouble();
+    RejectCode         =ini.value  ("opt/rejectcode",  30.0).toDouble();
     ARIter             =ini.value("opt/ariter",         1).toInt();
     NumIter            =ini.value("opt/numiter",        1).toInt();
     CodeSmooth         =ini.value("opt/codesmooth",     0).toInt();
@@ -1452,8 +1452,8 @@ void MainForm::SaveOpt(void)
     ini.setValue("opt/outcntresetbias",OutCntResetAmb);
     ini.setValue("opt/slipthres",   SlipThres   );
     ini.setValue("opt/maxagediff",  MaxAgeDiff  );
-    ini.setValue("opt/rejectgdop",  RejectGdop  );
-    ini.setValue("opt/rejectthres", RejectThres );
+    ini.setValue("opt/rejectcode",  RejectCode  );
+    ini.setValue("opt/rejectthres", RejectPhase );
     ini.setValue("opt/ariter",      ARIter      );
     ini.setValue("opt/numiter",     NumIter     );
     ini.setValue("opt/codesmooth",  CodeSmooth  );
