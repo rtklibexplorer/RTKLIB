@@ -635,7 +635,8 @@ static void prstatus(vt_t *vt)
     gtime_t eventime={0};
     const char *freq[]={"-","L1","L1+L2","L1+L2+E5b","L1+L2+E5b+L5","",""};
     rtcm_t rtcm[3];
-    int i,j,n,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
+    pthread_t thread;
+    int i,j,n,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
     int cputime,nb[3]={0},nmsg[3][10]={{0}};
     char tstr[64],tmstr[64],s[1024],*p;
     double runtime,rt[3]={0},dop[4]={0},rr[3],bl1=0.0,bl2=0.0;
@@ -645,7 +646,7 @@ static void prstatus(vt_t *vt)
     
     rtksvrlock(&svr);
     rtk=svr.rtk;
-    thread=(int)svr.thread;
+    thread=svr.thread;
     cycle=svr.cycle;
     state=svr.state;
     rtkstat=svr.rtk.sol.stat;

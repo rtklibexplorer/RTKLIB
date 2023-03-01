@@ -4045,7 +4045,7 @@ extern int rtk_uncompress(const char *file, char *uncfile)
     return stat;
 }
 /* dummy application functions for shared library ----------------------------*/
-#if defined(WIN_DLL) || defined(__APPLE__)
+#if defined(WIN_DLL) || defined(DLL)
 extern int showmsg(const char *format,...) {return 0;}
 extern void settspan(gtime_t ts, gtime_t te) {}
 extern void settime(gtime_t time) {}
