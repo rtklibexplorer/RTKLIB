@@ -1,5 +1,6 @@
 //---------------------------------------------------------------------------
 #include <stdio.h>
+#define INHIBIT_RTK_LOCK_MACROS
 #include "rtklib.h"
 
 #include <QShowEvent>

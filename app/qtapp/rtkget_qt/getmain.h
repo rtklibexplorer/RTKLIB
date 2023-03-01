@@ -8,7 +8,9 @@
 #include <QPixmap>
 #include <QSystemTrayIcon>
 
+#define INHIBIT_RTK_LOCK_MACROS
 #include "rtklib.h"
+
 #include "ui_getmain.h"
 
 class TextViewer;

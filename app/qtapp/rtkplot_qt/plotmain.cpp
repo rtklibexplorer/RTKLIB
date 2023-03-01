@@ -61,6 +61,7 @@
 #include <QFont>
 #include <QMimeData>
 
+#define INHIBIT_RTL_LOCK_MACROS
 #include "rtklib.h"
 #include "plotmain.h"
 #include "plotopt.h"

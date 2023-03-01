@@ -527,9 +527,13 @@ extern "C" {
 #else
 #define thread_t    pthread_t
 #define lock_t      pthread_mutex_t
-#define initlock(f) pthread_mutex_init(f,NULL)
+#if defined( INHIBIT_RTK_LOCK_MACROS)
+#else
+/* these defs break apple mutex */
+#define initlock(f) pthread_mutex_init((f),NULL)
 #define lock(f)     pthread_mutex_lock(f)
 #define unlock(f)   pthread_mutex_unlock(f)
+#endif
 #define FILEPATHSEP '/'
 #endif
 

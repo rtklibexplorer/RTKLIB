@@ -3,6 +3,8 @@
 #include <QColorDialog>
 #include <QShowEvent>
 
+#define INHIBIT_RTK_LOCK_MACROS
+
 #include "vmapdlg.h"
 #include "plotmain.h"
 
