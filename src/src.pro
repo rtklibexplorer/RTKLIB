@@ -20,6 +20,12 @@ include(../RTKLib.pri)
 win* {
     CONFIG += staticlib
 }
+
+macx {
+    CONFIG += staticlib
+}
+
+
 *msvc* {
     QMAKE_CFLAGS += -D_CRT_SECURE_NO_WARNINGS
 }
