@@ -99,6 +99,24 @@ MGEX_GFZ_CLK  ftps://gdc.cddis.eosdis.nasa.gov/gps/products/mgex/%W/GFZ0MGXRAP_%
 MGEX_JAX_EPH  ftps://gdc.cddis.eosdis.nasa.gov/gps/products/mgex/%W/JAX0MGXFIN_%Y%n0000_01D_05M_ORB.SP3.gz  c:\GNSS_DATA\mgex\%W
 MGEX_JAX_CLK  ftps://gdc.cddis.eosdis.nasa.gov/gps/products/mgex/%W/JAX0MGXFIN_%Y%n0000_01D_30S_CLK.CLK.gz  c:\GNSS_DATA\mgex\%W
 
+#! PRODUCT (NOAA CORS NETWORK)
+# https://geodesy.noaa.gov/CORS/data.shtml
+# sites: https://geodesy.noaa.gov/CORS/dates_sites.txt
+#            https://noaa-cors-pds.s3.amazonaws.com/rinex/YYYY/DDD/ssss/ssssDDD0.YYd.gz      c:\GNSS_DATA\%Y\%n
+CORS_OBS_D    https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/%s/%s%n0.%yd.gz              c:\GNSS_DATA\%Y\%n
+CORS_OBS_O    https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/%s/%s%n0.%yo.gz              c:\GNSS_DATA\%Y\%n
+CORS_OBS_DH   https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/%s/%s%n%H.%yd.gz             c:\GNSS_DATA\%Y\%n
+CORS_OBS_OH   https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/%s/%s%n%H.%yo.gz             c:\GNSS_DATA\%Y\%n
+CORS_OBS_S    https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/%s/%s%n0.%yS                 c:\GNSS_DATA\%Y\%n
+
+CORS_NAV      https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/brdc%n0.%yn.gz               c:\GNSS_DATA\%Y\%n
+CORS_GNAV     https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/brdc%n0.%yg.gz               c:\GNSS_DATA\%Y\%n
+#            https://noaa-cors-pds.s3.amazonaws.com/rinex/YYYY/DDD/AAAWWWWD.sp3.gz
+CORS_IGS_EPH  https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/igs%W%D.sp3.gz               c:\GNSS_DATA\%Y\%n
+CORS_IGL_EPH  https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/igl%W%D.sp3.gz               c:\GNSS_DATA\%Y\%n
+CORS_IGR_EPH  https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/igr%W%D.sp3.gz               c:\GNSS_DATA\%Y\%n
+CORS_IGU_EPH  https://noaa-cors-pds.s3.amazonaws.com/rinex/%Y/%n/igu%W%D_%h.sp3.gz            c:\GNSS_DATA\%Y\%n
+
 #! PRODUCT (JAXA)
 MDC1_EPH      ftp://mgmds01.tksc.jaxa.jp/mdc1/%W/madoca%W%D.sp3.gz             c:\GNSS_DATA\mdc1\%W
 MDC2_EPH      ftp://mgmds01.tksc.jaxa.jp/mdc2/%W/madoca%W%D.sp3.gz             c:\GNSS_DATA\mdc2\%W
