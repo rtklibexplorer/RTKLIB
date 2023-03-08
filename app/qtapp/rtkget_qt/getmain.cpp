@@ -412,7 +412,7 @@ void MainForm::DownloadFinished()
     UpdateEnable();
 
     for (int i = 0; i < MAX_STA; i++) delete[] thread->stas[i];
-    delete thread;
+    //delete thread;
 }
 //---------------------------------------------------------------------------
 void MainForm::BtnExitClick()
