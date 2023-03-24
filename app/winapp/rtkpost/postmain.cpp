@@ -132,7 +132,7 @@ void __fastcall TMainForm::FormCreate(TObject *Sender)
 {
     AnsiString s;
     
-    Caption=s.sprintf("%s ver.%s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
+    Caption=s.sprintf("%s %s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
     
     ::DragAcceptFiles(Handle,true);
 }
