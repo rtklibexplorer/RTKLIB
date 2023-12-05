@@ -1913,7 +1913,7 @@ void MonitorDialog::setReferenceStation()
     for (i = 0; i < 2; i++) {
         tWConsole->setColumnWidth(i, width[i] * fontScale / 96);
     }
-    header = {tr("Parameter"), tr("Value")};
+    header << tr("Parameter") << tr("Value");
     tWConsole->setHorizontalHeaderLabels(header);
 }
 //---------------------------------------------------------------------------
