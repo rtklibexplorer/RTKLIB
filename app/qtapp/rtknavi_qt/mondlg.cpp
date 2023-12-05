@@ -41,17 +41,17 @@ MonitorDialog::MonitorDialog(QWidget *parent)
 
     for (i = 0; i <= MAXRCVFMT; i++) cBSelectFormat->addItem(formatstrs[i]);
 
-	init_rtcm(&rtcm);
+    init_rtcm(&rtcm);
     init_raw(&raw, -1);
 
     connect(btnClear, &QPushButton::clicked, this, &MonitorDialog::btnClearClicked);
     connect(btnClose, &QPushButton::clicked, this, &MonitorDialog::accept);
     connect(btnDown, &QPushButton::clicked, this, &MonitorDialog::btnDownClicked);
-    connect(cBType, &QComboBox::currentIndexChanged, this, &MonitorDialog::displayTypeChanged);
-    connect(cBSelectFormat, &QComboBox::currentIndexChanged, this, &MonitorDialog::consoleFormatChanged);
-    connect(cBSelectObservation, &QComboBox::currentIndexChanged, this, &MonitorDialog::observationModeChanged);
-    connect(cBSelectInputStream, &QComboBox::currentIndexChanged, this, &MonitorDialog::inputStreamChanged);
-    connect(cBSelectSolutionStream, &QComboBox::currentIndexChanged, this, &MonitorDialog::solutionStreamChanged);
+    connect(cBType, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MonitorDialog::displayTypeChanged);
+    connect(cBSelectFormat, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MonitorDialog::consoleFormatChanged);
+    connect(cBSelectObservation, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MonitorDialog::observationModeChanged);
+    connect(cBSelectInputStream, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MonitorDialog::inputStreamChanged);
+    connect(cBSelectSolutionStream, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MonitorDialog::solutionStreamChanged);
     connect(&updateTimer, &QTimer::timeout, this, &MonitorDialog::updateTimerTriggered);
 
     typeF = cBType->currentIndex();
@@ -79,29 +79,29 @@ void MonitorDialog::closeEvent(QCloseEvent *event)
     updateTimer.stop();
 
     free_rtcm(&rtcm);
-	free_raw(&raw);
+  free_raw(&raw);
 
     event->accept();
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::displayTypeChanged()
 {
-	int index;
+  int index;
 
-    typeF = cBType->currentIndex();
-    index = typeF - NMONITEM;
+  typeF = cBType->currentIndex();
+  index = typeF - NMONITEM;
 
-    if (0 <= index) {
-		rtksvrlock(&rtksvr);
-        if (index < 2) rtksvr.npb[index] = 0;
-        else if (index < 4) rtksvr.nsb[index - 2] = 0;
-        else rtksvr.rtk.neb = 0;
-		rtksvrunlock(&rtksvr);
-	}
-	clearTable();
-    lblInformation->setText("");
-    consoleBuffer.clear();
-    tWConsole->clear();
+  if (0 <= index) {
+    rtksvrlock(&rtksvr);
+    if (index < 2) rtksvr.npb[index] = 0;
+    else if (index < 4) rtksvr.nsb[index - 2] = 0;
+    else rtksvr.rtk.neb = 0;
+    rtksvrunlock(&rtksvr);
+  }
+  clearTable();
+  lblInformation->setText("");
+  consoleBuffer.clear();
+  tWConsole->clear();
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::consoleFormatChanged()
@@ -134,7 +134,7 @@ void MonitorDialog::updateTimerTriggered()
 {
     if (!isVisible()) return;
 
-	switch (typeF) {
+  switch (typeF) {
         case  0: showRtk(); break;
         case  1: showObservations(); break;
         case  2: showNavigations(); break;
@@ -152,14 +152,14 @@ void MonitorDialog::updateTimerTriggered()
         case 14: showRtcmSsr(); break;
         case 15: showReferenceStation(); break;
         default: showBuffers(); break;
-	}
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::clearTable()
 {
     int console = 0;
 
-	switch (typeF) {
+  switch (typeF) {
         case  0: setRtk(); break;
         case  1: setObservations(); break;
         case  2: break;
@@ -179,7 +179,7 @@ void MonitorDialog::clearTable()
         default: console = 1;
             tWConsole->setColumnWidth(0, tWConsole->width());
             break;
-	}
+  }
     tWConsole->setVisible(true);
     Panel2->setVisible(console);
     btnPause->setVisible(console != 0);
@@ -203,28 +203,28 @@ void MonitorDialog::showBuffers()
 
     if (typeF < 16) return;
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
 
     if (typeF == 16) { // input buffer
         len = rtksvr.npb[inputStream];
         if (len > 0 && (msg = (uint8_t *)malloc(size_t(len)))) {
             memcpy(msg, rtksvr.pbuf[inputStream], size_t(len));
             rtksvr.npb[inputStream] = 0;
-		}
+    }
     } else if (typeF == 17) { // solution buffer
         len = rtksvr.nsb[solutionStream];
         if (len > 0 && (msg = (uint8_t*)malloc(size_t(len)))) {
             memcpy(msg, rtksvr.sbuf[solutionStream], size_t(len));
             rtksvr.nsb[solutionStream] = 0;
-		}
+    }
     } else { // error message buffer
         len = rtksvr.rtk.neb;
         if (len > 0 && (msg = (uint8_t *)malloc(size_t(len)))) {
             memcpy(msg, rtksvr.rtk.errbuf, size_t(len));
             rtksvr.rtk.neb = 0;
-		}
-	}
-	rtksvrunlock(&rtksvr);
+    }
+  }
+  rtksvrunlock(&rtksvr);
 
     if (len <= 0 || !msg) return;
 
@@ -238,32 +238,32 @@ void MonitorDialog::showBuffers()
     } else if (consoleFormat == 2) {
         for (i = 0; i < len; i++) {
             input_rtcm2(&rtcm, msg[i]);
-			if (rtcm.msgtype[0]) {
+      if (rtcm.msgtype[0]) {
                 QString buff = QString::fromLatin1(rtcm.msgtype, -1) + "\n";
                 addConsole((uint8_t*)qPrintable(buff), buff.size(), 1);
                 rtcm.msgtype[0] = '\0';
-			}
+      }
         }
     } else if (consoleFormat == 3) {
         for (i = 0; i < len; i++) {
             input_rtcm3(&rtcm, msg[i]);
-			if (rtcm.msgtype[0]) {
+      if (rtcm.msgtype[0]) {
                 QString buff = QString::fromLatin1(rtcm.msgtype, -1) + "\n";
                 addConsole((uint8_t*)qPrintable(buff), buff.size(), 1);
                 rtcm.msgtype[0] = '\0';
-			}
+      }
         }
     } else if (consoleFormat < 17) {
         for (i = 0; i < len; i++) {
             input_raw(&raw, consoleFormat - 2, msg[i]);
-			if (raw.msgtype[0]) {
+      if (raw.msgtype[0]) {
                 QString buff=QString::fromLatin1(raw.msgtype, -1) + "\n";
                 addConsole((uint8_t*)qPrintable(buff), buff.size(), 1);
                 raw.msgtype[0] = '\0';
-			}
+      }
         }
-	}
-	free(msg);
+  }
+  free(msg);
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::addConsole(const uint8_t *msg, int n, int mode)
@@ -340,7 +340,7 @@ void MonitorDialog::setRtk()
 //---------------------------------------------------------------------------
 void MonitorDialog::showRtk()
 {
-	rtk_t rtk;
+  rtk_t rtk;
     QString exsats, navsys = "";
     const QString svrstate[] = {tr("Stop"), tr("Run")};
     const QString sol[] = {tr("-"), tr("Fix"), tr("Float"), tr("SBAS"), tr("DGPS"), tr("Single"), tr("PPP"), ""};
@@ -359,7 +359,7 @@ void MonitorDialog::showRtk()
     const QString tropopt[] = {tr("OFF"), tr("Saastamoinen"), tr("SBAS"), tr("Estimate ZTD"), tr("Estimate ZTD+Grad"), ""};
     const QString ephopt [] = {tr("Broadcast"), tr("Precise"), tr("Broadcast+SBAS"), tr("Broadcat+SSR APC"), tr("Broadcast+SSR CoM"), tr("QZSS LEX"), ""};
 
-	rtksvrlock(&rtksvr); // lock
+  rtksvrlock(&rtksvr); // lock
 
     rtk = rtksvr.rtk;
     thread = (unsigned long)rtksvr.thread;
@@ -380,28 +380,28 @@ void MonitorDialog::showRtk()
             nmsg[i][j] = rtksvr.nmsg[i][j];
     }
 
-	if (rtksvr.state) {
+  if (rtksvr.state) {
         double runtime;
         runtime = static_cast<double>(tickget() - rtksvr.tick) / 1000.0;
         rt[0] = floor(runtime / 3600.0); runtime -= rt[0] * 3600.0;
         rt[1] = floor(runtime / 60.0); rt[2] = runtime - rt[1] * 60.0;
-	}
+  }
     if ((ne = rtksvr.nav.ne) > 0) {
         time2str(rtksvr.nav.peph[0].time, s1, 0);
         time2str(rtksvr.nav.peph[ne - 1].time, s2, 0);
         time2str(rtksvr.ftime[2], s3, 0);
-	}
+  }
     strncpy(file, rtksvr.files[2], 1024);
 
-	rtksvrunlock(&rtksvr); // unlock
+  rtksvrunlock(&rtksvr); // unlock
 
     for (j = k = 0; j < MAXSAT; j++) {
         if (rtk.opt.mode == PMODE_SINGLE && !rtk.ssat[j].vs) continue;
         if (rtk.opt.mode != PMODE_SINGLE && !rtk.ssat[j].vsat[0]) continue;
         azel[k * 2] = rtk.ssat[j].azel[0];
         azel[k * 2 + 1] = rtk.ssat[j].azel[1];
-		k++;
-	}
+    k++;
+  }
     dops(k, azel, 0.0, dop);
 
     if (rtk.opt.navsys & SYS_GPS) navsys = navsys + tr("GPS ");
@@ -474,7 +474,7 @@ void MonitorDialog::showRtk()
         satno2id(j, id);
         if (rtk.opt.exsats[j - 1] == 2) exsats = exsats + "+";
         exsats = exsats + id + " ";
-	}
+  }
     tWConsole->setItem(i, 0, new QTableWidgetItem(tr("Excluded Satellites")));
     tWConsole->setItem(i++, 1, new QTableWidgetItem(exsats));
 
@@ -636,7 +636,7 @@ void MonitorDialog::setSat()
     const QString label[] = {
         tr("SAT"),	tr("PRN"), tr("PRN"),	tr("Status"), tr("Azimuth (deg)"), tr("Elevation (deg)"), tr("LG (m)"), tr("PHW(cyc)"),
         tr("P1-P2(m)"), tr("P1-C1(m)"), tr("P2-C2(m)")
-	};
+  };
     int width[] = {25, 25, 30, 45, 45, 60, 60, 40, 40, 40}, nfreq;
 
     rtksvrlock(&rtksvr);
@@ -652,62 +652,62 @@ void MonitorDialog::setSat()
     for (i = 0; i < 4; i++) {
         tWConsole->setColumnWidth(j++, width[i] * fontScale / 96);
         header << label[i];
-	}
+  }
     for (i = 0; i < nfreq; i++) {
         tWConsole->setColumnWidth(j++, 30 * fontScale / 96);
         header << QString(tr("L%1")).arg(i+1);
-	}
+  }
     for (i = 0; i < nfreq; i++) {
         tWConsole->setColumnWidth(j++, 40 * fontScale / 96);
         header << QString(tr("Fix%1")).arg(i+1);
-	}
+  }
     for (i = 0; i < nfreq; i++) {
         tWConsole->setColumnWidth(j++, 45 * fontScale / 96);
         header << QString(tr("P%1 Residual(m)")).arg(i+1);
-	}
+  }
     for (i = 0; i < nfreq; i++) {
         tWConsole->setColumnWidth(j++, 45 * fontScale / 96);
         header << QString(tr("L%1 Residual(m)")).arg(i+1);
-	}
+  }
     for (i = 0; i < nfreq; i++) {
         tWConsole->setColumnWidth(j++, 45 * fontScale / 96);
         header << QString(tr("Slip%1")).arg(i+1);
-	}
+  }
     for (i = 0; i < nfreq; i++) {
         tWConsole->setColumnWidth(j++, 45 * fontScale / 96);
         header << QString(tr("Lock%1")).arg(i+1);
-	}
+  }
     for (i = 0; i < nfreq; i++) {
         tWConsole->setColumnWidth(j++, 45 * fontScale / 96);
         header << QString(tr("Outage%1")).arg(i+1);
-	}
+  }
     for (i = 0; i < nfreq; i++) {
         tWConsole->setColumnWidth(j++, 45 * fontScale / 96);
         header << QString(tr("Reject%1")).arg(i+1);
-	}
+  }
     for (i = 0; i < nfreq; i++) {
         tWConsole->setColumnWidth(j++, 50 * fontScale / 96);
         header << QString(tr("WaveL%1(m)")).arg(i+1);
-	}
+  }
     for (i = 4; i < 9; i++) {
         tWConsole->setColumnWidth(j++, width[i] * fontScale / 96);
         header << label[i];
-	}
+  }
     tWConsole->setHorizontalHeaderLabels(header);
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::showSat()
 {
-	rtk_t rtk;
-	ssat_t *ssat;
+  rtk_t rtk;
+  ssat_t *ssat;
     int i, j, k, n, fix, nfreq, sys = sys_tbl[cBSelectNavigationSystems->currentIndex()];
     int vsat[MAXSAT] = {0};
-	char id[32];
+  char id[32];
     double az, el, cbias[MAXSAT][2];
 
     setSat();
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
     rtk = rtksvr.rtk;
 
     for (i = 0; i < MAXSAT; i++)
@@ -716,7 +716,7 @@ void MonitorDialog::showSat()
             cbias[i][j] = rtksvr.nav.cbias[i][j][0];
     }
     nfreq = rtksvr.rtk.opt.nf;
-	rtksvrunlock(&rtksvr);
+  rtksvrunlock(&rtksvr);
 
     lblInformation->setText("");
 
@@ -728,12 +728,12 @@ void MonitorDialog::showSat()
     for (i = 0, n = 1; i < MAXSAT; i++) {
         if (!(satsys(i + 1, NULL) & sys)) continue;
         if (cBSelectSatellites->currentIndex() == 1 && !vsat[i]) continue;
-		n++;
-	}
+    n++;
+  }
     if (n < 2) {
         tWConsole->setRowCount(0);
-		return;
-	}
+    return;
+  }
     tWConsole->setRowCount(n - 1);
     tWConsole->setHorizontalHeaderLabels(header);
 
@@ -754,7 +754,7 @@ void MonitorDialog::showSat()
         for (k = 0; k < nfreq; k++) {
             fix = ssat->fix[k];
             tWConsole->setItem(n, j++, new QTableWidgetItem(fix == 1 ? tr("FLOAT") : (fix == 2 ? tr("FIX") : (fix == 3 ? tr("HOLD") : tr("-")))));
-		}
+    }
         for (k = 0; k < nfreq; k++)
             tWConsole->setItem(n, j++, new QTableWidgetItem(QString::number(ssat->resp[k], 'f', 2)));
         for (k = 0; k < nfreq; k++)
@@ -772,15 +772,15 @@ void MonitorDialog::showSat()
         tWConsole->setItem(n, j++, new QTableWidgetItem(QString::number(cbias[i][0], 'f', 2)));
         tWConsole->setItem(n, j++, new QTableWidgetItem(QString::number(cbias[i][1], 'f', 2)));
         tWConsole->setItem(n, j++, new QTableWidgetItem(QString::number(0, 'f', 2)));
-		n++;
-	}
+    n++;
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setEstimates()
 {
     QString label[] = {
         tr("State"), tr("Estimate Float"), tr("Std Float"), tr("Estimate Fixed"), tr("Std Fixed")
-	};
+  };
     int i, width[] = {40, 100, 100, 100, 100};
 
     tWConsole->setColumnCount(5);
@@ -796,13 +796,13 @@ void MonitorDialog::setEstimates()
 //---------------------------------------------------------------------------
 void MonitorDialog::showEstimates()
 {
-	gtime_t time;
+  gtime_t time;
     unsigned int i, nx, na, n;
     double *x, *P = NULL, *xa = NULL, *Pa = NULL;
     QString s0 = "-";
-	char tstr[64];
+  char tstr[64];
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
 
     time = rtksvr.rtk.sol.time;
     nx = (unsigned int)rtksvr.rtk.nx;
@@ -820,17 +820,17 @@ void MonitorDialog::showEstimates()
         free(x); free(P); free(xa); free(Pa);
         return;
     }
-	rtksvrunlock(&rtksvr);
+  rtksvrunlock(&rtksvr);
 
     for (i = 0, n = 0; i < nx; i++) {
         if (cBSelectSatellites->currentIndex() == 1 && x[i] == 0.0) continue;
-		n++;
-	}
+    n++;
+  }
     if (n < 2) {
         tWConsole->setRowCount(0);
         free(x); free(P); free(xa); free(Pa);
-		return;
-	}
+    return;
+  }
     tWConsole->setRowCount(n);
     tWConsole->setHorizontalHeaderLabels(header);
 
@@ -844,14 +844,14 @@ void MonitorDialog::showEstimates()
         tWConsole->setItem(i, j++, new QTableWidgetItem(P[i + i * nx] == 0.0 ? s0 : QString::number(SQRT(P[i + i * nx]), 'f', 3)));
         tWConsole->setItem(i, j++, new QTableWidgetItem((i >= na || qFuzzyCompare(xa[i], 0)) ? s0 : QString::number(xa[i], 'f', 3)));
         tWConsole->setItem(i, j++, new QTableWidgetItem((i >= na || Pa[i + i * na] == 0.0) ? s0 : QString::number(SQRT(Pa[i + i * na]), 'f', 3)));
-		n++;
-	}
-	free(x); free(P); free(xa); free(Pa);
+    n++;
+  }
+  free(x); free(P); free(xa); free(Pa);
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setCovariance()
 {
-	int i;
+  int i;
 
     header.clear();
 
@@ -865,13 +865,13 @@ void MonitorDialog::setCovariance()
 //---------------------------------------------------------------------------
 void MonitorDialog::showCovariance()
 {
-	gtime_t time;
+  gtime_t time;
     int i, j, nx, n, m;
     double *x, *P = NULL;
     QString s0 = "-";
-	char tstr[64];
+  char tstr[64];
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
 
     time = rtksvr.rtk.sol.time;
     nx = rtksvr.rtk.nx;
@@ -884,18 +884,18 @@ void MonitorDialog::showCovariance()
         rtksvrunlock(&rtksvr);
         return;
     }
-	rtksvrunlock(&rtksvr);
+  rtksvrunlock(&rtksvr);
 
     for (i = 0, n = 0; i < nx; i++) {
         if (cBSelectSatellites->currentIndex() == 1 && (x[i] == 0.0 || P[i + i * nx] == 0.0)) continue;
-		n++;
-	}
+    n++;
+  }
     if (n < 2) {
         tWConsole->setColumnCount(0);
         tWConsole->setRowCount(0);
         free(x); free(P);
         return;
-	}
+  }
     tWConsole->setColumnCount(n);
     tWConsole->setRowCount(n);
 
@@ -909,11 +909,11 @@ void MonitorDialog::showCovariance()
         for (j = 0, m = 0; j < nx; j++) {
             if (cBSelectSatellites->currentIndex() == 1 && (x[j] == 0.0 || P[j + j * nx] == 0.0)) continue;
             tWConsole->setItem(n, m, new QTableWidgetItem(P[i + j * nx] == 0.0 ? s0 : QString::number(SQRT(P[i + j * nx]), 'f', 5)));
-			m++;
-		}
-		n++;
-	}
-	free(x); free(P);
+      m++;
+    }
+    n++;
+  }
+  free(x); free(P);
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setObservations()
@@ -929,7 +929,7 @@ void MonitorDialog::setObservations()
     for (i = 0; i < 3; i++) {
         tWConsole->setColumnWidth(j++, width[i] * fontScale / 96);
         header << label[i];
-	}
+  }
     for (i = 0; i < NFREQ + nex; i++) {
         tWConsole->setColumnWidth(j++, 22 * fontScale / 96);
         header << (i < NFREQ ? QString(tr("C%1")).arg(i+1) : QString(tr("CX%1")).arg(i - NFREQ + 1));
@@ -945,15 +945,15 @@ void MonitorDialog::setObservations()
     for (i = 0; i < NFREQ + nex; i++) {
         tWConsole->setColumnWidth(j++, 85 * fontScale / 96);
         header << (i < NFREQ ? QString(tr("L%1 (cycle)")).arg(i+1) : QString(tr("LX%1 (cycle)")).arg(i - NFREQ + 1));
-	}
+  }
     for (i = 0; i < NFREQ + nex; i++) {
         tWConsole->setColumnWidth(j++, 60 * fontScale / 96);
         header << (i < NFREQ ? QString(tr("D%1 (Hz)")).arg(i+1) : QString(tr("DX%1 (Hz)")).arg(i - NFREQ + 1));
-	}
+  }
     for (i = 0; i < NFREQ + nex; i++) {
         tWConsole->setColumnWidth(j++, 15 * fontScale / 96);
         header << "I";
-	}
+  }
     tWConsole->setHorizontalHeaderLabels(header);
 }
 //---------------------------------------------------------------------------
@@ -963,7 +963,7 @@ void MonitorDialog::showObservations()
     char tstr[64], id[32], *code;
     int i, k, n = 0, nex = observationMode ? NEXOBS : 0, sys = sys_tbl[cBSelectNavigationSystems->currentIndex()];
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
     for (i = 0; i < rtksvr.obs[0][0].n && n < MAXOBS * 2; i++) {
         if (!(satsys(rtksvr.obs[0][0].data[i].sat, NULL) & sys)) continue;
         obs[n++] = rtksvr.obs[0][0].data[i];
@@ -972,7 +972,7 @@ void MonitorDialog::showObservations()
         if (!(satsys(rtksvr.obs[1][0].data[i].sat, NULL) & sys)) continue;
         obs[n++] = rtksvr.obs[1][0].data[i];
     }
-	rtksvrunlock(&rtksvr);
+  rtksvrunlock(&rtksvr);
 
     tWConsole->setRowCount(n + 1 < 2 ? 0 : n);
     tWConsole->setColumnCount(3 + (NFREQ + nex) * 6);
@@ -1003,7 +1003,7 @@ void MonitorDialog::showObservations()
             tWConsole->setItem(i, j++, new QTableWidgetItem(QString::number(obs[i].D[k], 'f', 3)));
         for (k = 0; k < NFREQ + nex; k++)
             tWConsole->setItem(i, j++, new QTableWidgetItem(QString::number(obs[i].LLI[k])));
-	}
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setNavigation()
@@ -1017,7 +1017,7 @@ void MonitorDialog::setNavigation()
     int i, width[] = {
         25, 25, 30, 30, 30, 25, 25, 115, 115, 115, 80, 80, 60, 60, 60, 60, 70, 70, 70, 60,
         50, 50, 50, 50, 50, 70, 70, 50,  70,  70, 30, 30
-	};
+  };
     tWConsole->setColumnCount(32);
     tWConsole->setRowCount(2);
 
@@ -1028,8 +1028,8 @@ void MonitorDialog::setNavigation()
 //---------------------------------------------------------------------------
 void MonitorDialog::showNavigations()
 {
-	eph_t eph[MAXSAT];
-	gtime_t time;
+  eph_t eph[MAXSAT];
+  gtime_t time;
     QString s;
     char tstr[64], id[32];
     int i, k, n, prn, off = cBSelectEphemeris->currentIndex() ? MAXSAT : 0;
@@ -1064,12 +1064,12 @@ void MonitorDialog::showNavigations()
         if (!(satsys(k + 1, &prn) & sys)) continue;
         valid = eph[k].toe.time != 0 && !eph[k].svh && fabs(timediff(time, eph[k].toe)) <= MAXDTOE;
         if (cBSelectSatellites->currentIndex() == 1 && !valid) continue;
-		n++;
-	}
+    n++;
+  }
     if (n < 2) {
         tWConsole->setRowCount(0);
-		return;
-	}
+    return;
+  }
     tWConsole->setRowCount(n);
     tWConsole->setHorizontalHeaderLabels(header);
 
@@ -1118,7 +1118,7 @@ void MonitorDialog::showNavigations()
         tWConsole->setItem(n, j++, new QTableWidgetItem(QString::number(eph[k].code, 16)));
         tWConsole->setItem(n, j++, new QTableWidgetItem(QString::number(eph[k].flag, 16)));
         n++;
-	}
+  }
     tWConsole->setRowCount(n);
 }
 //---------------------------------------------------------------------------
@@ -1131,7 +1131,7 @@ void MonitorDialog::setGlonassNavigations()
 
     int i, width[] = {
         25, 25, 30, 30, 30, 25, 25, 115, 115, 75, 75, 75, 70, 70, 70, 65, 65, 65, 70, 60, 50
-	};
+  };
     tWConsole->setColumnCount(21);
     tWConsole->setRowCount(1);
     for (i = 0; i < tWConsole->columnCount(); i++)
@@ -1141,16 +1141,16 @@ void MonitorDialog::setGlonassNavigations()
 //---------------------------------------------------------------------------
 void MonitorDialog::showGlonassNavigations()
 {
-	geph_t geph[NSATGLO];
-	gtime_t time;
+  geph_t geph[NSATGLO];
+  gtime_t time;
     QString s;
     char tstr[64], id[32];
     int i, n, valid, prn, off = cBSelectEphemeris->currentIndex() ? NSATGLO : 0;
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
     time = rtksvr.rtk.sol.time;
     for (i = 0; i < NSATGLO; i++) geph[i] = rtksvr.nav.geph[i + off];
-	rtksvrunlock(&rtksvr);
+  rtksvrunlock(&rtksvr);
 
     lblInformation->setText("");
 
@@ -1158,12 +1158,12 @@ void MonitorDialog::showGlonassNavigations()
         valid = geph[i].toe.time != 0 && !geph[i].svh &&
             fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO;
         if (cBSelectSatellites->currentIndex() == 1 && !valid) continue;
-		n++;
-	}
+    n++;
+  }
     if (n < 1) {
         tWConsole->setRowCount(1);
-		return;
-	}
+    return;
+  }
     tWConsole->setRowCount(n + 1);
     tWConsole->setHorizontalHeaderLabels(header);
 
@@ -1199,7 +1199,7 @@ void MonitorDialog::showGlonassNavigations()
         tWConsole->setItem(n, j++, new QTableWidgetItem(QString::number(geph[i].gamn * 1E9, 'f', 4)));
         tWConsole->setItem(n, j++, new QTableWidgetItem(QString::number(geph[i].dtaun * 1E9, 'f', 2)));
         n++;
-	}
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setSbsNavigations()
@@ -1221,14 +1221,14 @@ void MonitorDialog::setSbsNavigations()
 void MonitorDialog::showSbsNavigations()
 {
     seph_t seph[MAXPRNSBS - MINPRNSBS + 1];
-	gtime_t time;
+  gtime_t time;
     int i, n, valid, prn, off = cBSelectEphemeris->currentIndex() ? NSATSBS : 0;
     char tstr[64], id[32];
 
-	rtksvrlock(&rtksvr); // lock
+  rtksvrlock(&rtksvr); // lock
     time = rtksvr.rtk.sol.time;
     for (int i = 0; i < NSATSBS; i++) seph[i] = rtksvr.nav.seph[i + off];
-	rtksvrunlock(&rtksvr); // unlock
+  rtksvrunlock(&rtksvr); // unlock
 
     lblInformation->setText("");
 
@@ -1236,12 +1236,12 @@ void MonitorDialog::showSbsNavigations()
         valid = fabs(timediff(time, seph[i].t0)) <= MAXDTOE_SBS &&
             seph[i].t0.time && !seph[i].svh;
         if (cBSelectSatellites->currentIndex() == 1 && !valid) continue;
-		n++;
-	}
+    n++;
+  }
     if (n < 1) {
         tWConsole->setRowCount(0);
-		return;
-	}
+    return;
+  }
     tWConsole->setRowCount(n);
     tWConsole->setHorizontalHeaderLabels(header);
 
@@ -1274,8 +1274,8 @@ void MonitorDialog::showSbsNavigations()
         tWConsole->setItem(i, j++, new QTableWidgetItem(QString::number(seph[i].acc[2], 'f', 7)));
         tWConsole->setItem(i, j++, new QTableWidgetItem(QString::number(seph[i].af0 * 1E9, 'f', 2)));
         tWConsole->setItem(i, j++, new QTableWidgetItem(QString::number(seph[i].af1 * 1E9, 'f', 4)));
-		n++;
-	}
+    n++;
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setIonUtc()
@@ -1295,14 +1295,14 @@ void MonitorDialog::showIonUtc()
 {
     double utc_gps[8], utc_glo[8], utc_gal[8], utc_qzs[8], utc_cmp[8],utc_irn[9];
     double ion_gps[8], ion_gal[4], ion_qzs[8], ion_cmp[8], ion_irn[8];
-	gtime_t time;
+  gtime_t time;
     double tow = 0.0;
-	char tstr[64];
+  char tstr[64];
     int i, week = 0;
 
     Q_UNUSED(utc_glo);
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
     time = rtksvr.rtk.sol.time;
     for (i = 0; i < 8; i++) utc_gps[i] = rtksvr.nav.utc_gps[i];
     for (i = 0; i < 8; i++) utc_glo[i] = rtksvr.nav.utc_glo[i];
@@ -1315,7 +1315,7 @@ void MonitorDialog::showIonUtc()
     for (i = 0; i < 8; i++) ion_qzs[i] = rtksvr.nav.ion_qzs[i];
     for (i = 0; i < 8; i++) ion_cmp[i] = rtksvr.nav.ion_cmp[i];
     for (i = 0; i < 8; i++) ion_irn[i] = rtksvr.nav.ion_irn[i];
-	rtksvrunlock(&rtksvr);
+  rtksvrunlock(&rtksvr);
 
     lblInformation->setText("");
 
@@ -1409,28 +1409,28 @@ void MonitorDialog::showStream()
         tr("Input Rover"),	 tr("Input Base"), tr("Input Correction"), tr("Output Solution 1"),
         tr("Output Solution 2"), tr("Log Rover"),	tr("Log Base"),   tr("Log Correction"),
         tr("Monitor")
-	};
+  };
     const QString type[] = {
         tr("-"), tr("Serial"), tr("File"), tr("TCP Server"), tr("TCP Client"), tr("NTRIP Server"),
         tr("NTRIP Client"), tr("FTP"), tr("HTTP"), tr("NTRIP Caster"), tr("UDP Server"),
         tr("UDP Client"), tr("")
-	};
+  };
     const QString outformat[] = {
         tr("Lat/Lon/Height"), tr("X/Y/Z-ECEF"), tr("E/N/U-Baseline"), tr("NMEA-0183")
-	};
+  };
     const QString state[] = { tr("Error"), tr("-"), tr("OK") };
     QString mode, form;
-	stream_t stream[9];
+  stream_t stream[9];
     int i, format[9] = {0};
     char path[MAXSTRPATH] = "", *p, *q;
 
-	rtksvrlock(&rtksvr); // lock
+  rtksvrlock(&rtksvr); // lock
     for (i = 0; i < 8; i++) stream[i] = rtksvr.stream[i];
     for (i = 0; i < 3; i++) format[i] = rtksvr.format[i];
     for (i = 3; i < 5; i++) format[i] = rtksvr.solopt[i - 3].posf;
     stream[8] = monistr;
     format[8] = SOLF_LLH;
-	rtksvrunlock(&rtksvr); // unlock
+  rtksvrunlock(&rtksvr); // unlock
 
     tWConsole->setRowCount(9);
     lblInformation->setText("");
@@ -1459,17 +1459,17 @@ void MonitorDialog::showStream()
         if ((p = strchr(path, '@'))) {
             for (q = p - 1; q >= path; q--) if (*q == ':') break;
             if (q >= path) for (q++; q < p; q++) *q = '*';
-		}
+    }
         if (stream[i].type == STR_TCPCLI || stream[i].type == STR_TCPSVR) {
             if ((p = strchr(path, '/'))) *p = '\0';
             if ((p = strchr(path, '@'))) pp = p + 1;
             if (stream[i].type == STR_TCPSVR) {
                 if ((p = strchr(pp, ':'))) pp = p + 1; else *pp = ' ';
-			}
-		}
+      }
+    }
         tWConsole->setItem(i, j++, new QTableWidgetItem(pp));
         tWConsole->setItem(i, j++, new QTableWidgetItem(stream[i].msg));
-	}
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setSbsMessages()
@@ -1487,7 +1487,7 @@ void MonitorDialog::setSbsMessages()
 //---------------------------------------------------------------------------
 void MonitorDialog::showSbsMessages()
 {
-	sbsmsg_t msg[MAXSBSMSG];
+  sbsmsg_t msg[MAXSBSMSG];
     const QString content[] = {
         tr("For Testing"), tr("PRN Mask"), tr("Fast Corrections"), tr("Fast Corrections"),
         tr("Fast Corrections"), tr("Fast Corrections"), tr("Integrity Information"),
@@ -1503,17 +1503,17 @@ void MonitorDialog::showSbsMessages()
         tr("QZSS: Data Issue Number"), tr("QZSS: DGPS Correction"),
         tr("QZSS: Satellite Health"),
         ""
-	};
+  };
     const int id[] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 17, 18, 24, 25, 26, 27, 28, 62, 63, 43, 44, 47, 48, 49, 50, 51, -1};
     char str[256];
     QString s;
     int i, k, n;
 
-	rtksvrlock(&rtksvr); // lock
+  rtksvrlock(&rtksvr); // lock
     for (i = n = 0; i < rtksvr.nsbs; i++) {
         msg[n++] = rtksvr.sbsmsg[i];
     }
-	rtksvrunlock(&rtksvr); // unlock
+  rtksvrunlock(&rtksvr); // unlock
 
 
     tWConsole->setRowCount(n);
@@ -1532,7 +1532,7 @@ void MonitorDialog::showSbsMessages()
         tWConsole->setItem(i, j++, new QTableWidgetItem(s));
         for (k = 0; id[k] >= 0; k++) if (type == id[k]) break;
         tWConsole->setItem(i, j++, new QTableWidgetItem(id[k] < 0 ? "?" : content[k]));
-	}
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setSbsLong()
@@ -1552,15 +1552,15 @@ void MonitorDialog::setSbsLong()
 //---------------------------------------------------------------------------
 void MonitorDialog::showSbsLong()
 {
-	sbssat_t sbssat;
-	gtime_t time;
+  sbssat_t sbssat;
+  gtime_t time;
     int i;
     char tstr[64], id[32];
 
-	rtksvrlock(&rtksvr); // lock
+  rtksvrlock(&rtksvr); // lock
     time = rtksvr.rtk.sol.time;
     sbssat = rtksvr.nav.sbssat;
-	rtksvrunlock(&rtksvr); // unlock
+  rtksvrunlock(&rtksvr); // unlock
 
     tWConsole->setRowCount(sbssat.nsat <= 0 ? 1 : sbssat.nsat);
     lblInformation->setText(QString(tr("IODP:%1  System Latency:%2 s"))
@@ -1586,7 +1586,7 @@ void MonitorDialog::showSbsLong()
         if (satp->lcorr.t0.time) time2str(satp->lcorr.t0, tstr, 0);
         else strcpy(tstr, "-");
         tWConsole->setItem(i, j++, new QTableWidgetItem(tstr));
-	}
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setSbsIono()
@@ -1608,16 +1608,16 @@ void MonitorDialog::showSbsIono()
 {
     QString s0 = "-";
     sbsion_t sbsion[MAXBAND + 1];
-	char tstr[64];
+  char tstr[64];
     int i, j, k, n = 0;
 
-	rtksvrlock(&rtksvr); // lock
+  rtksvrlock(&rtksvr); // lock
     for (i = 0; i <= MAXBAND; i++) {
         sbsion[i] = rtksvr.nav.sbsion[i];
         n += sbsion[i].nigp;
     }
     ;
-	rtksvrunlock(&rtksvr); // unlock
+  rtksvrunlock(&rtksvr); // unlock
 
     tWConsole->setRowCount(n);
     tWConsole->setHorizontalHeaderLabels(header);
@@ -1636,9 +1636,9 @@ void MonitorDialog::showSbsIono()
             if (ion->igp[j].t0.time) time2str(ion->igp[j].t0, tstr, 0);
             else strcpy(tstr, "-");
             tWConsole->setItem(n, k++, new QTableWidgetItem(tstr));
-			n++;
-		}
-	}
+      n++;
+    }
+  }
     tWConsole->setRowCount(n <= 0 ? 0 : n + 1);
 }
 //---------------------------------------------------------------------------
@@ -1660,15 +1660,15 @@ void MonitorDialog::setSbsFast()
 void MonitorDialog::showSbsFast()
 {
     QString s0 = "-";
-	sbssat_t sbssat;
-	gtime_t time;
+  sbssat_t sbssat;
+  gtime_t time;
     int i;
     char tstr[64], id[32];
 
-	rtksvrlock(&rtksvr); // lock
+  rtksvrlock(&rtksvr); // lock
     time = rtksvr.rtk.sol.time;
     sbssat = rtksvr.nav.sbssat;
-	rtksvrunlock(&rtksvr); // unlock
+  rtksvrunlock(&rtksvr); // unlock
 
     lblInformation->setText("");
     tWConsole->setRowCount(sbssat.nsat <= 0 ? 1 : sbssat.nsat);
@@ -1691,7 +1691,7 @@ void MonitorDialog::showSbsFast()
         if (satp->fcorr.t0.time) time2str(satp->fcorr.t0, tstr, 0);
         else strcpy(tstr, "-");
         tWConsole->setItem(i, j++, new QTableWidgetItem(tstr));
-	}
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setRtcm()
@@ -1714,24 +1714,24 @@ void MonitorDialog::showRtcm()
     QString mstr1, mstr2;
     char tstr[64] = "-";
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
     format = rtksvr.format[inputStream];
     rtcm = rtksvr.rtcm[inputStream];
-	rtksvrunlock(&rtksvr);
+  rtksvrunlock(&rtksvr);
 
     if (rtcm.time.time) time2str(rtcm.time, tstr, 3);
 
     for (j = 1; j < 100; j++) {
         if (rtcm.nmsg2[j] == 0) continue;
         mstr1 += QString("%1%2 (%3)").arg(mstr1.isEmpty() ? "" : ",").arg(j).arg(rtcm.nmsg2[j]);
-	}
+  }
     if (rtcm.nmsg2[0] > 0) {
         mstr1 += QString("%1other (%2)").arg(mstr1.isEmpty() ? "" : ",").arg(rtcm.nmsg2[0]);
     }
     for (j = 1; j < 300; j++) {
         if (rtcm.nmsg3[j] == 0) continue;
         mstr2 += QString("%1%2(%3)").arg(mstr2.isEmpty() ? "" : ",").arg(j + 1000).arg(rtcm.nmsg3[j]);
-	}
+  }
     for (j=300;j<399;j++) {
         if (rtcm.nmsg3[j]==0) continue;
         mstr2+=QString("%1%2(%3)").arg(mstr2.isEmpty()?"":",").arg(j+3770).arg(rtcm.nmsg3[j]);
@@ -1805,15 +1805,15 @@ void MonitorDialog::setRtcmDgps()
 //---------------------------------------------------------------------------
 void MonitorDialog::showRtcmDgps()
 {
-	gtime_t time;
-	dgps_t dgps[MAXSAT];
+  gtime_t time;
+  dgps_t dgps[MAXSAT];
     int i;
     char tstr[64], id[32];
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
     time = rtksvr.rtk.sol.time;
     for (i = 0; i < MAXSAT; i++) dgps[i] = rtksvr.nav.dgps[i];
-	rtksvrunlock(&rtksvr);
+  rtksvrunlock(&rtksvr);
 
     lblInformation->setText("");
     tWConsole->setRowCount(MAXSAT);
@@ -1831,7 +1831,7 @@ void MonitorDialog::showRtcmDgps()
         tWConsole->setItem(i, j++, new QTableWidgetItem(QString::number(dgps[i].udre)));
         if (dgps[i].t0.time) time2str(dgps[i].t0, tstr, 0); else strcpy(tstr, "-");
         tWConsole->setItem(i, j++, new QTableWidgetItem(tstr));
-	}
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setRtcmSsr()
@@ -1852,20 +1852,20 @@ void MonitorDialog::setRtcmSsr()
 //---------------------------------------------------------------------------
 void MonitorDialog::showRtcmSsr()
 {
-	gtime_t time;
-	ssr_t ssr[MAXSAT];
+  gtime_t time;
+  ssr_t ssr[MAXSAT];
     int i, k, n, sat[MAXSAT], sys = sys_tbl[cBSelectSingleNavigationSystem->currentIndex() + 1];
     char tstr[64], id[32];
     QString s;
 
-	rtksvrlock(&rtksvr);
+  rtksvrlock(&rtksvr);
     time = rtksvr.rtk.sol.time;
     for (i = n= 0; i < MAXSAT; i++) {
         if (!(satsys(i + 1, NULL) & sys)) continue;
         ssr[n] = rtksvr.rtcm[inputStream].ssr[i];
         sat[n++] = i + 1;
     }
-	rtksvrunlock(&rtksvr);
+  rtksvrunlock(&rtksvr);
 
     lblInformation->setText("");
     tWConsole->setRowCount(n);
@@ -1912,7 +1912,7 @@ void MonitorDialog::setReferenceStation()
     tWConsole->setRowCount(2);
     for (i = 0; i < 2; i++) {
         tWConsole->setColumnWidth(i, width[i] * fontScale / 96);
-	}
+    }
     header = {tr("Parameter"), tr("Value")};
     tWConsole->setHorizontalHeaderLabels(header);
 }
