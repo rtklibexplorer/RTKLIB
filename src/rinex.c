@@ -879,40 +879,7 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
             }
         }
     }
-    if (m>=2) {
-        if (val[l[0]]==0.0&&val[l[1]]==0.0) {
-            p[l[0]]=-1; p[l[1]]=-1;
-        }
-        else if (val[l[0]]!=0.0&&val[l[1]]==0.0) {
-            p[l[0]]=1; p[l[1]]=-1;
-        }
-        else if (val[l[0]]==0.0&&val[l[1]]!=0.0) {
-            p[l[0]]=-1; p[l[1]]=1;
-        }
-        else if (ind->pri[l[1]]>ind->pri[l[0]]) {
-            p[l[1]]=1; p[l[0]]=NEXOBS<2?-1:NFREQ+1;
-        }
-        else {
-            p[l[0]]=1; p[l[1]]=NEXOBS<2?-1:NFREQ+1;
-        }
-    }
-    if (q>=2) {
-        if (val[r[0]]==0.0&&val[r[1]]==0.0) {
-            p[r[0]]=-1; p[r[1]]=-1;
-        }
-        else if (val[r[0]]!=0.0&&val[r[1]]==0.0) {
-            p[r[0]]=2; p[r[1]]=-1;
-        }
-        else if (val[r[0]]==0.0&&val[r[1]]!=0.0) {
-            p[r[0]]=-1; p[r[1]]=2;
-        }
-        else if (ind->pri[r[1]]>ind->pri[r[0]]) {
-            p[r[1]]=2; p[r[0]]=NEXOBS<3?-1:NFREQ+2;
-        }
-        else {
-            p[r[0]]=2; p[r[1]]=NEXOBS<3?-1:NFREQ+2;
-        }
-    }
+    
     /* save observation data */
     for (i=0;i<ind->n;i++) {
         if (p[i]<0||(val[i]==0.0&&lli[i]==0)) continue;
