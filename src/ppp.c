@@ -915,7 +915,8 @@ static int model_iono(gtime_t time, const double *pos, const double *azel,
         return 1;
     }
     if (opt->ionoopt==IONOOPT_EST) {
-        *dion=x[II(sat,opt)];
+        /* Estimated delay is a vertical delay, apply the mapping function. */
+        *dion=x[II(sat,opt)]*ionmapf(pos,azel);
         *var=0.0;
         return 1;
     }
@@ -933,7 +934,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                    double *azel)
 {
     prcopt_t *opt=&rtk->opt;
-    double y,r,cdtr,bias,C=0.0,rr[3],pos[3],e[3],dtdx[3],L[NFREQ],P[NFREQ],Lc,Pc;
+    double y,r,cdtr,bias,rr[3],pos[3],e[3],dtdx[3],L[NFREQ],P[NFREQ],Lc,Pc;
     double var[MAXOBS*2],dtrp=0.0,dion=0.0,vart=0.0,vari=0.0,dcb,freq;
     double dantr[NFREQ]={0},dants[NFREQ]={0};
     double ve[MAXOBS*2*NFREQ]={0},vmax=0;
@@ -981,6 +982,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
 
         /* stack phase and code residuals {L1,P1,L2,P2,...} */
         for (j=0;j<2*NF(opt);j++) {
+            double C=0.0;
 
             dcb=bias=0.0;
             code=j%2; /* 0=phase, 1=code */
@@ -993,7 +995,8 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                 if ((y=code==0?L[frq]:P[frq])==0.0) continue;
 
                 if ((freq=sat2freq(sat,obs[i].code[frq],nav))==0.0) continue;
-                C=SQR(FREQL1/freq)*ionmapf(pos,azel+i*2)*(code==0?-1.0:1.0);
+                /* The iono paths have already applied a slant factor. */
+                C=SQR(FREQL1/freq)*(code==0?-1.0:1.0);
             }
             if (H) {
                 for (k=0;k<nx;k++) H[k+nx*nv]=0.0;
@@ -1020,7 +1023,10 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
             }
             if (opt->ionoopt==IONOOPT_EST) {
                 if (rtk->x[II(sat,opt)]==0.0) continue;
-                if (H) H[II(sat,opt)+nx*nv]=C;
+                /* The vertical iono delay is estimated, but the residual is
+                 * in the direction of the slant, so apply the slat factor
+                 * mapping function. */
+                if (H) H[II(sat,opt)+nx*nv]=C*ionmapf(pos,azel+i*2);
             }
             if (frq==2&&code==1) { /* L5-receiver-dcb */
                 dcb+=rtk->x[ID(opt)];
