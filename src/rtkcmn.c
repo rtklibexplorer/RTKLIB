@@ -1548,6 +1548,15 @@ extern void matprint(const double A[], int n, int m, int p, int q)
 {
     matfprint(A,n,m,p,q,stdout);
 }
+/* set string without tail space ---------------------------------------------*/
+extern void setstr(char *dst, const char *src, int n)
+{
+    char *p=dst;
+    const char *q=src;
+    while (*q&&q<src+n) *p++=*q++;
+    *p--='\0';
+    while (p>=dst&&*p==' ') *p--='\0';
+}
 /* string to number ------------------------------------------------------------
 * convert substring in string to number
 * args   : char   *s        I   string ("... nnn.nnn ...")
