@@ -400,53 +400,129 @@ static double gfobs(const obsd_t *obs, int i, int j, int k, const nav_t *nav)
     if (freq1==0.0||freq2==0.0||L1==0.0||L2==0.0) return 0.0;
     return L1*CLIGHT/freq1-L2*CLIGHT/freq2;
 }
-/* single-differenced measurement error variance -----------------------------*/
+
+/* Single-differenced measurement error variance -----------------------------*/
 static double varerr(int sat, int sys, double el, double snr_rover, double snr_base,
                      double bl, double dt, int f, const prcopt_t *opt, const obsd_t *obs)
 {
-    double a,b,c,d,e;
-    double snr_max=opt->err[5];
-    double fact;
-    double sinel=sin(el),var;
-    int nf=NF(opt),frq,code;
+    int nf=NF(opt), frq=f%nf;
+    int code=f<nf?0:1; /* 0=phase, 1=code */
 
-    frq=f%nf;code=f<nf?0:1;
-    /* increase variance for pseudoranges */
-    if (code) fact=opt->eratio[frq];
-    /* else adjust variance between freqs */
-    else fact=opt->eratio[frq]/opt->eratio[0];
+    /* Firstly establish some factors that will scale the variance */
 
-    /* adjust variance for constellation */
+    /* System error factor */
+    double sys_fact;
     switch (sys) {
-        case SYS_GPS: fact*=EFACT_GPS;break;
-        case SYS_GLO: fact*=EFACT_GLO;break;
-        case SYS_GAL: fact*=EFACT_GAL;break;
-        case SYS_SBS: fact*=EFACT_SBS;break;
-        case SYS_QZS: fact*=EFACT_QZS;break;
-        case SYS_CMP: fact*=EFACT_CMP;break;
-        case SYS_IRN: fact*=EFACT_IRN;break;
-        default:      fact*=EFACT_GPS;break;
-    }
-    /* adjust variance for config parameters */
-    a=fact*opt->err[1];  /* base term */
-    b=fact*opt->err[2];  /* el term */
-    c=opt->err[3]*bl/1E4; /* baseline term */
-    d=CLIGHT*opt->sclkstab*dt; /* clock term */
-    /* calculate variance */
-    var=2.0*(a*a+b*b/sinel/sinel+c*c)+d*d;
-    if (opt->err[6]>0) {  /* add SNR term */
-        e=fact*opt->err[6];
-        var+=e*e*(pow(10,0.1*MAX(snr_max-snr_rover,0))+
-                  pow(10,0.1*MAX(snr_max-snr_base, 0)));
-    }
-    if (opt->err[7]>0.0) {   /* add rcvr stdevs term */
-        if (code) var+=SQR(opt->err[7]*0.01*(1<<(obs->Pstd[frq]+5))); /* 0.01*2^(n+5) */
-        else var+=SQR(opt->err[7]*obs->Lstd[frq]*0.004*0.2); /* 0.004 cycles -> m) */
+        case SYS_GPS: sys_fact=EFACT_GPS; break;
+        case SYS_GLO: sys_fact=EFACT_GLO; break;
+        case SYS_GAL: sys_fact=EFACT_GAL;break;
+        case SYS_SBS: sys_fact=EFACT_SBS; break;
+        case SYS_QZS: sys_fact=EFACT_QZS; break;
+        case SYS_CMP: sys_fact=EFACT_CMP; break;
+        case SYS_IRN: sys_fact=EFACT_IRN; break;
+        default:      sys_fact=EFACT_GPS; break;
     }
 
-    var*=(opt->ionoopt==IONOOPT_IFLC)?SQR(3.0):1.0;
+    /* System/frequency factors */
+    /* The ppp varerr function applies this factor.
+       #define VAR_GPS_QZS_L5_FACT to be consistent. */
+#ifdef VAR_GPS_QZS_L5_FACT
+    /* GPS/QZS L5 error factor */
+    if (sys==SYS_GPS||sys==SYS_QZS) {
+        if (frq==2) sys_fact*=EFACT_GPS_L5;
+    }
+#endif
+
+    /* Code/phase/frequency factor */
+    double code_freq_fact=opt->eratio[frq];
+    /* The ppp varerr function implements this guard.
+       #define VAR_GUARD_ERATIO to be consistent. */
+#ifdef VAR_GUARD_ERATIO
+    /* Guard against a configuration eratio being zero, or less */
+    if (code_freq_fact<=0.0) code_freq_fact=opt->eratio[0];
+#endif
+    /* Increased variance for pseudoranges */
+    if (!code) {
+        /* The ppp and pntpos varerr functions use 1.0 rather than the ratio. */
+#define VAR_PHASE_FREQ_RATIO
+#ifdef VAR_PHASE_FREQ_RATIO
+        /* Phase: adjust variance between freqs */
+        code_freq_fact/=opt->eratio[0];
+#else
+        code_freq_fact=1.0;
+#endif
+    }
+
+    /* IONOOPT IFLC factor */
+    double iflc_fact=(opt->ionoopt==IONOOPT_IFLC)?3.0:1.0;
+
+    /* Variance using an additive model */
+
+    /* Base term */
+    double a=opt->err[1];
+    double var=SQR(a);
+
+    /* Satellite elevation term */
+    /* The pntpos varerr function limits the elevation.
+       #define VAR_MIN_EL in radians to be consistent. */
+#ifdef VAR_MIN_EL
+    if (el<VAR_MIN_EL) el=VAR_MIN_EL;
+#endif
+    double b=opt->err[2];
+    /* The pntpos varerr function scales the elevation variance by 1/sin(el)
+       Undefine VAR_SQR_SINEL to be consistent. */
+#define VAR_SQR_SINEL
+#ifdef VAR_SQR_SINEL
+    var+=SQR(b/sin(el));
+#else
+    var+=SQR(b)/sin(el);
+#endif
+
+    /* Scale the above terms */
+    var*=2.0;
+
+    /* Add the SNR term, if not zero */
+    double d=opt->err[6];
+    if (d>0.0) {
+        /* #define VAR_SNR_NO_MAX to not have the SNR curve relative to the maximum SNR */
+#ifndef VAR_SNR_NO_MAX
+        double snr_max=opt->err[5];
+        var+=SQR(d)*(pow(10,0.1*MAX(snr_max-snr_rover,0))+
+                     pow(10,0.1*MAX(snr_max-snr_base, 0)));
+#else
+        var+=SQR(d)*(pow(10,-0.1*snr_rover)+pow(10,-0.1*snr_base));
+#endif
+    }
+
+    /* Scale the above terms */
+    var*=SQR(sys_fact*code_freq_fact);
+
+    /* Add the receiver std estimate */
+    double e=opt->err[7];
+    if (e>0.0) {
+        if (code) var+=SQR(e)*SQR(0.01*(1<<(obs->Pstd[frq]+5))); /* 0.01*2^(n+5) */
+        else var+=SQR(e)*SQR(obs->Lstd[frq]*0.004*0.2); /* 0.004 cycles -> m */
+    }
+
+    /* Baseline term */
+    /* TODO would the baseline contribution be affected by the use of IFLC, if
+       not then perhaps move below the scaling by the IFLC factor? */
+    double c=opt->err[3]*bl/1E4;
+    var+=2.0*SQR(c);
+
+    /* TODO The upstream code did not scale the clock error by the IFLC
+       factor.  The use of IFLC might not affect the random clock drift, so
+       perhaps add the clock term after scaling. */
+
+    /* Add the clock term */
+    var+=SQR(CLIGHT*opt->sclkstab*dt);
+
+    /* Scale the above terms */
+    var*=SQR(iflc_fact);
+
     return var;
 }
+
 /* baseline length -----------------------------------------------------------*/
 static double baseline(const double *ru, const double *rb, double *dr)
 {
