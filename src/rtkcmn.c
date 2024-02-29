@@ -1153,15 +1153,15 @@ extern void matmul(const char *tr, int n, int k, int m, double alpha,
                    const double *A, const double *B, double beta, double *C)
 {
     double d;
-    int i,j,x,f=tr[0]=='N'?(tr[1]=='N'?1:2):(tr[1]=='N'?3:4);
-    
-    for (i=0;i<n;i++) for (j=0;j<k;j++) {
+    int i,j,x,f=(tr[0] != 'N') + (tr[1] != 'N') * 2;
+
+    for (j=0;j<k;j++) for (i=0;i<n;i++) {
         d=0.0;
         switch (f) {
-            case 1: for (x=0;x<m;x++) d+=A[i+x*n]*B[x+j*m]; break;
+            case 0: for (x=0;x<m;x++) d+=A[i+x*n]*B[x+j*m]; break;
+            case 1: for (x=0;x<m;x++) d+=A[x+i*m]*B[x+j*m]; break;
             case 2: for (x=0;x<m;x++) d+=A[i+x*n]*B[j+x*k]; break;
-            case 3: for (x=0;x<m;x++) d+=A[x+i*m]*B[x+j*m]; break;
-            case 4: for (x=0;x<m;x++) d+=A[x+i*m]*B[j+x*k]; break;
+            case 3: for (x=0;x<m;x++) d+=A[x+i*m]*B[j+x*k]; break;
         }
         if (beta==0.0) C[i+j*n]=alpha*d; else C[i+j*n]=alpha*d+beta*C[i+j*n];
     }
@@ -1326,7 +1326,7 @@ extern int filter(double *x, double *P, const double *H, const double *v,
     }
     /* do kalman filter state update on compressed arrays */
     info=filter_(x_,P_,H_,v,R,k,m,xp_,Pp_);
-    /* copy values from compressed arrays back to full arrays */
+    /* copy values from compressed arrays back to full arrays, if update was successful */
     for (i=0;i<k;i++) {
         x[ix[i]]=xp_[i];
         for (j=0;j<k;j++) P[ix[i]+ix[j]*n]=Pp_[i+j*k];
@@ -1334,6 +1334,7 @@ extern int filter(double *x, double *P, const double *H, const double *v,
     free(ix); free(x_); free(xp_); free(P_); free(Pp_); free(H_);
     return info;
 }
+
 /* smoother --------------------------------------------------------------------
 * combine forward and backward filters by fixed-interval smoother as follows:
 *
