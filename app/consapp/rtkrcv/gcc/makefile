@@ -11,7 +11,7 @@ LDLIBS  = -lm -lrt -lpthread
 #LDLIBS  = ../../../lib/iers/gcc/iers.a -lm -lrt -lpthread
 
 all        : rtkrcv
-rtkrcv     : rtkrcv.o vt.o rtkcmn.o trace.o rtksvr.o rtkpos.o geoid.o solution.o lambda.o
+rtkrcv     : rtkrcv.o vt.o rtkcmn.o trace.o sparse.o rtksvr.o rtkpos.o geoid.o solution.o lambda.o
 rtkrcv     : sbas.o stream.o rcvraw.o rtcm.o preceph.o options.o pntpos.o ppp.o ppp_ar.o
 rtkrcv     : novatel.o ublox.o crescent.o skytraq.o javad.o nvs.o binex.o
 rtkrcv     : rt17.o ephemeris.o rinex.o ionex.o rtcm2.o rtcm3.o rtcm3e.o
@@ -26,6 +26,8 @@ rtkcmn.o   : $(SRC)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
 trace.o   : $(SRC)/trace.c
 	$(CC) -c $(CFLAGS) $(SRC)/trace.c
+sparse.o   : $(SRC)/sparse.c
+	$(CC) -c $(CFLAGS) $(SRC)/sparse.c
 rtksvr.o   : $(SRC)/rtksvr.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtksvr.c
 rtkpos.o   : $(SRC)/rtkpos.c

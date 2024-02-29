@@ -8,13 +8,15 @@ LDFLAGS = -lm
 BIN = genstec
 
 all        : $(BIN)
-genstec    : genstec.o rtkcmn.o trace.o ephemeris.o preceph.o sbas.o rinex.o
+genstec    : genstec.o rtkcmn.o trace.o sparse.o ephemeris.o preceph.o sbas.o rinex.o
 #gengrid    : gengrid.o rtkcmn.o trace.o stec.o preceph.o
 
 rtkcmn.o   : $(RTKLIBDIR)/rtklib.h $(RTKLIBDIR)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(RTKLIBDIR)/rtkcmn.c
 trace.o   : $(SRC)/trace.h $(SRC)/trace.c
 	$(CC) -c $(CFLAGS) $(SRC)/trace.c
+sparse.o   : $(SRC)/sparse.c
+	$(CC) -c $(CFLAGS) $(SRC)/sparse.c
 ephemeris.o: $(RTKLIBDIR)/ephemeris.c
 	$(CC) -c $(CFLAGS) $(RTKLIBDIR)/ephemeris.c
 preceph.o  : $(RTKLIBDIR)/preceph.c

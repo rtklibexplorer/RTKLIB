@@ -12,7 +12,7 @@ CFLAGS = -std=c99 -Wall -O3 -pedantic -Wno-unused-but-set-variable -I$(SRC) $(OP
 LDLIBS  = -lm -lrt -lpthread
 
 all        : str2str
-str2str    : str2str.o stream.o rtkcmn.o trace.o solution.o sbas.o geoid.o
+str2str    : str2str.o stream.o rtkcmn.o trace.o sparse.o solution.o sbas.o geoid.o
 str2str    : rcvraw.o novatel.o ublox.o crescent.o skytraq.o javad.o
 str2str    : nvs.o binex.o rt17.o rtcm.o rtcm2.o rtcm3.o rtcm3e.o preceph.o streamsvr.o
 str2str    : septentrio.o swiftnav.o
@@ -27,6 +27,8 @@ rtkcmn.o   : $(SRC)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
 trace.o   : $(SRC)/trace.c
 	$(CC) -c $(CFLAGS) $(SRC)/trace.c
+sparse.o   : $(SRC)/sparse.c
+	$(CC) -c $(CFLAGS) $(SRC)/sparse.c
 solution.o : $(SRC)/solution.c
 	$(CC) -c $(CFLAGS) $(SRC)/solution.c
 sbas.o     : $(SRC)/sbas.c

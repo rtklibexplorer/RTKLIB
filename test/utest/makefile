@@ -10,25 +10,27 @@ BIN    = t_matrix t_time t_coord t_rinex t_lambda t_atmos t_misc t_preceph t_glo
 t_geoid t_ppp t_ionex t_tle
 
 all        : $(BIN)
-t_matrix   : t_matrix.o rtkcmn.o trace.o preceph.o
-t_time     : t_time.o rtkcmn.o trace.o preceph.o
-t_coord    : t_coord.o rtkcmn.o trace.o geoid.o preceph.o
-t_rinex    : t_rinex.o rtkcmn.o trace.o rinex.o preceph.o
-t_lambda   : t_lambda.o rtkcmn.o trace.o lambda.o preceph.o
-t_atmos    : t_atmos.o rtkcmn.o trace.o preceph.o
-t_misc     : t_misc.o rtkcmn.o trace.o preceph.o
-t_preceph  : t_preceph.o rtkcmn.o trace.o preceph.o rinex.o ephemeris.o sbas.o
-t_gloeph   : t_gloeph.o rtkcmn.o trace.o rinex.o ephemeris.o sbas.o preceph.o 
-t_geoid    : t_geoid.o rtkcmn.o trace.o preceph.o geoid.o
-t_ppp      : t_ppp.o rtkcmn.o trace.o ephemeris.o preceph.o sbas.o ionex.o pntpos.o ppp.o ppp_ar.o
+t_matrix   : t_matrix.o rtkcmn.o trace.o sparse.o preceph.o
+t_time     : t_time.o rtkcmn.o trace.o sparse.o preceph.o
+t_coord    : t_coord.o rtkcmn.o trace.o sparse.o geoid.o preceph.o
+t_rinex    : t_rinex.o rtkcmn.o trace.o sparse.o rinex.o preceph.o
+t_lambda   : t_lambda.o rtkcmn.o trace.o sparse.o lambda.o preceph.o
+t_atmos    : t_atmos.o rtkcmn.o trace.o sparse.o preceph.o
+t_misc     : t_misc.o rtkcmn.o trace.o sparse.o preceph.o
+t_preceph  : t_preceph.o rtkcmn.o trace.o sparse.o preceph.o rinex.o ephemeris.o sbas.o
+t_gloeph   : t_gloeph.o rtkcmn.o trace.o sparse.o rinex.o ephemeris.o sbas.o preceph.o 
+t_geoid    : t_geoid.o rtkcmn.o trace.o sparse.o preceph.o geoid.o
+t_ppp      : t_ppp.o rtkcmn.o trace.o sparse.o ephemeris.o preceph.o sbas.o ionex.o pntpos.o ppp.o ppp_ar.o
 t_ppp      : lambda.o tides.o
-t_ionex    : t_ionex.o rtkcmn.o trace.o preceph.o ionex.o
-t_tle      : t_tle.o rtkcmn.o trace.o rinex.o ephemeris.o sbas.o preceph.o tle.o
+t_ionex    : t_ionex.o rtkcmn.o trace.o sparse.o preceph.o ionex.o
+t_tle      : t_tle.o rtkcmn.o trace.o sparse.o rinex.o ephemeris.o sbas.o preceph.o tle.o
 
 rtkcmn.o   : $(SRC)/rtklib.h $(SRC)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
 trace.o   : $(SRC)/trace.c
 	$(CC) -c $(CFLAGS) $(SRC)/trace.c
+sparse.o   : $(SRC)/sparse.c
+	$(CC) -c $(CFLAGS) $(SRC)/sparse.c
 rinex.o    : $(SRC)/rtklib.h $(SRC)/rinex.c
 	$(CC) -c $(CFLAGS) $(SRC)/rinex.c
 rtkpos.o   : $(SRC)/rtklib.h $(SRC)/rtkpos.c

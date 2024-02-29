@@ -38,6 +38,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <stdint.h>
+#include "sparse.h"
 #ifdef WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -1374,7 +1375,7 @@ EXPORT int  solve (const char *tr, const double *A, const double *Y, int n,
                    int m, double *X);
 EXPORT int  lsq   (const double *A, const double *y, int n, int m, double *x,
                    double *Q);
-EXPORT int  filter(double *x, double *P, const double *H, const double *v,
+EXPORT int  filter(double *x, double *P, const sparse_mat_t *H, const double *v,
                    const double *R, int n, int m);
 EXPORT int  smoother(const double *xf, const double *Qf, const double *xb,
                      const double *Qb, int n, double *xs, double *Qs);

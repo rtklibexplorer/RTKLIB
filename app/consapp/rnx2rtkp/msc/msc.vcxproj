@@ -123,6 +123,7 @@
     <ClCompile Include="..\..\..\..\src\rtcm3e.c" />
     <ClCompile Include="..\..\..\..\src\rtkcmn.c" />
     <ClCompile Include="..\..\..\..\src\trace.c" />
+    <ClCompile Include="..\..\..\..\src\sparse.c" />
     <ClCompile Include="..\..\..\..\src\rtkpos.c" />
     <ClCompile Include="..\..\..\..\src\sbas.c" />
     <ClCompile Include="..\..\..\..\src\solution.c" />

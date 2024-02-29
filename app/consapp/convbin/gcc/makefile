@@ -15,7 +15,7 @@ LDLIBS = -lm -lrt
 
 all  : convbin
 
-convbin    : convbin.o rtkcmn.o trace.o rinex.o sbas.o preceph.o rcvraw.o convrnx.o
+convbin    : convbin.o rtkcmn.o trace.o sparse.o rinex.o sbas.o preceph.o rcvraw.o convrnx.o
 convbin    : rtcm.o rtcm2.o rtcm3.o rtcm3e.o pntpos.o ephemeris.o ionex.o
 convbin    : novatel.o ublox.o crescent.o skytraq.o javad.o nvs.o
 convbin    : binex.o rt17.o septentrio.o swiftnav.o
@@ -26,6 +26,8 @@ rtkcmn.o   : $(SRC)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
 trace.o   : $(SRC)/trace.c
 	$(CC) -c $(CFLAGS) $(SRC)/trace.c
+sparse.o   : $(SRC)/sparse.c
+	$(CC) -c $(CFLAGS) $(SRC)/sparse.c
 rinex.o    : $(SRC)/rinex.c
 	$(CC) -c $(CFLAGS) $(SRC)/rinex.c
 sbas.o     : $(SRC)/sbas.c

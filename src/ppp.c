@@ -62,6 +62,7 @@
 *-----------------------------------------------------------------------------*/
 #include "rtklib.h"
 #include "trace.h"
+#include "sparse.h"
 
 #define SQR(x)      ((x)*(x))
 #define SQRT(x)     ((x)<=0.0||(x)!=(x)?0.0:sqrt(x))
@@ -930,7 +931,7 @@ static int model_iono(gtime_t time, const double *pos, const double *azel,
 static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                    const double *dts, const double *var_rs, const int *svh,
                    const double *dr, int *exc, const nav_t *nav,
-                   const double *x, rtk_t *rtk, double *v, double *H, double *R,
+                   const double *x, rtk_t *rtk, double *v, sparse_mat_t *H, double *R,
                    double *azel)
 {
     prcopt_t *opt=&rtk->opt;
@@ -996,7 +997,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                 if ((freq=sat2freq(sat,obs[i].code[frq],nav))==0.0) continue;
                 C=SQR(FREQL1/freq)*ionmapf(pos,azel+i*2)*(code==0?-1.0:1.0);
             }
-            for (k=0;k<nx;k++) H[k+nx*nv]=k<3?-e[k]:0.0;
+            for (k=0;k<nx;k++) sparse_mat_set_element(H,k,nv,k<3?-e[k]:0.0);
 
             /* receiver clock */
             switch (sys) {
@@ -1007,24 +1008,24 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                 default:      k=0; break;
             }
             cdtr=x[IC(k,opt)];
-            H[IC(k,opt)+nx*nv]=1.0;
+            sparse_mat_set_element(H, IC(k, opt), nv, 1.0);
 
             if (opt->tropopt==TROPOPT_EST||opt->tropopt==TROPOPT_ESTG) {
                 for (k=0;k<(opt->tropopt>=TROPOPT_ESTG?3:1);k++) {
-                    H[IT(opt)+k+nx*nv]=dtdx[k];
+                    sparse_mat_set_element(H, IT(opt) + k, nv, dtdx[k]);
                 }
             }
             if (opt->ionoopt==IONOOPT_EST) {
                 if (rtk->x[II(sat,opt)]==0.0) continue;
-                H[II(sat,opt)+nx*nv]=C;
+                sparse_mat_set_element(H, II(sat, opt), nv, C);
             }
             if (frq==2&&code==1) { /* L5-receiver-dcb */
                 dcb+=rtk->x[ID(opt)];
-                H[ID(opt)+nx*nv]=1.0;
+                sparse_mat_set_element(H, ID(opt), nv, 1.0);
             }
             if (code==0) { /* phase bias */
                 if ((bias=x[IB(sat,frq,opt)])==0.0) continue;
-                H[IB(sat,frq,opt)+nx*nv]=1.0;
+                sparse_mat_set_element(H, IB(sat, frq, opt), nv, 1.0);
             }
             /* residual */
             v[nv]=y-(r+cdtr-CLIGHT*dts[i*2]+dtrp+C*dion+dcb+bias);
@@ -1168,9 +1169,10 @@ static int test_hold_amb(rtk_t *rtk)
 extern void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
 {
     const prcopt_t *opt=&rtk->opt;
-    double *rs,*dts,*var,*v,*H,*R,*azel,*xp,*Pp,dr[3]={0},std[3];
+    double *rs,*dts,*var,*v,*R,*azel,*xp,*Pp,dr[3]={0},std[3];
     char str[32];
     int i,j,nv,info,svh[MAXOBS],exc[MAXOBS]={0},stat=SOLQ_SINGLE;
+    sparse_mat_t* H;
 
     time2str(obs[0].time,str,2);
     trace(3,"pppos   : time=%s nx=%d n=%d\n",str,rtk->nx,n);
@@ -1200,7 +1202,9 @@ extern void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
     }
     nv=n*rtk->opt.nf*2+MAXSAT+3;
     xp=mat(rtk->nx,1); Pp=zeros(rtk->nx,rtk->nx);
-    v=mat(nv,1); H=mat(rtk->nx,nv); R=mat(nv,nv);
+    v=mat(nv,1); R=mat(nv,nv);
+
+    H = sparse_mat_create(rtk->nx, nv);
 
     for (i=0;i<MAX_ITER;i++) {
 
@@ -1213,6 +1217,7 @@ extern void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
             break;
         }
         /* measurement update of ekf states */
+        sparse_mat_compress(H);
         if ((info=filter(xp,Pp,H,v,R,rtk->nx,nv))) {
             trace(2,"%s ppp (%d) filter error info=%d\n",str,i+1,info);
             break;
@@ -1253,5 +1258,6 @@ extern void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         }
     }
     free(rs); free(dts); free(var); free(azel);
-    free(xp); free(Pp); free(v); free(H); free(R);
+    free(xp); free(Pp);  free(v);   free(R);
+    sparse_mat_free(H);
 }

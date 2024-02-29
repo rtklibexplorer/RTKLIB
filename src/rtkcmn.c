@@ -156,6 +156,7 @@
 #endif
 #include "rtklib.h"
 #include "trace.h"
+#include "sparse.h"
 
 /* constants -----------------------------------------------------------------*/
 
@@ -1309,7 +1310,8 @@ static int filter_(const double *x, const double *P, const double *H,
     free(F); free(Q); free(K); free(I);
     return info;
 }
-extern int filter(double *x, double *P, const double *H, const double *v,
+
+extern int filter(double *x, double *P, const sparse_mat_t *H, const double *v,
                   const double *R, int n, int m)
 {
     double *x_,*xp_,*P_,*Pp_,*H_;
@@ -1322,7 +1324,7 @@ extern int filter(double *x, double *P, const double *H, const double *v,
     for (i=0;i<k;i++) {
         x_[i]=x[ix[i]];
         for (j=0;j<k;j++) P_[i+j*k]=P[ix[i]+ix[j]*n];
-        for (j=0;j<m;j++) H_[i+j*k]=H[ix[i]+j*n];
+        for (j=0;j<m;j++) H_[i+j*k]=sparse_mat_get_element(H, ix[i], j);
     }
     /* do kalman filter state update on compressed arrays */
     info=filter_(x_,P_,H_,v,R,k,m,xp_,Pp_);

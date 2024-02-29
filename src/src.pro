@@ -34,6 +34,7 @@ DESTDIR = ../lib
 
 SOURCES += rtkcmn.c \
     trace.c \
+    sparse.c \
     convkml.c \
     convrnx.c \
     convgpx.c \
@@ -75,7 +76,7 @@ SOURCES += rtkcmn.c \
     rcv/swiftnav.c \
     rcv/ublox.c 
 
-HEADERS += rtklib.h trace.h
+HEADERS += rtklib.h trace.h sparse.h
 
 unix {
     target.path = /usr/lib

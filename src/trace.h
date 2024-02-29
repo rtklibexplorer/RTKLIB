@@ -25,6 +25,7 @@ EXPORT int gettracelevel(void);
 EXPORT void trace_impl    (int level, const char *format, ...);
 EXPORT void tracet_impl   (int level, const char *format, ...);
 EXPORT void tracemat_impl (int level, const double *A, int n, int m, int p, int q);
+EXPORT void tracesparsemat_impl(int level, const sparse_mat_t* A, int p, int q);
 EXPORT void traceobs_impl (int level, const obsd_t *obs, int n);
 EXPORT void tracenav_impl (int level, const nav_t *nav);
 EXPORT void tracegnav_impl(int level, const nav_t *nav);
@@ -43,6 +44,7 @@ EXPORT void traceb_impl   (int level, const uint8_t *p, int n);
 #define trace(level, ...)     ((void)0)
 #define tracet(level, ...)    ((void)0)
 #define tracemat(level, ...)  ((void)0)
+#define tracesparsemat(level, ...) ((void)0)
 #define traceobs(level, ...)  ((void)0)
 #define tracenav(level, ...)  ((void)0)
 #define tracegnav(level, ...) ((void)0)

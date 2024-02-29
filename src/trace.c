@@ -91,6 +91,17 @@ extern void tracemat_impl(int level, const double *A, int n, int m, int p,
     matfprint(A, n, m, p, q, fp_trace);
     fflush(fp_trace);
 }
+extern void tracesparsemat_impl(int level, const sparse_mat_t* A, int p, int q)
+{
+  int i, j;
+  if (!fp_trace || level > level_trace) return;
+  for (i = 0; i < A->n_rows; i++) {
+    for (j = 0; j < A->n_cols; j++)
+      fprintf(fp_trace, "%*.*f ", p, q, sparse_mat_get_element(A, i, j));
+    fprintf(fp_trace, "\n");
+  }
+  fflush(fp_trace);
+}
 extern void traceobs_impl(int level, const obsd_t *obs, int n)
 {
     char str[64], id[16];

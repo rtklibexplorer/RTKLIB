@@ -50,6 +50,7 @@
 #include <stdarg.h>
 #include "rtklib.h"
 #include "trace.h"
+#include "sparse.h"
 
 /* algorithm configuration -------------------------------------------------- */
 #define STD_PREC_VAR_THRESH 0  /* pos variance threshold to skip standard precision */
@@ -1086,7 +1087,7 @@ static void ddcov(const int *nb, int n, const double *Ri, const double *Rj,
 }
 /* baseline length constraint ------------------------------------------------*/
 static int constbl(rtk_t *rtk, const double *x, const double *P, double *v,
-                   double *H, double *Ri, double *Rj, int index)
+                   sparse_mat_t *H, double *Ri, double *Rj, int index)
 {
     const double thres=0.1; /* threshold for nonliearity (v.2.3.0) */
     double xb[3],b[3],bb,var=0.0;
@@ -1115,7 +1116,7 @@ static int constbl(rtk_t *rtk, const double *x, const double *P, double *v,
     /* constraint to baseline length */
     v[index]=rtk->opt.baseline[0]-bb;
     if (H) {
-        for (i=0;i<3;i++) H[i+index*rtk->nx]=b[i]/bb;
+        for (i=0;i<3;i++) sparse_mat_set_element(H, i, index, b[i] / bb);
     }
     Ri[index]=0.0;
     Rj[index]=SQR(rtk->opt.baseline[1]);
@@ -1124,6 +1125,7 @@ static int constbl(rtk_t *rtk, const double *x, const double *P, double *v,
     
     return 1;
 }
+
 /* precise tropspheric model -------------------------------------------------*/
 static double prectrop(gtime_t time, const double *pos, int r,
                        const double *azel, const prcopt_t *opt, const double *x,
@@ -1184,11 +1186,11 @@ static int test_sys(int sys, int m)
 static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, const double *x,
                  const double *P, const int *sat, double *y, double *e,
                  double *azel, double *freq, const int *iu, const int *ir,
-                 int ns, double *v, double *H, double *R, int *vflg)
+                 int ns, double *v, sparse_mat_t *H, double *R, int *vflg)
 {
     prcopt_t *opt=&rtk->opt;
     double bl,dr[3],posu[3],posr[3],didxi=0.0,didxj=0.0,*im,icb,threshadj;
-    double *tropr,*tropu,*dtdxr,*dtdxu,*Ri,*Rj,freqi,freqj,*Hi=NULL,df;
+    double *tropr,*tropu,*dtdxr,*dtdxu,*Ri,*Rj,freqi,freqj,df;
     int i,j,k,m,f,nv=0,nb[NFREQ*NSYS*2+2]={0},b=0,sysi,sysj,nf=NF(opt);
     int ii,jj,frq,code;
     
@@ -1248,10 +1250,9 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                 if (!validobs(iu[j],ir[j],f,nf,y)) continue;
             
                 if (H) {
-                    Hi=H+nv*rtk->nx;
-                    for (k=0;k<rtk->nx;k++) Hi[k]=0.0;
+                    for (k=0;k<H->n_rows;k++) sparse_mat_set_element(H, k, nv, 0.0);
                 }
-            
+
                 /* double-differenced measurements from 2 receivers and 2 sats in meters */
                 v[nv]=(y[f+iu[i]*nf*2]-y[f+ir[i]*nf*2])-
                       (y[f+iu[j]*nf*2]-y[f+ir[j]*nf*2]);
@@ -1259,7 +1260,7 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                 /* partial derivatives by rover position, combine unit vectors from two sats */
                 if (H) {
                     for (k=0;k<3;k++) {
-                        Hi[k]=-e[k+iu[i]*3]+e[k+iu[j]*3];  /* translation of innovation to position states */
+                      sparse_mat_set_element(H, k, nv, -e[k + iu[i] * 3] + e[k + iu[j] * 3]);
                     }
                 }
                 if (opt->ionoopt==IONOOPT_EST) {
@@ -1268,8 +1269,8 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                     didxj=(code?-1.0:1.0)*im[j]*SQR(FREQL1/freqj);
                     v[nv]-=didxi*x[II(sat[i],opt)]-didxj*x[II(sat[j],opt)];
                     if (H) {
-                        Hi[II(sat[i],opt)]= didxi;
-                        Hi[II(sat[j],opt)]=-didxj;
+                      sparse_mat_set_element(H, II(sat[i], opt), nv, didxi);
+                      sparse_mat_set_element(H, II(sat[j], opt), nv, -didxj);
                     }
                 }
                 if (opt->tropopt>=TROPOPT_EST) {
@@ -1277,8 +1278,10 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                     v[nv]-=(tropu[i]-tropu[j])-(tropr[i]-tropr[j]);
                     for (k=0;k<(opt->tropopt<TROPOPT_ESTG?1:3);k++) {
                         if (!H) continue;
-                        Hi[IT(0,opt)+k]= (dtdxu[k+i*3]-dtdxu[k+j*3]);
-                        Hi[IT(1,opt)+k]=-(dtdxr[k+i*3]-dtdxr[k+j*3]);
+                        sparse_mat_set_element(H, IT(0, opt) + k, nv,
+                                               (dtdxu[k + i * 3] - dtdxu[k + j * 3]));
+                        sparse_mat_set_element(H, IT(1, opt) + k, nv,
+                                               -(dtdxr[k + i * 3] - dtdxr[k + j * 3]));
                     }
                 }
                 ii=IB(sat[i],frq,opt);
@@ -1290,15 +1293,15 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                         /* phase-bias states are single-differenced so need to difference them */
                         v[nv]-=CLIGHT/freqi*x[ii]-CLIGHT/freqj*x[jj];
                         if (H) {
-                        Hi[ii]= CLIGHT/freqi;
-                        Hi[jj]=-CLIGHT/freqj;
+                          sparse_mat_set_element(H, ii, nv, CLIGHT / freqi);
+                          sparse_mat_set_element(H, jj, nv, -CLIGHT / freqj);
                         }
                     }
                     else {
                         v[nv]-=x[ii]-x[jj];
                         if (H) {
-                            Hi[ii]= 1.0;
-                            Hi[jj]=-1.0;
+                          sparse_mat_set_element(H, ii, nv, 1.0);
+                          sparse_mat_set_element(H, jj, nv, -1.0);
                         }
                     }
                 }
@@ -1310,7 +1313,7 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
                         /* auto-cal method */
                         df=(freqi-freqj)/(f==0?DFRQ1_GLO:DFRQ2_GLO);
                         v[nv]-=df*x[IL(frq,opt)];
-                        if (H) Hi[IL(frq,opt)]=df;
+                        if (H) sparse_mat_set_element(H, IL(frq, opt), nv, df);
                     }
                     else if (rtk->opt.glomodear==GLO_ARMODE_FIXHOLD && frq<NFREQGLO) {
                         /* fix-and-hold method */
@@ -1387,7 +1390,7 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
         vflg[nv++]=3<<4;
         nb[b++]++;
     }
-    if (H) {trace(5,"H=\n"); tracemat(5,H,rtk->nx,nv,7,4);}
+    if (H) {trace(5,"H=\n"); tracesparsemat(5,H,7,4);}
     
     /* double-differenced measurement error covariance */
     ddcov(nb,b,Ri,Rj,nv,R);
@@ -1397,6 +1400,7 @@ static int ddres(rtk_t *rtk, const nav_t *nav, const obsd_t *obs, double dt, con
 
     return nv;
 }
+
 /* time-interpolation of residuals (for post-processing solutions) -----------
         time = rover time stamp
         obs = pointer to first base observation for this epoch
@@ -1548,16 +1552,19 @@ static void restamb(rtk_t *rtk, const double *bias, int nb, double *xa)
         }
     }
 }
+
 /* hold integer ambiguity ----------------------------------------------------*/
 static void holdamb(rtk_t *rtk, const double *xa)
 {
-    double *v,*H,*R;
+    double *v,*R;
     int i,j,n,m,f,info,index[MAXSAT],nb=rtk->nx-rtk->na,nv=0,nf=NF(&rtk->opt);
-    double dd,sum;
-    
+    double dd;
+
+    sparse_mat_t* H = sparse_mat_create(nb, rtk->nx);
+
     trace(3,"holdamb :\n");
     
-    v=mat(nb,1); H=zeros(nb,rtk->nx);
+    v=mat(nb,1);
     
     for (m=0;m<6;m++) for (f=0;f<nf;f++) {
         
@@ -1576,15 +1583,15 @@ static void holdamb(rtk_t *rtk, const double *xa)
                  double diff: v(nv)=err(i)-err(0) */
             v[nv]=(xa[index[0]]-xa[index[i]])-(rtk->x[index[0]]-rtk->x[index[i]]);
             
-            H[index[0]+nv*rtk->nx]= 1.0;
-            H[index[i]+nv*rtk->nx]=-1.0;
+            sparse_mat_set_element(H, index[0], nv, 1.0);
+            sparse_mat_set_element(H, index[i], nv, -1.0);
             nv++;
         }
     }
     /* return if less than min sats for hold (skip if fix&hold for GLONASS only) */
     if (rtk->opt.modear==ARMODE_FIXHOLD&&nv<rtk->opt.minholdsats) { 
         trace(3,"holdamb: not enough sats to hold ambiguity\n");
-        free(v); free(H);
+        free(v); sparse_mat_free(H);
         return;
     }
     
@@ -1593,17 +1600,18 @@ static void holdamb(rtk_t *rtk, const double *xa)
     for (i=0;i<nv;i++) R[i+i*nv]=rtk->opt.varholdamb;
         
     /* update states with constraints */
+    sparse_mat_compress(H);
     if ((info=filter(rtk->x,rtk->P,H,v,R,rtk->nx,nv))) {
         errmsg(rtk,"filter error (info=%d)\n",info);
     }
-    free(R);free(v); free(H);
+    free(R);free(v); sparse_mat_free(H);
 
     /* skip glonass/sbs icbias update if not enabled  */
     if (rtk->opt.glomodear!=GLO_ARMODE_FIXHOLD) return;
 
     /* Move fractional part of bias from phase-bias into ic bias for GLONASS sats (both in cycles) */
     for (f=0;f<nf;f++) {
-        i=-1;sum=0;
+        i=-1;
         for (j=nv=0;j<MAXSAT;j++) {
             /* check if valid GLONASS sat */
             if (test_sys(rtk->ssat[j].sys,1)&&rtk->ssat[j].vsat[f]&&rtk->ssat[j].lock[f]>=0) {
@@ -1617,7 +1625,6 @@ static void holdamb(rtk_t *rtk, const double *xa)
                     dd=rtk->opt.gainholdamb*(dd-ROUND(dd));  /* throwout integer part of answer and multiply by filter gain */
                     rtk->x[IB(j+1,f,&rtk->opt)]-=dd;  /* remove fractional part from phase bias */
                     rtk->ssat[j].icbias[f]+=dd;       /* and move to IC bias */
-                    sum+=dd;
                     index[nv++]=j;
                 }
             }
@@ -1625,7 +1632,7 @@ static void holdamb(rtk_t *rtk, const double *xa)
     }
     /* Move fractional part of bias from phase-bias into ic bias for SBAS sats (both in cycles) */
     for (f=0;f<nf;f++) {
-        i=-1;sum=0;
+        i=-1;
         for (j=nv=0;j<MAXSAT;j++) {
             /* check if valid GPS/SBS sat */
             if (test_sys(rtk->ssat[j].sys,0)&&rtk->ssat[j].vsat[f]&&rtk->ssat[j].lock[f]>=0) {
@@ -1640,7 +1647,6 @@ static void holdamb(rtk_t *rtk, const double *xa)
                     dd=rtk->opt.gainholdamb*(dd-ROUND(dd));  /* throwout integer part of answer and multiply by filter gain */
                     rtk->x[IB(j+1,f,&rtk->opt)]-=dd;  /* remove fractional part from phase bias diff */
                     rtk->ssat[j].icbias[f]+=dd;       /* and move to IC bias */
-                    sum+=dd;
                     index[nv++]=j;
                 }
             }
@@ -1908,12 +1914,13 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
 {
     prcopt_t *opt=&rtk->opt;
     gtime_t time=obs[0].time;
-    double *rs,*dts,*var,*y,*e,*azel,*freq,*v,*H,*R,*xp,*Pp,*xa,*bias,dt;
+    double *rs,*dts,*var,*y,*e,*azel,*freq,*v,*R,*xp,*Pp,*xa,*bias,dt;
     int i,j,f,n=nu+nr,ns,ny,nv,sat[MAXSAT],iu[MAXSAT],ir[MAXSAT];
     int info,vflg[MAXOBS*NFREQ*2+1],svh[MAXOBS*2];
     int stat=rtk->opt.mode<=PMODE_DGPS?SOLQ_DGPS:SOLQ_FLOAT;
     int nf=opt->ionoopt==IONOOPT_IFLC?1:opt->nf;
-    
+    sparse_mat_t* H;
+
     /* time diff between base and rover observations */
     dt=timediff(time,obs[nu].time);
     trace(3,"relpos  : dt=%.3f nu=%d nr=%d\n",dt,nu,nr);
@@ -1980,8 +1987,10 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     matcpy(Pp,rtk->P,rtk->nx,rtk->nx);
     
     ny=ns*nf*2+2;
-    v=mat(ny,1); H=zeros(rtk->nx,ny); R=mat(ny,ny); bias=mat(rtk->nx,1);
+    v=mat(ny,1); R=mat(ny,ny); bias=mat(rtk->nx,1);
     
+    H = sparse_mat_create(rtk->nx, ny);
+
     trace(3,"rover:  dt=%.3f\n",dt);
     for (i=0;i<opt->niter;i++) {
         /* calculate zero diff residuals [range - measured pseudorange] for rover (phase and code)
@@ -2024,6 +2033,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
                 xp=x+K*v
                 Pp=(I-K*H')*P                  */
         trace(3,"before filter x=");tracemat(3,rtk->x,1,9,13,6);
+        sparse_mat_compress(H);
         if ((info=filter(xp,Pp,H,v,R,rtk->nx,nv))) {
             errmsg(rtk,"filter error (info=%d)\n",info);
             stat=SOLQ_NONE;
@@ -2145,7 +2155,8 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
             rtk->ssat[i].lock[j]++;
     }
     free(rs); free(dts); free(var); free(y); free(e); free(azel); free(freq);
-    free(xp); free(Pp);  free(xa);  free(v); free(H); free(R); free(bias);
+    free(xp); free(Pp);  free(xa);  free(v); free(R); free(bias);
+    sparse_mat_free(H);
     
     if (stat!=SOLQ_NONE) rtk->sol.stat=stat;
 
