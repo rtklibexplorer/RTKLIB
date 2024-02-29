@@ -1286,8 +1286,11 @@ extern int lsq(const double *A, const double *y, int n, int m, double *x,
 *          double *xp       O   states vector after update (n x 1)
 *          double *Pp       O   covariance matrix of states after update (n x n)
 * return : status (0:ok,<0:error)
+*          Error means that K could not be calculated because (H'*P*H+R) (==Q) is
+*          singular.
 * notes  : matrix stored by column-major order (fortran convention)
 *          if state x[i]==0.0, not updates state x[i]/P[i+i*n]
+*          only updates output state and covariance, if Q is not singular (returns 0)
 *-----------------------------------------------------------------------------*/
 static int filter_(const double *x, const double *P, const double *H,
                    const double *v, const double *R, int n, int m,
@@ -1325,11 +1328,12 @@ extern int filter(double *x, double *P, const double *H, const double *v,
         for (j=0;j<m;j++) H_[i+j*k]=H[ix[i]+j*n];
     }
     /* do kalman filter state update on compressed arrays */
-    info=filter_(x_,P_,H_,v,R,k,m,xp_,Pp_);
-    /* copy values from compressed arrays back to full arrays, if update was successful */
-    for (i=0;i<k;i++) {
-        x[ix[i]]=xp_[i];
-        for (j=0;j<k;j++) P[ix[i]+ix[j]*n]=Pp_[i+j*k];
+    if(!(info=filter_(x_,P_,H_,v,R,k,m,xp_,Pp_))) {
+        /* copy values from compressed arrays back to full arrays, if update was successful */
+        for (i=0;i<k;i++) {
+            x[ix[i]]=xp_[i];
+            for (j=0;j<k;j++) P[ix[i]+ix[j]*n]=Pp_[i+j*k];
+        }
     }
     free(ix); free(x_); free(xp_); free(P_); free(Pp_); free(H_);
     return info;
