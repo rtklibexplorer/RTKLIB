@@ -415,7 +415,7 @@ static int estpos(const obsd_t *obs, int n, const double *rs, const double *dts,
     
     trace(3,"estpos  : n=%d\n",n);
     
-    v=mat(n+4,1); H=mat(NX,n+4); var=mat(n+4,1);
+    v=mat(n+NX-4,1); H=mat(NX,n+NX-4); var=mat(n+NX-4,1);
     
     for (i=0;i<3;i++) x[i]=sol->rr[i];
 
