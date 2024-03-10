@@ -430,8 +430,9 @@ extern void seph2pos(gtime_t time, const seph_t *seph, double *rs, double *dts,
 /* select ephemeris --------------------------------------------------------*/
 static eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
 {
-    double t,tmax,tmin;
-    int i,j=-1,sys,sel=0;
+    double tmax,tmin;
+    long ttr_min=0;
+    int i=0,j,sys,sel=0;
 
     trace(4,"seleph  : time=%s sat=%2d iode=%d\n",time_str(time,3),sat,iode);
 
@@ -446,7 +447,24 @@ static eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
     }
     tmin=tmax+1.0;
 
-    for (i=0;i<nav->n;i++) {
+    /* Only entries for which the time difference to toe is within tmax are
+     * considered, and the entries are sorted firstly by toe, so the range of
+     * entries to be searched can be narrowed. Find the first entry with a toe
+     * greater than time-tmax using a binary search. Note the entry toe and
+     * ttr times are in seconds so the gtime_t second fractions can be ignored
+     * in some cases. */
+    time_t start_time=time.time-1-tmax;
+    if (nav->n>0&&nav->eph[0].toe.time<start_time) {
+        for (j=nav->n-1;i<j;) {
+            int k=(i+j)/2;
+            if (nav->eph[k].toe.time<start_time) i=k+1; else j=k;
+        }
+    }
+    time_t end_time=time.time+1+tmax;
+    for (j=-1;i<nav->n;i++) {
+        /* Can exit the search early when toe>time+tmax */
+        gtime_t toe=nav->eph[i].toe;
+        if (toe.time>end_time) break;
         if (nav->eph[i].sat!=sat) continue;
         if (iode>=0&&nav->eph[i].iode!=iode) continue;
         if (sys==SYS_GAL) {
@@ -457,11 +475,20 @@ static eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
             /*if (sel==1&&!(nav->eph[i].code&(1<<8))) continue; */ /* F/NAV */
             if (sel==1&&!(nav->eph[i].code&(1<<9))) continue; /* I/NAV */
             if (sel==2&&!(nav->eph[i].code&(1<<8))) continue; /* F/NAV */
-            if (timediff(nav->eph[i].toe,time)>=0.0) continue; /* AOD<=0 */
+            if (timediff(toe,time)>=0.0) continue; /* AOD<=0 */
         }
-        if ((t=fabs(timediff(nav->eph[i].toe,time)))>tmax) continue;
+        double t=fabs(timediff(toe,time));
+        if (t>tmax) continue;
         if (iode>=0) return nav->eph+i;
-        if (t<=tmin) {j=i; tmin=t;} /* toe closest to time */
+        if (t<=tmin) {
+            /* toe closest to time */
+            /* Use only if the most recently transmitted */
+            if (t==tmin && nav->eph[i].ttr.time<ttr_min) continue;
+            j=i;
+            tmin=t;
+            ttr_min=nav->eph[i].ttr.time;
+            continue;
+        }
     }
     if (iode>=0||j<0) {
         trace(2,"no broadcast ephemeris: %s sat=%2d iode=%3d\n",time_str(time,0),
@@ -474,17 +501,37 @@ static eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
 /* select glonass ephemeris --------------------------------------------------*/
 static geph_t *selgeph(gtime_t time, int sat, int iode, const nav_t *nav)
 {
-    double t,tmax=MAXDTOE_GLO,tmin=tmax+1.0;
-    int i,j=-1;
+    double tmax=MAXDTOE_GLO,tmin=tmax+1.0;
+    long tof_min=0;
+    int i=0,j;
 
     trace(4,"selgeph : time=%s sat=%2d iode=%2d\n",time_str(time,3),sat,iode);
 
-    for (i=0;i<nav->ng;i++) {
+    time_t start_time=time.time-1-tmax;
+    if (nav->ng>0&&nav->geph[0].toe.time<start_time) {
+        for (j=nav->ng-1;i<j;) {
+            int k=(i+j)/2;
+            if (nav->geph[k].toe.time<start_time) i=k+1; else j=k;
+        }
+    }
+    time_t end_time=time.time+1+tmax;
+    for (j=-1;i<nav->ng;i++) {
+        gtime_t toe=nav->geph[i].toe;
+        if (toe.time>end_time) break;
         if (nav->geph[i].sat!=sat) continue;
         if (iode>=0&&nav->geph[i].iode!=iode) continue;
-        if ((t=fabs(timediff(nav->geph[i].toe,time)))>tmax) continue;
+        double t=fabs(timediff(toe,time));
+        if (t>tmax) continue;
         if (iode>=0) return nav->geph+i;
-        if (t<=tmin) {j=i; tmin=t;} /* toe closest to time */
+        if (t<=tmin) {
+            /* toe closest to time */
+            /* Use only if the most recently transmitted */
+            if (t==tmin && nav->geph[i].tof.time<tof_min) continue;
+            j=i;
+            tmin=t;
+            tof_min=nav->geph[i].tof.time;
+            continue;
+        }
     }
     if (iode>=0||j<0) {
         trace(3,"no glonass ephemeris  : %s sat=%2d iode=%2d\n",time_str(time,0),
@@ -497,15 +544,35 @@ static geph_t *selgeph(gtime_t time, int sat, int iode, const nav_t *nav)
 /* select sbas ephemeris -----------------------------------------------------*/
 static seph_t *selseph(gtime_t time, int sat, const nav_t *nav)
 {
-    double t,tmax=MAXDTOE_SBS,tmin=tmax+1.0;
-    int i,j=-1;
+    double tmax=MAXDTOE_SBS,tmin=tmax+1.0;
+    long tof_min=0;
+    int i=0,j;
 
     trace(4,"selseph : time=%s sat=%2d\n",time_str(time,3),sat);
 
-    for (i=0;i<nav->ns;i++) {
+    time_t start_time=time.time-1-tmax;
+    if (nav->ns>0&&nav->seph[0].t0.time<start_time) {
+        for (j=nav->ns-1;i<j;) {
+            int k=(i+j)/2;
+            if (nav->seph[k].t0.time<start_time) i=k+1; else j=k;
+        }
+    }
+    time_t end_time=time.time+1+tmax;
+    for (j=-1;i<nav->ns;i++) {
+        gtime_t t0=nav->seph[i].t0;
+        if (t0.time>end_time) break;
         if (nav->seph[i].sat!=sat) continue;
-        if ((t=fabs(timediff(nav->seph[i].t0,time)))>tmax) continue;
-        if (t<=tmin) {j=i; tmin=t;} /* toe closest to time */
+        double t=fabs(timediff(t0,time));
+        if (t>tmax) continue;
+        if (t<=tmin) {
+            /* toe closest to time */
+            /* Use only if the most recently transmitted */
+            if (t==tmin && nav->seph[i].tof.time<tof_min) continue;
+            j=i;
+            tmin=t;
+            tof_min=nav->seph[i].tof.time;
+            continue;
+        }
     }
     if (j<0) {
         trace(3,"no sbas ephemeris     : %s sat=%2d\n",time_str(time,0),sat);

@@ -2701,8 +2701,8 @@ extern int geterp(const erp_t *erp, gtime_t time, double *erpv)
 static int cmpeph(const void *p1, const void *p2)
 {
     eph_t *q1=(eph_t *)p1,*q2=(eph_t *)p2;
-    return q1->ttr.time!=q2->ttr.time?(int)(q1->ttr.time-q2->ttr.time):
-           (q1->toe.time!=q2->toe.time?(int)(q1->toe.time-q2->toe.time):
+    return q1->toe.time!=q2->toe.time?(int)(q1->toe.time-q2->toe.time):
+           (q1->ttr.time!=q2->ttr.time?(int)(q1->ttr.time-q2->ttr.time):
             q1->sat-q2->sat);
 }
 /* sort and unique ephemeris -------------------------------------------------*/
@@ -2739,8 +2739,8 @@ static void uniqeph(nav_t *nav)
 static int cmpgeph(const void *p1, const void *p2)
 {
     geph_t *q1=(geph_t *)p1,*q2=(geph_t *)p2;
-    return q1->tof.time!=q2->tof.time?(int)(q1->tof.time-q2->tof.time):
-           (q1->toe.time!=q2->toe.time?(int)(q1->toe.time-q2->toe.time):
+    return q1->toe.time!=q2->toe.time?(int)(q1->toe.time-q2->toe.time):
+           (q1->tof.time!=q2->tof.time?(int)(q1->tof.time-q2->tof.time):
             q1->sat-q2->sat);
 }
 /* sort and unique glonass ephemeris -----------------------------------------*/
@@ -2778,8 +2778,8 @@ static void uniqgeph(nav_t *nav)
 static int cmpseph(const void *p1, const void *p2)
 {
     seph_t *q1=(seph_t *)p1,*q2=(seph_t *)p2;
-    return q1->tof.time!=q2->tof.time?(int)(q1->tof.time-q2->tof.time):
-           (q1->t0.time!=q2->t0.time?(int)(q1->t0.time-q2->t0.time):
+    return q1->t0.time!=q2->t0.time?(int)(q1->t0.time-q2->t0.time):
+           (q1->tof.time!=q2->tof.time?(int)(q1->tof.time-q2->tof.time):
             q1->sat-q2->sat);
 }
 /* sort and unique sbas ephemeris --------------------------------------------*/
