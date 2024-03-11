@@ -1909,6 +1909,8 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     int info,vflg[MAXOBS*NFREQ*2+1],svh[MAXOBS*2];
     int stat=rtk->opt.mode<=PMODE_DGPS?SOLQ_DGPS:SOLQ_FLOAT;
     int nf=opt->ionoopt==IONOOPT_IFLC?1:opt->nf;
+    double* x = rtk->x;
+    double* P = rtk->P;
     
     /* time diff between base and rover observations */
     dt=timediff(time,obs[nu].time);
@@ -1959,9 +1961,9 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
         return 0;
     }
     /* update kalman filter states (pos,vel,acc,ionosp, troposp, sat phase biases) */
-    trace(4,"before udstate: x="); tracemat(4,rtk->x,1,NR(opt),13,4);
+    trace(4,"before udstate: x="); tracemat(4,x,1,NR(opt),13,4);
     udstate(rtk,obs,sat,iu,ir,ns,nav);
-    trace(4,"after udstate x="); tracemat(4,rtk->x,1,NR(opt),13,4);
+    trace(4,"after udstate x="); tracemat(4,x,1,NR(opt),13,4);
     
     for (i=0;i<ns;i++) for (j=0;j<nf;j++) {
         
@@ -1991,7 +1993,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
                 y    = zero diff residuals (code and phase)
                 e    = line of sight unit vectors to sats
                 azel = [az, el] to sats                                   */
-        if (!zdres(0,obs,nu,rs,dts,var,svh,nav,rtk->x,opt,y,e,azel,freq)) {
+        if (!zdres(0,obs,nu,rs,dts,var,svh,nav,x,opt,y,e,azel,freq)) {
             errmsg(rtk,"rover initial position error\n");
             stat=SOLQ_NONE;
             break;
@@ -2008,7 +2010,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
                 O H = partial derivatives
                 O R = double diff measurement error covariances
                 O vflg = list of sats used for dd  */
-        if ((nv=ddres(rtk,obs,dt,rtk->x,rtk->P,sat,y,e,azel,freq,iu,ir,ns,v,H,R,vflg))<1) {
+        if ((nv=ddres(rtk,obs,dt,x,P,sat,y,e,azel,freq,iu,ir,ns,v,H,R,vflg))<1) {
             errmsg(rtk,"not enough double-differenced residual, n=%d\n", nv);
             stat=SOLQ_NONE;
             break;
@@ -2017,21 +2019,21 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
                 K=P*H*(H'*P*H+R)^-1
                 xp=x+K*v
                 P=(I-K*H')*P                  */
-        trace(3,"before filter x=");tracemat(3,rtk->x,1,9,13,6);
+        trace(3,"before filter x=");tracemat(3,x,1,9,13,6);
         /* Only changes the state and covariance, if the update was successful */
-        if ((info=filter(rtk->x,rtk->P,H,v,R,rtk->nx,nv))) {
+        if ((info=filter(x,P,H,v,R,rtk->nx,nv))) {
             errmsg(rtk,"filter error (info=%d)\n",info);
             stat=SOLQ_NONE;
             break;
         }
-        trace(3,"after filter x=");tracemat(3,rtk->x,1,9,13,6);
-        trace(4,"x(%d)=",i+1); tracemat(4,rtk->x,1,NR(opt),13,4);
+        trace(3,"after filter x=");tracemat(3,x,1,9,13,6);
+        trace(4,"x(%d)=",i+1); tracemat(4,x,1,NR(opt),13,4);
     }
     /* calc zero diff residuals again after kalman filter update */
-    if (stat!=SOLQ_NONE&&zdres(0,obs,nu,rs,dts,var,svh,nav,rtk->x,opt,y,e,azel,freq)) {
+    if (stat!=SOLQ_NONE&&zdres(0,obs,nu,rs,dts,var,svh,nav,x,opt,y,e,azel,freq)) {
         
         /* calc double diff residuals again after kalman filter update for float solution */
-        nv=ddres(rtk,obs,dt,rtk->x,rtk->P,sat,y,e,azel,freq,iu,ir,ns,v,NULL,R,vflg);
+        nv=ddres(rtk,obs,dt,x,P,sat,y,e,azel,freq,iu,ir,ns,v,NULL,R,vflg);
         
         /* warn if residuals are too large after filter update */
         warn_on_invalid_sol(rtk,v,R,vflg,nv,4.0);
@@ -2055,7 +2057,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
             if (zdres(0,obs,nu,rs,dts,var,svh,nav,xa,opt,y,e,azel,freq)) {
 
                 /* post-fit residuals for fixed solution (xa includes fixed phase biases, rtk->xa does not) */
-                nv=ddres(rtk,obs,dt,xa,rtk->P,sat,y,e,azel,freq,iu,ir,ns,v,NULL,R,vflg);
+                nv=ddres(rtk,obs,dt,xa,P,sat,y,e,azel,freq,iu,ir,ns,v,NULL,R,vflg);
 
                 /* warn if residuals are too large after fixing ambiguities */
                 warn_on_invalid_sol(rtk,v,R,vflg,nv,4.0);
@@ -2097,21 +2099,21 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     }
     else {  /* float solution */
         for (i=0;i<3;i++) {
-            rtk->sol.rr[i]=rtk->x[i];
-            rtk->sol.qr[i]=(float)rtk->P[i+i*rtk->nx];
+            rtk->sol.rr[i]=x[i];
+            rtk->sol.qr[i]=(float)P[i+i*rtk->nx];
         }
-        rtk->sol.qr[3]=(float)rtk->P[1];
-        rtk->sol.qr[4]=(float)rtk->P[1+2*rtk->nx];
-        rtk->sol.qr[5]=(float)rtk->P[2];
+        rtk->sol.qr[3]=(float)P[1];
+        rtk->sol.qr[4]=(float)P[1+2*rtk->nx];
+        rtk->sol.qr[5]=(float)P[2];
         
         if (rtk->opt.dynamics) { /* velocity and covariance */
             for (i=3;i<6;i++) {
-                rtk->sol.rr[i]=rtk->x[i];
-                rtk->sol.qv[i-3]=(float)rtk->P[i+i*rtk->nx];
+                rtk->sol.rr[i]=x[i];
+                rtk->sol.qv[i-3]=(float)P[i+i*rtk->nx];
             }
-            rtk->sol.qv[3]=(float)rtk->P[4+3*rtk->nx];
-            rtk->sol.qv[4]=(float)rtk->P[5+4*rtk->nx];
-            rtk->sol.qv[5]=(float)rtk->P[5+3*rtk->nx];
+            rtk->sol.qv[3]=(float)P[4+3*rtk->nx];
+            rtk->sol.qv[4]=(float)P[5+4*rtk->nx];
+            rtk->sol.qv[5]=(float)P[5+3*rtk->nx];
         }
         rtk->nfix=0;
     }
