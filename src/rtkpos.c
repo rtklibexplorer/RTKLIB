@@ -1167,7 +1167,6 @@ static int test_sys(int sys, int m)
         O rtk->ssat[i].resp[j] = residual pseudorange error
         O rtk->ssat[i].resc[j] = residual carrier phase error
         I rtk->rb= base location
-        I nav  = sat nav data
         I dt = time diff between base and rover observations
         I x = rover pos & vel and sat phase biases (float solution)
         I P = error covariance matrix of float states
@@ -2001,7 +2000,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
                 O rtk->ssat[i].resp[j] = residual pseudorange error
                 O rtk->ssat[i].resc[j] = residual carrier phase error
                 I dt = time diff between base and rover observations
-                I Pp = covariance matrix of float solution 
+                I P = covariance matrix of float solution
                 I sat = list of common sats
                 I iu,ir = user and ref indices to sats
                 I ns = # of sats
@@ -2017,7 +2016,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
         /* kalman filter measurement update, updates x,y,z,sat phase biases, etc
                 K=P*H*(H'*P*H+R)^-1
                 xp=x+K*v
-                Pp=(I-K*H')*P                  */
+                P=(I-K*H')*P                  */
         trace(3,"before filter x=");tracemat(3,rtk->x,1,9,13,6);
         /* Only changes the state and covariance, if the update was successful */
         if ((info=filter(rtk->x,rtk->P,H,v,R,rtk->nx,nv))) {
