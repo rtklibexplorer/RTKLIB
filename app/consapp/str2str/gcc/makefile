@@ -68,30 +68,30 @@ septentrio.o: $(SRC)/rcv/septentrio.c
 swiftnav.o: $(SRC)/rcv/swiftnav.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/swiftnav.c
 
-str2str.o  : $(SRC)/rtklib.h
-stream.o   : $(SRC)/rtklib.h
-streamsvr.o: $(SRC)/rtklib.h
-rtkcmn.o   : $(SRC)/rtklib.h
-solution.o : $(SRC)/rtklib.h
-sbas.o     : $(SRC)/rtklib.h
-geoid.o    : $(SRC)/rtklib.h
-rcvraw.o   : $(SRC)/rtklib.h
-novatel.o  : $(SRC)/rtklib.h
-ublox.o    : $(SRC)/rtklib.h
-ss2.o      : $(SRC)/rtklib.h
-crescent.o : $(SRC)/rtklib.h
-skytraq.o  : $(SRC)/rtklib.h
-javad.o    : $(SRC)/rtklib.h
-nvs.o      : $(SRC)/rtklib.h
-binex.o    : $(SRC)/rtklib.h
-rt17.o     : $(SRC)/rtklib.h
-rtcm.o     : $(SRC)/rtklib.h
-rtcm2.o    : $(SRC)/rtklib.h
-rtcm3.o    : $(SRC)/rtklib.h
-rtcm3e.o   : $(SRC)/rtklib.h
-preceph.o  : $(SRC)/rtklib.h
-septentrio.o: $(SRC)/rtklib.h
-swiftnav.o  : $(SRC)/rtklib.h
+str2str.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+stream.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+streamsvr.o: $(SRC)/rtklib.h $(SRC)/trace.h
+rtkcmn.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+solution.o : $(SRC)/rtklib.h $(SRC)/trace.h
+sbas.o     : $(SRC)/rtklib.h $(SRC)/trace.h
+geoid.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+rcvraw.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+novatel.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+ublox.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+ss2.o      : $(SRC)/rtklib.h $(SRC)/trace.h
+crescent.o : $(SRC)/rtklib.h $(SRC)/trace.h
+skytraq.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+javad.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+nvs.o      : $(SRC)/rtklib.h $(SRC)/trace.h
+binex.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+rt17.o     : $(SRC)/rtklib.h $(SRC)/trace.h
+rtcm.o     : $(SRC)/rtklib.h $(SRC)/trace.h
+rtcm2.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+rtcm3.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+rtcm3e.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+preceph.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+septentrio.o: $(SRC)/rtklib.h $(SRC)/trace.h
+swiftnav.o  : $(SRC)/rtklib.h $(SRC)/trace.h
 
 install:
 	cp str2str $(BINDIR)

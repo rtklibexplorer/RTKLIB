@@ -73,27 +73,27 @@ ionex.o    : $(SRC)/ionex.c
 tides.o    : $(SRC)/tides.c
 	$(CC) -c $(CFLAGS) $(SRC)/tides.c
 
-rnx2rtkp.o : $(SRC)/rtklib.h
-rtkcmn.o   : $(SRC)/rtklib.h
-rinex.o    : $(SRC)/rtklib.h
-rtkpos.o   : $(SRC)/rtklib.h
-postpos.o  : $(SRC)/rtklib.h
-solution.o : $(SRC)/rtklib.h
-lambda.o   : $(SRC)/rtklib.h
-geoid.o    : $(SRC)/rtklib.h
-sbas.o     : $(SRC)/rtklib.h
-preceph.o  : $(SRC)/rtklib.h
-pntpos.o   : $(SRC)/rtklib.h
-ephemeris.o: $(SRC)/rtklib.h
-options.o  : $(SRC)/rtklib.h
-ppp.o      : $(SRC)/rtklib.h
-ppp_ar.o   : $(SRC)/rtklib.h
-rtcm.o     : $(SRC)/rtklib.h
-rtcm2.o    : $(SRC)/rtklib.h
-rtcm3.o    : $(SRC)/rtklib.h
-rtcm3e.o   : $(SRC)/rtklib.h
-ionex.o    : $(SRC)/rtklib.h
-tides.o    : $(SRC)/rtklib.h
+rnx2rtkp.o : $(SRC)/rtklib.h $(SRC)/trace.h
+rtkcmn.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+rinex.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+rtkpos.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+postpos.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+solution.o : $(SRC)/rtklib.h $(SRC)/trace.h
+lambda.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+geoid.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+sbas.o     : $(SRC)/rtklib.h $(SRC)/trace.h
+preceph.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+pntpos.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+ephemeris.o: $(SRC)/rtklib.h $(SRC)/trace.h
+options.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+ppp.o      : $(SRC)/rtklib.h $(SRC)/trace.h
+ppp_ar.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+rtcm.o     : $(SRC)/rtklib.h $(SRC)/trace.h
+rtcm2.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+rtcm3.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+rtcm3e.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+ionex.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+tides.o    : $(SRC)/rtklib.h $(SRC)/trace.h
 
 CMD1    = ./rnx2rtkp
 INPUT11 = ../../../test/data/rinex/07590920.05o ../../../test/data/rinex/30400920.05n

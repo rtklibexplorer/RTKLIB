@@ -24,13 +24,13 @@ trace.o   : $(SRC)/trace.c
 preceph.o  : $(SRC)/preceph.c
 	$(CC) -c $(CFLAGS) $(SRC)/preceph.c
 
-pos2kml.o  : $(SRC)/rtklib.h
-convkml.o  : $(SRC)/rtklib.h
-convgpx.o  : $(SRC)/rtklib.h
-solution.o : $(SRC)/rtklib.h
-geoid.o    : $(SRC)/rtklib.h
-rtkcmn.o   : $(SRC)/rtklib.h
-preceph.o  : $(SRC)/rtklib.h
+pos2kml.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+convkml.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+convgpx.o  : $(SRC)/rtklib.h $(SRC)/trace.h
+solution.o : $(SRC)/rtklib.h $(SRC)/trace.h
+geoid.o    : $(SRC)/rtklib.h $(SRC)/trace.h
+rtkcmn.o   : $(SRC)/rtklib.h $(SRC)/trace.h
+preceph.o  : $(SRC)/rtklib.h $(SRC)/trace.h
 
 install:
 	cp pos2kml $(BINDIR)
