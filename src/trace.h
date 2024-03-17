@@ -16,7 +16,6 @@ extern "C" {
 #define trace(level, ...) do { if (level <= gettracelevel()) trace_impl(level, __VA_ARGS__); } while (0)
 #define tracet(level, ...) do { if (level <= gettracelevel()) tracet_impl(level, __VA_ARGS__); } while (0)
 #define tracemat(level, ...) do { if (level <= gettracelevel()) tracemat_impl(level, __VA_ARGS__); } while (0)
-#define tracesparsemat(level, ...) do { if (level <= gettracelevel()) tracesparsemat_impl(level, __VA_ARGS__); } while (0)
 #define traceobs(level, ...) do { if (level <= gettracelevel()) traceobs_impl(level, __VA_ARGS__); } while (0)
 #define tracenav(level, ...) do { if (level <= gettracelevel()) tracenav_impl(level, __VA_ARGS__); } while (0)
 #define tracegnav(level, ...) do { if (level <= gettracelevel()) tracegnav_impl(level, __VA_ARGS__); } while (0)
