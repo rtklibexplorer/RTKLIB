@@ -1297,47 +1297,47 @@ extern int lsq(const double *A, const double *y, int n, int m, double *x,
 *
 *   K=P*H*(H'*P*H+R)^-1, xp=x+K*v, Pp=(I-K*H')*P
 *
-* args   : double *x        I   states vector (n x 1)
+* args   : double *x        IO  states vector (n x 1)
 *          double *P        I   covariance matrix of states (n x n)
 *          double *H        I   transpose of design matrix (n x m)
 *          double *v        I   innovation (measurement - model) (m x 1)
-*          double *R        I   covariance matrix of measurement error (m x m)
+*          double *R        IX  covariance matrix of measurement error (m x m)
 *          int    n,m       I   number of states and measurements
-*          double *xp       O   states vector after update (n x 1)
 *          double *Pp       O   covariance matrix of states after update (n x n)
 * return : status (0:ok,<0:error)
 * notes  : matrix stored by column-major order (fortran convention)
 *          if state x[i]==0.0, not updates state x[i]/P[i+i*n]
+*          The x array is not modified on error.
+*          The R input matrix is destructively modified, even on error.
 *-----------------------------------------------------------------------------*/
-static int filter_(const double *x, const double *P, const double *H,
-                   const double *v, const double *R, int n, int m,
-                   double *xp, double *Pp)
+static int filter_(double *x, const double *P, const double *H,
+                   const double *v, double *R, int n, int m,
+                   double *Pp)
 {
-    double *F=mat(n,m),*Q=mat(m,m),*K=mat(n,m),*I=eye(n);
+    double *PH=mat(n,m),*K=mat(n,m),*I=eye(n);
     int info;
     
-    matcpy(Q,R,m,m);
-    matcpy(xp,x,n,1);
-    matmul("NN",n,m,n,1.0,P,H,0.0,F);       /* Q=H'*P*H+R */
-    matmul("TN",m,m,n,1.0,H,F,1.0,Q);
-    if (!(info=matinv(Q,m))) {
-        matmul("NN",n,m,m,1.0,F,Q,0.0,K);   /* K=P*H*Q^-1 */
-        matmul("NN",n,1,m,1.0,K,v,1.0,xp);  /* xp=x+K*v */
-        matmul("NT",n,n,m,-1.0,K,H,1.0,I);  /* Pp=(I-K*H')*P */
-        matmul("NN",n,n,n,1.0,I,P,0.0,Pp);
+    matmul("NN",n,m,n,1.0,P,H,0.0,PH);         /* P*H */
+    /* R is destructively modified to store Q */
+    matmul("TN",m,m,n,1.0,H,PH,1.0,R);         /* Q=H'*P*H+R */
+    if (!(info=matinv(R,m))) {                 /* Q^-1 */
+        matmul("NN",n,m,m,1.0,PH,R,0.0,K);     /* K=P*H*Q^-1 */
+        matmul("NN",n,1,m,1.0,K,v,1.0,x);      /* xp=x+K*v */
+        matmul("NT",n,n,m,-1.0,K,H,1.0,I);     /* (I-K*H') */
+        matmul("NN",n,n,n,1.0,I,P,0.0,Pp);     /* Pp=(I-K*H')*P */
     }
-    free(F); free(Q); free(K); free(I);
+    free(PH); free(K); free(I);
     return info;
 }
 extern int filter(double *x, double *P, const double *H, const double *v,
-                  const double *R, int n, int m)
+                  double *R, int n, int m)
 {
-    double *x_,*xp_,*P_,*Pp_,*H_;
+    double *x_,*P_,*Pp_,*H_;
     int i,j,k,info,*ix;
     
     /* create list of non-zero states */
     ix=imat(n,1); for (i=k=0;i<n;i++) if (x[i]!=0.0&&P[i+i*n]>0.0) ix[k++]=i;
-    x_=mat(k,1); xp_=mat(k,1); P_=mat(k,k); Pp_=mat(k,k); H_=mat(k,m);
+    x_=mat(k,1); P_=mat(k,k); Pp_=mat(k,k); H_=mat(k,m);
     /* compress array by removing zero elements to save computation time */
     for (i=0;i<k;i++) {
         x_[i]=x[ix[i]];
@@ -1345,13 +1345,14 @@ extern int filter(double *x, double *P, const double *H, const double *v,
         for (j=0;j<m;j++) H_[i+j*k]=H[ix[i]+j*n];
     }
     /* do kalman filter state update on compressed arrays */
-    info=filter_(x_,P_,H_,v,R,k,m,xp_,Pp_);
-    /* copy values from compressed arrays back to full arrays */
-    for (i=0;i<k;i++) {
-        x[ix[i]]=xp_[i];
-        for (j=0;j<k;j++) P[ix[i]+ix[j]*n]=Pp_[i+j*k];
+    if (!(info=filter_(x_,P_,H_,v,R,k,m,Pp_))) {
+        /* copy values from compressed arrays back to full arrays */
+        for (i=0;i<k;i++) {
+            x[ix[i]]=x_[i];
+            for (j=0;j<k;j++) P[ix[i]+ix[j]*n]=Pp_[i+j*k];
+        }
     }
-    free(ix); free(x_); free(xp_); free(P_); free(Pp_); free(H_);
+    free(ix); free(x_); free(P_); free(Pp_); free(H_);
     return info;
 }
 /* smoother --------------------------------------------------------------------

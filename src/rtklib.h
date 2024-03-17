@@ -1378,7 +1378,7 @@ EXPORT int  solve (const char *tr, const double *A, const double *Y, int n,
 EXPORT int  lsq   (const double *A, const double *y, int n, int m, double *x,
                    double *Q);
 EXPORT int  filter(double *x, double *P, const double *H, const double *v,
-                   const double *R, int n, int m);
+                   double *R, int n, int m);
 EXPORT int  smoother(const double *xf, const double *Qf, const double *xb,
                      const double *Qb, int n, double *xs, double *Qs);
 EXPORT void matprint (const double *A, int n, int m, int p, int q);
