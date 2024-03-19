@@ -1552,8 +1552,8 @@ static void holdamb(rtk_t *rtk, const double *xa)
 {
     double *v,*H,*R;
     int i,j,n,m,f,info,index[MAXSAT],nb=rtk->nx-rtk->na,nv=0,nf=NF(&rtk->opt);
-    double dd,sum;
-
+    double dd;
+    
     trace(3,"holdamb :\n");
 
     v=mat(nb,1); H=zeros(nb,rtk->nx);
@@ -1602,7 +1602,7 @@ static void holdamb(rtk_t *rtk, const double *xa)
 
     /* Move fractional part of bias from phase-bias into ic bias for GLONASS sats (both in cycles) */
     for (f=0;f<nf;f++) {
-        i=-1;sum=0;
+        i=-1;
         for (j=nv=0;j<MAXSAT;j++) {
             /* check if valid GLONASS sat */
             if (test_sys(rtk->ssat[j].sys,1)&&rtk->ssat[j].vsat[f]&&rtk->ssat[j].lock[f]>=0) {
@@ -1616,7 +1616,6 @@ static void holdamb(rtk_t *rtk, const double *xa)
                     dd=rtk->opt.gainholdamb*(dd-ROUND(dd));  /* throwout integer part of answer and multiply by filter gain */
                     rtk->x[IB(j+1,f,&rtk->opt)]-=dd;  /* remove fractional part from phase bias */
                     rtk->ssat[j].icbias[f]+=dd;       /* and move to IC bias */
-                    sum+=dd;
                     index[nv++]=j;
                 }
             }
@@ -1624,7 +1623,7 @@ static void holdamb(rtk_t *rtk, const double *xa)
     }
     /* Move fractional part of bias from phase-bias into ic bias for SBAS sats (both in cycles) */
     for (f=0;f<nf;f++) {
-        i=-1;sum=0;
+        i=-1;
         for (j=nv=0;j<MAXSAT;j++) {
             /* check if valid GPS/SBS sat */
             if (test_sys(rtk->ssat[j].sys,0)&&rtk->ssat[j].vsat[f]&&rtk->ssat[j].lock[f]>=0) {
@@ -1639,7 +1638,6 @@ static void holdamb(rtk_t *rtk, const double *xa)
                     dd=rtk->opt.gainholdamb*(dd-ROUND(dd));  /* throwout integer part of answer and multiply by filter gain */
                     rtk->x[IB(j+1,f,&rtk->opt)]-=dd;  /* remove fractional part from phase bias diff */
                     rtk->ssat[j].icbias[f]+=dd;       /* and move to IC bias */
-                    sum+=dd;
                     index[nv++]=j;
                 }
             }
