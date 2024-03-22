@@ -1582,17 +1582,49 @@ static void restamb(rtk_t *rtk, const double *bias, int nb, double *xa)
 /* hold integer ambiguity ----------------------------------------------------*/
 static void holdamb(rtk_t *rtk, const double *xa)
 {
-    double *v,*H,*R;
-    int i,j,n,m,f,info,index[MAXSAT],nb=rtk->nx-rtk->na,nv=0,nf=NF(&rtk->opt);
-    double dd,sum;
-    
+    int nx=rtk->nx;
+    int index[MAXSAT],nv=0,nf=NF(&rtk->opt),nc=0;
+    double *x=rtk->x,*P=rtk->P;
+
     trace(3,"holdamb :\n");
-    
-    v=mat(nb,1); H=zeros(nb,rtk->nx);
-    
-    for (m=0;m<6;m++) for (f=0;f<nf;f++) {
-        
-        for (n=i=0;i<MAXSAT;i++) {
+
+    /* Create list of non-zero states */
+    int *ix=imat(nx,1),*xi=imat(nx,1);
+    for (int i=0;i<nx;i++) {
+      if (x[i]!=0.0&&P[i+i*nx]>0.0) {
+        xi[i]=nc;
+        ix[nc++]=i;
+      }
+      else
+        xi[i]=0xfffffff;
+    }
+
+    /* Pre-calculate the size nv. Needs to match the loop below. */
+    for (int m=0;m<6;m++) for (int f=0;f<nf;f++) {
+        int n=0;
+        for (int i=0;i<MAXSAT;i++) {
+            if (!test_sys(rtk->ssat[i].sys,m)||rtk->ssat[i].fix[f]!=2||
+                rtk->ssat[i].azel[1]<rtk->opt.elmaskhold) {
+                continue;
+            }
+            n++;
+        }
+        nv+=n<1?0:n-1;
+    }
+
+    /* Return if less than min sats for hold (skip if fix&hold for GLONASS only) */
+    if (rtk->opt.modear==ARMODE_FIXHOLD&&nv<rtk->opt.minholdsats) {
+        trace(3,"holdamb: not enough sats to hold ambiguity\n");
+        return;
+    }
+
+    double *Hc=zeros(nc,nv);
+    double *v=mat(nv,1);
+
+    int nv2=0;
+    for (int m=0;m<6;m++) for (int f=0;f<nf;f++) {
+        int n=0;
+        for (int i=0;i<MAXSAT;i++) {
             if (!test_sys(rtk->ssat[i].sys,m)||rtk->ssat[i].fix[f]!=2||
                 rtk->ssat[i].azel[1]<rtk->opt.elmaskhold) {
                 continue;
@@ -1600,78 +1632,82 @@ static void holdamb(rtk_t *rtk, const double *xa)
             index[n++]=IB(i+1,f,&rtk->opt);
             rtk->ssat[i].fix[f]=3; /* hold */
         }
-        /* use ambiguity resolution results to generate a set of pseudo-innovations
-                to feed to kalman filter based on error between fixed and float solutions */
-        for (i=1;i<n;i++) {
-            /* phase-biases are single diff, so subtract errors to get
-                 double diff: v(nv)=err(i)-err(0) */
-            v[nv]=(xa[index[0]]-xa[index[i]])-(rtk->x[index[0]]-rtk->x[index[i]]);
-            
-            H[index[0]+nv*rtk->nx]= 1.0;
-            H[index[i]+nv*rtk->nx]=-1.0;
-            nv++;
+        /* Use ambiguity resolution results to generate a set of pseudo-innovations
+           to feed to kalman filter based on error between fixed and float solutions */
+        for (int i=1;i<n;i++) {
+            /* Phase-biases are single diff, so subtract errors to get
+               double diff: v(nv)=err(i)-err(0) */
+            v[nv2]=(xa[index[0]]-xa[index[i]])-(rtk->x[index[0]]-rtk->x[index[i]]);
+            cvwrite(Hc+nv2*nc,nc,xi,index[0], 1.0);
+            cvwrite(Hc+nv2*nc,nc,xi,index[i],-1.0);
+            nv2++;
         }
     }
-    /* return if less than min sats for hold (skip if fix&hold for GLONASS only) */
-    if (rtk->opt.modear==ARMODE_FIXHOLD&&nv<rtk->opt.minholdsats) { 
-        trace(3,"holdamb: not enough sats to hold ambiguity\n");
-        free(v); free(H);
-        return;
-    }
-    
-    rtk->holdamb=1;  /* set flag to indicate hold has occurred */
-    R=zeros(nv,nv);
-    for (i=0;i<nv;i++) R[i+i*nv]=rtk->opt.varholdamb;
 
-    /* update states with constraints */
-    if ((info=filter(rtk->x,rtk->P,H,v,R,rtk->nx,nv))) {
+    rtk->holdamb=1;  /* Set flag to indicate hold has occurred */
+    double *R=zeros(nv,nv);
+    for (int i=0;i<nv;i++) R[i+i*nv]=rtk->opt.varholdamb;
+
+    /* Update states with constraints */
+
+    /* Compress array by removing zero elements to save computation time */
+    double *xc=mat(nc,1),*Pc=mat(nc,nc),*Ppc=mat(nc,nc);
+    for (int i=0;i<nc;i++) xc[i]=x[ix[i]];
+    for (int j=0;j<nc;j++) for (int i=0;i<nc;i++) Pc[i+j*nc]=P[ix[i]+ix[j]*nx];
+
+    /* Do kalman filter state update on compressed arrays */
+    int info=filter_(xc,Pc,Hc,v,R,nc,nv,Ppc);
+    if (!info) {
+        /* Copy values from compressed arrays back to full arrays */
+        for (int i=0;i<nc;i++) x[ix[i]]=xc[i];
+        for (int j=0;j<nc;j++) for (int i=0;i<nc;i++) P[ix[i]+ix[j]*nx]=Ppc[i+j*nc];
+    } else {
         errmsg(rtk,"filter error (info=%d)\n",info);
     }
-    free(R);free(v); free(H);
+    free(ix); free(xi); free(xc); free(Pc); free(Ppc); free(Hc);
+    free(R);free(v);
 
-    /* skip glonass/sbs icbias update if not enabled  */
+    /* Skip glonass/sbs icbias update if not enabled  */
     if (rtk->opt.glomodear!=GLO_ARMODE_FIXHOLD) return;
 
     /* Move fractional part of bias from phase-bias into ic bias for GLONASS sats (both in cycles) */
-    for (f=0;f<nf;f++) {
-        i=-1;sum=0;
-        for (j=nv=0;j<MAXSAT;j++) {
-            /* check if valid GLONASS sat */
+    for (int f=0;f<nf;f++) {
+        int i=-1;
+        for (int j=nv=0;j<MAXSAT;j++) {
+            /* Check if valid GLONASS sat */
             if (test_sys(rtk->ssat[j].sys,1)&&rtk->ssat[j].vsat[f]&&rtk->ssat[j].lock[f]>=0) {
                 if (i<0) {
                     i=j;  /* use first valid sat for reference sat */
                     index[nv++]=j;
                 }
-                else {  /* adjust the rest */
-                    /* find phase-bias difference */
-                    dd=rtk->x[IB(j+1,f,&rtk->opt)]-rtk->x[IB(i+1,f,&rtk->opt)];
-                    dd=rtk->opt.gainholdamb*(dd-ROUND(dd));  /* throwout integer part of answer and multiply by filter gain */
-                    rtk->x[IB(j+1,f,&rtk->opt)]-=dd;  /* remove fractional part from phase bias */
+                else {  /* Adjust the rest */
+                    /* Find phase-bias difference */
+                    double dd=rtk->x[IB(j+1,f,&rtk->opt)]-rtk->x[IB(i+1,f,&rtk->opt)];
+                    dd=rtk->opt.gainholdamb*(dd-ROUND(dd));  /* Throwout integer part of answer and multiply by filter gain */
+                    rtk->x[IB(j+1,f,&rtk->opt)]-=dd;  /* Remove fractional part from phase bias */
                     rtk->ssat[j].icbias[f]+=dd;       /* and move to IC bias */
-                    sum+=dd;
                     index[nv++]=j;
                 }
             }
         }
     }
     /* Move fractional part of bias from phase-bias into ic bias for SBAS sats (both in cycles) */
-    for (f=0;f<nf;f++) {
-        i=-1;sum=0;
-        for (j=nv=0;j<MAXSAT;j++) {
-            /* check if valid GPS/SBS sat */
+    for (int f=0;f<nf;f++) {
+        int i=-1;
+        for (int j=nv=0;j<MAXSAT;j++) {
+            /* Check if valid GPS/SBS sat */
             if (test_sys(rtk->ssat[j].sys,0)&&rtk->ssat[j].vsat[f]&&rtk->ssat[j].lock[f]>=0) {
                 if (i<0) {
-                    i=j;  /* use first valid GPS sat for reference sat */
+                    i=j;  /* Use first valid GPS sat for reference sat */
                     index[nv++]=j;
                 }
-                else {  /* adjust the SBS sats */
+                else {  /* Adjust the SBS sats */
                     if (rtk->ssat[j].sys!=SYS_SBS) continue;
                     /* find phase-bias difference */
-                    dd=rtk->x[IB(j+1,f,&rtk->opt)]-rtk->x[IB(i+1,f,&rtk->opt)];
-                    dd=rtk->opt.gainholdamb*(dd-ROUND(dd));  /* throwout integer part of answer and multiply by filter gain */
-                    rtk->x[IB(j+1,f,&rtk->opt)]-=dd;  /* remove fractional part from phase bias diff */
+                    double dd=rtk->x[IB(j+1,f,&rtk->opt)]-rtk->x[IB(i+1,f,&rtk->opt)];
+                    dd=rtk->opt.gainholdamb*(dd-ROUND(dd));  /* Throwout integer part of answer and multiply by filter gain */
+                    rtk->x[IB(j+1,f,&rtk->opt)]-=dd;  /* Remove fractional part from phase bias diff */
                     rtk->ssat[j].icbias[f]+=dd;       /* and move to IC bias */
-                    sum+=dd;
                     index[nv++]=j;
                 }
             }
