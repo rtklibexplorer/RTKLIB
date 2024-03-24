@@ -925,21 +925,28 @@ static int model_iono(gtime_t time, const double *pos, const double *azel,
     }
     return 0;
 }
-/* phase and code residuals --------------------------------------------------*/
+static inline void cvwrite(double *V, int nc, const int *xi, int i, double v)
+{
+    int ii=xi[i];
+    if (ii>=nc) return;
+    V[ii]=v;
+}
+/* Phase and code residuals --------------------------------------------------*/
 static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                    const double *dts, const double *var_rs, const int *svh,
                    const double *dr, int *exc, const nav_t *nav,
-                   const double *x, rtk_t *rtk, double *v, double *H, double *R,
-                   double *azel)
+                   const double *x, rtk_t *rtk, double *v,
+                   double *Hc, int nc, const int *xi,
+                   double *R, double *azel)
 {
     prcopt_t *opt=&rtk->opt;
-    double y,r,cdtr,bias,C=0.0,rr[3],pos[3],e[3],dtdx[3],L[NFREQ],P[NFREQ],Lc,Pc;
+    double y,r,cdtr,bias,rr[3],pos[3],e[3],dtdx[3],L[NFREQ],P[NFREQ],Lc,Pc;
     double var[MAXOBS*2],dtrp=0.0,dion=0.0,vart=0.0,vari=0.0,dcb,freq;
     double dantr[NFREQ]={0},dants[NFREQ]={0};
     double ve[MAXOBS*2*NFREQ]={0},vmax=0;
     char str[32];
     int ne=0,obsi[MAXOBS*2*NFREQ]={0},frqi[MAXOBS*2*NFREQ],maxobs,maxfrq,rej;
-    int i,j,k,sat,sys,nv=0,nx=rtk->nx,stat=1,frq,code;
+    int i,j,k,sat,sys,nv=0,stat=1,frq,code;
 
     time2str(obs[0].time,str,2);
 
@@ -961,26 +968,28 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
             exc[i]=1;
             continue;
         }
-        /* tropospheric and ionospheric model */
+        /* Tropospheric and ionospheric model */
         if (!model_trop(obs[i].time,pos,azel+i*2,opt,x,dtdx,nav,&dtrp,&vart)||
             !model_iono(obs[i].time,pos,azel+i*2,opt,sat,x,nav,&dion,&vari)) {
             continue;
         }
-        /* satellite and receiver antenna model */
+        /* Satellite and receiver antenna model */
         if (opt->posopt[0]) satantpcv(rs+i*6,rr,nav->pcvs+sat-1,dants);
         antmodel(opt->pcvr,opt->antdel[0],azel+i*2,opt->posopt[1],dantr);
 
-        /* phase windup model */
+        /* Phase windup model */
         if (!model_phw(rtk->sol.time,sat,nav->pcvs[sat-1].type,
                        opt->posopt[2]?2:0,rs+i*6,rr,&rtk->ssat[sat-1].phw)) {
             continue;
         }
-        /* corrected phase and code measurements */
+        /* Corrected phase and code measurements */
         corr_meas(obs+i,nav,azel+i*2,&rtk->opt,dantr,dants,
                   rtk->ssat[sat-1].phw,L,P,&Lc,&Pc);
 
-        /* stack phase and code residuals {L1,P1,L2,P2,...} */
+        /* Stack phase and code residuals {L1,P1,L2,P2,...} */
         for (j=0;j<2*NF(opt);j++) {
+            double C=0.0;
+            double *Hi=NULL;
 
             dcb=bias=0.0;
             code=j%2; /* 0=phase, 1=code */
@@ -995,12 +1004,13 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                 if ((freq=sat2freq(sat,obs[i].code[frq],nav))==0.0) continue;
                 C=SQR(FREQL1/freq)*ionmapf(pos,azel+i*2)*(code==0?-1.0:1.0);
             }
-            if (H) {
-                for (k=0;k<nx;k++) H[k+nx*nv]=0.0;
-                for (k=0;k<3;k++) H[k+nx*nv]=-e[k];
+            if (Hc) {
+                Hi=Hc+nv*nc;
+                for (k=0;k<3 ;k++) Hi[k]=-e[k];
+                for (k=3;k<nc;k++) Hi[k]=0.0;
             }
 
-            /* receiver clock */
+            /* Receiver clock */
             switch (sys) {
                 case SYS_GLO: k=1; break;
                 case SYS_GAL: k=2; break;
@@ -1009,35 +1019,35 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                 default:      k=0; break;
             }
             cdtr=x[IC(k,opt)];
-            if (H) {
-                H[IC(k,opt)+nx*nv]=1.0;
+            if (Hc) {
+                cvwrite(Hi,nc,xi,IC(k,opt),1.0);
 
                 if (opt->tropopt==TROPOPT_EST||opt->tropopt==TROPOPT_ESTG) {
                     for (k=0;k<(opt->tropopt>=TROPOPT_ESTG?3:1);k++) {
-                        H[IT(opt)+k+nx*nv]=dtdx[k];
+                        cvwrite(Hi,nc,xi,IT(opt)+k,dtdx[k]);
                     }
                 }
             }
             if (opt->ionoopt==IONOOPT_EST) {
                 if (rtk->x[II(sat,opt)]==0.0) continue;
-                if (H) H[II(sat,opt)+nx*nv]=C;
+                if (Hc) cvwrite(Hi,nc,xi,II(sat,opt),C);
             }
             if (frq==2&&code==1) { /* L5-receiver-dcb */
                 dcb+=rtk->x[ID(opt)];
-                if (H) H[ID(opt)+nx*nv]=1.0;
+                if (Hc) cvwrite(Hi,nc,xi,ID(opt),1.0);
             }
-            if (code==0) { /* phase bias */
+            if (code==0) { /* Phase bias */
                 if ((bias=x[IB(sat,frq,opt)])==0.0) continue;
-                if (H) H[IB(sat,frq,opt)+nx*nv]=1.0;
+                if (Hc) cvwrite(Hi,nc,xi,IB(sat,frq,opt),1.0);
             }
-            /* residual */
+            /* Residual */
             double res=y-(r+cdtr-CLIGHT*dts[i*2]+dtrp+C*dion+dcb+bias);
             if (v) v[nv]=res;
 
-            if (code==0) rtk->ssat[sat-1].resc[frq]=res;  /* carrier phase */
-            else         rtk->ssat[sat-1].resp[frq]=res;  /* pseudorange */
+            if (code==0) rtk->ssat[sat-1].resc[frq]=res;  /* Carrier phase */
+            else         rtk->ssat[sat-1].resp[frq]=res;  /* Pseudorange */
 
-            /* variance */
+            /* Variance */
             var[nv]=varerr(sat,sys,azel[1+i*2],
                     SNR_UNIT*rtk->ssat[sat-1].snr_rover[frq],
                     j,opt,obs+i);
@@ -1047,14 +1057,14 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
             trace(3,"%s sat=%2d %s%d res=%9.4f sig=%9.4f el=%4.1f\n",str,sat,
                   code?"P":"L",frq+1,res,sqrt(var[nv]),azel[1+i*2]*R2D);
 
-            /* reject satellite by pre-fit residuals */
+            /* Reject satellite by pre-fit residuals */
             if (!post&&opt->maxinno[code]>0.0&&fabs(res)>opt->maxinno[code]) {
-                trace(2,"outlier (%d) rejected %s sat=%2d %s%d res=%9.4f el=%4.1f\n",
+                trace(2,"Outlier (%d) rejected %s sat=%2d %s%d res=%9.4f el=%4.1f\n",
                       post,str,sat,code?"P":"L",frq+1,res,azel[1+i*2]*R2D);
                 exc[i]=1; rtk->ssat[sat-1].rejc[frq]++;
                 continue;
             }
-            /* record large post-fit residuals */
+            /* Record large post-fit residuals */
             if (post&&fabs(res)>sqrt(var[nv])*THRES_REJECT) {
                 obsi[ne]=i; frqi[ne]=j; ve[ne]=res; ne++;
             }
@@ -1062,7 +1072,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
             nv++;
         }
     }
-    /* reject satellite with large and max post-fit residual */
+    /* Reject satellite with large and max post-fit residual */
     if (post&&ne>0) {
         vmax=ve[0]; maxobs=obsi[0]; maxfrq=frqi[0]; rej=0;
         for (j=1;j<ne;j++) {
@@ -1070,7 +1080,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
             vmax=ve[j]; maxobs=obsi[j]; maxfrq=frqi[j]; rej=j;
         }
         sat=obs[maxobs].sat;
-        trace(2,"outlier (%d) rejected %s sat=%2d %s%d res=%9.4f el=%4.1f\n",
+        trace(2,"Outlier (%d) rejected %s sat=%2d %s%d res=%9.4f el=%4.1f\n",
             post,str,sat,maxfrq%2?"P":"L",maxfrq/2+1,vmax,azel[1+maxobs*2]*R2D);
         exc[maxobs]=1; rtk->ssat[sat-1].rejc[maxfrq%2]++; stat=0;
         ve[rej]=0;
@@ -1174,90 +1184,120 @@ static int test_hold_amb(rtk_t *rtk)
 extern void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
 {
     const prcopt_t *opt=&rtk->opt;
-    double *rs,*dts,*var,*v,*H,*R,*azel,*xp,*Pp,dr[3]={0},std[3];
+    double *rs,*dts,*var,*v,*R,*azel,*xp,dr[3]={0},std[3];
     char str[32];
-    int i,j,nv,info,svh[MAXOBS],exc[MAXOBS]={0},stat=SOLQ_SINGLE;
+    int nv,svh[MAXOBS],exc[MAXOBS]={0},stat=SOLQ_SINGLE;
+    int nx=rtk->nx,nc;
 
     time2str(obs[0].time,str,2);
-    trace(3,"pppos   : time=%s nx=%d n=%d\n",str,rtk->nx,n);
+    trace(3,"pppos   : time=%s nx=%d n=%d\n",str,nx,n);
 
     rs=mat(6,n); dts=mat(2,n); var=mat(1,n); azel=zeros(2,n);
 
-    for (i=0;i<MAXSAT;i++) for (j=0;j<opt->nf;j++) rtk->ssat[i].fix[j]=0;
-    for (i=0;i<n&&i<MAXOBS;i++) for (j=0;j<opt->nf;j++) {
+    for (int i=0;i<MAXSAT;i++) for (int j=0;j<opt->nf;j++) rtk->ssat[i].fix[j]=0;
+    for (int i=0;i<n&&i<MAXOBS;i++) for (int j=0;j<opt->nf;j++) {
         rtk->ssat[obs[i].sat-1].snr_rover[j]=obs[i].SNR[j];
         rtk->ssat[obs[i].sat-1].snr_base[j] =0;
     }
 
-    /* temporal update of ekf states */
+    /* Temporal update of ekf states */
     udstate_ppp(rtk,obs,n,nav);
 
-    /* satellite positions and clocks */
+    /* Satellite positions and clocks */
     satposs(obs[0].time,obs,n,nav,rtk->opt.sateph,rs,dts,var,svh);
 
-    /* exclude measurements of eclipsing satellite (block IIA) */
+    /* Exclude measurements of eclipsing satellite (block IIA) */
     if (rtk->opt.posopt[3]) {
         testeclipse(obs,n,nav,rs);
     }
-    /* earth tides correction */
+    /* Earth tides correction */
     if (opt->tidecorr) {
         tidedisp(gpst2utc(obs[0].time),rtk->x,opt->tidecorr==1?1:7,&nav->erp,
                  opt->odisp[0],dr);
     }
     nv=n*rtk->opt.nf*2+MAXSAT+3;
-    xp=mat(rtk->nx,1); Pp=zeros(rtk->nx,rtk->nx);
-    v=mat(nv,1); H=mat(rtk->nx,nv); R=mat(nv,nv);
+    xp=mat(nx,1);
+    v=mat(nv,1); R=mat(nv,nv);
 
+    double *x=rtk->x,*P=rtk->P;
+    matcpy(xp,x,nx,1);
+
+    /* Create list of non-zero states */
+    int *ix=imat(nx,1), *xi=imat(nx,1);
+    for (int i=nc=0;i<nx;i++) {
+        if (i<9||(x[i]!=0.0&&P[i+i*nx]>0.0)) {
+            xi[i]=nc;
+            ix[nc++]=i;
+        }
+        else
+            xi[i]=0xfffffff;
+    }
+    /* Compress array by removing zero elements to save computation time */
+    double *xc=mat(nc,1), *xpc=mat(nc,1), *Pc=mat(nc,nc), *Ppc=mat(nc,nc), *Hc=mat(nc,nv);
+    for (int i=0;i<nc;i++) xc[i]=xpc[i]=x[ix[i]];
+    for (int j=0;j<nc;j++) for (int i=0;i<nc;i++) Pc[i+j*nc]=P[ix[i]+ix[j]*nx];
+
+    int i;
     for (i=0;i<MAX_ITER;i++) {
 
-        matcpy(xp,rtk->x,rtk->nx,1);
-        matcpy(Pp,rtk->P,rtk->nx,rtk->nx);
-
-        /* prefit residuals */
-        if (!(nv=ppp_res(0,obs,n,rs,dts,var,svh,dr,exc,nav,xp,rtk,v,H,R,azel))) {
+        /* Prefit residuals */
+        if (!(nv=ppp_res(0,obs,n,rs,dts,var,svh,dr,exc,nav,xp,rtk,v,Hc,nc,xi,R,azel))) {
             trace(2,"%s ppp (%d) no valid obs data\n",str,i+1);
             break;
         }
-        /* measurement update of ekf states */
-        if ((info=filter(xp,Pp,H,v,R,rtk->nx,nv))) {
+        /* Measurement update of ekf states */
+        /*  Do kalman filter state update on compressed arrays */
+        int info=filter_(xc,Pc,Hc,v,R,nc,nv,Ppc);
+        if (info) {
             trace(2,"%s ppp (%d) filter error info=%d\n",str,i+1,info);
             break;
         }
-        /* postfit residuals */
-        if (ppp_res(i+1,obs,n,rs,dts,var,svh,dr,exc,nav,xp,rtk,NULL,NULL,NULL,azel)) {
-            matcpy(rtk->x,xp,rtk->nx,1);
-            matcpy(rtk->P,Pp,rtk->nx,rtk->nx);
+        /* Copy values from compressed array xc back to full array xp */
+        for (int i=0;i<nc;i++) xp[ix[i]]=xc[i];
+
+        /* Postfit residuals */
+        if (ppp_res(i+1,obs,n,rs,dts,var,svh,dr,exc,nav,xp,rtk,NULL,NULL,0,NULL,NULL,azel)) {
+            /* Copy values from compressed arrays back to full arrays */
+            for (int i=0;i<nc;i++) x[ix[i]]=xc[i];
+            for (int j=0;j<nc;j++) for (int i=0;i<nc;i++) P[ix[i]+ix[j]*nx]=Ppc[i+j*nc];
             stat=SOLQ_PPP;
             break;
         }
+
+        /* Restore xp and xc */
+        for (int i=0;i<nc;i++) xp[ix[i]]=xc[i]=xpc[i];
     }
+    free(ix); free(xi); free(xc); free(xpc); free(Pc); free(Ppc); free(Hc);
+    free(v); free(R);
     if (i>=MAX_ITER) {
         trace(2,"%s ppp (%d) iteration overflows\n",str,i);
     }
     if (stat==SOLQ_PPP) {
+        double *Pp=mat(nx,nx);
+        matcpy(Pp,P,nx,nx);
 
         if (ppp_ar(rtk,obs,n,exc,nav,azel,xp,Pp)&&
-            ppp_res(9,obs,n,rs,dts,var,svh,dr,exc,nav,xp,rtk,NULL,NULL,NULL,azel)) {
+            ppp_res(9,obs,n,rs,dts,var,svh,dr,exc,nav,xp,rtk,NULL,NULL,0,NULL,NULL,azel)) {
 
-            matcpy(rtk->xa,xp,rtk->nx,1);
-            matcpy(rtk->Pa,Pp,rtk->nx,rtk->nx);
+            matcpy(rtk->xa,xp,nx,1);
+            matcpy(rtk->Pa,Pp,nx,nx);
 
-            for (i=0;i<3;i++) std[i]=sqrt(Pp[i+i*rtk->nx]);
+            for (i=0;i<3;i++) std[i]=sqrt(Pp[i+i*nx]);
             if (norm(std,3)<MAX_STD_FIX) stat=SOLQ_FIX;
         }
         else {
             rtk->nfix=0;
         }
-        /* update solution status */
+        /* Update solution status */
         update_stat(rtk,obs,n,stat);
 
         if (stat==SOLQ_FIX&&test_hold_amb(rtk)) {
-            matcpy(rtk->x,xp,rtk->nx,1);
-            matcpy(rtk->P,Pp,rtk->nx,rtk->nx);
+            matcpy(rtk->x,xp,nx,1);
+            matcpy(rtk->P,Pp,nx,nx);
             trace(2,"%s hold ambiguity\n",str);
             rtk->nfix=0;
         }
+        free(Pp);
     }
-    free(rs); free(dts); free(var); free(azel);
-    free(xp); free(Pp); free(v); free(H); free(R);
+    free(rs); free(dts); free(var); free(azel); free(xp);
 }
