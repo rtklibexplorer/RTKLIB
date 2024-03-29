@@ -587,9 +587,9 @@ static void udpos_ppp(rtk_t *rtk)
         }
     }
     /* x=F*x, P=F*P*F+Q */
-    matmul("NN",nx,1,nx,1.0,F,x,0.0,xp);
-    matmul("NN",nx,nx,nx,1.0,F,P,0.0,FP);
-    matmul("NT",nx,nx,nx,1.0,FP,F,0.0,P);
+    matmul("NN",nx,1,nx,F,x,xp);
+    matmul("NN",nx,nx,nx,F,P,FP);
+    matmul("NT",nx,nx,nx,FP,F,P);
 
     for (i=0;i<nx;i++) {
         rtk->x[ix[i]]=xp[i];

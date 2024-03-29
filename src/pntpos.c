@@ -575,7 +575,7 @@ static int resdop(const obsd_t *obs, int n, const double *rs, const double *dts,
         a[0]=sin(azel[i*2])*cosel;
         a[1]=cos(azel[i*2])*cosel;
         a[2]=sin(azel[1+i*2]);
-        matmul("TN",3,1,3,1.0,E,a,0.0,e);
+        matmul("TN",3,1,3,E,a,e);
         
         /* satellite velocity relative to receiver in ECEF */
         for (j=0;j<3;j++) {

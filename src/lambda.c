@@ -191,7 +191,7 @@ extern int lambda(int n, int m, const double *a, const double *Q, double *F,
         
         /* lambda reduction (z=Z'*a, Qz=Z'*Q*Z=L'*diag(D)*L) */
         reduction(n,L,D,Z);
-        matmul("TN",n,1,n,1.0,Z,a,0.0,z); /* z=Z'*a */
+        matmul("TN",n,1,n,Z,a,z); /* z=Z'*a */
         
         /* mlambda search 
             z = transformed double-diff phase biases

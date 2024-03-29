@@ -1105,20 +1105,43 @@ extern void matcpy(double *A, const double *B, int n, int m)
 #ifdef LAPACK /* with LAPACK/BLAS or MKL */
 
 /* multiply matrix (wrapper of blas dgemm) -------------------------------------
-* multiply matrix by matrix (C=alpha*A*B+beta*C)
+* multiply matrix by matrix (C=A*B)
 * args   : char   *tr       I  transpose flags ("N":normal,"T":transpose)
 *          int    n,k,m     I  size of (transposed) matrix A,B
-*          double alpha     I  alpha
 *          double *A,*B     I  (transposed) matrix A (n x m), B (m x k)
-*          double beta      I  beta
-*          double *C        IO matrix C (n x k)
+*          double *C        O matrix C (n x k)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void matmul(const char *tr, int n, int k, int m, double alpha,
-                   const double *A, const double *B, double beta, double *C)
+extern void matmul(const char *tr, int n, int k, int m,
+                   const double *A, const double *B, double *C)
 {
     int lda=tr[0]=='T'?m:n,ldb=tr[1]=='T'?k:m;
+    const double alpha=1,beta=0;
 
+    dgemm_((char *)tr,(char *)tr+1,&n,&k,&m,&alpha,(double *)A,&lda,(double *)B,
+           &ldb,&beta,C,&n);
+}
+/* multiply matrix (wrapper of blas dgemm) -------------------------------------
+* multiply matrix by matrix (C=C+A*B)
+*-----------------------------------------------------------------------------*/
+extern void matmulp(const char *tr, int n, int k, int m,
+                    const double *A, const double *B, double *C)
+{
+    int lda=tr[0]=='T'?m:n,ldb=tr[1]=='T'?k:m;
+    const double alpha=1,beta=1;
+
+    dgemm_((char *)tr,(char *)tr+1,&n,&k,&m,&alpha,(double *)A,&lda,(double *)B,
+           &ldb,&beta,C,&n);
+}
+/* multiply matrix (wrapper of blas dgemm) -------------------------------------
+* multiply matrix by matrix (C=C-A*B)
+*-----------------------------------------------------------------------------*/
+extern void matmulm(const char *tr, int n, int k, int m,
+                    const double *A, const double *B, double *C)
+{
+    int lda=tr[0]=='T'?m:n,ldb=tr[1]=='T'?k:m;
+    const double alpha=-1,beta=1;
+    
     dgemm_((char *)tr,(char *)tr+1,&n,&k,&m,&alpha,(double *)A,&lda,(double *)B,
            &ldb,&beta,C,&n);
 }
@@ -1167,21 +1190,136 @@ extern int solve(const char *tr, const double *A, const double *Y, int n,
 #else /* without LAPACK/BLAS or MKL */
 
 /* multiply matrix -----------------------------------------------------------*/
-extern void matmul(const char *tr, int n, int k, int m, double alpha,
-                   const double *A, const double *B, double beta, double *C)
+extern void matmul(const char *tr, int n, int k, int m,
+                   const double *A, const double *B, double *C)
 {
-    double d;
-    int i,j,x,f=tr[0]=='N'?(tr[1]=='N'?1:2):(tr[1]=='N'?3:4);
+    int f=(tr[0]!='N')*2+(tr[1]!='N');
 
-    for (i=0;i<n;i++) for (j=0;j<k;j++) {
-        d=0.0;
-        switch (f) {
-            case 1: for (x=0;x<m;x++) d+=A[i+x*n]*B[x+j*m]; break;
-            case 2: for (x=0;x<m;x++) d+=A[i+x*n]*B[j+x*k]; break;
-            case 3: for (x=0;x<m;x++) d+=A[x+i*m]*B[x+j*m]; break;
-            case 4: for (x=0;x<m;x++) d+=A[x+i*m]*B[j+x*k]; break;
-        }
-        if (beta==0.0) C[i+j*n]=alpha*d; else C[i+j*n]=alpha*d+beta*C[i+j*n];
+    switch (f) {
+        case 0: /* NN */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[i+x*n]*B[x+j*m];
+                  C[i+j*n]=d;
+              }
+          }
+          break;
+        case 1: /* NT */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[i+x*n]*B[j+x*k];
+                  C[i+j*n]=d;
+              }
+          }
+          break;
+        case 2: /* TN */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[x+i*m]*B[x+j*m];
+                  C[i+j*n]=d;
+              }
+          }
+          break;
+        case 3: /* TT */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[x+i*m]*B[j+x*k];
+                  C[i+j*n]=d;
+              }
+          }
+          break;
+    }
+}
+extern void matmulp(const char *tr, int n, int k, int m,
+                    const double *A, const double *B, double *C)
+{
+    int f=(tr[0]!='N')*2+(tr[1]!='N');
+
+    switch (f) {
+        case 0: /* NN */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[i+x*n]*B[x+j*m];
+                  C[i+j*n]+=d;
+              }
+          }
+          break;
+        case 1: /* NT */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[i+x*n]*B[j+x*k];
+                  C[i+j*n]+=d;
+              }
+          }
+          break;
+        case 2: /* TN */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[x+i*m]*B[x+j*m];
+                  C[i+j*n]+=d;
+              }
+          }
+          break;
+        case 3: /* TT */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[x+i*m]*B[j+x*k];
+                  C[i+j*n]+=d;
+              }
+          }
+          break;
+    }
+}
+extern void matmulm(const char *tr, int n, int k, int m,
+                    const double *A, const double *B, double *C)
+{
+    int f=(tr[0]!='N')*2+(tr[1]!='N');
+
+    switch (f) {
+        case 0: /* NN */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[i+x*n]*B[x+j*m];
+                  C[i+j*n]-=d;
+              }
+          }
+          break;
+        case 1: /* NT */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[i+x*n]*B[j+x*k];
+                  C[i+j*n]-=d;
+              }
+          }
+          break;
+        case 2: /* TN */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[x+i*m]*B[x+j*m];
+                  C[i+j*n]-=d;
+              }
+          }
+          break;
+        case 3: /* TT */
+          for (int j=0;j<k;j++) {
+              for (int i=0;i<n;i++) {
+                  double d=0.0;
+                  for (int x=0;x<m;x++) d+=A[x+i*m]*B[j+x*k];
+                  C[i+j*n]-=d;
+              }
+          }
+          break;
     }
 }
 /* LU decomposition ----------------------------------------------------------*/
@@ -1258,7 +1396,7 @@ extern int solve(const char *tr, const double *A, const double *Y, int n,
     int info;
 
     matcpy(B,A,n,n);
-    if (!(info=matinv(B,n))) matmul(tr[0]=='N'?"NN":"TN",n,m,n,1.0,B,Y,0.0,X);
+    if (!(info=matinv(B,n))) matmul(tr[0]=='N'?"NN":"TN",n,m,n,B,Y,X);
     free(B);
     return info;
 }
@@ -1285,9 +1423,9 @@ extern int lsq(const double *A, const double *y, int n, int m, double *x,
 
     if (m<n) return -1;
     Ay=mat(n,1);
-    matmul("NN",n,1,m,1.0,A,y,0.0,Ay); /* Ay=A*y */
-    matmul("NT",n,n,m,1.0,A,A,0.0,Q);  /* Q=A*A' */
-    if (!(info=matinv(Q,n))) matmul("NN",n,1,n,1.0,Q,Ay,0.0,x); /* x=Q^-1*Ay */
+    matmul("NN",n,1,m,A,y,Ay); /* Ay=A*y */
+    matmul("NT",n,n,m,A,A,Q);  /* Q=A*A' */
+    if (!(info=matinv(Q,n))) matmul("NN",n,1,n,Q,Ay,x); /* x=Q^-1*Ay */
     free(Ay);
     return info;
 }
@@ -1317,13 +1455,13 @@ static int filter_(const double *x, const double *P, const double *H,
 
     matcpy(Q,R,m,m);
     matcpy(xp,x,n,1);
-    matmul("NN",n,m,n,1.0,P,H,0.0,F);       /* Q=H'*P*H+R */
-    matmul("TN",m,m,n,1.0,H,F,1.0,Q);
+    matmul("NN",n,m,n,P,H,F);       /* Q=H'*P*H+R */
+    matmulp("TN",m,m,n,H,F,Q);
     if (!(info=matinv(Q,m))) {
-        matmul("NN",n,m,m,1.0,F,Q,0.0,K);   /* K=P*H*Q^-1 */
-        matmul("NN",n,1,m,1.0,K,v,1.0,xp);  /* xp=x+K*v */
-        matmul("NT",n,n,m,-1.0,K,H,1.0,I);  /* Pp=(I-K*H')*P */
-        matmul("NN",n,n,n,1.0,I,P,0.0,Pp);
+        matmul("NN",n,m,m,F,Q,K);   /* K=P*H*Q^-1 */
+        matmulp("NN",n,1,m,K,v,xp);  /* xp=x+K*v */
+        matmulm("NT",n,n,m,K,H,I);  /* Pp=(I-K*H')*P */
+        matmul("NN",n,n,n,I,P,Pp);
     }
     free(F); free(Q); free(K); free(I);
     return info;
@@ -1380,9 +1518,9 @@ extern int smoother(const double *xf, const double *Qf, const double *xb,
     if (!matinv(invQf,n)&&!matinv(invQb,n)) {
         for (i=0;i<n*n;i++) Qs[i]=invQf[i]+invQb[i];
         if (!(info=matinv(Qs,n))) {
-            matmul("NN",n,1,n,1.0,invQf,xf,0.0,xx);
-            matmul("NN",n,1,n,1.0,invQb,xb,1.0,xx);
-            matmul("NN",n,1,n,1.0,Qs,xx,0.0,xs);
+            matmul("NN",n,1,n,invQf,xf,xx);
+            matmulp("NN",n,1,n,invQb,xb,xx);
+            matmul("NN",n,1,n,Qs,xx,xs);
         }
     }
     free(invQf); free(invQb); free(xx);
@@ -2027,7 +2165,7 @@ extern void ecef2enu(const double *pos, const double *r, double *e)
     double E[9];
 
     xyz2enu(pos,E);
-    matmul("NN",3,1,3,1.0,E,r,0.0,e);
+    matmul("NN",3,1,3,E,r,e);
 }
 /* transform local vector to ecef coordinate -----------------------------------
 * transform local tangential coordinate vector to ecef
@@ -2041,7 +2179,7 @@ extern void enu2ecef(const double *pos, const double *e, double *r)
     double E[9];
 
     xyz2enu(pos,E);
-    matmul("TN",3,1,3,1.0,E,e,0.0,r);
+    matmul("TN",3,1,3,E,e,r);
 }
 /* transform covariance to local tangential coordinate --------------------------
 * transform ecef covariance to local tangential coordinate
@@ -2055,8 +2193,8 @@ extern void covenu(const double *pos, const double *P, double *Q)
     double E[9],EP[9];
 
     xyz2enu(pos,E);
-    matmul("NN",3,3,3,1.0,E,P,0.0,EP);
-    matmul("NT",3,3,3,1.0,EP,E,0.0,Q);
+    matmul("NN",3,3,3,E,P,EP);
+    matmul("NT",3,3,3,EP,E,Q);
 }
 /* transform local enu coordinate covariance to xyz-ecef -----------------------
 * transform local enu covariance to xyz-ecef coordinate
@@ -2070,8 +2208,8 @@ extern void covecef(const double *pos, const double *Q, double *P)
     double E[9],EQ[9];
 
     xyz2enu(pos,E);
-    matmul("TN",3,3,3,1.0,E,Q,0.0,EQ);
-    matmul("NN",3,3,3,1.0,EQ,E,0.0,P);
+    matmul("TN",3,3,3,E,Q,EQ);
+    matmul("NN",3,3,3,EQ,E,P);
 }
 /* coordinate rotation matrix ------------------------------------------------*/
 #define Rx(t,X) do { \
@@ -2278,15 +2416,15 @@ extern void eci2ecef(gtime_t tutc, const double *erpv, double *U, double *gmst)
     z =(2306.2181*t+1.09468*t2+0.018203*t3)*AS2R;
     eps=(84381.448-46.8150*t-0.00059*t2+0.001813*t3)*AS2R;
     Rz(-z,R1); Ry(th,R2); Rz(-ze,R3);
-    matmul("NN",3,3,3,1.0,R1,R2,0.0,R);
-    matmul("NN",3,3,3,1.0,R, R3,0.0,P); /* P=Rz(-z)*Ry(th)*Rz(-ze) */
-
+    matmul("NN",3,3,3,R1,R2,R);
+    matmul("NN",3,3,3,R, R3,P); /* P=Rz(-z)*Ry(th)*Rz(-ze) */
+    
     /* iau 1980 nutation */
     nut_iau1980(t,f,&dpsi,&deps);
     Rx(-eps-deps,R1); Rz(-dpsi,R2); Rx(eps,R3);
-    matmul("NN",3,3,3,1.0,R1,R2,0.0,R);
-    matmul("NN",3,3,3,1.0,R ,R3,0.0,N); /* N=Rx(-eps)*Rz(-dspi)*Rx(eps) */
-
+    matmul("NN",3,3,3,R1,R2,R);
+    matmul("NN",3,3,3,R ,R3,N); /* N=Rx(-eps)*Rz(-dspi)*Rx(eps) */
+    
     /* greenwich aparent sidereal time (rad) */
     gmst_=utc2gmst(tutc_,erpv[2]);
     gast=gmst_+dpsi*cos(eps);
@@ -2294,11 +2432,11 @@ extern void eci2ecef(gtime_t tutc, const double *erpv, double *U, double *gmst)
 
     /* eci to ecef transformation matrix */
     Ry(-erpv[0],R1); Rx(-erpv[1],R2); Rz(gast,R3);
-    matmul("NN",3,3,3,1.0,R1,R2,0.0,W );
-    matmul("NN",3,3,3,1.0,W ,R3,0.0,R ); /* W=Ry(-xp)*Rx(-yp) */
-    matmul("NN",3,3,3,1.0,N ,P ,0.0,NP);
-    matmul("NN",3,3,3,1.0,R ,NP,0.0,U_); /* U=W*Rz(gast)*N*P */
-
+    matmul("NN",3,3,3,R1,R2,W );
+    matmul("NN",3,3,3,W ,R3,R ); /* W=Ry(-xp)*Rx(-yp) */
+    matmul("NN",3,3,3,N ,P ,NP);
+    matmul("NN",3,3,3,R ,NP,U_); /* U=W*Rz(gast)*N*P */
+    
     for (i=0;i<9;i++) U[i]=U_[i];
     if (gmst) *gmst=gmst_;
 
@@ -3413,8 +3551,8 @@ extern void dops(int ns, const double *azel, double elmin, double *dop)
         H[3+4*n++]=1.0;
     }
     if (n<4) return;
-
-    matmul("NT",4,4,n,1.0,H,H,0.0,Q);
+    
+    matmul("NT",4,4,n,H,H,Q);
     if (!matinv(Q,4)) {
         dop[0]=SQRT(Q[0]+Q[5]+Q[10]+Q[15]); /* GDOP */
         dop[1]=SQRT(Q[0]+Q[5]+Q[10]);       /* PDOP */
@@ -3782,8 +3920,8 @@ extern void sunmoonpos(gtime_t tutc, const double *erpv, double *rsun,
     eci2ecef(tutc,erpv,U,&gmst_);
 
     /* sun and moon position in ecef */
-    if (rsun ) matmul("NN",3,1,3,1.0,U,rs,0.0,rsun );
-    if (rmoon) matmul("NN",3,1,3,1.0,U,rm,0.0,rmoon);
+    if (rsun ) matmul("NN",3,1,3,U,rs,rsun );
+    if (rmoon) matmul("NN",3,1,3,U,rm,rmoon);
     if (gmst ) *gmst=gmst_;
 }
 /* uncompress file -------------------------------------------------------------

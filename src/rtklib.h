@@ -1370,8 +1370,12 @@ EXPORT double norm(const double *a, int n);
 EXPORT void cross3(const double *a, const double *b, double *c);
 EXPORT int  normv3(const double *a, double *b);
 EXPORT void matcpy(double *A, const double *B, int n, int m);
-EXPORT void matmul(const char *tr, int n, int k, int m, double alpha,
-                   const double *A, const double *B, double beta, double *C);
+EXPORT void matmul(const char *tr, int n, int k, int m,
+                   const double *A, const double *B, double *C);
+EXPORT void matmulp(const char *tr, int n, int k, int m,
+                    const double *A, const double *B, double *C);
+EXPORT void matmulm(const char *tr, int n, int k, int m,
+                    const double *A, const double *B, double *C);
 EXPORT int  matinv(double *A, int n);
 EXPORT int  solve (const char *tr, const double *A, const double *Y, int n,
                    int m, double *X);

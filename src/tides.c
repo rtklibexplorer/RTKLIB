@@ -276,12 +276,12 @@ extern void tidedisp(gtime_t tutc, const double *rr, int opt, const erp_t *erp,
     }
     if ((opt&2)&&odisp) { /* ocean tide loading */
         tide_oload(tut,odisp,denu);
-        matmul("TN",3,1,3,1.0,E,denu,0.0,drt);
+        matmul("TN",3,1,3,E,denu,drt);
         for (i=0;i<3;i++) dr[i]+=drt[i];
     }
     if ((opt&4)&&erp) { /* pole tide */
         tide_pole(tut,pos,erpv,denu);
-        matmul("TN",3,1,3,1.0,E,denu,0.0,drt);
+        matmul("TN",3,1,3,E,denu,drt);
         for (i=0;i<3;i++) dr[i]+=drt[i];
     }
     trace(5,"tidedisp: dr=%.3f %.3f %.3f\n",dr[0],dr[1],dr[2]);

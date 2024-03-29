@@ -562,12 +562,12 @@ extern int tle_pos(gtime_t time, const char *name, const char *satno,
     R1[0]=1.0; R1[4]=R1[8]=cos(-erpv[1]); R1[7]=sin(-erpv[1]); R1[5]=-R1[7];
     R2[4]=1.0; R2[0]=R2[8]=cos(-erpv[0]); R2[2]=sin(-erpv[0]); R2[6]=-R2[2];
     R3[8]=1.0; R3[0]=R3[4]=cos(gmst); R3[3]=sin(gmst); R3[1]=-R3[3];
-    matmul("NN",3,1,3,1.0,R3,rs_tle  ,0.0,rs_pef  );
-    matmul("NN",3,1,3,1.0,R3,rs_tle+3,0.0,rs_pef+3);
+    matmul("NN",3,1,3,R3,rs_tle  ,rs_pef  );
+    matmul("NN",3,1,3,R3,rs_tle+3,rs_pef+3);
     rs_pef[3]+=OMGE*rs_pef[1];
     rs_pef[4]-=OMGE*rs_pef[0];
-    matmul("NN",3,3,3,1.0,R1,R2,0.0,W);
-    matmul("NN",3,1,3,1.0,W,rs_pef  ,0.0,rs  );
-    matmul("NN",3,1,3,1.0,W,rs_pef+3,0.0,rs+3);
+    matmul("NN",3,3,3,R1,R2,W);
+    matmul("NN",3,1,3,W,rs_pef  ,rs  );
+    matmul("NN",3,1,3,W,rs_pef+3,rs+3);
     return 1;
 }
