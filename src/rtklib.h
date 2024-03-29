@@ -1363,13 +1363,60 @@ EXPORT double *mat  (int n, int m);
 EXPORT int    *imat (int n, int m);
 EXPORT double *zeros(int n, int m);
 EXPORT double *eye  (int n);
-EXPORT double dot2(const double *a, const double *b);
-EXPORT double dot3(const double *a, const double *b);
-EXPORT double dot (const double *a, const double *b, int n);
-EXPORT double norm(const double *a, int n);
+/* dot product -----------------------------------------------------------------
+ * inner product of vectors of size 2
+ * args   : double *a,*b     I   vectors a and b
+ * return : a'*b
+ *-----------------------------------------------------------------------------*/
+static inline double dot2(const double* a, const double* b) { return a[0] * b[0] + a[1] * b[1]; }
+
+/* dot product -----------------------------------------------------------------
+ * inner product of vectors of size 3
+ * args   : double *a,*b     I   vectors a and b
+ * return : a'*b
+ *-----------------------------------------------------------------------------*/
+static inline double dot3(const double* a, const double* b)
+{
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+/* inner product ---------------------------------------------------------------
+* inner product of vectors
+* args   : double *a,*b     I   vector a,b (n x 1)
+*          int    n         I   size of vector a,b
+* return : a'*b
+*-----------------------------------------------------------------------------*/
+static inline double dot(const double *a, const double *b, int n)
+{
+    double c=0.0;
+
+    while (--n>=0) c+=a[n]*b[n];
+    return c;
+}
+
+/* euclid norm -----------------------------------------------------------------
+* euclid norm of vector
+* args   : double *a        I   vector a (n x 1)
+*          int    n         I   size of vector a
+* return : || a ||
+*-----------------------------------------------------------------------------*/
+static inline double norm(const double *a, int n)
+{
+    return sqrt(dot(a,a,n));
+}
 EXPORT void cross3(const double *a, const double *b, double *c);
 EXPORT int  normv3(const double *a, double *b);
-EXPORT void matcpy(double *A, const double *B, int n, int m);
+/* copy matrix -----------------------------------------------------------------
+* copy matrix
+* args   : double *A        O   destination matrix A (n x m)
+*          double *B        I   source matrix B (n x m)
+*          int    n,m       I   number of rows and columns of matrix
+* return : none
+*-----------------------------------------------------------------------------*/
+static inline void matcpy(double *A, const double *B, int n, int m)
+{
+    memcpy(A,B,sizeof(double)*n*m);
+}
 EXPORT void matmul(const char *tr, int n, int k, int m,
                    const double *A, const double *B, double *C);
 EXPORT void matmulp(const char *tr, int n, int k, int m,
@@ -1405,8 +1452,28 @@ EXPORT gtime_t bdt2time(int week, double sec);
 EXPORT double  time2bdt(gtime_t t, int *week);
 EXPORT char    *time_str(gtime_t t, int n);
 
-EXPORT gtime_t timeadd  (gtime_t t, double sec);
-EXPORT double  timediff (gtime_t t1, gtime_t t2);
+/* add time --------------------------------------------------------------------
+* add time to gtime_t struct
+* args   : gtime_t t        I   gtime_t struct
+*          double sec       I   time to add (s)
+* return : gtime_t struct (t+sec)
+*-----------------------------------------------------------------------------*/
+static inline gtime_t timeadd(gtime_t t, double sec)
+{
+    double tt;
+
+    t.sec+=sec; tt=floor(t.sec); t.time+=(int)tt; t.sec-=tt;
+    return t;
+}
+/* time difference -------------------------------------------------------------
+* difference between gtime_t structs
+* args   : gtime_t t1,t2    I   gtime_t structs
+* return : time difference (t1-t2) (s)
+*-----------------------------------------------------------------------------*/
+static inline double timediff(gtime_t t1, gtime_t t2)
+{
+    return difftime(t1.time,t2.time)+t1.sec-t2.sec;
+}
 EXPORT gtime_t gpst2utc (gtime_t t);
 EXPORT gtime_t utc2gpst (gtime_t t);
 EXPORT gtime_t gpst2bdt (gtime_t t);
