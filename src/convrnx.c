@@ -563,7 +563,7 @@ static void setopt_sta(const strfile_t *str, rnxopt_t *opt)
         ;
     }
     else if (norm(sta->del,3)>0.0) {
-        if (!sta->deltype&&norm(sta->del,3)>0.0) { /* enu */
+        if (!sta->deltype) { /* enu */
             opt->antdel[0]=sta->del[2]; /* h */
             opt->antdel[1]=sta->del[0]; /* e */
             opt->antdel[2]=sta->del[1]; /* n */
@@ -574,6 +574,8 @@ static void setopt_sta(const strfile_t *str, rnxopt_t *opt)
             opt->antdel[0]=enu[2]; /* h */
             opt->antdel[1]=enu[0]; /* e */
             opt->antdel[2]=enu[1]; /* n */
+        } else {
+            trace(2,"failed to update RINEX option antenna delta from xyz due to no station position\n");
         }
     }
     else {
@@ -937,7 +939,7 @@ static void outrnxevent(FILE *fp, const rnxopt_t *opt, gtime_t time, int event,
         
         /* antenna delta */
         if (norm(p->sta.del,3)>0.0) {
-            if (!p->sta.deltype&&norm(p->sta.del,3)>0.0) { /* enu */
+            if (!p->sta.deltype) { /* enu */
                 del[0]=p->sta.del[2]; /* h */
                 del[1]=p->sta.del[0]; /* e */
                 del[2]=p->sta.del[1]; /* n */
@@ -948,6 +950,9 @@ static void outrnxevent(FILE *fp, const rnxopt_t *opt, gtime_t time, int event,
                 del[0]=enu[2]; /* h */
                 del[1]=enu[0]; /* e */
                 del[2]=enu[1]; /* n */
+            } else {
+                trace(2,"failed to output RINEX option antenna delta from xyz due to no station position\n");
+                del[0]=del[1]=del[2]=0.0;
             }
         }
         else {
