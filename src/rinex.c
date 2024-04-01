@@ -224,6 +224,7 @@ static int uraindex(double value)
 /* Galileo SISA index to SISA nominal value (m) ------------------------------*/
 static double sisa_value(int sisa)
 {
+    if (sisa<   0) return -1.0;
     if (sisa<= 49) return sisa*0.01;
     if (sisa<= 74) return 0.5+(sisa- 50)*0.02;
     if (sisa<= 99) return 1.0+(sisa- 75)*0.04;
@@ -242,10 +243,10 @@ static int sisa_index(double value)
      * signal-in-space[6].Please notice that SISA flag refers to the dual-frequency signal combinations.
      */
     if (value<0.0 || value>6.0) return 255; /* unknown or NAPA */
-    else if (value<=0.5) return (int)(value/0.01);
-    else if (value<=1.0) return (int)((value-0.5)/0.02)+50;
-    else if (value<=2.0) return (int)((value-1.0)/0.04)+75;
-    return (int)((value-2.0)/0.16)+100;
+    else if (value<=0.49) return (int)round(value/0.01);
+    else if (value<=0.98) return (int)round((value-0.5)/0.02)+50;
+    else if (value<=1.96) return (int)round((value-1.0)/0.04)+75;
+    return (int)round((value-2.0)/0.16)+100;
 }
 /* initialize station parameter ----------------------------------------------*/
 static void init_sta(sta_t *sta)
