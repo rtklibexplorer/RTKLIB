@@ -167,7 +167,6 @@ extern void alm2pos(gtime_t time, const alm_t *alm, double *rs, double *dts)
     }
     if (n>=MAX_ITER_KEPLER) {
         trace(2,"alm2pos: kepler iteration overflow sat=%2d\n",alm->sat);
-        return;
     }
     sinE=sin(E); cosE=cos(E);
     u=atan2(sqrt(1.0-alm->e*alm->e)*sinE,cosE-alm->e)+alm->omg;
@@ -245,7 +244,6 @@ extern void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts,
     }
     if (n>=MAX_ITER_KEPLER) {
         trace(2,"eph2pos: kepler iteration overflow sat=%2d\n",eph->sat);
-        return;
     }
     sinE=sin(E); cosE=cos(E);
 
