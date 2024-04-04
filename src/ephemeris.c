@@ -601,7 +601,7 @@ static int satpos_sbas(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
     }
     if (i>=nav->sbssat.nsat) {
         trace(2,"no sbas, use brdcast: %s sat=%2d\n",time_str(time,0),sat);
-        ephpos(time,teph,sat,nav,-1,rs,dts,var,svh);
+        if (!ephpos(time,teph,sat,nav,-1,rs,dts,var,svh)) return 0;
         /* *svh=-1; */ /* use broadcast if no sbas */
         return 1;
     }
