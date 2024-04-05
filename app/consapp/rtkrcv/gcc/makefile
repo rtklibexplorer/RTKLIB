@@ -98,6 +98,7 @@ geoid.o    : $(SRC)/rtklib.h
 solution.o : $(SRC)/rtklib.h
 lambda.o   : $(SRC)/rtklib.h
 sbas.o     : $(SRC)/rtklib.h
+stream.o   : $(SRC)/rtklib.h
 rcvraw.o   : $(SRC)/rtklib.h
 rtcm.o     : $(SRC)/rtklib.h
 rtcm2.o    : $(SRC)/rtklib.h
