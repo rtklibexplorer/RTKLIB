@@ -79,6 +79,7 @@ extern int loaddatump(const char *file)
         return -1;
     }
     if (!(prm=(tprm_t *)malloc(sizeof(tprm_t)*MAXPRM))) {
+        fclose(fp);
         fprintf(stderr,"%s : memory allocation error\n",__FILE__);
         return -1;
     }
