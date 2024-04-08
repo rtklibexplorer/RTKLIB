@@ -388,7 +388,12 @@ static int test_list(path_t *path)
     
     if (!(fp=fopen(FTP_LISTING,"r"))) return 1;
     
-    if ((p=strrchr(path->remot,'/'))) file=p+1; else return 1;
+    if ((p=strrchr(path->remot,'/')))
+        file=p+1;
+    else {
+        fclose(fp);
+        return 1;
+    }
     
     /* search file in remote file list */
     while (fgets(buff,sizeof(buff),fp)) {
