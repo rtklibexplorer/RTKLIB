@@ -161,8 +161,9 @@ static strfile_t *gen_strfile(int format, const char *opt)
     
     if (format==STRFMT_RTCM2||format==STRFMT_RTCM3) {
         if (!init_rtcm(&str->rtcm)) {
+            free(str);
             showmsg("init rtcm error");
-            return 0;
+            return NULL;
         }
         str->rtcm.time=time0;
         str->obs=&str->rtcm.obs;
@@ -172,8 +173,9 @@ static strfile_t *gen_strfile(int format, const char *opt)
     }
     else if (format<=MAXRCVFMT) {
         if (!init_raw(&str->raw,format)) {
+            free(str);
             showmsg("init raw error");
-            return 0;
+            return NULL;
         }
         str->raw.time=time0;
         str->obs=&str->raw.obs;
@@ -183,8 +185,9 @@ static strfile_t *gen_strfile(int format, const char *opt)
     }
     else if (format==STRFMT_RINEX) {
         if (!init_rnxctr(&str->rnx)) {
+            free(str);
             showmsg("init rnx error");
-            return 0;
+            return NULL;
         }
         str->rnx.time=time0;
         str->obs=&str->rnx.obs;
@@ -192,7 +195,10 @@ static strfile_t *gen_strfile(int format, const char *opt)
         str->sta=&str->rnx.sta;
         strcpy(str->rnx.opt,opt);
     }
-    else return 0;
+    else {
+        free(str);
+        return NULL;
+    }
 
     str->stas=NULL;
     for (i=0;i<MAXSAT;i++) for (j=0;j<NFREQ+NEXOBS;j++) {
