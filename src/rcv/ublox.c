@@ -481,13 +481,13 @@ static int decode_rxmrawx(raw_t *raw)
         if (cpstd>=cpstd_slip) slip=LLI_SLIP;
         if (slip) raw->lockflag[sat-1][idx]=slip;
         raw->lockt[sat-1][idx]=lockt*1E-3;
-        raw->halfc[sat-1][idx]=halfc;
         /* LLI: bit0=slip,bit1=half-cycle-unresolved */
         LLI=!halfv&&L!=0.0?LLI_HALFC:0;
         /* half cycle adjusted */
         LLI|=halfc?LLI_HALFA:0; 
         /* set cycle slip if half cycle subtract bit changed state */
         LLI|=halfc!=raw->halfc[sat-1][idx]?LLI_SLIP:0;
+        raw->halfc[sat-1][idx]=halfc;
         /* set cycle slip flag if first valid phase since slip */
         if (L!=0.0) LLI|=raw->lockflag[sat-1][idx]>0.0?LLI_SLIP:0;
 
