@@ -385,7 +385,7 @@ static serial_t *openserial(const char *path, int mode, char *msg)
         sscanf(p,"#%d",&tcp_port);
     }
     for (i=0;i<13;i++) if (br[i]==brate) break;
-    if (i>=14) {
+    if (i>=13) {
         sprintf(msg,"bitrate error (%d)",brate);
         tracet(1,"openserial: %s path=%s\n",msg,path);
         free(serial);
