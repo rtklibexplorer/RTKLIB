@@ -208,7 +208,7 @@ static int decode_irn_utc(const uint8_t *buff, double *utc)
     
     /* 9 or 26: utc and time sync parameters */
     if      (id3==9||id3==26) i=8*37*2+36;
-    else if (id4==9||id3==26) i=8*37*3+36;
+    else if (id4==9||id4==26) i=8*37*3+36;
     else return 0;
 
     utc[0]=getbits(buff,i,16)*P2_35; i+=16; /* A0 */
