@@ -209,7 +209,7 @@ static int read_polygon(FILE *fp, double *bound, gisd_t **p)
     for (i=0;i<nt;i++) {
         nr=(i<nt-1?part[i+1]:np)-part[i];
         
-        if (!(polygon=(gis_polygon_t *)malloc(sizeof(gis_poly_t)))) {
+        if (!(polygon=(gis_polygon_t *)malloc(sizeof(gis_polygon_t)))) {
             free(part);
             return 0;
         }
