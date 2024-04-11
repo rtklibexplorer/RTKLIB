@@ -567,17 +567,16 @@ static int test_local(gtime_t ts, gtime_t te, double ti, const char *path,
     int stat,abort=0;
     
     for (time=ts;timediff(time,te)<=1E-3;time=timeadd(time,ti)) {
-        
-        sprintf(str,"%s->%s",path,local);
-        
-        if (showmsg(str)) {
-            abort=1;
-            break;
-        }
         genpath(path,sta,time,0,remot);
         genpath(dir ,sta,time,0,dir_t);
         remot2local(remot,dir_t,local);
         
+        sprintf(str,"%s->%s",path,local);
+        if (showmsg(str)) {
+            abort=1;
+            break;
+        }
+
         stat=test_file(local);
         
         fprintf(fp," %s",stat==0?"-":(stat==1?"o":"z"));
