@@ -1037,7 +1037,6 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
                    const solopt_t *sopt, const filopt_t *fopt, int flag,
                    char **infile, const int *index, int n, char *outfile)
 {
-    FILE *fp,*fptm;
     rtk_t *rtk_ptr = (rtk_t *)malloc(sizeof(rtk_t)); /* moved from stack to heap to avoid stack overflow warning */
     prcopt_t popt_=*popt;
     solopt_t tmsopt = *sopt;
@@ -1151,18 +1150,26 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
     iobsu=iobsr=isbs=reverse=aborts=0;
 
     if (popt_.mode==PMODE_SINGLE||popt_.soltype==SOLTYPE_FORWARD) {
-        if ((fp=openfile(outfile)) && (fptm=openfile(outfiletm))) {
-            procpos(fp,fptm,&popt_,sopt,rtk_ptr,SOLMODE_SINGLE_DIR);
+        FILE *fp=openfile(outfile);
+        if (fp) {
+            FILE *fptm=openfile(outfiletm);
+            if (fptm) {
+                procpos(fp,fptm,&popt_,sopt,rtk_ptr,SOLMODE_SINGLE_DIR);
+                fclose(fptm);
+            }
             fclose(fp);
-            fclose(fptm);
         }
     }
     else if (popt_.soltype==SOLTYPE_BACKWARD) {
-        if ((fp=openfile(outfile)) && (fptm=openfile(outfiletm))) {
-            reverse=1; iobsu=iobsr=obss.n-1; isbs=sbss.n-1;
-            procpos(fp,fptm,&popt_,sopt,rtk_ptr,SOLMODE_SINGLE_DIR);
+        FILE *fp=openfile(outfile);
+        if (fp) {
+            FILE *fptm=openfile(outfiletm);
+            if (fptm) {
+                reverse=1; iobsu=iobsr=obss.n-1; isbs=sbss.n-1;
+                procpos(fp,fptm,&popt_,sopt,rtk_ptr,SOLMODE_SINGLE_DIR);
+                fclose(fptm);
+            }
             fclose(fp);
-            fclose(fptm);
         }
     }
     else { /* combined or combined with no phase reset */
@@ -1178,10 +1185,16 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
             procpos(NULL,NULL,&popt_,sopt,rtk_ptr,SOLMODE_COMBINED); /* backward */
 
             /* combine forward/backward solutions */
-            if (!aborts&&(fp=openfile(outfile))  && (fptm=openfile(outfiletm))) {
-                combres(fp,fptm,&popt_,sopt);
-                fclose(fp);
-                fclose(fptm);
+            if (!aborts) {
+                FILE *fp=openfile(outfile);
+                if (fp) {
+                    FILE *fptm=openfile(outfiletm);
+                    if (fptm) {
+                        combres(fp,fptm,&popt_,sopt);
+                        fclose(fptm);
+                    }
+                    fclose(fp);
+                }
             }
         }
         else showmsg("error : memory allocation");
