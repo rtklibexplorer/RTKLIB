@@ -284,7 +284,6 @@ static void combtec(nav_t *nav)
 extern void readtec(const char *file, nav_t *nav, int opt)
 {
     FILE *fp;
-    double lats[3]={0},lons[3]={0},hgts[3]={0},rb=0.0,nexp=-1.0;
     double dcb[MAXSAT]={0},rms[MAXSAT]={0};
     int i,n;
     char *efiles[MAXEXFILE];
@@ -310,6 +309,7 @@ extern void readtec(const char *file, nav_t *nav, int opt)
             continue;
         }
         /* read ionex header */
+        double lats[3]={0},lons[3]={0},hgts[3]={0},rb=0.0,nexp=-1.0;
         if (readionexh(fp,lats,lons,hgts,&rb,&nexp,dcb,rms)<=0.0) {
             trace(2,"ionex file format error %s\n",efiles[i]);
             continue;
