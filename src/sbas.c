@@ -196,7 +196,8 @@ static int decode_sbstype6(const sbsmsg_t *msg, sbssat_t *sbssat)
     for (i=0;i<4;i++) {
         iodf[i]=getbitu(msg->msg,14+i*2,2);
     }
-    for (i=0;i<sbssat->nsat&&i<MAXSAT;i++) {
+    /* Limited to 51 to avoid overflow of iodf[] */
+    for (i=0;i<sbssat->nsat&&i<=51;i++) {
         if (sbssat->sat[i].fcorr.iodf!=iodf[i/13]) continue;
         udre=getbitu(msg->msg,22+i*4,4);
         sbssat->sat[i].fcorr.udre=udre+1;
