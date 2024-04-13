@@ -525,6 +525,7 @@ static int readserial(serial_t *serial, uint8_t *buff, int n, char *msg)
     
     /* write received stream to tcp server port */
     if (serial->tcpsvr&&nr>0) {
+        /* TODO handle no-blocking write ? */
         writetcpsvr(serial->tcpsvr,buff,(int)nr,msg_tcp);
     }
     return nr;
@@ -540,7 +541,12 @@ static int writeserial(serial_t *serial, uint8_t *buff, int n, char *msg)
 #ifdef WIN32
     if ((ns=writeseribuff(serial,buff,n))<n) serial->error=1;
 #else
-    if (write(serial->dev,buff,n)<n) {
+    ns=write(serial->dev,buff,n);
+    if (ns<0) {
+        if (errno==EAGAIN) {
+            /* TODO ?? */
+        }
+        ns = 0;
         serial->error=1;
     }
 #endif
