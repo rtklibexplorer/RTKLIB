@@ -573,7 +573,7 @@ static void *rtksvrthread(void *arg)
     uint32_t tick,ticknmea,tick1hz,tickreset;
     uint8_t *p,*q;
     char msg[128];
-    int i,j,n,fobs[3]={0},cycle,cputime;
+    int i,j,n,cycle,cputime;
     
     tracet(3,"rtksvrthread:\n");
     
@@ -602,6 +602,7 @@ static void *rtksvrthread(void *arg)
             svr->npb[i]+=n;
             rtksvrunlock(svr);
         }
+        int fobs[3]={0};
         for (i=0;i<3;i++) {
             if (svr->format[i]==STRFMT_SP3||svr->format[i]==STRFMT_RNXCLK) {
                 /* decode download file */
