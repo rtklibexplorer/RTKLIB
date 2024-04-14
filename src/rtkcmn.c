@@ -1840,7 +1840,7 @@ static int read_leaps_usno(FILE *fp)
     rewind(fp);
 
     while (fgets(buff,sizeof(buff),fp)&&n<MAXLEAPS) {
-        if (sscanf(buff,"%d %s %d =JD %lf TAI-UTC= %lf",&y,month,&d,&jd,
+        if (sscanf(buff,"%d %31s %d =JD %lf TAI-UTC= %lf",&y,month,&d,&jd,
                    &tai_utc)<5) continue;
         if (y<1980) continue;
         for (m=1;m<=12;m++) if (!strcmp(months[m-1],month)) break;
@@ -2698,7 +2698,7 @@ extern void readpos(const char *file, const char *rcv, double *pos)
     }
     while (np<2048&&fgets(buff,sizeof(buff),fp)) {
         if (buff[0]=='%'||buff[0]=='#') continue;
-        if (sscanf(buff,"%lf %lf %lf %s",&poss[np][0],&poss[np][1],&poss[np][2],
+        if (sscanf(buff,"%lf %lf %lf %255s",&poss[np][0],&poss[np][1],&poss[np][2],
                    str)<4) continue;
         sprintf(stas[np++],"%.15s",str);
     }
@@ -2738,10 +2738,10 @@ static int readblqrecord(FILE *fp, double *odisp)
 extern int readblq(const char *file, const char *sta, double *odisp)
 {
     FILE *fp;
-    char buff[256],staname[32]="",name[32],*p;
+    char buff[256],staname[17]="",name[17],*p;
 
     /* station name to upper case */
-    (void)sscanf(sta,"%16s",staname);
+    if (sscanf(sta,"%16s",staname)<1) return 0;
     for (p=staname;(*p=(char)toupper((int)(*p)));p++) ;
 
     if (!(fp=fopen(file,"r"))) {
@@ -2775,7 +2775,6 @@ extern int readerp(const char *file, erp_t *erp)
 {
     FILE *fp;
     erpd_t *erp_data;
-    double v[14]={0};
     char buff[256];
 
     trace(3,"readerp: file=%s\n",file);
@@ -2785,6 +2784,7 @@ extern int readerp(const char *file, erp_t *erp)
         return 0;
     }
     while (fgets(buff,sizeof(buff),fp)) {
+        double v[14]={0};
         if (sscanf(buff,"%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
                    v,v+1,v+2,v+3,v+4,v+5,v+6,v+7,v+8,v+9,v+10,v+11,v+12,v+13)<5) {
             continue;

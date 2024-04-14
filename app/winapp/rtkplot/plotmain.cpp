@@ -1197,7 +1197,7 @@ void __fastcall TPlot::RangeListClick(TObject *Sender)
     if ((i=RangeList->ItemIndex)<0) return;
     
     str=RangeList->Items->Strings[i];
-    if (sscanf(str.c_str(),"%lf%s",&YRange,unit)<1) return;
+    if (sscanf(str.c_str(),"%lf%31s",&YRange,unit)<1) return;
     if      (!strcmp(unit,"cm")) YRange*=0.01;
     else if (!strcmp(unit,"km")) YRange*=1000.0;
     

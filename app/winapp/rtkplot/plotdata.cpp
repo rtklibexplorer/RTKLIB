@@ -936,7 +936,7 @@ void __fastcall TPlot::ReadStaPos(const char *file, const char *sta,
             }
         }
         else {
-            if (sscanf(buff,"%lf %lf %lf %s",pos,pos+1,pos+2,code)<4) continue;
+            if (sscanf(buff,"%lf %lf %lf %255s",pos,pos+1,pos+2,code)<4) continue;
             if (strcmp(code,sta)) continue;
             pos[0]*=D2R;
             pos[1]*=D2R;

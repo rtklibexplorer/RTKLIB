@@ -752,7 +752,7 @@ void __fastcall TMainForm::GetTime(gtime_t *ts, gtime_t *te, double *ti)
     *ti=86400.0;
     
     str=TimeInt->Text;
-    if (sscanf(str.c_str(),"%lf%s",&val,unit)>=1) {
+    if (sscanf(str.c_str(),"%lf%31s",&val,unit)>=1) {
         if      (!strcmp(unit,"day")) *ti=val*86400.0;
         else if (!strcmp(unit,"min")) *ti=val*60.0;
         else                          *ti=val*3600.0;

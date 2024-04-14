@@ -377,7 +377,7 @@ static serial_t *openserial(const char *path, int mode, char *msg)
     
     if ((p=strchr(path,':'))) {
         strncpy(port,path,p-path); port[p-path]='\0';
-        sscanf(p,":%d:%d:%c:%d:%s",&brate,&bsize,&parity,&stopb,fctr);
+        sscanf(p,":%d:%d:%c:%d:%63s",&brate,&bsize,&parity,&stopb,fctr);
     }
     else strcpy(port,path);
     

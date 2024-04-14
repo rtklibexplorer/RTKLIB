@@ -391,7 +391,8 @@ static int readdcbf(const char *file, nav_t *nav, const sta_t *sta)
         if      (strstr(buff,"DIFFERENTIAL (P1-C1) CODE BIASES")) type=1;
         else if (strstr(buff,"DIFFERENTIAL (P2-C2) CODE BIASES")) type=2;
 
-        if (!type||sscanf(buff,"%s %s",str1,str2)<1) continue;
+        str2[0]='\0';
+        if (!type||sscanf(buff,"%31s %31s",str1,str2)<1) continue;
 
         if ((cbias=str2num(buff,26,9))==0.0) continue;
 
