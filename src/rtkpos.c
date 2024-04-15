@@ -897,31 +897,33 @@ static void udbias(rtk_t *rtk, double tt, const obsd_t *obs, const int *sat,
         free(bias);
     }
 }
-/* temporal update of states --------------------------------------------------*/
+/* Temporal update of states --------------------------------------------------*/
 static void udstate(rtk_t *rtk, const obsd_t *obs, const int *sat,
                     const int *iu, const int *ir, int ns, const nav_t *nav)
 {
-    double tt=rtk->tt,bl,dr[3];
-
     trace(3,"udstate : ns=%d\n",ns);
+    
+    double tt=rtk->tt;
 
-    /* temporal update of position/velocity/acceleration */
+    /* Temporal update of position/velocity/acceleration */
     udpos(rtk,tt);
 
-    /* temporal update of ionospheric parameters */
-    if (rtk->opt.ionoopt==IONOOPT_EST) {
-        bl=baseline(rtk->x,rtk->rb,dr);
-        udion(rtk,tt,bl,sat,ns);
+    /* Temporal update of ionospheric parameters */
+    if (rtk->opt.ionoopt==IONOOPT_EST || rtk->opt.tropopt>=TROPOPT_EST) {
+        double dr[3], bl=baseline(rtk->x,rtk->rb,dr);
+        if (rtk->opt.ionoopt==IONOOPT_EST) {
+            udion(rtk,tt,bl,sat,ns);
+        }
+        /* Temporal update of tropospheric parameters */
+        if (rtk->opt.tropopt>=TROPOPT_EST) {
+            udtrop(rtk,tt,bl);
+        }
     }
-    /* temporal update of tropospheric parameters */
-    if (rtk->opt.tropopt>=TROPOPT_EST) {
-        udtrop(rtk,tt,bl);
-    }
-    /* temporal update of receiver h/w bias */
+    /* Temporal update of receiver h/w bias */
     if (rtk->opt.glomodear==GLO_ARMODE_AUTOCAL&&(rtk->opt.navsys&SYS_GLO)) {
         udrcvbias(rtk,tt);
     }
-    /* temporal update of phase-bias */
+    /* Temporal update of phase-bias */
     if (rtk->opt.mode>PMODE_DGPS) {
         udbias(rtk,tt,obs,sat,iu,ir,ns,nav);
     }
