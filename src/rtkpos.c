@@ -221,7 +221,7 @@ extern int rtkoutstat(rtk_t *rtk, char *buff)
     int i,j,week,est,nfreq,nf=NF(&rtk->opt);
     char id[32],*p=buff;
 
-    if (rtk->sol.stat<=SOLQ_NONE) {
+    if (rtk->sol.stat==SOLQ_NONE) {
         return 0;
     }
     /* write ppp solution status to buffer */
