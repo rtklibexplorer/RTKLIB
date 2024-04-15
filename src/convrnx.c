@@ -504,6 +504,7 @@ static void setopt_sta_list(const strfile_t *str, rnxopt_t *opt)
     for (i=0;i<MAXCOMMENT;i++) {
         if (!*opt->comment[i]) break;
     }
+    if (i>=MAXCOMMENT) return;
     sprintf(opt->comment[i++],"%5s  %22s  %22s","STAID","TIME OF FIRST OBS",
             "TIME OF LAST OBS");
     
