@@ -449,6 +449,11 @@ static void buff2sysopts(void)
             prcopt_.snrmask.mask[i][j++]=atof(p);
         }
     }
+    /* Guard number of frequencies */
+    if (prcopt_.nf>NFREQ) {
+       fprintf(stderr,"Number of frequencies %d limited to %d, rebuild with NFREQ=%d\n",prcopt_.nf, NFREQ, prcopt_.nf);
+        prcopt_.nf=NFREQ;
+    }
     /* number of frequency (4:L1+L5) TODO ????*/
     /*if (prcopt_.nf==4) {
         prcopt_.nf=3;
