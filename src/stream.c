@@ -2265,7 +2265,7 @@ static void decodeftppath(const char *path, char *addr, char *file, char *user,
         if ((q=strchr(buff,':'))) {
              *q='\0'; if (passwd) strcpy(passwd,q+1);
         }
-        *q='\0'; if (user) strcpy(user,buff); 
+        if (user) strcpy(user,buff);
     }
     else p=buff;
     
