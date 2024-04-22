@@ -102,7 +102,7 @@ static void utest3(void)
     erp_t erp={0};
     tle_t tle={0};
     gtime_t time;
-    char sat[32];
+    char sat[8];
     double rs1[6],rs2[6],ds[6],dts[2],var;
     int i,j,k,stat,svh;
 

@@ -132,7 +132,7 @@ void utest4(void)
 /* readsap() */
 void utest5(void)
 {
-    char *file="../../data/ant/igs14.atx",id[32];
+    char *file="../../data/ant/igs14.atx",id[8];
     double ep[]={2009,4,1,0,0,0};
     gtime_t time=epoch2time(ep);
     nav_t nav={0};

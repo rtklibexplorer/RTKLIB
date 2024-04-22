@@ -32,7 +32,7 @@ static void printssrmsg(int sat, const ssr_t *ssr, int topt, int mopt)
 {
     double tow;
     int week;
-    char tstr[32],id[16];
+    char tstr[32],id[8];
     
     if (topt) {
         time2str(ssr->t0,tstr,0);

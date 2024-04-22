@@ -2260,7 +2260,7 @@ void Plot::updateSatelliteMask()
 void Plot::updateSatelliteSelection()
 {
     QString satelliteList = ui->cBSatelliteList->currentText();
-    char id[16];
+    char id[8];
     int sys = 0;
 
     if (satelliteList == "G") sys = SYS_GPS;

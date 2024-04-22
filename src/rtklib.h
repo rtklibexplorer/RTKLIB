@@ -1364,7 +1364,7 @@ EXPORT extern opt_t sysopts[];              /* system options table */
 EXPORT int  satno   (int sys, int prn);
 EXPORT int  satsys  (int sat, int *prn);
 EXPORT int  satid2no(const char *id);
-EXPORT void satno2id(int sat, char *id);
+EXPORT void satno2id(int sat, char id[8]);
 EXPORT uint8_t obs2code(const char *obs);
 EXPORT char *code2obs(uint8_t code);
 EXPORT double code2freq(int sys, uint8_t code, int fcn);

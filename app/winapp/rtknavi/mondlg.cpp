@@ -365,7 +365,7 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	double azel[MAXSAT*2],pos[3],vel[3],rr[3]={0},enu[3]={0};
 	int i,j,k,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,nave;
 	int cputime,nb[3]={0},nmsg[3][10]={{0}},ne;
-	char tstr[64],*ant,id[32],s1[64]="-",s2[64]="-",s3[64]="-";
+	char tstr[64],*ant,id[8],s1[64]="-",s2[64]="-",s3[64]="-";
 	char file[1024]="";
 	const char *ionoopt[]={"OFF","Broadcast","SBAS","Dual-Frequency","Estimate STEC","IONEX TEC","QZSS LEX",""};
 	const char *tropopt[]={"OFF","Saastamoinen","SBAS","Estimate ZTD","Estimate ZTD+Grad",""};
@@ -706,7 +706,7 @@ void __fastcall TMonitorDialog::ShowSat(void)
 	AnsiString s;
 	int i,j,k,n,fix,prn,pmode,nfreq,sys=sys_tbl[SelSys->ItemIndex];
 	int vsat[MAXSAT]={0};
-	char id[32];
+	char id[8];
 	double az,el,cbias[MAXSAT][2];
 	
 	SetSat();
@@ -973,7 +973,7 @@ void __fastcall TMonitorDialog::ShowObs(void)
 {
 	AnsiString s;
 	obsd_t obs[MAXOBS*2];
-	char tstr[64],id[32],*code;
+	char tstr[64],id[8],*code;
 	int i,j,k,n=0,nex=ObsMode?NEXOBS:0,sys=sys_tbl[SelSys->ItemIndex];
 	
 	rtksvrlock(&rtksvr);
@@ -1050,7 +1050,7 @@ void __fastcall TMonitorDialog::ShowNav(void)
 	eph_t eph[MAXSAT];
 	gtime_t time;
 	AnsiString s;
-	char tstr[64],id[32];
+	char tstr[64],id[8];
 	int i,j,k,n,valid,prn,off=SelEph->ItemIndex*MAXSAT;
 	int sys=sys_tbl[SelSys2->ItemIndex+1];
 	
@@ -1163,7 +1163,7 @@ void __fastcall TMonitorDialog::ShowGnav(void)
 	geph_t geph[NSATGLO];
 	gtime_t time;
 	AnsiString s;
-	char tstr[64],id[32];
+	char tstr[64],id[8];
 	int i,j,n,valid,prn,off=SelEph->ItemIndex?NSATGLO:0;
 	
 	rtksvrlock(&rtksvr);
@@ -1245,7 +1245,7 @@ void __fastcall TMonitorDialog::ShowSbsNav(void)
 	seph_t seph[MAXPRNSBS-MINPRNSBS+1]={0};
 	gtime_t time;
 	int i,j,n,valid,prn,off=SelEph->ItemIndex?NSATSBS:0;
-	char tstr[64],id[32];
+	char tstr[64],id[8];
 	
 	rtksvrlock(&rtksvr); // lock
 	time=rtksvr.rtk.sol.time;
@@ -1603,7 +1603,7 @@ void __fastcall TMonitorDialog::ShowSbsLong(void)
 	sbssatp_t *satp;
 	gtime_t time;
 	int i,j,n,valid;
-	char tstr[64],id[32];
+	char tstr[64],id[8];
 	
 	rtksvrlock(&rtksvr); // lock
 	time=rtksvr.rtk.sol.time;
@@ -1705,7 +1705,7 @@ void __fastcall TMonitorDialog::ShowSbsFast(void)
 	sbssatp_t *satp;
 	gtime_t time;
 	int i,j,n,valid;
-	char tstr[64],id[32];
+	char tstr[64],id[8];
 	
 	rtksvrlock(&rtksvr); // lock
 	time=rtksvr.rtk.sol.time;
@@ -1853,7 +1853,7 @@ void __fastcall TMonitorDialog::ShowRtcmDgps(void)
 	gtime_t time;
 	dgps_t dgps[MAXSAT];
 	int i,j,valid;
-	char tstr[64],id[32];
+	char tstr[64],id[8];
 	
 	rtksvrlock(&rtksvr);
 	time=rtksvr.rtk.sol.time;
@@ -1906,7 +1906,7 @@ void __fastcall TMonitorDialog::ShowRtcmSsr(void)
 	gtime_t time;
 	ssr_t ssr[MAXSAT];
 	int i,j,k,n,valid,sat[MAXSAT],sys=sys_tbl[SelSys2->ItemIndex+1];
-	char tstr[64],id[32],buff[256]="",*p;
+	char tstr[64],id[8],buff[256]="",*p;
 
 	rtksvrlock(&rtksvr);
 	time=rtksvr.rtk.sol.time;

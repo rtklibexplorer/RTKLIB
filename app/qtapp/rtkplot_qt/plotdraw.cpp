@@ -991,7 +991,7 @@ void Plot::drawObservation(QPainter &c, int level)
     obsd_t *obs;
     double xs, ys, xt, xl[2], yl[2], tt[MAXSAT] = { 0 }, xp, xc, yc, yp[MAXSAT] = { 0 };
     int i, j, nSats = 0, sats[MAXSAT] = { 0 }, ind = observationIndex;
-    char id[16];
+    char id[8];
 
     trace(3, "drawObservation: level=%d\n", level);
 
@@ -1325,7 +1325,6 @@ void Plot::drawSky(QPainter &c, int level)
     double x, y, xp, yp, xs, ys, dt, dx, dy, xl[2], yl[2], radius;
     int i, j, freq, ind = observationIndex;
     int hh = (int)(QFontMetrics(ui->lblDisplay->font()).height() * 1.5);
-    char satId[16];
 
     trace(3, "drawSky: level=%d\n", level);
 
@@ -1373,6 +1372,7 @@ void Plot::drawSky(QPainter &c, int level)
             if (p0[sat][0] != 0.0 || p0[sat][1] != 0.0) {
                 QPoint pnt;
                 if (graphSky->toPoint(p0[sat][0], p0[sat][1], pnt)) {
+                    char satId[8];
                     satno2id(sat + 1, satId);
                     drawLabel(graphSky, c, pnt, QString(satId), Graph::Alignment::Left, Graph::Alignment::Center);
                 }
@@ -1439,6 +1439,7 @@ void Plot::drawSky(QPainter &c, int level)
             x = radius * sin(azimuth[i]) * (1.0 - 2.0 * elevation[i] / PI);
             y = radius * cos(azimuth[i]) * (1.0 - 2.0 * elevation[i] / PI);
 
+            char satId[8];
             satno2id(obs->sat, satId);
 
             graphSky->drawMark(c, x, y, Graph::MarkerTypes::Dot, col, fontsize * 2 + 5, 0);
@@ -1481,6 +1482,7 @@ void Plot::drawSky(QPainter &c, int level)
             if (plotOptDialog->getHideLowSatellites() && elevation[i] < plotOptDialog->getElevationMask() * D2R) continue;
             if (plotOptDialog->getHideLowSatellites() && plotOptDialog->getElevationMaskEnabled() && elevation[i] < elevationMaskData[static_cast<int>(azimuth[i] * R2D + 0.5)]) continue;
 
+            char satId[8];
             satno2id(obs->sat, satId);
             s = QStringLiteral("%1: ").arg(satId, 3, QChar('-'));
 
@@ -2211,7 +2213,6 @@ void Plot::drawMpSky(QPainter &c, int level)
 
     // highlight selected data
     if (ui->btnShowTrack->isChecked() && 0 <= observationIndex && observationIndex < nObservation) {
-        char id[32];
         int fontsize = (int)(QFontMetrics(ui->lblDisplay->font()).height());
         for (int i = indexObservation[observationIndex]; i < observation.n && i < indexObservation[observationIndex + 1]; i++) {
             obsd_t *obs = observation.data+i;
@@ -2230,6 +2231,7 @@ void Plot::drawMpSky(QPainter &c, int level)
             double x = radius * sin(azimuth[i]) * (1.0 - 2.0 * elevation[i] / PI);
             double y = radius * cos(azimuth[i]) * (1.0 - 2.0 * elevation[i] / PI);
 
+            char id[8];
             satno2id(obs->sat, id);
 
             graphSky->drawMark(c, x, y, Graph::MarkerTypes::Dot, col, fontsize * 2 + 5, 0);

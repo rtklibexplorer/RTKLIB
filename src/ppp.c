@@ -129,7 +129,7 @@ extern int pppoutstat(rtk_t *rtk, char *buff)
     ssat_t *ssat;
     double tow,pos[3],vel[3],acc[3],*x;
     int i,j,week;
-    char id[32],*p=buff;
+    char id[8],*p=buff;
 
     if (!rtk->sol.stat) return 0;
 

@@ -38,7 +38,7 @@ static void out_iono(gtime_t time, int sat, int brk, double iono, double rate,
                      double var, FILE *fp)
 {
     double tow;
-    char id[64];
+    char id[8];
     int week;
     
     tow=time2gpst(time,&week);

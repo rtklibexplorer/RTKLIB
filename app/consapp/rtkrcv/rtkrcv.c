@@ -797,7 +797,7 @@ static void prsatellite(vt_t *vt, int nf)
 {
     rtk_t rtk;
     double az,el;
-    char id[32];
+    char id[8];
     int i,j,fix,frq[]={1,2,5,7,8,6};
     
     trace(4,"prsatellite:\n");
@@ -840,7 +840,7 @@ static void prsatellite(vt_t *vt, int nf)
 static void probserv(vt_t *vt, int nf)
 {
     obsd_t obs[MAXOBS*2];
-    char tstr[64],id[32];
+    char tstr[64],id[8];
     int i,j,n=0,frq[]={1,2,5,7,8,6,9};
     
     trace(4,"probserv:\n");
@@ -880,7 +880,7 @@ static void prnavidata(vt_t *vt)
     geph_t geph[MAXPRNGLO];
     double ion[8],utc[8];
     gtime_t time;
-    char id[32],s1[64],s2[64],s3[64];
+    char id[8],s1[64],s2[64],s3[64];
     int i,valid,prn;
     
     trace(4,"prnavidata:\n");
@@ -985,7 +985,7 @@ static void prssr(vt_t *vt)
     gtime_t time;
     ssr_t ssr[MAXSAT];
     int i,valid;
-    char tstr[64],id[32],*p=buff;
+    char tstr[64],id[8],*p=buff;
     
     rtksvrlock(&svr);
     time=svr.rtk.sol.time;

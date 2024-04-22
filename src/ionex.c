@@ -98,7 +98,7 @@ static tec_t *addtec(const double *lats, const double *lons, const double *hgts,
 static void readionexdcb(FILE *fp, double *dcb, double *rms)
 {
     int i,sat;
-    char buff[1024],id[32],*label;
+    char buff[1024],id[8],*label;
     
     trace(3,"readionexdcb:\n");
     

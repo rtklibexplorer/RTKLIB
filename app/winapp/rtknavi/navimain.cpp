@@ -1793,7 +1793,7 @@ void __fastcall TMainForm::DrawSnr(TCanvas *c, int w, int h, int x0, int y0,
     };
     UTF8String s; 
     int i,j,k,l,n,x1,x2,y1,y2,y3,k1,tm,bm,hh,ww,www,snr[NFREQ+1],mask[7]={0};
-    char id[16],sys[]="GREJCIS",*q;
+    char id[8],sys[]="GREJCIS",*q;
     
     trace(4,"DrawSnr: w=%d h=%d x0=%d y0=%d index=%d freq=%d\n",w,h,x0,y0,index,freq);
     
@@ -1869,7 +1869,7 @@ void __fastcall TMainForm::DrawSat(TCanvas *c, int w, int h, int x0, int y0,
     TPoint p(w/2,h/2);
     double r=MIN(w*0.95,h*0.95)/2,azel[MAXSAT*2],dop[4];
     int i,j,k,l,d,x[MAXSAT],y[MAXSAT],snr[NFREQ+1],ns=0;
-    char id[16],sys[]="GREJCIS",*q;
+    char id[8],sys[]="GREJCIS",*q;
     
     trace(4,"DrawSat: w=%d h=%d index=%d freq=%d\n",w,h,index,freq);
     
@@ -2345,7 +2345,7 @@ void __fastcall TMainForm::SaveNav(nav_t *nav)
 {
     TIniFile *ini=new TIniFile(IniFile);
     AnsiString str,s;
-    char id[32];
+    char id[8];
     int i;
     
     trace(3,"SaveNav\n");

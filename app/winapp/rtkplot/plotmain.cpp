@@ -2243,7 +2243,7 @@ void __fastcall TPlot::UpdateSatMask(void)
 void __fastcall TPlot::UpdateSatSel(void)
 {
     AnsiString SatListText=SatList->Text;
-    char id[16];
+    char id[8];
     int i,sys=0;
     
     if      (SatListText=="G") sys=SYS_GPS;

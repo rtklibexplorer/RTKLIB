@@ -948,7 +948,7 @@ static void setpcv(gtime_t time, prcopt_t *popt, nav_t *nav, const pcvs_t *pcvs,
     pcv_t *pcv,pcv0={0};
     double pos[3],del[3];
     int i,j,mode=PMODE_DGPS<=popt->mode&&popt->mode<=PMODE_FIXED;
-    char id[64];
+    char id[8];
 
     /* set satellite antenna parameters */
     for (i=0;i<MAXSAT;i++) {

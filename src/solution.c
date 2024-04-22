@@ -1050,7 +1050,7 @@ static int decode_solstat(char *buff, solstat_t *stat)
     static const solstat_t stat0={{0}};
     double tow,az,el,resp,resc,snr;
     int n,week,sat,frq,vsat,fix,slip,lock,outc,slipc,rejc;
-    char id[32]="",*p;
+    char id[8]="",*p;
     
     trace(4,"decode_solstat: buff=%s\n",buff);
     
@@ -1058,7 +1058,7 @@ static int decode_solstat(char *buff, solstat_t *stat)
     
     for (p=buff;*p;p++) if (*p==',') *p=' ';
     
-    n=sscanf(buff,"$SAT%d%lf%31s%d%lf%lf%lf%lf%d%lf%d%d%d%d%d%d",
+    n=sscanf(buff,"$SAT%d%lf%7s%d%lf%lf%lf%lf%d%lf%d%d%d%d%d%d",
              &week,&tow,id,&frq,&az,&el,&resp,&resc,&vsat,&snr,&fix,&slip,
              &lock,&outc,&slipc,&rejc);
     

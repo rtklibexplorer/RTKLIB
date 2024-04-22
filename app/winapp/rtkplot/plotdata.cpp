@@ -368,7 +368,7 @@ void __fastcall TPlot::GenVisData(void)
     sta_t sta={0};
     double tint,r,pos[3],rr[3],rs[6],e[3],azel[2];
     int i,j,nobs=0;
-    char name[16];
+    char name[8];
     
     trace(3,"GenVisData\n");
     
@@ -1005,7 +1005,7 @@ void __fastcall TPlot::SaveSnrMp(AnsiString file)
     AnsiString ObsTypeText=ObsType2->Text;
     gtime_t time;
     double tow;
-    char sat[32],mp[32],tstr[64],*code=ObsTypeText.c_str()+1;
+    char sat[8],mp[32],tstr[64],*code=ObsTypeText.c_str()+1;
     const char *tlabel;
     int i,j,k,week;
     
@@ -1240,7 +1240,7 @@ void __fastcall TPlot::UpdateObs(int nobs)
             int sat=Obs.data[i+k].sat;
             
             if (SimObs) {
-                char name[16];
+                char name[8];
                 satno2id(sat,name);
                 if (!tle_pos(time,name,"","",&TLEData,NULL,rs)) continue;
             }

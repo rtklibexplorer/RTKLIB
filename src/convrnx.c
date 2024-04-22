@@ -674,7 +674,7 @@ static void dump_halfc(const strfile_t *str)
 {
 #if 0 /* for debug */
     halfc_t *p;
-    char s0[32],s1[32],s2[32],*stats[]={"ADD","SUB","NON"};
+    char s0[8],s1[32],s2[32],*stats[]={"ADD","SUB","NON"};
     int i,j;
     
     trace(2,"# HALF-CYCLE AMBIGUITY CORRECTIONS\n");

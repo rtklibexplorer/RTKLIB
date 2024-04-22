@@ -504,18 +504,18 @@ extern int satid2no(const char *id)
 *          char   *id       O   satellite id (Gnn,Rnn,Enn,Jnn,Cnn,Inn or nnn)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void satno2id(int sat, char *id)
+extern void satno2id(int sat, char id[8])
 {
     int prn;
     switch (satsys(sat,&prn)) {
-        case SYS_GPS: sprintf(id,"G%02d",prn-MINPRNGPS+1); return;
-        case SYS_GLO: sprintf(id,"R%02d",prn-MINPRNGLO+1); return;
-        case SYS_GAL: sprintf(id,"E%02d",prn-MINPRNGAL+1); return;
-        case SYS_QZS: sprintf(id,"J%02d",prn-MINPRNQZS+1); return;
-        case SYS_CMP: sprintf(id,"C%02d",prn-MINPRNCMP+1); return;
-        case SYS_IRN: sprintf(id,"I%02d",prn-MINPRNIRN+1); return;
-        case SYS_LEO: sprintf(id,"L%02d",prn-MINPRNLEO+1); return;
-        case SYS_SBS: sprintf(id,"%03d" ,prn); return;
+        case SYS_GPS: snprintf(id,8,"G%02d",prn-MINPRNGPS+1); return;
+        case SYS_GLO: snprintf(id,8,"R%02d",prn-MINPRNGLO+1); return;
+        case SYS_GAL: snprintf(id,8,"E%02d",prn-MINPRNGAL+1); return;
+        case SYS_QZS: snprintf(id,8,"J%02d",prn-MINPRNQZS+1); return;
+        case SYS_CMP: snprintf(id,8,"C%02d",prn-MINPRNCMP+1); return;
+        case SYS_IRN: snprintf(id,8,"I%02d",prn-MINPRNIRN+1); return;
+        case SYS_LEO: snprintf(id,8,"L%02d",prn-MINPRNLEO+1); return;
+        case SYS_SBS: snprintf(id,8,"%03d" ,prn); return;
     }
     strcpy(id,"");
 }
@@ -3124,7 +3124,7 @@ extern int savenav(const char *file, const nav_t *nav)
 {
     FILE *fp;
     int i;
-    char id[32];
+    char id[8];
 
     trace(3,"savenav: file=%s\n",file);
 

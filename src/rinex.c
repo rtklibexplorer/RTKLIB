@@ -777,7 +777,7 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
     trace(4,"decode_obsdata: ver=%.2f\n",ver);
 
     if (ver>2.99) { /* ver.3 */
-        sprintf(satid,"%.3s",buff);
+        snprintf(satid,8,"%.3s",buff);
         obs->sat=(uint8_t)satid2no(satid);
     }
     if (!obs->sat) {
@@ -1383,7 +1383,7 @@ static int readrnxnavb(FILE *fp, const char *opt, double ver, int sys,
 
             /* decode satellite field */
             if (ver>=3.0||sys==SYS_GAL||sys==SYS_QZS) { /* ver.3 or GAL/QZS */
-                sprintf(id,"%.3s",buff);
+                snprintf(id,8,"%.3s",buff);
                 sat=satid2no(id);
                 sp=4;
                 if (ver>=3.0) {

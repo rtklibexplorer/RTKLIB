@@ -679,7 +679,7 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	TEdit *editu[]={RovPos1,RovPos2,RovPos3};
 	TEdit *editr[]={RefPos1,RefPos2,RefPos3};
 	AnsiString s;
-	char buff[1024]="",*p,id[32];
+	char buff[1024]="",*p,id[8];
 	int sat;
 	prcopt_t prcopt=prcopt_default;
 	solopt_t solopt=solopt_default;
