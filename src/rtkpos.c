@@ -1485,7 +1485,7 @@ static int ddidx(rtk_t *rtk, int *ix, int gps, int glo, int sbs)
                 /* else don't use this sat for fixing ambiguity */
                 else rtk->ssat[i-k].fix[f]=1;
             }
-            if (rtk->ssat[i-k].fix[f]!=2) continue;  /* no good sat found */
+            if (i>=k+MAXSAT||rtk->ssat[i-k].fix[f]!=2) continue;  /* no good sat found */
             /* step through all sats (j=state index, j-k=sat index, i-k=first good sat) */
             for (n=0,j=k;j<k+MAXSAT;j++) {
                 if (i==j||rtk->x[j]==0.0||!test_sys(rtk->ssat[j-k].sys,m)||
