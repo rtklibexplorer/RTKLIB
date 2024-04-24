@@ -139,7 +139,7 @@ static void outheader(FILE *fp, const char **file, int n, const prcopt_t *popt,
     gtime_t ts,te;
     double t1,t2;
     int i,j,w1,w2;
-    char s2[32],s3[32];
+    char s2[40],s3[40];
 
     trace(3,"outheader: n=%d\n",n);
 
@@ -503,7 +503,7 @@ static int valcomb(const sol_t *solf, const sol_t *solb, double *rbf,
 {
     double dr[3],var[3];
     int i;
-    char tstr[32];
+    char tstr[40];
 
     trace(4,"valcomb :\n");
 

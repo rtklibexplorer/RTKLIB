@@ -7,7 +7,7 @@
 
 static void dumpeph(peph_t *peph, int n)
 {
-    char s[64];
+    char s[40];
     int i,j;
     for (i=0;i<n;i++) {
         time2str(peph[i].time,s,3);
@@ -21,7 +21,7 @@ static void dumpeph(peph_t *peph, int n)
 }
 static void dumpclk(pclk_t *pclk, int n)
 {
-    char s[64];
+    char s[40];
     int i,j;
     for (i=0;i<n;i++) {
         time2str(pclk[i].time,s,3);

@@ -8,7 +8,7 @@
 static void dumptec(const tec_t *tec, int n, int level)
 {
     const tec_t *p;
-    char s[64];
+    char s[40];
     int i,j,k,m;
     
     for (i=0;i<n;i++) {

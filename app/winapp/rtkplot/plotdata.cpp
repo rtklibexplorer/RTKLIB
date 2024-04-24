@@ -953,7 +953,7 @@ void __fastcall TPlot::SaveDop(AnsiString file)
     gtime_t time;
     double azel[MAXOBS*2],dop[4],tow;
     int i,j,ns,week;
-    char tstr[64];
+    char tstr[40];
     const char *tlabel;
     
     trace(3,"SaveDop: file=%s\n",file.c_str());
@@ -982,7 +982,7 @@ void __fastcall TPlot::SaveDop(AnsiString file)
         time=Obs.data[IndexObs[i]].time;
         if (TimeLabel==0) {
             tow=time2gpst(time,&week);
-            sprintf(tstr,"%4d %8.1f ",week,tow);
+            snprintf(tstr,sizeof(tstr),"%4d %8.1f ",week,tow);
         }
         else if (TimeLabel==1) {
             time2str(time,tstr,1);
@@ -1005,7 +1005,7 @@ void __fastcall TPlot::SaveSnrMp(AnsiString file)
     AnsiString ObsTypeText=ObsType2->Text;
     gtime_t time;
     double tow;
-    char sat[8],mp[32],tstr[64],*code=ObsTypeText.c_str()+1;
+    char sat[8],mp[32],tstr[40],*code=ObsTypeText.c_str()+1;
     const char *tlabel;
     int i,j,k,week;
     
@@ -1035,7 +1035,7 @@ void __fastcall TPlot::SaveSnrMp(AnsiString file)
             
             if (TimeLabel==0) {
                 tow=time2gpst(time,&week);
-                sprintf(tstr,"%4d %9.1f ",week,tow);
+                snprintf(tstr,sizeof(tstr),"%4d %9.1f ",week,tow);
             }
             else if (TimeLabel==1) {
                 time2str(time,tstr,1);

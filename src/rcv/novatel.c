@@ -1267,7 +1267,7 @@ static int decode_utcb(raw_t *raw)
 static int decode_oem4(raw_t *raw)
 {
     double tow;
-    char tstr[32];
+    char tstr[40];
     int msg,stat,week,type=U2(raw->buff+4);
     
     trace(3,"decode_oem4: type=%3d len=%d\n",type,raw->len);

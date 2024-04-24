@@ -176,7 +176,7 @@ static int simobs(simopt_t simopt, rnxopt_t rnxopt, nav_t *nav, obs_t *obs) {
   double    epr,ecp;
   int       i,j,k,n,m,ns,sys,prn;
   int       iSys;
-  char      s[64];
+  char      s[40];
   double    f0,fk;
 
   trace(3,"simobs:nnav=%d ngnav=%d\n",nav->n,nav->ng);

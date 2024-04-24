@@ -29,7 +29,7 @@ __fastcall TSpanDialog::TSpanDialog(TComponent* Owner)
 //---------------------------------------------------------------------------
 void __fastcall TSpanDialog::FormShow(TObject *Sender)
 {
-	char ts[64],te[64];
+	char ts[40],te[40];
 	AnsiString s;
 	TimeStartF->Checked=TimeEna[0];
 	TimeEndF  ->Checked=TimeEna[1];

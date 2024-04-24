@@ -1970,19 +1970,20 @@ extern double utc2gmst(gtime_t t, double ut1_utc)
 /* time to string --------------------------------------------------------------
 * convert gtime_t struct to string
 * args   : gtime_t t        I   gtime_t struct
-*          char   *s        O   string ("yyyy/mm/dd hh:mm:ss.ssss")
+*          char   [40]      O   string ("yyyy/mm/dd hh:mm:ss.ssss")
 *          int    n         I   number of decimals
-* return : none
+* return : time string
 *-----------------------------------------------------------------------------*/
-extern void time2str(gtime_t t, char *s, int n)
+extern char *time2str(gtime_t t, char s[40], int n)
 {
     double ep[6];
 
     if (n<0) n=0; else if (n>12) n=12;
     if (1.0-t.sec<0.5/pow(10.0,n)) {t.time++; t.sec=0.0;};
     time2epoch(t,ep);
-    sprintf(s,"%04.0f/%02.0f/%02.0f %02.0f:%02.0f:%0*.*f",ep[0],ep[1],ep[2],
-            ep[3],ep[4],n<=0?2:n+3,n<=0?0:n,ep[5]);
+    snprintf(s,40,"%04.0f/%02.0f/%02.0f %02.0f:%02.0f:%0*.*f",ep[0],ep[1],ep[2],
+             ep[3],ep[4],n<=0?2:n+3,n<=0?0:n,ep[5]);
+    return s;
 }
 /* get time string -------------------------------------------------------------
 * get time string

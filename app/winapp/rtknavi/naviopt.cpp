@@ -871,7 +871,7 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
     int otype[]={STR_SERIAL,STR_TCPCLI,STR_TCPSVR,STR_NTRIPSVR,STR_NTRIPCAS,STR_FILE};
 	TEdit *editu[]={RovPos1,RovPos2,RovPos3};
 	TEdit *editr[]={RefPos1,RefPos2,RefPos3};
-	char buff[1024],*p,*q,id[32],comment[256],s[64];
+	char buff[1024],*p,*q,id[32],comment[256],s[40];
 	int sat,ex;
 	prcopt_t prcopt=prcopt_default;
 	solopt_t solopt=solopt_default;

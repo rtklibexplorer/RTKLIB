@@ -201,7 +201,7 @@ static gtime_t adjday(gtime_t time, double tod)
 /* set time tag --------------------------------------------------------------*/
 static int settag(obsd_t *data, gtime_t time)
 {
-    char s1[64],s2[64];
+    char s1[40],s2[40];
     
     if (data->time.time!=0&&fabs(timediff(data->time,time))>5E-4) {
         time2str(data->time,s1,4); time2str(time,s2,4);

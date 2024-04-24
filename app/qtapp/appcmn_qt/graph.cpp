@@ -203,7 +203,7 @@ QString Graph::numText(double x, double dx)
 //---------------------------------------------------------------------------
 QString Graph::timeText(double x, double dx)
 {
-    char str[64];
+    char str[40];
 
     time2str(gpst2time(week, x), str, 1);
     int b = dx < 86400.0 ? 11 : (dx < 86400.0 * 30 ? 5 : 2);

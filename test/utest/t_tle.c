@@ -18,7 +18,9 @@ static void dumptle(FILE *fp, const tle_t *tle)
         fprintf(fp,"(%2d) satno= %s\n",     i+1,tle->data[i].satno);
         fprintf(fp,"(%2d) class= %c\n",     i+1,tle->data[i].satclass);
         fprintf(fp,"(%2d) desig= %s\n",     i+1,tle->data[i].desig);
-        fprintf(fp,"(%2d) epoch= %s\n",     i+1,time_str(tle->data[i].epoch,0));
+        char tstr[40];
+        time2str(tle->data[i].epoch,tstr,0);
+        fprintf(fp,"(%2d) epoch= %s\n",     i+1,tstr);
         fprintf(fp,"(%2d) etype= %d\n",     i+1,tle->data[i].etype);
         fprintf(fp,"(%2d) eleno= %d\n",     i+1,tle->data[i].eleno);
         fprintf(fp,"(%2d) ndot = %19.12e\n",i+1,tle->data[i].ndot );

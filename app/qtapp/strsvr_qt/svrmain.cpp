@@ -394,7 +394,7 @@ void MainForm::updateServerStat()
     static const QString statusStr[] = {tr("Error"), tr("Closed"), tr("Waiting..."), tr("Connected"), tr("Active")};
     gtime_t time = utc2gpst(timeget());
     int stat[MAXSTR] = {0}, byte[MAXSTR] = {0}, bps[MAXSTR] = {0}, log_stat[MAXSTR] = {0};
-    char msg[MAXSTRMSG * MAXSTR] = "", str[256];
+    char msg[MAXSTRMSG * MAXSTR] = "";
     double ctime, t[4], pos;
 
     strsvrstat(&strsvr, stat, log_stat, byte, bps, msg);
@@ -412,8 +412,9 @@ void MainForm::updateServerStat()
     ui->pBProgress->setValue(!stat[0] ? 0 : qMin((int)pos, 100));
 
     // update time
-    time2str(time, str, 0);
-    ui->lblTime->setText(QString(tr("%1 GPST")).arg(str));
+    char tstr[40];
+    time2str(time, tstr, 0);
+    ui->lblTime->setText(QString(tr("%1 GPST")).arg(tstr));
 
     if (ui->panelStreams->isEnabled())
         ctime = timediff(endTime, startTime);

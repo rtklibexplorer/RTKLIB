@@ -22,7 +22,7 @@ void __fastcall TStartDialog::FormShow(TObject *Sender)
 	FILE *fp;
 	uint32_t time=0;
 	uint8_t buff[80]={0};
-	char tstr[64],path_tag[1024],path[1024],*paths[1];
+	char tstr[40],path_tag[1024],path[1024],*paths[1];
     
 	if (Time.time==0) {
 	    Time=utc2gpst(timeget());

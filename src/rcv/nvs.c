@@ -73,7 +73,7 @@ static int decode_xf5raw(raw_t *raw)
     uint8_t rcvTimeScaleCorr, sys, carrNo;
     int i,j,prn,sat,n=0,nsat,week;
     uint8_t *p=raw->buff+2;
-    char *q,tstr[32],flag;
+    char *q,tstr[40],flag;
     
     trace(4,"decode_xf5raw: len=%d\n",raw->len);
     

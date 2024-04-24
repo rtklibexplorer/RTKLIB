@@ -1855,7 +1855,7 @@ void __fastcall TPlot::TimerTimer(TObject *Sender)
     double tint=TimeEna[2]?TimeInt:0.0,pos[3],ep[6];
     int i,j,n,inb,inr,cycle,nmsg[2]={0},stat,istat;
     int sel=!BtnSol1->Down&&BtnSol2->Down?1:0;
-    char msg[MAXSTRMSG]="",tstr[32];
+    char msg[MAXSTRMSG]="",tstr[40];
     
     trace(4,"TimeTimer\n");
     

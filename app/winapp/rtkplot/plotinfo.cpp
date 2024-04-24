@@ -32,7 +32,7 @@ void __fastcall TPlot::UpdateTimeObs(void)
     UTF8String msg,msgs[8],s;
     double azel[MAXOBS*2],dop[4]={0};
     int i,ns=0,no=0,ind=ObsIndex;
-    char tstr[64];
+    char tstr[48];
     
     trace(3,"UpdateTimeObs\n");
     
@@ -86,7 +86,7 @@ void __fastcall TPlot::UpdateTimeSol(void)
     sol_t *data;
     double xyz[3],pos[3],r,az,el;
     int sel=BtnSol1->Down||!BtnSol2->Down?0:1,ind=SolIndex[sel];
-    char tstr[64];
+    char tstr[48];
     
     trace(3,"UpdateTimeSol\n");
     
@@ -139,7 +139,7 @@ void __fastcall TPlot::UpdateInfoObs(void)
     UTF8String msg,msgs[8];
     gtime_t ts={0},te={0},t,tp={0};
     int i,n=0,ne=0;
-    char s1[64],s2[64],*p;
+    char s1[48],s2[48],*p;
     
     trace(3,"UpdateInfoObs:\n");
     
@@ -185,7 +185,7 @@ void __fastcall TPlot::UpdateInfoSol(void)
     gtime_t ts={0},te={0};
     double r[3],b,bl[2]={1E9,0.0};
     int i,j,n=0,nq[8]={0},sel=BtnSol1->Down||!BtnSol2->Down?0:1;
-    char s1[64],s2[64],*p;
+    char s1[48],s2[48],*p;
     
     trace(3,"UpdateInfoSol:\n");
     
@@ -369,7 +369,7 @@ void __fastcall TPlot::UpdatePoint(int x, int y)
     TPoint p(x,y);
     double enu[3]={0},rr[3],pos[3],xx,yy,r,xl[2],yl[2],q[2],az,el,snr;
     int i;
-    char tstr[64];
+    char tstr[48];
     UTF8String msg;
     
     trace(4,"UpdatePoint: x=%d y=%d\n",x,y);

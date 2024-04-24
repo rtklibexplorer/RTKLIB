@@ -39,7 +39,7 @@ static void prusage(void)
 /* update rtcm struct --------------------------------------------------------*/
 static void updatertcm(gtime_t time, rtcm_t *rtcm, nav_t *nav, FILE *fp)
 {
-    char s1[32],s2[32];
+    char s1[40],s2[40];
     int i;
     
     while (input_rtcm3f(rtcm,fp)>=0) {
@@ -71,7 +71,7 @@ static void printephdiff(gtime_t time, int sat, int eph1, int eph2,
     double drs[3],drss[3],rc[3],er[3],ea[3],ec[3];
     double rr[3],e[3],rr1[3],rr2[3],r1,r2,azel[2];
     int i,week,svh1,svh2;
-    char tstr[32];
+    char tstr[40];
     
     if (!satpos(time,time,sat,eph1,nav1,rs1,dts1,&var1,&svh1)) return;
     if (!satpos(time,time,sat,eph2,nav2,rs2,dts2,&var2,&svh2)) return;

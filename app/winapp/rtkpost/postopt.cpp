@@ -784,7 +784,7 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	AnsiString PPPOpts_Text=PPPOpts->Text;
 	TEdit *editu[]={RovPos1,RovPos2,RovPos3};
 	TEdit *editr[]={RefPos1,RefPos2,RefPos3};
-	char buff[1024],*p,id[32],comment[256],s[64];
+	char buff[1024],*p,id[32],comment[256],s[40];
 	int sat,ex;
 	prcopt_t prcopt=prcopt_default;
 	solopt_t solopt=solopt_default;

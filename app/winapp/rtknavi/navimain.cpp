@@ -1478,7 +1478,7 @@ void __fastcall TMainForm::UpdateTime(void)
     struct tm *t;
     double tow;
     int week;
-    char tstr[64];
+    char tstr[40];
     
     trace(4,"UpdateTime\n");
     
@@ -1487,9 +1487,9 @@ void __fastcall TMainForm::UpdateTime(void)
     else if (TimeSys==2) {
         time=gpst2utc(time);
         if (!(t=localtime(&time.time))) strcpy(tstr,"2000/01/01 00:00:00.0");
-        else sprintf(tstr,"%04d/%02d/%02d %02d:%02d:%02d.%d",t->tm_year+1900,
-                     t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec,
-                     (int)(time.sec*10));
+        else snprintf(tstr,sizeof(tstr),"%04d/%02d/%02d %02d:%02d:%02d.%d",t->tm_year+1900,
+                      t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec,
+                      (int)(time.sec*10));
     }
     else if (TimeSys==3) {
         tow=time2gpst(time,&week); sprintf(tstr,"week %04d %8.1f s",week,tow);

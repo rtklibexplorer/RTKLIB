@@ -1124,7 +1124,7 @@ extern void rtksvrsstat(rtksvr_t *svr, int *sstat, char *msg)
 *-----------------------------------------------------------------------------*/
 extern int rtksvrmark(rtksvr_t *svr, const char *name, const char *comment)
 {
-    char buff[MAXSOLMSG+1],tstr[32],*p,*q;
+    char buff[MAXSOLMSG+1],tstr[40],*p,*q;
     double tow,pos[3];
     int i,sum,week;
     

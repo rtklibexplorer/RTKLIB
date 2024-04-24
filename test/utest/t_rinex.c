@@ -9,7 +9,7 @@ static void dumpobs(obs_t *obs)
 {
     gtime_t time={0};
     int i;
-    char str[64];
+    char str[40];
     printf("obs : n=%d\n",obs->n);
     for (i=0;i<obs->n;i++) {
         time2str(obs->data[i].time,str,3);
@@ -28,7 +28,7 @@ static void dumpobs(obs_t *obs)
 static void dumpnav(nav_t *nav)
 {
     int i;
-    char str[64],s1[64],s2[64];
+    char str[40],s1[40],s2[40];
     printf("nav : n=%d\n",nav->n);
     for (i=0;i<nav->n;i++) {
         time2str(nav->eph[i].toe,str,3);

@@ -392,9 +392,11 @@ int main(int argc, char **argv)
         
         /* show stream server status */
         for (i=0,p=buff;i<MAXSTR;i++) p+=sprintf(p,"%c",ss[stat[i]+1]);
-        
+
+        char tstr[40];
+        time2str(utc2gpst(timeget()),tstr,0);
         fprintf(stderr,"%s [%s] %10d B %7d bps %s\n",
-                time_str(utc2gpst(timeget()),0),buff,byte[0],bps[0],strmsg);
+                tstr,buff,byte[0],bps[0],strmsg);
         
         sleepms(dispint);
     }

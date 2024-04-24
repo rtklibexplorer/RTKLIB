@@ -938,7 +938,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
     double var[MAXOBS*2],dtrp=0.0,dion=0.0,vart=0.0,vari=0.0,dcb,freq;
     double dantr[NFREQ]={0},dants[NFREQ]={0};
     double ve[MAXOBS*2*NFREQ]={0},vmax=0;
-    char str[32];
+    char str[40];
     int ne=0,obsi[MAXOBS*2*NFREQ]={0},frqi[MAXOBS*2*NFREQ],maxobs,maxfrq,rej;
     int i,j,k,sat,sys,nv=0,nx=rtk->nx,stat=1,frq,code;
 
@@ -1181,7 +1181,7 @@ extern void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
 {
     const prcopt_t *opt=&rtk->opt;
     double *rs,*dts,*var,*v,*H,*R,*azel,*xp,*Pp,dr[3]={0},std[3];
-    char str[32];
+    char str[40];
     int i,j,nv,info,svh[MAXOBS],exc[MAXOBS]={0},stat=SOLQ_SINGLE;
 
     time2str(obs[0].time,str,2);

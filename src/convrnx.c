@@ -484,7 +484,7 @@ static void setopt_phshift(rnxopt_t *opt)
 static void setopt_sta_list(const strfile_t *str, rnxopt_t *opt)
 {
     const stas_t *p;
-    char s1[32],s2[32];
+    char s1[40],s2[40];
     int n=0;
 
     for (p=str->stas;p;p=p->next) {
@@ -599,7 +599,7 @@ static void dump_stas(const strfile_t *str)
 #if 1 /* for debug */
     stas_t *p;
     double pos[3];
-    char s1[32],s2[32];
+    char s1[40],s2[40];
 
     trace(2,"# STATION LIST\n");
     trace(2,"# %17s %19s %5s %6s %16s %16s %12s %13s %9s %2s %6s %6s %6s\n",
@@ -674,7 +674,7 @@ static void dump_halfc(const strfile_t *str)
 {
 #if 0 /* for debug */
     halfc_t *p;
-    char s0[8],s1[32],s2[32],*stats[]={"ADD","SUB","NON"};
+    char s0[8],s1[40],s2[40],*stats[]={"ADD","SUB","NON"};
     int i,j;
     
     trace(2,"# HALF-CYCLE AMBIGUITY CORRECTIONS\n");
@@ -1210,7 +1210,7 @@ static void setopt_apppos(strfile_t *str, rnxopt_t *opt)
 static int showstat(int sess, gtime_t ts, gtime_t te, int *n)
 {
     const char type[]="ONGHQLCISET";
-    char msg[1024]="",*p=msg,s[64];
+    char msg[1024]="",*p=msg,s[40];
     int i;
     
     if (sess>0) {

@@ -21,7 +21,7 @@ void TimeDialog::setTime(const gtime_t &time)
     gtime_t utc;
     double tow, doy;
 	int week;
-    char s1[64], s2[64];
+    char s1[40], s2[40];
 
     utc = gpst2utc(time);
     time2str(time, s1, 0);

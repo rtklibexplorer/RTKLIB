@@ -1631,7 +1631,7 @@ extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
     double gpst;
     int week,timeu;
     const char *sep=opt2sep(opt);
-    char s[64];
+    char s[40];
     uint8_t *p=buff;
     
     trace(4,"outsols :\n");

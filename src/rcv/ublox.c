@@ -356,7 +356,7 @@ static int decode_rxmrawx(raw_t *raw)
 {
     uint8_t *p=raw->buff+6;
     gtime_t time;
-    char *q,tstr[64];
+    char *q,tstr[40];
     double tow,P,L,D,tn,tadj=0.0,toff=0.0;
     int i,j,k,idx,sys,prn,sat,code,slip,halfv,halfc,LLI,n=0;
     int week,nmeas,ver,gnss,svid,sigid,frqid,lockt,cn0,cpstd=0,prstd=0,tstat;

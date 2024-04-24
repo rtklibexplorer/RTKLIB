@@ -7,7 +7,7 @@
 
 static void dumpgeph(geph_t *geph, int n)
 {
-    char s1[64],s2[64];
+    char s1[40],s2[40];
     int i;
     for (i=0;i<n;i++) {
         time2str(geph[i].toe,s1,0);

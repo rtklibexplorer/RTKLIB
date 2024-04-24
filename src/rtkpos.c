@@ -365,7 +365,7 @@ static void outsolstat(rtk_t *rtk,const nav_t *nav)
 /* save error message --------------------------------------------------------*/
 static void errmsg(rtk_t *rtk, const char *format, ...)
 {
-    char buff[256],tstr[32];
+    char buff[256],tstr[40];
     int n;
     va_list ap;
     time2str(rtk->sol.time,tstr,2);

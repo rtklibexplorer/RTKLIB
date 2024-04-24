@@ -786,7 +786,7 @@ static int statefile(file_t *file)
 /* get extended state file ---------------------------------------------------*/
 static int statexfile(file_t *file, char *msg)
 {
-    char *p=msg,tstr1[32],tstr2[32];
+    char *p=msg,tstr1[40],tstr2[40];
     int state=file?2:0;
     
     p+=sprintf(p,"file:\n");
