@@ -226,7 +226,8 @@ static void testeclipse(const obsd_t *obs, int n, const nav_t *nav, double *rs)
         /* test eclipse */
         if (ang<PI/2.0||r*sin(ang)>RE_WGS84) continue;
 
-        trace(3,"eclipsing sat excluded %s sat=%2d\n",time_str(obs[0].time,0),
+        char tstr[40];
+        trace(3,"eclipsing sat excluded %s sat=%2d\n",time2str(obs[0].time,tstr,0),
               obs[i].sat);
 
         for (j=0;j<3;j++) rs[j+i*6]=0.0;
@@ -781,8 +782,9 @@ static void udbias_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
                 j=IB(i+1,f,&rtk->opt);
                 if (rtk->x[j]!=0.0) rtk->x[j]+=offset/k;
             }
+            char tstr[40];
             trace(2,"phase-code jump corrected: %s n=%2d dt=%12.9fs\n",
-                  time_str(rtk->sol.time,0),k,offset/k/CLIGHT);
+                  time2str(rtk->sol.time,tstr,0),k,offset/k/CLIGHT);
         }
         for (i=0;i<n&&i<MAXOBS;i++) {
             sat=obs[i].sat;

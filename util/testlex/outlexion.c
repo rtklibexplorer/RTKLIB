@@ -13,7 +13,8 @@ static int updatelex(int index, gtime_t time, lex_t *lex, nav_t *nav)
     
     for (;index<lex->n;index++) {
         if (!lexupdatecorr(lex->msgs+index,nav,&tof)) continue;
-        fprintf(stderr,"%6d: tof=%s\r",index,time_str(tof,0));
+        char tstr[40];
+        fprintf(stderr,"%6d: tof=%s\r",index,time2str(tof,tstr,0));
         if (timediff(tof,time)>=0.0) break;
     }
     return index;
@@ -37,7 +38,8 @@ static void printtec(int index, gtime_t time, double sec, const nav_t *nav,
         for (i=0;i<nlat;i++) fprintf(fp,"%.1f%s",lat0-dpos*i,i<nlat-1?" ":"");
         fprintf(fp,"];\n\n");
     }
-    fprintf(fp,"%% %s\n",time_str(time,0));
+    char tstr[40];
+    fprintf(fp,"%% %s\n",time2str(time,tstr,0));
     fprintf(fp,"time(%d)=%.0f;\n",index,sec);
     fprintf(fp,"tec(:,:,%d)=[\n",index);
     for (i=0;i<nlat;i++) {
@@ -113,7 +115,8 @@ int main(int argc, char **argv)
     for (i=0;i<(int)(tspan*3600.0/tint);i++) {
        time=timeadd(t0,tint*i);
        
-       fprintf(stderr,"time=%s\r",time_str(time,0));
+       char tstr[40];
+       fprintf(stderr,"time=%s\r",time2str(time,tstr,0));
        
        index=updatelex(index,time,&lex,&nav);
        

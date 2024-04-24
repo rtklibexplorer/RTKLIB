@@ -1421,7 +1421,6 @@ EXPORT gtime_t gst2time(int week, double sec);
 EXPORT double  time2gst(gtime_t t, int *week);
 EXPORT gtime_t bdt2time(int week, double sec);
 EXPORT double  time2bdt(gtime_t t, int *week);
-EXPORT char    *time_str(gtime_t t, int n);
 
 EXPORT gtime_t timeadd  (gtime_t t, double sec);
 EXPORT double  timediff (gtime_t t1, gtime_t t2);

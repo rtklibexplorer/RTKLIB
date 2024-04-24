@@ -279,7 +279,8 @@ static int input_strfile(strfile_t *str)
     if (!str->tstart.time&&str->time.time) {
         str->tstart=str->time;
     }
-    trace(4,"input_strfile: time=%s type=%d\n",time_str(str->time,3),type);
+    char tstr[40];
+    trace(4,"input_strfile: time=%s type=%d\n",time2str(str->time,tstr,3),type);
     return type;
 }
 /* open stream file ----------------------------------------------------------*/
@@ -780,9 +781,11 @@ static int scan_file(char **files, int nf, rnxopt_t *opt, strfile_t *str,
             }
             if (++c%11) continue;
             
-            sprintf(msg,"scanning: %s %s%s%s%s%s%s%s",time_str(str->time,0),
-                    n[0]?"G":"",n[1]?"R":"",n[2]?"E":"",n[3]?"J":"",
-                    n[4]?"S":"",n[5]?"C":"",n[6]?"I":"");
+            char tstr[40];
+            snprintf(msg,sizeof(msg),"scanning: %s %s%s%s%s%s%s%s",
+                     time2str(str->time,tstr,0),
+                     n[0]?"G":"",n[1]?"R":"",n[2]?"E":"",n[3]?"J":"",
+                     n[4]?"S":"",n[5]?"C":"",n[6]?"I":"");
             if ((abort=showmsg(msg))) break;
         }
         close_strfile(str);

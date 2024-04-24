@@ -384,7 +384,8 @@ static int iondelay(gtime_t time, const tec_t *tec, const double *pos,
     double fs,posp[3]={0},vtec,rms,hion,rp;
     int i;
     
-    trace(3,"iondelay: time=%s pos=%.1f %.1f azel=%.1f %.1f\n",time_str(time,0),
+    char tstr[40];
+    trace(3,"iondelay: time=%s pos=%.1f %.1f azel=%.1f %.1f\n",time2str(time,tstr,0),
           pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,azel[1]*R2D);
     
     *delay=*var=0.0;
@@ -436,7 +437,8 @@ extern int iontec(gtime_t time, const nav_t *nav, const double *pos,
     double dels[2],vars[2],a,tt;
     int i,stat[2];
     
-    trace(3,"iontec  : time=%s pos=%.1f %.1f azel=%.1f %.1f\n",time_str(time,0),
+    char tstr[40];
+    trace(3,"iontec  : time=%s pos=%.1f %.1f azel=%.1f %.1f\n",time2str(time,tstr,0),
           pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,azel[1]*R2D);
     
     if (azel[1]<MIN_EL||pos[2]<MIN_HGT) {
@@ -448,7 +450,7 @@ extern int iontec(gtime_t time, const nav_t *nav, const double *pos,
         if (timediff(nav->tec[i].time,time)>0.0) break;
     }
     if (i==0||i>=nav->nt) {
-        trace(2,"%s: tec grid out of period\n",time_str(time,0));
+        trace(2,"%s: tec grid out of period\n",time2str(time,tstr,0));
         return 0;
     }
     if ((tt=timediff(nav->tec[i].time,nav->tec[i-1].time))==0.0) {
@@ -461,7 +463,7 @@ extern int iontec(gtime_t time, const nav_t *nav, const double *pos,
     
     if (!stat[0]&&!stat[1]) {
         trace(2,"%s: tec grid out of area pos=%6.2f %7.2f azel=%6.1f %5.1f\n",
-              time_str(time,0),pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,azel[1]*R2D);
+              time2str(time,tstr,0),pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,azel[1]*R2D);
         return 0;
     }
     if (stat[0]&&stat[1]) { /* linear interpolation by time */

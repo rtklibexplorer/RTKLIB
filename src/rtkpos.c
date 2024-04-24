@@ -2278,7 +2278,8 @@ extern int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
     int i,nu,nr;
     char msg[128]="";
 
-    trace(3,"rtkpos  : time=%s n=%d\n",time_str(obs[0].time,3),n);
+    char tstr[40];
+    trace(3,"rtkpos  : time=%s n=%d\n",time2str(obs[0].time,tstr,3),n);
     trace(4,"obs=\n"); traceobs(4,obs,n);
     /*trace(5,"nav=\n"); tracenav(5,nav);*/
 

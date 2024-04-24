@@ -229,9 +229,10 @@ static int decode_nmearmc(char **val, int n, sol_t *sol)
     sol->ns=0;
     
     sol->type=0; /* position type = xyz */
-    
+
+    char tstr[40];
     trace(5,"decode_nmearmc: %s rr=%.3f %.3f %.3f stat=%d ns=%d vel=%.2f dir=%.0f ang=%.0f mew=%c mode=%c\n",
-          time_str(sol->time,0),sol->rr[0],sol->rr[1],sol->rr[2],sol->stat,sol->ns,
+          time2str(sol->time,tstr,0),sol->rr[0],sol->rr[1],sol->rr[2],sol->stat,sol->ns,
           vel,dir,ang,mew,mode);
     
     return 2; /* update time */
@@ -256,7 +257,8 @@ static int decode_nmeazda(char **val, int n, sol_t *sol)
     sol->time=utc2gpst(epoch2time(ep));
     sol->ns=0;
     
-    trace(5,"decode_nmeazda: %s\n",time_str(sol->time,0));
+    char tstr[40];
+    trace(5,"decode_nmeazda: %s\n",time2str(sol->time,tstr,0));
     
     return 2; /* update time */
 }
@@ -314,8 +316,9 @@ static int decode_nmeagga(char **val, int n, sol_t *sol)
     
     sol->type=0; /* position type = xyz */
     
+    char tstr[40];
     trace(5,"decode_nmeagga: %s rr=%.3f %.3f %.3f stat=%d ns=%d hdop=%.1f ua=%c um=%c\n",
-          time_str(sol->time,0),sol->rr[0],sol->rr[1],sol->rr[2],sol->stat,sol->ns,
+          time2str(sol->time,tstr,0),sol->rr[0],sol->rr[1],sol->rr[2],sol->stat,sol->ns,
           hdop,ua,um);
     
     return 1;

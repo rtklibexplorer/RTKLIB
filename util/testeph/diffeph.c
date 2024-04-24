@@ -214,7 +214,8 @@ int main(int argc, char **argv)
     for (i=0;i<(int)(tspan*3600.0/tint);i++) {
        time=timeadd(t0,tint*i);
        
-       fprintf(stderr,"time=%s\r",time_str(time,0));
+       char tstr[40];
+       fprintf(stderr,"time=%s\r",time2str(time,tstr,0));
        
        /* update ephemeris in navigation data */
        if (fp) {

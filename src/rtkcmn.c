@@ -1985,19 +1985,6 @@ extern char *time2str(gtime_t t, char s[40], int n)
              ep[3],ep[4],n<=0?2:n+3,n<=0?0:n,ep[5]);
     return s;
 }
-/* get time string -------------------------------------------------------------
-* get time string
-* args   : gtime_t t        I   gtime_t struct
-*          int    n         I   number of decimals
-* return : time string
-* notes  : not reentrant, do not use multiple in a function
-*-----------------------------------------------------------------------------*/
-extern char *time_str(gtime_t t, int n)
-{
-    static char buff[64];
-    time2str(t,buff,n);
-    return buff;
-}
 /* time to day of year ---------------------------------------------------------
 * convert time to day of year
 * args   : gtime_t t        I   gtime_t struct
@@ -2394,7 +2381,8 @@ extern void eci2ecef(gtime_t tutc, const double *erpv, double *U, double *gmst)
     double R1[9],R2[9],R3[9],R[9],W[9],N[9],P[9],NP[9];
     int i;
 
-    trace(4,"eci2ecef: tutc=%s\n",time_str(tutc,3));
+    char tstr[40];
+    trace(4,"eci2ecef: tutc=%s\n",time2str(tutc,tstr,3));
 
     if (fabs(timediff(tutc,tutc_))<0.01) { /* read cache */
         for (i=0;i<9;i++) U[i]=U_[i];
@@ -3857,7 +3845,8 @@ static void sunmoonpos_eci(gtime_t tut, double *rsun, double *rmoon)
     const double ep2000[]={2000,1,1,12,0,0};
     double t,f[5],eps,Ms,ls,rs,lm,pm,rm,sine,cose,sinp,cosp,sinl,cosl;
 
-    trace(4,"sunmoonpos_eci: tut=%s\n",time_str(tut,3));
+    char tstr[40];
+    trace(4,"sunmoonpos_eci: tut=%s\n",time2str(tut,tstr,3));
 
     t=timediff(tut,epoch2time(ep2000))/86400.0/36525.0;
 
@@ -3912,7 +3901,8 @@ extern void sunmoonpos(gtime_t tutc, const double *erpv, double *rsun,
     gtime_t tut;
     double rs[3],rm[3],U[9],gmst_;
 
-    trace(4,"sunmoonpos: tutc=%s\n",time_str(tutc,3));
+    char tstr[40];
+    trace(4,"sunmoonpos: tutc=%s\n",time2str(tutc,tstr,3));
 
     tut=timeadd(tutc,erpv[2]); /* utc -> ut1 */
 

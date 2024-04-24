@@ -168,7 +168,8 @@ static int decode_bnx_00(raw_t *raw, uint8_t *buff, int len)
     
     msg=raw->msgtype+strlen(raw->msgtype);
     if (raw->outtype) {
-        msg+=sprintf(msg," time=%s src=%u",time_str(raw->time,0),src);
+        char tstr[40];
+        msg+=sprintf(msg," time=%s src=%u",time2str(raw->time,tstr,0),src);
     }
     while (p-buff<len) {
         p+=getbnxi(p,&fid);
@@ -1092,7 +1093,8 @@ static int decode_bnx_7f(raw_t *raw, uint8_t *buff, int len)
     
     if (raw->outtype) {
         msg=raw->msgtype+strlen(raw->msgtype);
-        sprintf(msg," subrec=%02X time%s",srec,time_str(raw->time,3));
+        char tstr[40];
+        sprintf(msg," subrec=%02X time%s",srec,time2str(raw->time,tstr,3));
     }
     switch (srec) {
         case 0x00: return decode_bnx_7f_00(raw,buff+7,len-7);

@@ -214,8 +214,9 @@ extern int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
 {
     int err=0;
 
+    char tstr[40];
     trace(4,"ionocorr: time=%s opt=%d sat=%2d pos=%.3f %.3f azel=%.3f %.3f\n",
-          time_str(time,3),ionoopt,sat,pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,
+          time2str(time,tstr,3),ionoopt,sat,pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,
           azel[1]*R2D);
     
     /* SBAS ionosphere model */
@@ -258,8 +259,9 @@ extern int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
 extern int tropcorr(gtime_t time, const nav_t *nav, const double *pos,
                     const double *azel, int tropopt, double *trp, double *var)
 {
+    char tstr[40];
     trace(4,"tropcorr: time=%s opt=%d pos=%.3f %.3f azel=%.3f %.3f\n",
-          time_str(time,3),tropopt,pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,
+          time2str(time,tstr,3),tropopt,pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,
           azel[1]*R2D);
     
     /* Saastamoinen model */
@@ -303,7 +305,8 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
         
         /* reject duplicated observation data */
         if (i<n-1&&i<MAXOBS-1&&sat==obs[i+1].sat) {
-            trace(2,"duplicated obs data %s sat=%d\n",time_str(time,3),sat);
+            char tstr[40];
+            trace(2,"duplicated obs data %s sat=%d\n",time2str(time,tstr,3),sat);
             i++;
             continue;
         }
@@ -487,7 +490,7 @@ static int raim_fde(const obsd_t *obs, int n, const double *rs,
     double *rs_e,*dts_e,*vare_e,*azel_e,*resp_e,rms_e,rms=100.0;
     int i,j,k,nvsat,stat=0,*svh_e,*vsat_e,sat=0;
     
-    trace(3,"raim_fde: %s n=%2d\n",time_str(obs[0].time,0),n);
+    trace(3,"raim_fde: %s n=%2d\n",time2str(obs[0].time,tstr,0),n);
     
     if (!(obs_e=(obsd_t *)malloc(sizeof(obsd_t)*n))) return 0;
     rs_e = mat(6,n); dts_e = mat(2,n); vare_e=mat(1,n); azel_e=zeros(2,n);
@@ -541,10 +544,12 @@ static int raim_fde(const obsd_t *obs, int n, const double *rs,
         vsat[i]=0;
         strcpy(msg,msg_e);
     }
+#ifdef TRACE
     if (stat) {
         time2str(obs[0].time,tstr,2); satno2id(sat,name);
         trace(2,"%s: %s excluded by raim\n",tstr+11,name);
     }
+#endif
     free(obs_e);
     free(rs_e ); free(dts_e ); free(vare_e); free(azel_e);
     free(svh_e); free(vsat_e); free(resp_e);
@@ -656,7 +661,8 @@ extern int pntpos(const obsd_t *obs, int n, const nav_t *nav,
     double *rs,*dts,*var,*azel_,*resp;
     int i,stat,vsat[MAXOBS]={0},svh[MAXOBS];
     
-    trace(3,"pntpos  : tobs=%s n=%d\n",time_str(obs[0].time,3),n);
+    char tstr[40];
+    trace(3,"pntpos  : tobs=%s n=%d\n",time2str(obs[0].time,tstr,3),n);
     
     sol->stat=SOLQ_NONE;
     

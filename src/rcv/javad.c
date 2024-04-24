@@ -266,11 +266,12 @@ static int decode_RT(raw_t *raw)
     if (raw->tbase>=1) time=utc2gpst(time); /* UTC->GPST */
     raw->time=time;
     
-    trace(3,"decode_RT: time=%s\n",time_str(time,3));
+    char tstr[40];
+    trace(3,"decode_RT: time=%s\n",time2str(time,tstr,3));
     
     if (raw->outtype) {
         msg=raw->msgtype+strlen(raw->msgtype);
-        sprintf(msg," %s",time_str(time,3));
+        sprintf(msg," %s",time2str(time,tstr,3));
     }
     /* flush observation data buffer */
     return flushobuf(raw);
@@ -328,7 +329,8 @@ static int decode_RD(raw_t *raw)
     raw->time=timeadd(epoch2time(ep),raw->tod*0.001);
     if (raw->tbase>=1) raw->time=utc2gpst(raw->time); /* UTC->GPST */
     
-    trace(3,"decode_RD: time=%s\n",time_str(raw->time,3));
+    char tstr[40];
+    trace(3,"decode_RD: time=%s\n",time2str(raw->time,tstr,3));
     
     return 0;
 }
@@ -1659,12 +1661,13 @@ static int decode_TC(raw_t *raw)
         sat=raw->obuf.data[i].sat;
         tt_p=(uint16_t)raw->lockt[sat-1][0];
         
-        trace(4,"%s: sat=%2d tt=%6d->%6d\n",time_str(raw->time,3),sat,tt_p,tt);
+        char tstr[40];
+        trace(4,"%s: sat=%2d tt=%6d->%6d\n",time2str(raw->time,tstr,3),sat,tt_p,tt);
         
         /* loss-of-lock detected by lock-time counter */
         if (tt==0||tt<tt_p) {
             trace(3,"decode_TC: loss-of-lock detected: t=%s sat=%2d tt=%6d->%6d\n",
-                  time_str(raw->time,3),sat,tt_p,tt);
+                  time2str(raw->time,tstr,3),sat,tt_p,tt);
             raw->obuf.data[i].LLI[0]|=1;
         }
         raw->lockt[sat-1][0]=tt;

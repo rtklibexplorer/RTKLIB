@@ -243,7 +243,8 @@ extern void tidedisp(gtime_t tutc, const double *rr, int opt, const erp_t *erp,
     int year,mon,day;
 #endif
     
-    trace(3,"tidedisp: tutc=%s\n",time_str(tutc,0));
+    char tstr[40];
+    trace(3,"tidedisp: tutc=%s\n",time2str(tutc,tstr,0));
     
     if (erp) {
         geterp(erp,utc2gpst(tutc),erpv);

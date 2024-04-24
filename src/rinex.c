@@ -760,7 +760,8 @@ static int decode_obsepoch(FILE *fp, char *buff, double ver, gtime_t *time,
             return 0;
         }
     }
-    trace(4,"decode_obsepoch: time=%s flag=%d\n",time_str(*time,3),*flag);
+    char tstr[40];
+    trace(4,"decode_obsepoch: time=%s flag=%d\n",time2str(*time,tstr,3),*flag);
     return n;
 }
 /* decode observation data ---------------------------------------------------*/
@@ -899,7 +900,8 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         trace(4, "obs: i=%d f=%d P=%14.3f L=%14.3f LLI=%d code=%d\n",i,p[i],obs->P[p[i]],
         obs->L[p[i]],obs->LLI[p[i]],obs->code[p[i]]);
     }
-    trace(4,"decode_obsdata: time=%s sat=%2d\n",time_str(obs->time,0),obs->sat);
+    char tstr[40];
+    trace(4,"decode_obsdata: time=%s sat=%2d\n",time2str(obs->time,tstr,0),obs->sat);
     return 1;
 }
 /* save cycle slips ----------------------------------------------------------*/

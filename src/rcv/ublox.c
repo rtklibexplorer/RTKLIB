@@ -742,7 +742,8 @@ static int decode_trkd5(raw_t *raw)
     else if (tr>t+302400.0) week--;
     time=gpst2time(week,tr);
     
-    trace(4,"time=%s\n",time_str(time,0));
+    char tstr[40];
+    trace(4,"time=%s\n",time2str(time,tstr,0));
     
     for (i=0,p=raw->buff+off;p-raw->buff<raw->len-2;i++,p+=len) {
         
