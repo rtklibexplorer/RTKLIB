@@ -410,11 +410,7 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
 
     solstatic=sopt->solstatic&&
               (popt->mode==PMODE_STATIC||popt->mode==PMODE_STATIC_START||popt->mode==PMODE_PPP_STATIC);
-
-    /* initialize unless running backwards on a combined run with phase reset disabled */
-    if (mode==SOLMODE_SINGLE_DIR || !reverse || popt->soltype==SOLTYPE_COMBINED)
-        rtkinit(rtk,popt);
-
+    
     rtcm_path[0]='\0';
 
     while ((nobs=inputobs(obs_ptr,rtk->sol.stat,popt))>=0) {
@@ -1154,7 +1150,9 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
         if (fp) {
             FILE *fptm=openfile(outfiletm);
             if (fptm) {
+                rtkinit(rtk_ptr,popt);
                 procpos(fp,fptm,&popt_,sopt,rtk_ptr,SOLMODE_SINGLE_DIR);
+                rtkfree(rtk_ptr);
                 fclose(fptm);
             }
             fclose(fp);
@@ -1166,7 +1164,9 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
             FILE *fptm=openfile(outfiletm);
             if (fptm) {
                 reverse=1; iobsu=iobsr=obss.n-1; isbs=sbss.n-1;
+                rtkinit(rtk_ptr,popt);
                 procpos(fp,fptm,&popt_,sopt,rtk_ptr,SOLMODE_SINGLE_DIR);
+                rtkfree(rtk_ptr);
                 fclose(fptm);
             }
             fclose(fp);
@@ -1180,10 +1180,17 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
 
         if (solf&&solb) {
             isolf=isolb=0;
+            rtkinit(rtk_ptr,popt);
             procpos(NULL,NULL,&popt_,sopt,rtk_ptr,SOLMODE_COMBINED); /* forward */
             reverse=1; iobsu=iobsr=obss.n-1; isbs=sbss.n-1;
+            if (popt_.soltype!=SOLTYPE_COMBINED_NORESET) {
+                /* Reset */
+                rtkfree(rtk_ptr);
+                rtkinit(rtk_ptr,popt);
+            }
             procpos(NULL,NULL,&popt_,sopt,rtk_ptr,SOLMODE_COMBINED); /* backward */
-
+            rtkfree(rtk_ptr);
+            
             /* combine forward/backward solutions */
             if (!aborts) {
                 FILE *fp=openfile(outfile);
@@ -1204,7 +1211,6 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
         free(rbb);
     }
     /* free rtk, obs and nav data */
-    rtkfree(rtk_ptr);
     free(rtk_ptr);
     freeobsnav(&obss,&navs);
 
