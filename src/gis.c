@@ -285,7 +285,7 @@ static int gis_read_record(FILE *fp, FILE *fp_idx, int type, double *bound,
             read_polygon(fp,bound,data);
         }
         else { /* skip record */
-            for (i=0;i<len1-4;i++) {
+            for (int j=0;j<len1-4;j++) {
                 fread(buff,1,1,fp);
             }
         }
