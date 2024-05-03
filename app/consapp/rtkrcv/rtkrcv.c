@@ -1366,7 +1366,7 @@ static void *con_thread(void *arg)
  
     /* auto start if option set */
     if (start&1) { /* start with console */
-        cmd_start(args,narg,con->vt);
+        cmd_start(NULL,0,con->vt);
         start=0;
     }
     
