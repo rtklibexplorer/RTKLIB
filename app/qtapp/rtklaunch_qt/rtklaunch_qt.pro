@@ -30,3 +30,5 @@ RESOURCES += \
 RC_FILE = rtklaunch_qt.rc
 
 CONFIG += c++11
+
+QMAKE_LFLAGS += -no-pie
