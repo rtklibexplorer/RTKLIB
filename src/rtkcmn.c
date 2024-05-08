@@ -828,104 +828,142 @@ extern int getcodepri(int sys, uint8_t code, const char *opt)
     /* search code priority */
     return (p=strchr(codepris[i][j],obs[1]))?14-(int)(p-codepris[i][j]):0;
 }
-/* extract unsigned/signed bits ------------------------------------------------
+/* Extract unsigned/signed bits ------------------------------------------------
 * extract unsigned/signed bits from byte data
-* args   : uint8_t *buff    I   byte data
-*          int    pos       I   bit position from start of data (bits)
-*          int    len       I   bit length (bits) (len<=32)
+* args   : uint8_t *buff      I   byte data
+*          unsigned   pos     I   bit position from start of data (bits)
+*          unsigned   len     I   bit length (bits) (len<=32)
 * return : extracted unsigned/signed bits
 *-----------------------------------------------------------------------------*/
-extern uint32_t getbitu(const uint8_t *buff, int pos, int len)
+extern uint32_t getbitu(const uint8_t *buff, unsigned pos, unsigned len)
 {
-    uint32_t bits=0;
-    int i;
-    for (i=pos;i<pos+len;i++) bits=(bits<<1)+((buff[i/8]>>(7-i%8))&1u);
-    return bits;
+  if (len > 32) trace(2, "getbitu: len=%u out of range\n", len);
+  uint32_t bits = 0;
+  for (unsigned i = pos; i < pos + len; i++)
+      bits = (bits << 1) | ((buff[i / 8] >> (7 - i % 8)) & 1u);
+  return bits;
 }
-extern int32_t getbits(const uint8_t *buff, int pos, int len)
+extern int32_t getbits(const uint8_t *buff, unsigned pos, unsigned len)
 {
-    uint32_t bits=getbitu(buff,pos,len);
-    if (len<=0||32<=len||!(bits&(1u<<(len-1)))) return (int32_t)bits;
-    return (int32_t)(bits|(~0u<<len)); /* extend sign */
+  uint32_t bits = getbitu(buff, pos, len);
+  if (len == 0) {
+      /* Would need at least one bit for a sign, so emit a warning. */
+      trace(2, "getbits: len=%u out of range\n", len);
+      return 0;
+  }
+  if (len >= 32) {
+      if (len > 32) trace(2, "getbits: len=%u out of range\n", len);
+      return (int32_t)bits;
+  }
+  /* Check the sign bit */
+  if (!(bits & (1u << (len - 1)))) return (int32_t)bits;
+  return (int32_t)(bits | (~0u << len)); /* Extend sign */
 }
-/* set unsigned/signed bits ----------------------------------------------------
+/* Set unsigned/signed bits ----------------------------------------------------
 * set unsigned/signed bits to byte data
-* args   : uint8_t *buff IO byte data
-*          int    pos       I   bit position from start of data (bits)
-*          int    len       I   bit length (bits) (len<=32)
+* args   : uint8_t    *buff IO byte data
+*          unsigned   pos   I   bit position from start of data (bits)
+*          unsigned   len   I   bit length (bits) (len<=32)
 *          [u]int32_t data  I   unsigned/signed data
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void setbitu(uint8_t *buff, int pos, int len, uint32_t data)
+extern void setbitu(uint8_t *buff, unsigned pos, unsigned len, uint32_t data)
 {
+    if (len==0||32<len) {
+        trace(2,"Warning setbitu len %u out of range for data %x\n",len,data);
+        return;
+    }
     uint32_t mask=1u<<(len-1);
-    int i;
-    if (len<=0||32<len) return;
-    for (i=pos;i<pos+len;i++,mask>>=1) {
-        if (data&mask) buff[i/8]|=1u<<(7-i%8); else buff[i/8]&=~(1u<<(7-i%8));
+    for (int i=pos;i<pos+len;i++,mask>>=1) {
+        if (data&mask)
+            buff[i/8]|=1u<<(7-i%8);
+        else
+            buff[i/8]&=~(1u<<(7-i%8));
     }
 }
-extern void setbits(uint8_t *buff, int pos, int len, int32_t data)
-{
-    if (data<0) data|=1<<(len-1); else data&=~(1<<(len-1)); /* set sign bit */
-    setbitu(buff,pos,len,(uint32_t)data);
+extern void setbits(uint8_t *buff, unsigned pos, unsigned len, int32_t data) {
+    if (len==0||32<len) {
+        trace(2,"Warning setbits len %u out of range for data %x\n",len,data);
+        return;
+    }
+
+    uint32_t limit=1u<<(len-1);
+    if (len<32) {
+        /* Clamp the data in the case it overflows the len */
+        if (data>=0) {
+          if ((uint32_t)data>=limit) {
+            trace(2,"Warning setbits overflow for data %x len %u\n",data,len);
+            /* Clamp */
+            data=limit-1;
+            trace(2,"  clamped to %x\n",data);
+      }
+    } else if ((uint32_t)(-data)>limit) {
+      trace(2,"Warning setbits underflow for data %x len %u\n",data,len);
+      /* Clamp */
+      data=-limit;
+      trace(2,"  clamped to %x\n",data);
+    }
+  }
+
+  uint32_t udata = data;
+  if (data<0)
+      udata|=limit;    /* Set sign bit */
+  else
+      udata&=~limit;   /* Clear sign bit */
+  setbitu(buff,pos,len,udata);
 }
 /* crc-32 parity ---------------------------------------------------------------
 * compute crc-32 parity for novatel raw
-* args   : uint8_t *buff    I   data
-*          int    len       I   data length (bytes)
+* args   : uint8_t *buff     I   data
+*          unsigned  len     I   data length (bytes)
 * return : crc-32 parity
 * notes  : see NovAtel OEMV firmware manual 1.7 32-bit CRC
 *-----------------------------------------------------------------------------*/
-extern uint32_t rtk_crc32(const uint8_t *buff, int len)
+extern uint32_t rtk_crc32(const uint8_t *buff, unsigned len)
 {
+    trace(4,"rtk_crc32: len=%u\n",len);
     uint32_t crc=0;
-    int i,j;
-
-    trace(4,"rtk_crc32: len=%d\n",len);
-
-    for (i=0;i<len;i++) {
+    for (unsigned i=0;i<len;i++) {
         crc^=buff[i];
-        for (j=0;j<8;j++) {
-            if (crc&1) crc=(crc>>1)^POLYCRC32; else crc>>=1;
+        for (int j=0;j<8;j++) {
+            if (crc&1)
+                crc=(crc>>1)^POLYCRC32;
+            else
+                crc>>=1;
         }
     }
     return crc;
 }
 /* crc-24q parity --------------------------------------------------------------
 * compute crc-24q parity for sbas, rtcm3
-* args   : uint8_t *buff    I   data
-*          int    len       I   data length (bytes)
+* args   : uint8_t  *buff    I   data
+*          unsigned  len     I   data length (bytes)
 * return : crc-24Q parity
 * notes  : see reference [2] A.4.3.3 Parity
 *-----------------------------------------------------------------------------*/
-extern uint32_t rtk_crc24q(const uint8_t *buff, int len)
+extern uint32_t rtk_crc24q(const uint8_t *buff, unsigned len)
 {
+    trace(4, "rtk_crc24q: len=%u\n",len);
+
     uint32_t crc=0;
-    int i;
-
-    trace(4,"rtk_crc24q: len=%d\n",len);
-
-    for (i=0;i<len;i++) crc=((crc<<8)&0xFFFFFF)^tbl_CRC24Q[(crc>>16)^buff[i]];
+    for (unsigned i=0;i<len;i++)
+        crc=((crc<<8)&0xFFFFFF)^tbl_CRC24Q[(crc>>16)^buff[i]];
     return crc;
 }
 /* crc-16 parity ---------------------------------------------------------------
 * compute crc-16 parity for binex, nvs
-* args   : uint8_t *buff    I   data
-*          int    len       I   data length (bytes)
+* args   : uint8_t  *buff    I   data
+*          unsigned  len       I   data length (bytes)
 * return : crc-16 parity
 * notes  : see reference [10] A.3.
 *-----------------------------------------------------------------------------*/
-extern uint16_t rtk_crc16(const uint8_t *buff, int len)
+extern uint16_t rtk_crc16(const uint8_t *buff, unsigned len)
 {
+    trace(4, "rtk_crc16: len=%d\n",len);
+
     uint16_t crc=0;
-    int i;
-
-    trace(4,"rtk_crc16: len=%d\n",len);
-
-    for (i=0;i<len;i++) {
+    for (unsigned i=0;i<len;i++)
         crc=(crc<<8)^tbl_CRC16[((crc>>8)^buff[i])&0xFF];
-    }
     return crc;
 }
 /* decode navigation data word -------------------------------------------------

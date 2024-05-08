@@ -1629,13 +1629,13 @@ EXPORT int tle_pos(gtime_t time, const char *name, const char *satno,
                    double *rs);
 
 /* receiver raw data functions -----------------------------------------------*/
-EXPORT uint32_t getbitu(const uint8_t *buff, int pos, int len);
-EXPORT int32_t  getbits(const uint8_t *buff, int pos, int len);
-EXPORT void setbitu(uint8_t *buff, int pos, int len, uint32_t data);
-EXPORT void setbits(uint8_t *buff, int pos, int len, int32_t  data);
-EXPORT uint32_t rtk_crc32 (const uint8_t *buff, int len);
-EXPORT uint32_t rtk_crc24q(const uint8_t *buff, int len);
-EXPORT uint16_t rtk_crc16 (const uint8_t *buff, int len);
+EXPORT uint32_t getbitu(const uint8_t *buff, unsigned pos, unsigned len);
+EXPORT int32_t getbits(const uint8_t *buff, unsigned pos, unsigned len);
+EXPORT void setbitu(uint8_t *buff, unsigned pos, unsigned len, uint32_t data);
+EXPORT void setbits(uint8_t *buff, unsigned pos, unsigned len, int32_t data);
+EXPORT uint32_t rtk_crc32(const uint8_t *buff, unsigned len);
+EXPORT uint32_t rtk_crc24q(const uint8_t *buff, unsigned len);
+EXPORT uint16_t rtk_crc16(const uint8_t *buff, unsigned len);
 EXPORT int decode_word (uint32_t word, uint8_t *data);
 EXPORT int decode_frame(const uint8_t *buff, eph_t *eph, alm_t *alm,
                         double *ion, double *utc);
