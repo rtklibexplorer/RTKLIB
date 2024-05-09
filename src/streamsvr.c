@@ -635,7 +635,7 @@ extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, char **paths,
                        char **logs, strconv_t **conv, char **cmds,
                        char **cmds_periodic, const double *nmeapos)
 {
-    int i,rw,stropt[5]={0};
+    int i,rw,stropt[8]={0};
     char file1[MAXSTRPATH],file2[MAXSTRPATH],*p;
     
     tracet(3,"strsvrstart:\n");
