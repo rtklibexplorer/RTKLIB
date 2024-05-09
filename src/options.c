@@ -223,21 +223,30 @@ static int enum2str(char *s, const char *comment, int val)
     strncpy(s,p+n,q-p-n); s[q-p-n]='\0';
     return (int)(q-p-n);
 }
-/* string to enum ------------------------------------------------------------*/
-static int str2enum(const char *str, const char *comment, int *val)
-{
-    const char *p;
-    char s[32];
-    
-    for (p=comment;;p++) {
-       if (!(p=strstr(p,str))) break;
-       if (*(p-1)!=':') continue;
-       for (p-=2;'0'<=*p&&*p<='9'&&p>comment;p--) ;
-       p = p == comment ? p : p + 1;
-       return sscanf(p,"%d",val)==1;
+/* String to enum ------------------------------------------------------------
+ * Note if str is empty then the first comment digit is returned.
+ */
+static int str2enum(const char *str, const char *comment, int *val) {
+    for (const char *p = comment;; p++) {
+        p=strstr(p, str);
+        if (!p) break;
+        size_t i=p-comment;
+        if (i<1) continue;
+        if (comment[--i]!=':') continue;
+        /* Search for preceding digits */
+        size_t j=i;
+        while (j>0) {
+            char c=comment[j-1];
+            if (c<'0' || c>'9') break;
+            j--;
+        }
+        if (j==i) continue; /* No digits found */
+        return sscanf(comment+j,"%d",val)==1;
     }
-    sprintf(s,"%.30s:",str);
-    if ((p=strstr(comment,s))) { /* number */
+    char s[32];
+    snprintf(s,sizeof(s),"%.30s:",str);
+    const char *p=strstr(comment,s);
+    if (p) { /* Number */
         return sscanf(p,"%d",val)==1;
     }
     return 0;
