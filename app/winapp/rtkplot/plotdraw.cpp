@@ -1636,7 +1636,7 @@ void __fastcall TPlot::DrawSnr(int level)
                     int k,freq;
                     if (obs->sat!=sat) continue;
                     if (sscanf(obstype,"L%1d",&freq)==1) {
-                        k=k>2?freq-3:freq-1;
+                        k=freq>2?freq-3:freq-1;
                     }
                     else {
                         for (k=0;k<NFREQ+NEXOBS;k++) {

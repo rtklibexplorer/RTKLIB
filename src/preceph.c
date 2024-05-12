@@ -741,7 +741,7 @@ extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
         freq[0]=FREQ1_CMP;
         freq[1]=FREQ2_CMP;
     }
-    else if (sys==SYS_IRN) { /* B1I-B2I */
+    else if (sys==SYS_IRN) { /* L5-S */
         freq[0]=FREQL5;
         freq[1]=FREQs;
     }

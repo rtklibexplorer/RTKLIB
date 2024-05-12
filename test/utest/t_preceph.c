@@ -196,7 +196,7 @@ void utest5(void)
                 rs1[0],rs1[1],rs1[2],dts1[0]*1E9,rs2[0],rs2[1],rs2[2],dts2[0]*1E9);
     }
     fclose(fp);
-    printf("%s utest4 : OK\n",__FILE__);
+    printf("%s utest5 : OK\n",__FILE__);
 }
 int main(int argc, char **argv)
 {

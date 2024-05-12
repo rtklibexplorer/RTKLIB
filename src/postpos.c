@@ -1085,7 +1085,7 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
     
     /* read dcb parameters from DCB, BIA, BSX files */
     dcb_ok = 0;
-    for (i=0;i<3;i++) for (k=0;k<2;k++) {
+    for (i=0;i<MAX_CODE_BIASES;i++) for (k=0;k<MAX_CODE_BIAS_FREQS;k++) {
         for (j=0;j<MAXSAT;j++) navs.cbias[j][k][i]=-1;
         for (j=0;j<MAXRCV;j++) navs.rbias[j][k][i]=0;
         }

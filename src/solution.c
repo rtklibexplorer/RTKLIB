@@ -96,7 +96,7 @@ static const int nmea_sid[]={ /* NMEA system IDs [1] table 21 */
     1,2,3,4,5,6,0
 };
 static const int nmea_solq[]={  /* NMEA GPS quality indicator [1] */
-    /* 0=Fix not available or invalidi */
+    /* 0=Fix not available or invalid */
     /* 1=GPS SPS Mode, fix valid */
     /* 2=Differential GPS, SPS Mode, fix valid */
     /* 3=GPS PPS Mode, fix valid */
@@ -186,7 +186,7 @@ static void covtosol_vel(const double *P, sol_t *sol)
     sol->qv[4]=(float)P[5]; /* yz */
     sol->qv[5]=(float)P[2]; /* zx */
 }
-/* decode NMEA RMC (Recommended Minumum Specific GNSS Data) sentence ---------*/
+/* decode NMEA RMC (Recommended Minimum Specific GNSS Data) sentence ---------*/
 static int decode_nmearmc(char **val, int n, sol_t *sol)
 {
     double tod=0.0,lat=0.0,lon=0.0,vel=0.0,dir=0.0,date=0.0,ang=0.0,ep[6];
@@ -858,7 +858,7 @@ static int sort_solbuf(solbuf_t *solbuf)
     return 1;
 }
 /* read solutions data from solution files -------------------------------------
-* read solution data from soluiton files
+* read solution data from solution files
 * args   : char   *files[]  I  solution files
 *          int    nfile     I  number of files
 *         (gtime_t ts)      I  start time (ts.time==0: from start)
@@ -1601,7 +1601,7 @@ extern int outsolheads(uint8_t *buff, const solopt_t *opt)
     p+=sprintf(p,"\r\n");
     return (int)(p-(char *)buff);
 }
-/* std-dev of soltuion -------------------------------------------------------*/
+/* std-dev of solution -------------------------------------------------------*/
 static double sol_std(const sol_t *sol)
 {
     /* approximate as max std-dev of 3-axis std-devs */
@@ -1665,7 +1665,7 @@ extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
     return (int)(p-buff);
 }
 /* output solution extended ----------------------------------------------------
-* output solution exteneded infomation
+* output solution extended information
 * args   : uint8_t *buff    IO  output buffer
 *          sol_t  *sol      I   solution
 *          ssat_t *ssat     I   satellite status
@@ -1750,7 +1750,7 @@ extern void outsol(FILE *fp, const sol_t *sol, const double *rb,
     }
 }
 /* output solution extended ----------------------------------------------------
-* output solution exteneded infomation to file
+* output solution extended information to file
 * args   : FILE   *fp       I   output file pointer
 *          sol_t  *sol      I   solution
 *          ssat_t *ssat     I   satellite status

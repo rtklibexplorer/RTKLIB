@@ -2596,7 +2596,7 @@ static int readantex(const char *file, pcvs_t *pcvs)
 * args   : char   *file       I   antenna parameter file (antex)
 *          pcvs_t *pcvs       IO  antenna parameters
 * return : status (1:ok,0:file open error)
-* notes  : file with the externsion .atx or .ATX is recognized as antex
+* notes  : file with the extension .atx or .ATX is recognized as antex
 *          file except for antex is recognized ngs antenna parameters
 *          see reference [3]
 *          only support non-azimuth-depedent parameters

@@ -193,7 +193,7 @@ object OptDialog: TOptDialog
           'Iono-Free LC'
           'Estimate TEC'
           'IONEX TEC'
-          'QZSS Broardcast'
+          'QZSS Broadcast'
           'QZSS LEX'
           'Input TEC')
       end
