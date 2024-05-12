@@ -85,11 +85,11 @@ int main(int argc, char **argv)
     }
     if (tcolor<0||5<tcolor||pcolor<0||5<pcolor) {
         fprintf(stderr,"pos2kml : command option error\n");
-        return -1;
+        return EXIT_FAILURE;
     }
     if (n<=0) {
         fprintf(stderr,"pos2kml : no input file\n");
-        return -1;
+        return EXIT_FAILURE;
     }
     for (i=0;i<n;i++) {
         if (gpx) {

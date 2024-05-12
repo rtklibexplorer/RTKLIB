@@ -115,7 +115,7 @@ int main(int argc, char **argv)
     for (i=1;i<argc;i++) {
         if (!strcmp(argv[i],"-k")&&i+1<argc) {
             resetsysopts();
-            if (!loadopts(argv[++i],sysopts)) return -1;
+            if (!loadopts(argv[++i],sysopts)) return EXIT_FAILURE;
             getsysopts(&prcopt,&solopt,&filopt);
         }
     }
@@ -188,10 +188,10 @@ int main(int argc, char **argv)
     }
     if (n<=0) {
         showmsg("error : no input file");
-        return -2;
+        return EXIT_FAILURE;
     }
     ret=postpos(ts,te,tint,0.0,&prcopt,&solopt,&filopt,infile,n,outfile,"","");
 
     if (!ret) fprintf(stderr,"%40s\r","");
-    return ret;
+    return ret?EXIT_FAILURE:0;
 }

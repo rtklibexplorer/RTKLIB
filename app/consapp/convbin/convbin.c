@@ -307,10 +307,10 @@ static int convbin(int format, rnxopt_t *opt, const char *ifile, char **file,
     
     if (!convrnx(format,opt,ifile,ofile)) {
         fprintf(stderr,"\n");
-        return -1;
+        return 0;
     }
     fprintf(stderr,"\n");
-    return 0;
+    return 1;
 }
 /* set signal mask -----------------------------------------------------------*/
 static void setmask(const char *argv, rnxopt_t *opt, int mask)
@@ -599,11 +599,11 @@ int main(int argc, char **argv)
     
     if (!*ifile) {
         fprintf(stderr,"no input file\n");
-        return -1;
+        return EXIT_FAILURE;
     }
     if (format<0) {
         fprintf(stderr,"input format can not be recognized\n");
-        return -1;
+        return EXIT_FAILURE;
     }
     sprintf(opt.prog,"%s %s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
     sprintf(opt.comment[0],"log: %-55.55s",ifile);
@@ -620,5 +620,5 @@ int main(int argc, char **argv)
     
     traceclose();
     
-    return stat;
+    return stat?0:EXIT_FAILURE;
 }
