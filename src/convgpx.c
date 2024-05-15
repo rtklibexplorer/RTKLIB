@@ -170,6 +170,7 @@ extern int convgpx(const char *infile, const char *outfile, gtime_t ts,
         for (i=0;i<3;i++) solbuf.rb[i]+=dr[i];
     }
     /* save gpx file */
-    return savegpx(file,&solbuf,outtrk,outpnt,outalt,outtime)?0:-4;
+    int r = savegpx(file,&solbuf,outtrk,outpnt,outalt,outtime)?0:-4;
+    freesolbuf(&solbuf);
+    return r;
 }
-

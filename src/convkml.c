@@ -209,5 +209,7 @@ extern int convkml(const char *infile, const char *outfile, gtime_t ts,
         for (i=0;i<3;i++) solbuf.rb[i]+=dr[i];
     }
     /* save kml file */
-    return savekml(file,&solbuf,tcolor,pcolor,outalt,outtime)?0:-4;
+    int r = savekml(file,&solbuf,tcolor,pcolor,outalt,outtime)?0:-4;
+    freesolbuf(&solbuf);
+    return r;
 }
