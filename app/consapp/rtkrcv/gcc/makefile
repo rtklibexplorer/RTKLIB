@@ -90,6 +90,7 @@ septentrio.o: $(SRC)/rcv/septentrio.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/septentrio.c
 
 rtkrcv.o   : $(SRC)/rtklib.h ../vt.h
+vt.o       : ../vt.h
 rtkcmn.o   : $(SRC)/rtklib.h
 trace.o    : $(SRC)/rtklib.h
 rtksvr.o   : $(SRC)/rtklib.h
