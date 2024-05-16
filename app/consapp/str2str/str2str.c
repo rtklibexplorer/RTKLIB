@@ -113,7 +113,7 @@ static const char *help[]={
 "",
 "  command file cheat sheet:",
 "    - # begins a comment, empty lines are ignored",
-"    - @ separates sections: first startup commands, then stop commands, then periodic commands
+"    - @ separates sections: first startup commands, then stop commands, then periodic commands",
 "    - binary commands begin with !",
 "      - WAIT sleep for milliseconds (max 3 seconds)",
 "      - BRATE set the bitrate, defaults to 115200",
