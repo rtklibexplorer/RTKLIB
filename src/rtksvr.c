@@ -82,7 +82,7 @@ static void writesol(rtksvr_t *svr, int index)
             
             /* output solution status */
             rtksvrlock(svr);
-            n=rtkoutstat(&svr->rtk,(char *)buff);
+            n=rtkoutstat(&svr->rtk,svr->solopt[i].sstat,(char *)buff);
             rtksvrunlock(svr);
         }
         else {

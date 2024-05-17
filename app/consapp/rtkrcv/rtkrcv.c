@@ -1229,6 +1229,7 @@ static void cmd_set(char **args, int narg, vt_t *vt)
         return;
     }
     getsysopts(&prcopt,solopt,&filopt);
+    solopt[1]=solopt[0];
     
     vt_printf(vt,"option %s changed.",opt->name);
     if (strncmp(opt->name,"console",7)) {
@@ -1256,6 +1257,7 @@ static void cmd_load(char **args, int narg, vt_t *vt)
         return;
     }
     getsysopts(&prcopt,solopt,&filopt);
+    solopt[1]=solopt[0];
     
     if (!loadopts(file,rcvopts)) {
         vt_printf(vt,"no options file: %s\n",file);
@@ -1677,6 +1679,9 @@ static void deamonise(void)
 *     Short form of a command is allowed. In case of the short form, the
 *     command is distinguished according to header characters.
 *     
+*     The -r argument only affects the status file. The status output streams
+*     take their level from the out-outstat option.
+*
 *-----------------------------------------------------------------------------*/
 int main(int argc, char **argv)
 {
@@ -1720,6 +1725,8 @@ int main(int argc, char **argv)
         fprintf(stderr,"no options file: %s. defaults used\n",file);
     }
     getsysopts(&prcopt,solopt,&filopt);
+    /* Copy the system options for the second output solution stream */
+    solopt[1]=solopt[0];
     
     /* read navigation data */
     if (!readnav(NAVIFILE,&svr.nav)) {
