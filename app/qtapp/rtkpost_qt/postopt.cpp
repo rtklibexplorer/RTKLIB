@@ -772,8 +772,8 @@ void OptDialog::LoadOpt(const QString &file)
 
     IntpRefObs->setCurrentIndex(prcopt.intpref);
     SbasSat->setText(QString::number(prcopt.sbassatsel));
-    RovPosType->setCurrentIndex(prcopt.rovpos == 0 ? 0 : prcopt.rovpos + 2);
-    RefPosType->setCurrentIndex(prcopt.refpos == 0 ? 0 : prcopt.refpos + 2);
+    RovPosType->setCurrentIndex(prcopt.rovpos == POSOPT_POS_LLH ? 0 : prcopt.rovpos == POSOPT_POS_XYZ ? 2 : prcopt.rovpos + 1);
+    RefPosType->setCurrentIndex(prcopt.refpos == POSOPT_POS_LLH ? 0 : prcopt.refpos == POSOPT_POS_XYZ ? 2 : prcopt.refpos + 1);
     RovPosTypeP = RovPosType->currentIndex();
     RefPosTypeP = RefPosType->currentIndex();
     SetPos(RovPosType->currentIndex(), editu, prcopt.ru);
@@ -917,10 +917,12 @@ void OptDialog::SaveOpt(const QString &file)
 
     prcopt.intpref = IntpRefObs->currentIndex();
     prcopt.sbassatsel = SbasSat->text().toInt();
-    prcopt.rovpos = RovPosType->currentIndex() < 3 ? 0 : RovPosType->currentIndex() - 2;
-    prcopt.refpos = RefPosType->currentIndex() < 3 ? 0 : RefPosType->currentIndex() - 2;
-    if (prcopt.rovpos == 0) GetPos(RovPosType->currentIndex(), editu, prcopt.ru);
-    if (prcopt.refpos == 0) GetPos(RefPosType->currentIndex(), editr, prcopt.rb);
+    prcopt.rovpos = RovPosType->currentIndex() < 2 ? POSOPT_POS_LLH : RovPosType->currentIndex() == 2 ? POSOPT_POS_XYZ : (RovPosType->currentIndex() - 1);
+    prcopt.refpos = RefPosType->currentIndex() < 2 ? POSOPT_POS_LLH : RefPosType->currentIndex() == 2 ? POSOPT_POS_XYZ : (RefPosType->currentIndex() - 1);
+    if (prcopt.rovpos == POSOPT_POS_LLH || prcopt.rovpos == POSOPT_POS_XYZ)
+      GetPos(RovPosType->currentIndex(), editu, prcopt.ru);
+    if (prcopt.refpos == POSOPT_POS_LLH || prcopt.refpos == POSOPT_POS_XYZ)
+      GetPos(RefPosType->currentIndex(), editr, prcopt.rb);
 
     strcpy(prcopt.rnxopt[0], qPrintable(RnxOpts1_Text));
     strcpy(prcopt.rnxopt[1], qPrintable(RnxOpts2_Text));

@@ -426,7 +426,7 @@ static int startsvr(vt_t *vt)
             if (strtype[i]==STR_FILE&&!confwrite(vt,strpath[i])) return 0;
         }
     }
-    if (prcopt.refpos==4) { /* rtcm */
+    if (prcopt.refpos==POSOPT_RTCM) { /* rtcm */
         for (i=0;i<3;i++) prcopt.rb[i]=0.0;
     }
     pos[0]=nmeapos[0]*D2R;

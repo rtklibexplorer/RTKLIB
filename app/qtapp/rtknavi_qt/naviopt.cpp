@@ -835,9 +835,20 @@ void OptDialog::LoadOpt(const QString &file)
     MaxAveEp->setValue(prcopt.maxaveep);
 
     RovPosTypeP->setCurrentIndex(0);
+    if (prcopt.rovpos == POSOPT_POS_LLH)
+      RovPosTypeP->setCurrentIndex(0);
+    else if (prcopt.rovpos == POSOPT_POS_XYZ)
+      RovPosTypeP->setCurrentIndex(2);
+
     RefPosTypeP->setCurrentIndex(0);
-    if      (prcopt.refpos==POSOPT_RTCM  ) RefPosTypeP->setCurrentIndex(3);
-    else if (prcopt.refpos==POSOPT_SINGLE) RefPosTypeP->setCurrentIndex(4);
+    if (prcopt.refpos == POSOPT_POS_LLH)
+      RefPosTypeP->setCurrentIndex(0);
+    else if (prcopt.refpos == POSOPT_POS_XYZ)
+      RefPosTypeP->setCurrentIndex(2);
+    else if (prcopt.refpos == POSOPT_RTCM)
+      RefPosTypeP->setCurrentIndex(3);
+    else if (prcopt.refpos==POSOPT_SINGLE)
+      RefPosTypeP->setCurrentIndex(4);
 
     RovPosTypeF = RovPosTypeP->currentIndex();
     RefPosTypeF = RefPosTypeP->currentIndex();
@@ -1049,13 +1060,26 @@ void OptDialog::SaveOpt(const QString &file)
     prcopt.maxaveep = MaxAveEp->value();
     prcopt.initrst = ChkInitRestart->isChecked();
 
-    prcopt.rovpos = 4;
-    prcopt.refpos = 4;
-    if      (RefPosTypeP->currentIndex()==3) prcopt.refpos=POSOPT_RTCM;
-    else if (RefPosTypeP->currentIndex()==4) prcopt.refpos=POSOPT_SINGLE;
+    prcopt.rovpos = POSOPT_POS_LLH;
+    if (RovPosTypeP->currentIndex() < 2)
+      prcopt.rovpos = POSOPT_POS_LLH;
+    else if (RovPosTypeP->currentIndex() == 2)
+      prcopt.rovpos = POSOPT_POS_XYZ;
 
-    if (prcopt.rovpos == POSOPT_POS) GetPos(RovPosTypeP->currentIndex(), editu, prcopt.ru);
-    if (prcopt.refpos == POSOPT_POS) GetPos(RefPosTypeP->currentIndex(), editr, prcopt.rb);
+    prcopt.refpos = POSOPT_POS_LLH;
+    if (RefPosTypeP->currentIndex() < 2)
+      prcopt.refpos = POSOPT_POS_LLH;
+    else if (RefPosTypeP->currentIndex() == 2)
+      prcopt.refpos = POSOPT_POS_XYZ;
+    else if (RefPosTypeP->currentIndex() == 3)
+      prcopt.refpos = POSOPT_RTCM;
+    else if (RefPosTypeP->currentIndex() == 4)
+      prcopt.refpos = POSOPT_SINGLE;
+
+    if (prcopt.rovpos == POSOPT_POS_LLH || prcopt.rovpos == POSOPT_POS_XYZ)
+      GetPos(RovPosTypeP->currentIndex(), editu, prcopt.ru);
+    if (prcopt.refpos == POSOPT_POS_LLH || prcopt.refpos == POSOPT_POS_XYZ)
+      GetPos(RefPosTypeP->currentIndex(), editr, prcopt.rb);
 
     strcpy(filopt.satantp, qPrintable(SatPcvFile_Text));
     strcpy(filopt.rcvantp, qPrintable(AntPcvFile_Text));

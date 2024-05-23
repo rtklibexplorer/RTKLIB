@@ -432,11 +432,12 @@ extern "C" {
 #define SBSOPT_ICORR 4                  /* SBAS option: ionosphere correction */
 #define SBSOPT_RANGE 8                  /* SBAS option: ranging */
 
-#define POSOPT_POS   0                  /* pos option: LLH/XYZ */
-#define POSOPT_SINGLE 1                 /* pos option: average of single pos */
-#define POSOPT_FILE  2                  /* pos option: read from pos file */
-#define POSOPT_RINEX 3                  /* pos option: rinex header pos */
-#define POSOPT_RTCM  4                  /* pos option: rtcm/raw station pos */
+#define POSOPT_POS_LLH 0                /* pos option: LLH */
+#define POSOPT_POS_XYZ 1                /* pos option: XYZ */
+#define POSOPT_SINGLE  2                /* pos option: average of single pos */
+#define POSOPT_FILE    3                /* pos option: read from pos file */
+#define POSOPT_RINEX   4                /* pos option: rinex header pos */
+#define POSOPT_RTCM    5                /* pos option: rtcm/raw station pos */
 
 #define STR_NONE     0                  /* stream type: none */
 #define STR_SERIAL   1                  /* stream type: serial */

@@ -743,8 +743,8 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	
 	IntpRefObs	 ->ItemIndex	=prcopt.intpref;
 	SbasSat		 ->Text			=s.sprintf("%d",prcopt.sbassatsel);
-	RovPosType	 ->ItemIndex	=prcopt.rovpos==0?0:prcopt.rovpos+2;
-	RefPosType	 ->ItemIndex	=prcopt.refpos==0?0:prcopt.refpos+2;
+        RovPosType->ItemIndex = prcopt.rovpos == POSOPT_POS_LLH ? 0 : prcopt.rovpos == POSOPT_POS_XYZ ? 2 : prcopt.rovpos + 1;
+        RefPosType->ItemIndex = prcopt.refpos == POSOPT_POS_LLH ? 0 : prcopt.refpos == POSOPT_POS_XYZ ? 2 : prcopt.refpos + 1;
 	RovPosTypeP					=RovPosType->ItemIndex;
 	RefPosTypeP					=RefPosType->ItemIndex;
 	SetPos(RovPosType->ItemIndex,editu,prcopt.ru);
@@ -899,10 +899,12 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	
 	prcopt.intpref	=IntpRefObs->ItemIndex;
 	prcopt.sbassatsel=SbasSat->Text.ToInt();
-	prcopt.rovpos=RovPosType->ItemIndex<3?0:RovPosType->ItemIndex-2;
-	prcopt.refpos=RefPosType->ItemIndex<3?0:RefPosType->ItemIndex-2;
-	if (prcopt.rovpos==0) GetPos(RovPosType->ItemIndex,editu,prcopt.ru);
-	if (prcopt.refpos==0) GetPos(RefPosType->ItemIndex,editr,prcopt.rb);
+        prcopt.rovpos = RovPosType->ItemIndex < 2 ? POSOPT_POS_LLH : RovPosType->ItemIndex == 2 ? POSOPT_POS_XYZ : (RovPosType->ItemIndex - 1);
+        prcopt.refpos = RefPosType->ItemIndex < 2 ? POSOPT_POS_LLH : RefPosType->ItemIndex == 2 ? POSOPT_POS_XYZ : (RefPosType->ItemIndex - 1);
+        if (prcopt.rovpos == POSOPT_POS_LLH || prcopt.rovpos == POSOPT_POS_XYZ)
+          GetPos(RovPosType->ItemIndex, editu, prcopt.ru);
+        if (prcopt.refpos == POSOPT_POS_LLH || prcopt.refpos == POSOPT_POS_XYZ)
+          GetPos(RefPosType->ItemIndex, editr, prcopt.rb);
 	
 	strcpy(prcopt.rnxopt[0],RnxOpts1_Text.c_str());
 	strcpy(prcopt.rnxopt[1],RnxOpts2_Text.c_str());
