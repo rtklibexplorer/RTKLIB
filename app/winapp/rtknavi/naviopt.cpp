@@ -830,8 +830,13 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	ChkInitRestart->Checked		=prcopt.initrst;
 	
 	RovPosTypeP	 ->ItemIndex	=0;
+        if (prcopt.rovpos == POSOPT_POS_LLH) RovPosTypeP->ItemIndex = 0;
+        else if (prcopt.rovpos == POSOPT_POS_XYZ) RovPosTypeP->ItemIndex = 2;
+
 	RefPosTypeP	 ->ItemIndex	=0;
-	if      (prcopt.refpos==POSOPT_RTCM  ) RefPosTypeP->ItemIndex=3;
+        if (prcopt.refpos == POSOPT_POS_LLH) RefPosTypeP->ItemIndex = 0;
+        else if (prcopt.refpos == POSOPT_POS_XYZ) RefPosTypeP->ItemIndex = 2;
+	else if (prcopt.refpos==POSOPT_RTCM  ) RefPosTypeP->ItemIndex=3;
 	else if (prcopt.refpos==POSOPT_SINGLE) RefPosTypeP->ItemIndex=4;
 	
 	RovPosTypeF					=RovPosTypeP->ItemIndex;
@@ -1059,13 +1064,20 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
 	prcopt.maxaveep=MaxAveEp->Text.ToInt();
 	prcopt.initrst=ChkInitRestart->Checked;
 	
-	prcopt.rovpos=POSOPT_POS;
-	prcopt.refpos=POSOPT_POS;
-	if      (RefPosTypeP->ItemIndex==3) prcopt.refpos=POSOPT_RTCM;
+        prcopt.rovpos = POSOPT_POS_LLH;
+        if (RovPosTypeP->ItemIndex < 2) prcopt.rovpos = POSOPT_POS_LLH;
+        else if (RovPosTypeP->ItemIndex == 2) prcopt.rovpos = POSOPT_POS_XYZ;
+
+        prcopt.refpos = POSOPT_POS_LLH;
+        if (RefPosTypeP->ItemIndex < 2) prcopt.refpos = POSOPT_POS_LLH;
+        else if (RefPosTypeP->ItemIndex == 2) prcopt.refpos = POSOPT_POS_XYZ;
+        else if (RefPosTypeP->ItemIndex == 3) prcopt.refpos=POSOPT_RTCM;
 	else if (RefPosTypeP->ItemIndex==4) prcopt.refpos=POSOPT_SINGLE;
 	
-	if (prcopt.rovpos==POSOPT_POS) GetPos(RovPosTypeP->ItemIndex,editu,prcopt.ru);
-	if (prcopt.refpos==POSOPT_POS) GetPos(RefPosTypeP->ItemIndex,editr,prcopt.rb);
+        if (prcopt.rovpos == POSOPT_POS_LLH || prcopt.rovpos == POSOPT_POS_XYZ)
+          GetPos(RovPosTypeP->ItemIndex, editu, prcopt.ru);
+        if (prcopt.refpos == POSOPT_POS_LLH || prcopt.refpos == POSOPT_POS_XYZ)
+          GetPos(RefPosTypeP->ItemIndex, editr, prcopt.rb);
 	
 	strcpy(filopt.satantp,SatPcvFile_Text.c_str());
 	strcpy(filopt.rcvantp,AntPcvFile_Text.c_str());

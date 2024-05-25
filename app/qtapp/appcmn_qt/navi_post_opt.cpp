@@ -245,10 +245,10 @@ OptDialog::OptDialog(QWidget *parent, int opts)
         qobject_cast<QStandardItemModel *>(ui->cBRoverPositionType->model());
 
     if (options == PostOptions) {
-        refPosModel->item(3)->setFlags(refPosModel->item(3)->flags() & ~Qt::ItemIsEnabled); // disable "RTCM/Raw Antenna Position"
+        refPosModel->item(6)->setFlags(refPosModel->item(6)->flags() & ~Qt::ItemIsEnabled); // disable "RTCM/Raw Antenna Position"
     } else if (options == NaviOptions) {
-        refPosModel->item(5)->setFlags(refPosModel->item(5)->flags() & ~Qt::ItemIsEnabled); // disable "Get from Position File"
-        refPosModel->item(6)->setFlags(refPosModel->item(6)->flags() & ~Qt::ItemIsEnabled); // disable "RINEX Header Position"
+        refPosModel->item(4)->setFlags(refPosModel->item(4)->flags() & ~Qt::ItemIsEnabled); // disable "Get from Position File"
+        refPosModel->item(5)->setFlags(refPosModel->item(5)->flags() & ~Qt::ItemIsEnabled); // disable "RINEX Header Position"
 
         rovPosModel->item(3)->setFlags(rovPosModel->item(3)->flags() & ~Qt::ItemIsEnabled); // disable "Average of Single Pos"
         rovPosModel->item(4)->setFlags(rovPosModel->item(4)->flags() & ~Qt::ItemIsEnabled); // disable "Get from Position File"
@@ -653,36 +653,23 @@ void OptDialog::saveClose()
     getPosition(ui->cBRoverPositionType->currentIndex(), editu, rovPos);
     getPosition(ui->cBReferencePositionType->currentIndex(), editr, refPos);
 
-    if (options == NaviOptions) {
-        processingOptions.refpos = POSOPT_POS;
-        if      (ui->cBReferencePositionType->currentIndex() == 3) processingOptions.refpos = POSOPT_RTCM;
-        else if (ui->cBReferencePositionType->currentIndex() == 4) processingOptions.refpos = POSOPT_SINGLE;
+    for (int i = 0; i < 3; i++) processingOptions.rb[i] = refPos[i];
+    processingOptions.refpos = POSOPT_POS_LLH;  /* Fallback */
+    if (ui->cBReferencePositionType->currentIndex() < 2) processingOptions.refpos = POSOPT_POS_LLH;
+    else if (ui->cBReferencePositionType->currentIndex() == 2) processingOptions.refpos = POSOPT_POS_XYZ;
+    else if (options == NaviOptions) {
+        if (ui->cBReferencePositionType->currentIndex() == 3) processingOptions.refpos = POSOPT_SINGLE;
+        else if (ui->cBReferencePositionType->currentIndex() == 6) processingOptions.refpos = POSOPT_RTCM;
     } else if (options == PostOptions) {
-        processingOptions.refpos = ui->cBReferencePositionType->currentIndex() < 3 ? 0 : ui->cBReferencePositionType->currentIndex() - 2;
+        processingOptions.refpos = ui->cBReferencePositionType->currentIndex() - 1; /* 2:single, 3:posfile, 4:rinex, 5: rtcm */
     }
 
-    if (processingOptions.mode != PMODE_FIXED && processingOptions.mode != PMODE_PPP_FIXED) {
-        processingOptions.rovpos = POSOPT_POS;
-        for (int i = 0; i < 3; i++) processingOptions.ru[i] = 0.0;
-    } else if (ui->cBRoverPositionType->currentIndex() <= 2) {
-        processingOptions.rovpos = POSOPT_POS;
-        for (int i = 0; i < 3; i++) processingOptions.ru[i] = rovPos[i];
-    } else {  // RTKPost, only
-        processingOptions.rovpos = ui->cBRoverPositionType->currentIndex() - 2; /* 1:single, 2:posfile, 3:rinex */
-    }
-
-    if (processingOptions.mode == PMODE_SINGLE || processingOptions.mode == PMODE_MOVEB) {
-        processingOptions.refpos = POSOPT_POS;
-        for (int i = 0; i < 3; i++) processingOptions.rb[i] = 0.0;
-    } else if (ui->cBReferencePositionType->currentIndex() <= 2) {
-        processingOptions.refpos = POSOPT_POS;
-        for (int i = 0; i < 3; i++) processingOptions.rb[i] = refPos[i];
-    } else if (ui->cBRoverPositionType->currentIndex() == 3) {   // RTCM/Raw position, RTKNavi only
-        processingOptions.refpos = POSOPT_RTCM;
-        for (int i = 0; i < 3; i++) processingOptions.rb[i] = 0.0;
-    } else {
-        processingOptions.refpos = ui->cBReferencePositionType->currentIndex() - 3;
-        for (int i = 0; i < 3; i++) processingOptions.rb[i] = 0.0;
+    for (int i = 0; i < 3; i++) processingOptions.ru[i] = rovPos[i];
+    processingOptions.rovpos = POSOPT_POS_LLH;
+    if (ui->cBRoverPositionType->currentIndex() < 2) processingOptions.rovpos = POSOPT_POS_LLH;
+    else if (ui->cBRoverPositionType->currentIndex() == 2) processingOptions.rovpos = POSOPT_POS_XYZ;
+    else if (options == PostOptions) {
+        processingOptions.rovpos = ui->cBRoverPositionType->currentIndex() - 1; /* 2:single, 3:posfile, 4:rinex */
     }
 
     if (ui->cBRoverAntennaPcv->isChecked()) {
@@ -839,13 +826,17 @@ void OptDialog::load(const QString &file)
         ui->cBIntputReferenceObservation->setCurrentIndex(prcopt.intpref);
         // sbassatsel
         ui->sBSbasSat->setValue(prcopt.sbassatsel);
-        ui->cBRoverPositionType->setCurrentIndex(prcopt.rovpos == 0 ? 0 : prcopt.rovpos + 2);
-        ui->cBReferencePositionType->setCurrentIndex(prcopt.refpos == 0 ? 0 : prcopt.refpos + 2);
+        ui->cBRoverPositionType->setCurrentIndex(prcopt.rovpos == POSOPT_POS_LLH ? 0 : prcopt.rovpos == POSOPT_POS_XYZ ? 2 : prcopt.rovpos + 1);
+        ui->cBReferencePositionType->setCurrentIndex(prcopt.refpos == POSOPT_POS_LLH ? 0 : prcopt.refpos == POSOPT_POS_XYZ ? 2 : prcopt.refpos + 1);
     } else if (options == NaviOptions) {
         ui->cBRoverPositionType->setCurrentIndex(0);
+        if (prcopt.rovpos == POSOPT_POS_LLH) ui->cBRoverPositionType->setCurrentIndex(0);
+        else if (prcopt.rovpos == POSOPT_POS_XYZ) ui->cBRoverPositionType->setCurrentIndex(2);
         ui->cBReferencePositionType->setCurrentIndex(0);
-        if (prcopt.refpos == POSOPT_RTCM) ui->cBReferencePositionType->setCurrentIndex(3);
-        else if (prcopt.refpos == POSOPT_SINGLE) ui->cBReferencePositionType->setCurrentIndex(4);
+        if (prcopt.refpos == POSOPT_POS_LLH) ui->cBReferencePositionType->setCurrentIndex(0);
+        else if (prcopt.refpos == POSOPT_POS_XYZ) ui->cBReferencePositionType->setCurrentIndex(2);
+        else if (prcopt.refpos == POSOPT_SINGLE) ui->cBReferencePositionType->setCurrentIndex(3);
+        else if (prcopt.refpos == POSOPT_RTCM) ui->cBReferencePositionType->setCurrentIndex(6);
     }
     current_roverPositionType = ui->cBRoverPositionType->currentIndex();
     current_referencePositionType = ui->cBReferencePositionType->currentIndex();
@@ -1012,14 +1003,15 @@ void OptDialog::save(const QString &file)
     else if (options == PostOptions)
         procOpts.sbassatsel = ui->sBSbasSat->value();
 
+    procOpts.rovpos = ui->cBRoverPositionType->currentIndex() < 2 ? POSOPT_POS_LLH : ui->cBRoverPositionType->currentIndex() == 2 ? POSOPT_POS_XYZ : ui->cBRoverPositionType->currentIndex() - 1;
     if (options == NaviOptions) {
-        procOpts.rovpos = POSOPT_POS;
-        procOpts.refpos = POSOPT_POS;
-        if      (ui->cBReferencePositionType->currentIndex() == 3) procOpts.refpos = POSOPT_RTCM;
-        else if (ui->cBReferencePositionType->currentIndex() == 4) procOpts.refpos = POSOPT_SINGLE;
+        procOpts.refpos = POSOPT_POS_LLH;
+        if      (ui->cBReferencePositionType->currentIndex() < 2) procOpts.refpos = POSOPT_POS_LLH;
+        else if (ui->cBReferencePositionType->currentIndex() == 2) procOpts.refpos = POSOPT_POS_XYZ;
+        else if (ui->cBReferencePositionType->currentIndex() == 3) procOpts.refpos = POSOPT_SINGLE;
+        else if (ui->cBReferencePositionType->currentIndex() == 6) procOpts.refpos = POSOPT_RTCM;
     } else if (options == PostOptions) {
-        procOpts.rovpos = ui->cBRoverPositionType->currentIndex() < 3 ? 0 : ui->cBRoverPositionType->currentIndex() - 2;
-        procOpts.refpos = ui->cBReferencePositionType->currentIndex() < 3 ? 0 : ui->cBReferencePositionType->currentIndex() - 2;
+        procOpts.refpos = ui->cBReferencePositionType->currentIndex() < 2 ? POSOPT_POS_LLH : ui->cBReferencePositionType->currentIndex() == 2 ? POSOPT_POS_XYZ : ui->cBReferencePositionType->currentIndex() - 1;
     }
     procOpts.eratio[0] = ui->sBMeasurementErrorR1->value();
     procOpts.eratio[1] = ui->sBMeasurementErrorR2->value();
@@ -1057,8 +1049,8 @@ void OptDialog::save(const QString &file)
         procOpts.baseline[0] = ui->sBBaselineLen->value();
         procOpts.baseline[1] = ui->sBBaselineSig->value();
     }
-    if (procOpts.rovpos == POSOPT_POS) getPosition(ui->cBRoverPositionType->currentIndex(), editu, procOpts.ru);
-    if (procOpts.refpos == POSOPT_POS) getPosition(ui->cBReferencePositionType->currentIndex(), editr, procOpts.rb);
+    if (procOpts.rovpos == POSOPT_POS_LLH || procOpts.rovpos == POSOPT_POS_XYZ) getPosition(ui->cBRoverPositionType->currentIndex(), editu, procOpts.ru);
+    if (procOpts.refpos == POSOPT_POS_LLH || procOpts.refpos == POSOPT_POS_XYZ) getPosition(ui->cBReferencePositionType->currentIndex(), editr, procOpts.rb);
     if (ui->cBRoverAntennaPcv->isChecked()) strncpy(procOpts.anttype[0], qPrintable(ui->cBRoverAntenna->currentText()), MAXANT-1);
     if (ui->cBReferenceAntennaPcv->isChecked()) strncpy(procOpts.anttype[1], qPrintable(ui->cBReferenceAntenna->currentText()), MAXANT-1);
     procOpts.antdel[0][0] = ui->sBRoverAntennaE->value();
@@ -1622,9 +1614,9 @@ void OptDialog::updateEnable()
     ui->sBReferenceAntennaN->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
     ui->sBReferenceAntennaU->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
     ui->lblReferenceAntennaD->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
-    ui->lblMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 4);
-    ui->sBMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 4);
-    ui->cBInitRestart->setVisible(ui->cBReferencePositionType->currentIndex() == 4);
+    ui->lblMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
+    ui->sBMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
+    ui->cBInitRestart->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
     ui->cBOutputSingle->setEnabled(ui->cBPositionMode->currentIndex() != 0);
     ui->cBSyncSolution->setEnabled(options == NaviOptions ? rel || ppp : false);
 

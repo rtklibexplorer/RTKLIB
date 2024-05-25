@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 
     prcopt.mode  =PMODE_KINEMA;
     prcopt.navsys=0;
-    prcopt.refpos=1;
+    prcopt.refpos=POSOPT_SINGLE;
     prcopt.glomodear=1;
     solopt.timef=0;
     sprintf(solopt.prog ,"%s ver.%s %s",PROGNAME,VER_RTKLIB,PATCH_LEVEL);
@@ -167,12 +167,12 @@ int main(int argc, char **argv)
             for (j=0;j<2;j++) prcopt.baseline[j]=atof(argv[++i]);
         }
         else if (!strcmp(argv[i],"-r")&&i+3<argc) {
-            prcopt.refpos=prcopt.rovpos=0;
+            prcopt.refpos=prcopt.rovpos=POSOPT_POS_XYZ;
             for (j=0;j<3;j++) prcopt.rb[j]=atof(argv[++i]);
             matcpy(prcopt.ru,prcopt.rb,3,1);
         }
         else if (!strcmp(argv[i],"-l")&&i+3<argc) {
-            prcopt.refpos=prcopt.rovpos=0;
+            prcopt.refpos=prcopt.rovpos=POSOPT_POS_LLH;
             for (j=0;j<3;j++) pos[j]=atof(argv[++i]);
             for (j=0;j<2;j++) pos[j]*=D2R;
             pos2ecef(pos,prcopt.rb);
