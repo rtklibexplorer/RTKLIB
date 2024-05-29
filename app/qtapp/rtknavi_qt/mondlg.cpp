@@ -1340,7 +1340,7 @@ void MonitorDialog::ShowIonUtc(void)
     for (i = 0; i < 8; i++) utc_cmp[i] = rtksvr.nav.utc_cmp[i];
     for (i = 0; i < 9; i++) utc_irn[i] = rtksvr.nav.utc_irn[i];
     for (i = 0; i < 8; i++) ion_gps[i] = rtksvr.nav.ion_gps[i];
-    for (i = 0; i < 8; i++) ion_gal[i] = rtksvr.nav.ion_gal[i];
+    for (i = 0; i < 4; i++) ion_gal[i] = rtksvr.nav.ion_gal[i];
     for (i = 0; i < 8; i++) ion_qzs[i] = rtksvr.nav.ion_qzs[i];
     for (i = 0; i < 8; i++) ion_cmp[i] = rtksvr.nav.ion_cmp[i];
     for (i = 0; i < 8; i++) ion_irn[i] = rtksvr.nav.ion_irn[i];
