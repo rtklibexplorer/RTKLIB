@@ -86,44 +86,82 @@ QString* TcpOptDialog::getHistory()
 //---------------------------------------------------------------------------
 void TcpOptDialog::setPath(QString path)
 {
-    int index = path.lastIndexOf("@");
-    QString mountpoint_str;
+    int userpwEnd = path.lastIndexOf("@");
+    int addrStart = userpwEnd < 0 ? 0 : userpwEnd + 1;
+    int mntpntStart = path.indexOf("/", addrStart);
 
-    QStringList tokens = path.mid(0, index).split(':'); // split user name and password
-    if (tokens.size() == 2)
-    {
-        ui->lEUser->setText(tokens.at(0));
-        ui->lEPassword->setText(tokens.at(1));
-    } else if (tokens.size() == 1)
-        ui->lEUser->setText(tokens.at(0));
-
-    QString url_str = path.mid(index+1); // use the rest
-
-    // "ftp" is just a dummy need for QUrl to parse correctly
-    // split away mount point data (see getPath())
-    QUrl url(QString("ftp://") + url_str.left(url_str.lastIndexOf(":")));
-
-    ui->cBAddress->insertItem(0, url.host());
-    ui->cBAddress->setCurrentText(url.host());
-    addHistory(ui->cBAddress, history);
-
-    ui->sBPort->setValue(url.port());
-    if (showOptions == OPT_NTRIP_SERVER || showOptions == OPT_NTRIP_CASTER_CLIENT) {
-        index = url_str.lastIndexOf(":");   // split "str" prefix
-        mountpoint_str = url_str.mid(index + 1);
+    QString addrport;
+    QString mntpnt;
+    QString mntpntstr;
+    if (mntpntStart >= 0) {
+        int pathStart = mntpntStart + 1;
+        if (showOptions == OPT_NTRIP_SERVER || showOptions == OPT_NTRIP_CASTER_CLIENT) {
+            int mntpntEnd = path.indexOf(":", pathStart);
+            if (mntpntEnd >= pathStart) {
+                mntpnt = path.mid(pathStart, mntpntEnd - pathStart);
+                mntpntstr = path.mid(mntpntEnd + 1);
+            } else {
+                mntpnt = path.mid(pathStart);
+            }
+        } else {
+            mntpnt = path.mid(pathStart);
+        }
+        ui->cBMountPoint->setCurrentText(mntpnt);
+        addrport = path.mid(addrStart, mntpntStart - addrStart);
+    } else {
+        addrport = path.mid(addrStart);
     }
-    ui->cBMountPoint->insertItem(0, url.path().mid(1), mountpoint_str);
-    ui->cBMountPoint->setCurrentText(url.path().mid(1));
+    ui->cBMountPoint->insertItem(0, mntpnt, mntpntstr);
+    ui->cBMountPoint->setCurrentText(mntpnt);
+
+    QString user, password;
+    if (userpwEnd >= 0) {
+        QString userpasswd = path.mid(0, userpwEnd);
+        int userEnd = userpasswd.indexOf(":");
+        if (userEnd >= 0 ) {
+            user = userpasswd.mid(0, userEnd);
+            password = userpasswd.mid(userEnd + 1);
+        } else {
+            user = userpasswd;
+        }
+    }
+    ui->lEUser->setText(user);
+    ui->lEPassword->setText(password);
+
+    int port = 0;
+    int portSep = addrport.indexOf(":");
+    if (portSep >= 0)
+        port = addrport.mid(portSep + 1).toInt();
+    ui->sBPort->setValue(port);
+
+    QString addr = addrport.mid(0, portSep);
+    ui->cBAddress->insertItem(0, addr);
+    ui->cBAddress->setCurrentText(addr);
+    addHistory(ui->cBAddress, history);
 }
 //---------------------------------------------------------------------------
-QString TcpOptDialog::getPath()
-{
-    return QString("%1:%2@%3:%4/%5:%6").arg(ui->lEUser->text(),
-                                            ui->lEPassword->text(),
-                                            ui->cBAddress->currentText(),
-                                            ui->sBPort->text(),
-                                            ui->cBMountPoint->currentText(),
-                                            ui->cBMountPoint->currentData().toString());
+QString TcpOptDialog::getPath() {
+    QString path;
+    QString user = ui->lEUser->text();
+    QString password = ui->lEPassword->text();
+    if (!user.isEmpty() || !password.isEmpty()) {
+        path = user;
+        if (!password.isEmpty())
+            path = QString("%1:%2").arg(path, password);
+        path += "@";
+    }
+    path = QString("%1%2").arg(path, ui->cBAddress->currentText());
+    QString port = ui->sBPort->text();
+    if (!port.isEmpty())
+        path = QString("%1:%2").arg(path, port);
+    QString mntpnt = ui->cBMountPoint->currentText();
+    QString str = ui->cBMountPoint->currentData().toString();
+    if (!mntpnt.isEmpty() || !str.isEmpty()) {
+        path = QString("%1/%2").arg(path, mntpnt);
+        if (!str.isEmpty())
+            path = QString("%1:%2").arg(path, str);
+    }
+    return path;
 }
 
 //---------------------------------------------------------------------------
