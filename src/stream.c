@@ -104,7 +104,11 @@
 #define MAXSTATMSG          32          /* max length of status message */
 #define DEFAULT_MEMBUF_SIZE 4096        /* default memory buffer size (bytes) */
 
+#ifdef WIN32
+#define NTRIP_AGENT         "RTKLIB/" VER_RTKLIB "_" PATCH_LEVEL "_Win32"
+#else
 #define NTRIP_AGENT         "RTKLIB/" VER_RTKLIB "_" PATCH_LEVEL
+#endif
 #define NTRIP_CLI_PORT      2101        /* default ntrip-client connection port */
 #define NTRIP_SVR_PORT      80          /* default ntrip-server connection port */
 #define NTRIP_MAXRSP        32768       /* max size of ntrip response */
