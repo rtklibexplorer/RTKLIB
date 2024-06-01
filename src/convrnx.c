@@ -1166,9 +1166,13 @@ static void convsbs(FILE **ofp, rnxopt_t *opt, strfile_t *str, int *n,
 
     if (!screent(time,opt->ts,opt->te,0.0)) return;
     
-    /* avoid duplicated data by multiple files handover */
+#if 0
+    /* Avoid duplicated data by multiple files handover */
+    /* TODO There can be multiple messages at each time step that are not duplicates.
+     * Might be able to use a per-prn time. */
     if (tend->time&&timediff(time,*tend)<opt->ttol) return;
     *tend=time;
+#endif
 
     prn=str->raw.sbsmsg.prn;
     if (MINPRNSBS<=prn&&prn<=MAXPRNSBS) {
