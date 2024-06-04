@@ -489,12 +489,16 @@ void MainForm::startServer()
         cmds[i] = cmds_periodic[i] = NULL;
         if (streamTypes[i] == STR_SERIAL) {
             cmds[i] = new char[1024];
+            cmds[i][0] = '\0';
             cmds_periodic[i] = new char[1024];
+            cmds_periodic[i][0] = '\0';
             if (commandsEnabled[i][0]) strncpy(cmds[i], qPrintable(commands[i][0]), 1023);
             if (commandsEnabled[i][2]) strncpy(cmds_periodic[i], qPrintable(commands[i][2]), 1023);
         } else if (streamTypes[i] == STR_TCPCLI || streamTypes[i] == STR_NTRIPCLI || streamTypes[i] == STR_TCPSVR) {
             cmds[i] = new char[1024];
+            cmds[i][0] = '\0';
             cmds_periodic[i] = new char[1024];
+            cmds_periodic[i][0] = '\0';
             if (commandsEnabledTcp[i][0]) strncpy(cmds[i], qPrintable(commandsTcp[i][0]), 1023);
             if (commandsEnabledTcp[i][2]) strncpy(cmds_periodic[i], qPrintable(commandsTcp[i][2]), 1023);
         }
