@@ -32,6 +32,12 @@
 
 #define MSGOPT  "0:all,1:rover,2:base,3:corr"
 
+#ifdef WIN32
+#define TEMPDIR "C:\\Temp"
+#else
+#define TEMPDIR "/tmp"
+#endif
+
 //---------------------------------------------------------------------------
 OptDialog::OptDialog(QWidget *parent, int opts)
     : QDialog(parent), options(opts), ui(new Ui::OptDialog)
@@ -1384,6 +1390,7 @@ void OptDialog::saveOptions(QSettings &settings)
     settings.setValue("setting/dcbfile", ui->lEDCBFile->text());
     settings.setValue("setting/eopfile", ui->lEEOPFile->text());
     settings.setValue("setting/blqfile", ui->lEBLQFile->text());
+    settings.setValue("setting/localdirectory", ui->lELocalDirectory->text());
 
     if (options == NaviOptions) {
         settings.setValue("setting/svrcycle", ui->sBServerCycle->value());
@@ -1587,7 +1594,8 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->lEDCBFile->setText(settings.value("setting/dcbfile", "").toString());
     ui->lEEOPFile->setText(settings.value("setting/eopfile", "").toString());
     ui->lEBLQFile->setText(settings.value("setting/blqfile", "").toString());
-    ui->lELocalDirectory->setText(settings.value("setting/localdirectory", "C:\\Temp").toString());
+    if (options == NaviOptions)
+        ui->lELocalDirectory->setText(settings.value("setting/localdirectory", TEMPDIR).toString());
 
     if (options == NaviOptions) {
         ui->sBServerCycle->setValue(settings.value("setting/svrcycle", 10).toInt());
