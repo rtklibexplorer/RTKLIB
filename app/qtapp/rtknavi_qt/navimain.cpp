@@ -602,7 +602,7 @@ void MainWindow::showOptionsDialog()
             strclose(&monistr);
         }
         // reopen monitor stream
-        openMonitorPort(monitorPort_old);
+        openMonitorPort(optDialog->monitorPort);
     }
 }
 // callback on button-input-streams -----------------------------------------
