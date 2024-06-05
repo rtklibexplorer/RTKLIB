@@ -621,10 +621,10 @@ void MainForm::stopServer()
 
     setTrayIcon(0);
 
-    for (int i = 0; i < MAXSTR; i++) {
+    for (int i = 0; i < MAXSTR; i++)
         if (cmds[i]) delete[] cmds[i];
+    for (int i = 0; i < MAXSTR - 1; i++)
         if (conversionEnabled[i]) strconvfree(strsvr.conv[i]);
-    }
     if (svrOptDialog->traceLevel > 0) traceclose();
 }
 // callback on interval timer for stream monitor ----------------------------
@@ -955,12 +955,12 @@ void MainForm::saveOptions()
 
     for (int i = 0; i < MAXSTR; i++)
         for (int j = 0; j < 2; j++) {
-            commands[j][i] = commands[j][i].replace("\n", "@@");
+            commands[i][j] = commands[i][j].replace("\n", "@@");
             settings.setValue(QString("serial/cmd_%1_%2").arg(i).arg(j), commands[i][j]);
         }
     for (int i = 0; i < MAXSTR; i++)
         for (int j = 0; j < 2; j++) {
-            commandsTcp[j][i] = commandsTcp[j][i].replace("\n", "@@");
+            commandsTcp[i][j] = commandsTcp[i][j].replace("\n", "@@");
             settings.setValue(QString("tcpip/cmd_%1_%2").arg(i).arg(j), commandsTcp[i][j]);
         }
 

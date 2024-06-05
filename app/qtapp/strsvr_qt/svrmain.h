@@ -55,7 +55,7 @@ private:
     QString tcpHistory[MAXHIST], tcpMountpointHistory[MAXHIST];
     QString conversionMessage[MAXSTR - 1], conversionOptions[MAXSTR - 1];
     QString pathLog[MAXSTR];
-    int conversionEnabled[MAXSTR - 1], conversionInputFormat[MAXSTR - 1], conversionOutputFormat[3];
+    int conversionEnabled[MAXSTR - 1], conversionInputFormat[MAXSTR - 1], conversionOutputFormat[MAXSTR - 1];
     int commandsEnabled[MAXSTR][3], commandsEnabledTcp[MAXSTR][3], pathEnabled[MAXSTR];
     gtime_t startTime, endTime;
     QSystemTrayIcon *trayIcon;
