@@ -413,7 +413,11 @@ void  MainForm::dropEvent(QDropEvent *event)
 void MainForm::callRtkPlot()
 {
     QString file = filePath(ui->cBOutputFile->currentText());
+#ifdef WIN32
+    QString cmd[] = {"rtkplot_qt", "..\\rtkplot_qt\\rtkplot_qt", "..\\..\\..\\bin\\rtkplot_qt"};
+#else
     QString cmd[] = {"rtkplot_qt", "../rtkplot_qt/rtkplot_qt", "../../../bin/rtkplot_qt"};
+#endif
     QStringList opts;
 
     opts += file;
@@ -652,7 +656,11 @@ void MainForm::viewOutputFileTrace()
 void MainForm::plotInputFile1()
 {
     QString files[6];
+#ifdef WIN32
+    QString cmd[] = {"rtkplot_qt", "..\\rtkplot_qt\\rtkplot_qt", "..\\..\\..\\bin\\rtkplot_qt"};
+#else
     QString cmd[] = {"rtkplot_qt", "../rtkplot_qt/rtkplot_qt", "../../../bin/rtkplot_qt"};
+#endif
     QStringList opts;
     QString navfile;
 
@@ -676,7 +684,11 @@ void MainForm::plotInputFile1()
 void MainForm::plotInputFile2()
 {
     QString files[6];
+#ifdef WIN32
+    QString cmd[] = {"rtkplot_qt", "..\\rtkplot_qt\\rtkplot_qt", "..\\..\\..\\bin\\rtkplot_qt"};
+#else
     QString cmd[] = {"rtkplot_qt", "../rtkplot_qt/rtkplot_qt", "../../../bin/rtkplot_qt"};
+#endif
     QStringList opts;
     QString navfile;
 

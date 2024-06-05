@@ -442,7 +442,11 @@ void MainWindow::stopServer()
 // callback on button-plot --------------------------------------------------
 void MainWindow::showRtkPlot()
 {
-    QString cmd[] = {"rtkplot_qt", "..\\..\\..\\bin\\rtkplot_qt", "..\\rtkplot_qt\\rtkplot_qt"};
+#ifdef WIN32
+    QString cmd[] = {"rtkplot_qt", "..\\rtkplot_qt\\rtkplot_qt", "..\\..\\..\\bin\\rtkplot_qt"};
+#else
+    QString cmd[] = {"rtkplot_qt", "../rtkplot_qt/rtkplot_qt", "../../../bin/rtkplot_qt"};
+#endif
     QStringList opts;
 
     trace(3, "showRtkPlot\n");
