@@ -117,11 +117,11 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     ui->cBReferencePositionType->setItemData(0, "Latitude/longitude/height in degree and m", Qt::ToolTipRole);
     ui->cBReferencePositionType->setItemData(1, "Latitude/longitude/height in degree/minute/second and m", Qt::ToolTipRole);
     ui->cBReferencePositionType->setItemData(2, "X/Y/Z components in ECEF frame.", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(3, "Use the antenna position included in RTCM messages", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(4, "Use the average of single point solutions", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(5, "Use the position in the position file. The station is searched by using the\n"
+    ui->cBReferencePositionType->setItemData(3, "Use the average of single point solutions", Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(4, "Use the position in the position file. The station is searched by using the\n"
                                                 "head 4-character ID of the rover observation data file path", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(6, "Use the approximate position in RINEX OBS header", Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(5, "Use the approximate position in RINEX OBS header", Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(6, "Use the antenna position included in RTCM messages", Qt::ToolTipRole);
 
     // inspired by https://stackoverflow.com/questions/18321779/degrees-minutes-and-seconds-regex
     // and https://stackoverflow.com/questions/3518504/regular-expression-for-matching-latitude-longitude-coordinates
@@ -1711,7 +1711,7 @@ void OptDialog::updateEnable()
     setComboBoxItemEnabled(ui->cBReferencePositionType, 3, options == NaviOptions);
     setComboBoxItemEnabled(ui->cBReferencePositionType, 4, options == PostOptions);
     setComboBoxItemEnabled(ui->cBReferencePositionType, 5, options == PostOptions);
-    setComboBoxItemEnabled(ui->cBReferencePositionType, 6, options == PostOptions);
+    setComboBoxItemEnabled(ui->cBReferencePositionType, 6, options == NaviOptions);
     ui->lEReferencePosition1->setEnabled(ui->cBReferencePositionType->isEnabled() && ui->cBReferencePositionType->currentIndex() <= 2);
     ui->lEReferencePosition2->setEnabled(ui->cBReferencePositionType->isEnabled() && ui->cBReferencePositionType->currentIndex() <= 2);
     ui->lEReferencePosition3->setEnabled(ui->cBReferencePositionType->isEnabled() && ui->cBReferencePositionType->currentIndex() <= 2);
