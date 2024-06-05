@@ -360,7 +360,11 @@ void MainWindow::callRtkPlot()
         ui->cBOutputFileEnable1, ui->cBOutputFileEnable2, ui->cBOutputFileEnable3, ui->cBOutputFileEnable4,
         ui->cBOutputFileEnable5, ui->cBOutputFileEnable6, ui->cBOutputFileEnable7, ui->cBOutputFileEnable8
     };
-    QString cmd[] = {"rtkplot_qt", "..\\..\\..\\bin\\rtkplot_qt", "..\\rtkplot_qt\\rtkplot_qt"};
+#ifdef WIN32
+    QString cmd[] = {"rtkplot_qt", "..\\rtkplot_qt\\rtkplot_qt", "..\\..\\..\\bin\\rtkplot_qt"};
+#else
+    QString cmd[] = {"rtkplot_qt", "../rtkplot_qt/rtkplot_qt", "../../../bin/rtkplot_qt"};
+#endif
     QStringList opts;
 
     opts << " -r";
@@ -378,7 +382,11 @@ void MainWindow::callRtkPlot()
 // callback on button-post-proc ---------------------------------------------
 void MainWindow::callRtkPost()
 {
+#ifdef WIN32
     QString cmd[] = {commandPostExe, QString("..\\..\\..\\bin\\") + commandPostExe, QString("..\\rtkpost_qt\\") + commandPostExe};
+#else
+    QString cmd[] = {commandPostExe, QString("../../../bin/") + commandPostExe, QString("../rtkpost_qt/") + commandPostExe};
+#endif
     QStringList opts;
 
     if (!ui->cBOutputFileEnable1->isChecked()) return;
