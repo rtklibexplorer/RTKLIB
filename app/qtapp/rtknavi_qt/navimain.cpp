@@ -2380,9 +2380,8 @@ void MainWindow::saveNavigation(nav_t *nav)
     trace(3, "saveNavigation\n");
 
     if (nav == NULL) return;
-    if (nav->eph == NULL) return;
 
-    for (i = 0; i < MAXSAT*2; i++) {
+    for (i = 0; i < nav->n; i++) {
         if (nav->eph[i].ttr.time == 0) continue;
         str = "";
         satno2id(nav->eph[i].sat, id);
