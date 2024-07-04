@@ -1,10 +1,13 @@
 #include "helper.h"
 
+#include "rtklib.h"
+
 #include <math.h>
 
 #include <QLabel>
 #include <QComboBox>
 #include <QStandardItemModel>
+#include <QMessageBox>
 
 
 //---------------------------------------------------------------------------
@@ -61,4 +64,23 @@ void setComboBoxItemEnabled(QComboBox * comboBox, int index, bool enabled)
     assert(item);
     if(!item) return;
     item->setEnabled(enabled);
+}
+
+bool check_compression(const QString &filename)
+{
+    char tmpfile[1024];
+    int cstat;
+    bool ret = true;
+
+    if ((cstat=rtk_uncompress(qPrintable(filename), tmpfile)) == -1){
+        QMessageBox::information(NULL,
+                                 QObject::tr("Decompression tools missing"),
+                                 QObject::tr("You need to have <i>gzip</i>, <i>tar</i>, and <i>crx2rnx</i> installed to work with compressed rinex files.<br><i>crx2rnx</i> can e.g. be found at "
+                                             "<a href = \"https://terras.gsi.go.jp/ja/crx2rnx.html\">https://terras.gsi.go.jp/ja/crx2rnx.html</a>."));
+        ret = false;
+    }
+    /* delete temporary file */
+    if (cstat) remove(tmpfile);
+
+    return ret;
 }

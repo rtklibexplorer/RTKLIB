@@ -1,14 +1,14 @@
+BIN_DIR="../../../RTKLIB_bin"
 
-mkdir ../../../RTKLIB_bin
+if [ ! -e $BIN_DIR ]; then
+	mkdir $BIN_DIR
+fi
 
-cp rtkconv_qt/rtkconv_qt ../../../RTKLIB_bin/rtkconv_qt
-cp rtknavi_qt/rtknavi_qt ../../../RTKLIB_bin/rtknavi_qt
-cp rtkplot_qt/rtkplot_qt ../../../RTKLIB_bin/rtkplot_qt
-cp rtkpost_qt/rtkpost_qt ../../../RTKLIB_bin/rtkpost_qt
-cp srctblbrows_qt/srctblbrows_qt ../../../RTKLIB_bin/srctblbrows_qt
-cp strsvr_qt/strsvr_qt ../../../RTKLIB_bin/strsvr_qt
-cp rtkget_qt/rtkget_qt ../../../RTKLIB_bin/rtkget_qt
-cp rtklaunch_qt/rtklaunch_qt ../../../RTKLIB_bin/rtklaunch_qt
-
-
-
+cp rtkconv_qt/rtkconv_qt         $BIN_DIR/rtkconv_qt
+cp rtknavi_qt/rtknavi_qt         $BIN_DIR/rtknavi_qt
+cp rtkplot_qt/rtkplot_qt         $BIN_DIR/rtkplot_qt
+cp rtkpost_qt/rtkpost_qt         $BIN_DIR/rtkpost_qt
+cp srctblbrows_qt/srctblbrows_qt $BIN_DIR/srctblbrows_qt
+cp strsvr_qt/strsvr_qt           $BIN_DIR/strsvr_qt
+cp rtkget_qt/rtkget_qt           $BIN_DIR/rtkget_qt
+cp rtklaunch_qt/rtklaunch_qt     $BIN_DIR/rtklaunch_qt

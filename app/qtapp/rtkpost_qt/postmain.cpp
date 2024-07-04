@@ -51,6 +51,7 @@
 #include <QCompleter>
 #include <QRegularExpression>
 #include <QTime>
+#include <QMessageBox>
 
 #include "rtklib.h"
 #include "postmain.h"
@@ -60,6 +61,7 @@
 #include "keydlg.h"
 #include "aboutdlg.h"
 #include "viewer.h"
+#include "helper.h"
 
 #include "ui_postmain.h"
 
@@ -136,7 +138,13 @@ ProcessingThread::~ProcessingThread()
 }
 void ProcessingThread::addInput(const QString & file) {
     if (!file.isEmpty()) {
-        strncpy(infile[n++], qPrintable(file), 1023);
+        if (!QFile::exists(file)) {
+            QMessageBox::information(NULL, QObject::tr("File not found"),
+                                     QObject::tr("The specified input file \"%1\" was not found.").arg(file));
+            return;
+        };
+        if (check_compression(file))
+            strncpy(infile[n++], qPrintable(file), 1023);
     }
 }
 void ProcessingThread::run()

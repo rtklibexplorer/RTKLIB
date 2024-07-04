@@ -889,7 +889,9 @@ static void udbias(rtk_t *rtk, double tt, const obsd_t *obs, const int *sat,
             if (bias[i]==0.0||rtk->x[IB(sat[i],k,&rtk->opt)]!=0.0) continue;
             initx(rtk,bias[i],SQR(rtk->opt.std[0]),IB(sat[i],k,&rtk->opt));
             trace(3,"     sat=%3d, F=%d: init phase=%.3f\n",sat[i],k+1,bias[i]);
-            rtk->ssat[sat[i]-1].lock[k]=-rtk->opt.minlock;
+            if (rtk->opt.modear!=ARMODE_INST) {
+                rtk->ssat[sat[i]-1].lock[k]=-rtk->opt.minlock;
+            }
         }
         free(bias);
     }

@@ -103,13 +103,13 @@ void utest3(void)
     double C[6];
     matmul("TT",3,2,2,A,B,C);
     for (i=0;i<3;i++) for (j=0;j<2;j++) assert(fabs(C[i+j*3]-AB[j+i*2])<1E-9);
-
+    
     matmul("NN",2,3,2,B,A,C);
     for (i=0;i<2;i++) for (j=0;j<3;j++) assert(fabs(C[i+j*2]-AB[i+j*2])<1E-9);
-
+    
     matmul("TN",3,2,2,A,B,C);
     for (i=0;i<3;i++) for (j=0;j<2;j++) assert(fabs(C[i+j*3]-ABT[j+i*2])<1E-9);
-
+    
     matmul("TN",2,3,2,B,A,C);
     for (i=0;i<2;i++) for (j=0;j<3;j++) assert(fabs(C[i+j*2]-ABT[i+j*2])<1E-9);
 
