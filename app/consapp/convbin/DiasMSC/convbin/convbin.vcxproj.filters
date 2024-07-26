@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\app">
+      <UniqueIdentifier>{3bbf8b4b-367f-4d88-996d-087afa45b025}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src">
+      <UniqueIdentifier>{3b5744a6-9940-408b-a44d-214c30234570}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\rcv">
+      <UniqueIdentifier>{0c8cdd4c-46e0-4288-ac57-9c6092be6d8b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\convbin.c">
+      <Filter>Source Files\app</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\skytraq.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\swiftnav.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\ublox.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\binex.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\crescent.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\javad.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\novatel.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\nvs.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\rt17.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcv\septentrio.c">
+      <Filter>Source Files\src\rcv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\trace.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\convrnx.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\ephemeris.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\ionex.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\pntpos.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\preceph.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rcvraw.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rinex.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rtcm.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rtcm2.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rtcm3.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rtcm3e.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\rtkcmn.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\src\sbas.c">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\src\rtklib.h">
+      <Filter>Source Files\src</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
