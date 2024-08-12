@@ -18,7 +18,7 @@ void __fastcall TTimeDialog::FormShow(TObject *Sender)
 	gtime_t utc;
 	double tow,doy;
 	int week;
-	char msg[1024],s1[64],s2[64],*p=msg;
+	char msg[1024],s1[40],s2[40],*p=msg;
 	utc=gpst2utc(Time);
 	time2str(Time,s1,0);
 	time2str(utc,s2,0);

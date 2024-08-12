@@ -234,7 +234,7 @@ void utest9(void)
     double ep0[]={1970,12,31,23,59,59.1234567890123456};
     double ep1[]={2004, 1, 1, 0, 0, 0.0000000000000000};
     double ep2[]={2006, 2,28,23,59,59.9999995000000000};
-    char s[128];
+    char s[40];
     int ret;
     time2str(epoch2time(ep0),s,0);
         ret=strcmp(s,"1970/12/31 23:59:59");
@@ -266,7 +266,7 @@ void utest9(void)
 /* timeget() */
 void utest10(void)
 {
-    char s1[64],s2[64];
+    char s1[40],s2[40];
     gtime_t time1,time2;
     int i,j;
     time1=timeget();

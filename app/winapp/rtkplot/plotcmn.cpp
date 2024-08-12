@@ -438,17 +438,17 @@ int __fastcall TPlot::SearchPos(int x, int y)
     return -1;
 }
 // generate time-string -----------------------------------------------------
-void __fastcall TPlot::TimeStr(gtime_t time, int n, int tsys, char *str)
+void __fastcall TPlot::TimeStr(gtime_t time, int n, int tsys, char str[48])
 {
     struct tm *t;
-    char tstr[64];
+    char tstr[40];
     const char *label="";
     double tow;
     int week;
     
     if (TimeLabel==0) { // www/ssss
         tow=time2gpst(time,&week);
-        sprintf(tstr,"%4d/%*.*fs",week,(n>0?6:5)+n,n,tow);
+        snprintf(tstr,sizeof(tstr),"%4d/%*.*fs",week,(n>0?6:5)+n,n,tow);
     }
     else if (TimeLabel==1) { // gpst
         time2str(time,tstr,n);
@@ -461,12 +461,12 @@ void __fastcall TPlot::TimeStr(gtime_t time, int n, int tsys, char *str)
     else { // lt
         time=gpst2utc(time);
         if (!(t=localtime(&time.time))) strcpy(tstr,"2000/01/01 00:00:00.0");
-        else sprintf(tstr,"%04d/%02d/%02d %02d:%02d:%02d.%0*d",t->tm_year+1900,
-                     t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec,
-                     n,(int)(time.sec*pow(10.0,n)));
+        else snprintf(tstr,sizeof(tstr),"%04d/%02d/%02d %02d:%02d:%02d.%0*d",t->tm_year+1900,
+                      t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec,
+                      n,(int)(time.sec*pow(10.0,n)));
         label=" LT";
     }
-    sprintf(str,"%s%s",tstr,label);
+    snprintf(str,48,"%s%s",tstr,label);
 }
 // latitude/longitude/height string -----------------------------------------
 UTF8String __fastcall TPlot::LatLonStr(const double *pos, int ndec)

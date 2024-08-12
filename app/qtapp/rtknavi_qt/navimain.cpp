@@ -1443,7 +1443,7 @@ void MainWindow::updateTime()
     struct tm *t;
     double tow;
     int week;
-    char tstr[64];
+    char tstr[40];
     QString str;
 
     trace(4, "updateTime\n");
@@ -1779,7 +1779,7 @@ void MainWindow::drawSnr(QPainter &c, int w, int h, int x0, int y0,
     };
     static const QColor color_sys[] = {Qt::green, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Color::Teal, Qt::gray};
     int i, j, snrIdx, sysIdx, numSystems, x1, y1, height, offset, topMargin, bottomMargin, hh, barDistance, barWidth, snr[NFREQ + 1], sysMask[7] = {0};
-    char id[16], sys[] = "GREJCS", *q;
+    char id[8], sys[] = "GREJCS", *q;
 
     trace(4, "drawSnr: w=%d h=%d x0=%d y0=%d index=%d freq=%d\n", w, h, x0, y0, index, freq);
 
@@ -1859,7 +1859,7 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
     QPoint p(w / 2, h / 2);
     double r = qMin(w * 0.95, h * 0.95) / 2, azel[MAXSAT * 2], dop[4];
     int i, j, k, sysIdx, radius, x[MAXSAT], y[MAXSAT], snr[NFREQ+1], nsats = 0;
-    char id[16], sys[] = "GREJCIS", *q;
+    char id[8], sys[] = "GREJCIS", *q;
 
     trace(4, "drawSatellites: w=%d h=%d index=%d freq=%d\n", w, h, index, freq);
 
@@ -2383,7 +2383,7 @@ void MainWindow::saveNavigation(nav_t *nav)
 {
     QSettings settings(iniFile, QSettings::IniFormat);
     QString str;
-    char id[32];
+    char id[8];
     int i;
 
     trace(3, "saveNavigation\n");

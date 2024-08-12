@@ -374,8 +374,9 @@ static int decoderaw(rtksvr_t *svr, int index)
         }
 #if 0 /* record for receiving tick for debug */
         if (ret==1) {
+            char tstr[40];
             trace(0,"%d %10d T=%s NS=%2d\n",index,tickget(),
-                  time_str(obs->data[0].time,0),obs->n);
+                  time2str(obs->data[0].time,tstr,0),obs->n);
         }
 #endif
         /* update rtk server */
@@ -1124,7 +1125,7 @@ extern void rtksvrsstat(rtksvr_t *svr, int *sstat, char *msg)
 *-----------------------------------------------------------------------------*/
 extern int rtksvrmark(rtksvr_t *svr, const char *name, const char *comment)
 {
-    char buff[MAXSOLMSG+1],tstr[32],*p,*q;
+    char buff[MAXSOLMSG+1],tstr[40],*p,*q;
     double tow,pos[3];
     int i,sum,week;
     

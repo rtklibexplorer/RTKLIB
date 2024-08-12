@@ -504,18 +504,18 @@ extern int satid2no(const char *id)
 *          char   *id       O   satellite id (Gnn,Rnn,Enn,Jnn,Cnn,Inn or nnn)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void satno2id(int sat, char *id)
+extern void satno2id(int sat, char id[8])
 {
     int prn;
     switch (satsys(sat,&prn)) {
-        case SYS_GPS: sprintf(id,"G%02d",prn-MINPRNGPS+1); return;
-        case SYS_GLO: sprintf(id,"R%02d",prn-MINPRNGLO+1); return;
-        case SYS_GAL: sprintf(id,"E%02d",prn-MINPRNGAL+1); return;
-        case SYS_QZS: sprintf(id,"J%02d",prn-MINPRNQZS+1); return;
-        case SYS_CMP: sprintf(id,"C%02d",prn-MINPRNCMP+1); return;
-        case SYS_IRN: sprintf(id,"I%02d",prn-MINPRNIRN+1); return;
-        case SYS_LEO: sprintf(id,"L%02d",prn-MINPRNLEO+1); return;
-        case SYS_SBS: sprintf(id,"%03d" ,prn); return;
+        case SYS_GPS: snprintf(id,8,"G%02d",prn-MINPRNGPS+1); return;
+        case SYS_GLO: snprintf(id,8,"R%02d",prn-MINPRNGLO+1); return;
+        case SYS_GAL: snprintf(id,8,"E%02d",prn-MINPRNGAL+1); return;
+        case SYS_QZS: snprintf(id,8,"J%02d",prn-MINPRNQZS+1); return;
+        case SYS_CMP: snprintf(id,8,"C%02d",prn-MINPRNCMP+1); return;
+        case SYS_IRN: snprintf(id,8,"I%02d",prn-MINPRNIRN+1); return;
+        case SYS_LEO: snprintf(id,8,"L%02d",prn-MINPRNLEO+1); return;
+        case SYS_SBS: snprintf(id,8,"%03d" ,prn); return;
     }
     strcpy(id,"");
 }
@@ -1970,32 +1970,20 @@ extern double utc2gmst(gtime_t t, double ut1_utc)
 /* time to string --------------------------------------------------------------
 * convert gtime_t struct to string
 * args   : gtime_t t        I   gtime_t struct
-*          char   *s        O   string ("yyyy/mm/dd hh:mm:ss.ssss")
+*          char   [40]      O   string ("yyyy/mm/dd hh:mm:ss.ssss")
 *          int    n         I   number of decimals
-* return : none
+* return : time string
 *-----------------------------------------------------------------------------*/
-extern void time2str(gtime_t t, char *s, int n)
+extern char *time2str(gtime_t t, char s[40], int n)
 {
     double ep[6];
 
     if (n<0) n=0; else if (n>12) n=12;
     if (1.0-t.sec<0.5/pow(10.0,n)) {t.time++; t.sec=0.0;};
     time2epoch(t,ep);
-    sprintf(s,"%04.0f/%02.0f/%02.0f %02.0f:%02.0f:%0*.*f",ep[0],ep[1],ep[2],
-            ep[3],ep[4],n<=0?2:n+3,n<=0?0:n,ep[5]);
-}
-/* get time string -------------------------------------------------------------
-* get time string
-* args   : gtime_t t        I   gtime_t struct
-*          int    n         I   number of decimals
-* return : time string
-* notes  : not reentrant, do not use multiple in a function
-*-----------------------------------------------------------------------------*/
-extern char *time_str(gtime_t t, int n)
-{
-    static char buff[64];
-    time2str(t,buff,n);
-    return buff;
+    snprintf(s,40,"%04.0f/%02.0f/%02.0f %02.0f:%02.0f:%0*.*f",ep[0],ep[1],ep[2],
+             ep[3],ep[4],n<=0?2:n+3,n<=0?0:n,ep[5]);
+    return s;
 }
 /* time to day of year ---------------------------------------------------------
 * convert time to day of year
@@ -2393,7 +2381,8 @@ extern void eci2ecef(gtime_t tutc, const double *erpv, double *U, double *gmst)
     double R1[9],R2[9],R3[9],R[9],W[9],N[9],P[9],NP[9];
     int i;
 
-    trace(4,"eci2ecef: tutc=%s\n",time_str(tutc,3));
+    char tstr[40];
+    trace(4,"eci2ecef: tutc=%s\n",time2str(tutc,tstr,3));
 
     if (fabs(timediff(tutc,tutc_))<0.01) { /* read cache */
         for (i=0;i<9;i++) U[i]=U_[i];
@@ -3124,7 +3113,7 @@ extern int savenav(const char *file, const nav_t *nav)
 {
     FILE *fp;
     int i;
-    char id[32];
+    char id[8];
 
     trace(3,"savenav: file=%s\n",file);
 
@@ -3856,7 +3845,8 @@ static void sunmoonpos_eci(gtime_t tut, double *rsun, double *rmoon)
     const double ep2000[]={2000,1,1,12,0,0};
     double t,f[5],eps,Ms,ls,rs,lm,pm,rm,sine,cose,sinp,cosp,sinl,cosl;
 
-    trace(4,"sunmoonpos_eci: tut=%s\n",time_str(tut,3));
+    char tstr[40];
+    trace(4,"sunmoonpos_eci: tut=%s\n",time2str(tut,tstr,3));
 
     t=timediff(tut,epoch2time(ep2000))/86400.0/36525.0;
 
@@ -3911,7 +3901,8 @@ extern void sunmoonpos(gtime_t tutc, const double *erpv, double *rsun,
     gtime_t tut;
     double rs[3],rm[3],U[9],gmst_;
 
-    trace(4,"sunmoonpos: tutc=%s\n",time_str(tutc,3));
+    char tstr[40];
+    trace(4,"sunmoonpos: tutc=%s\n",time2str(tutc,tstr,3));
 
     tut=timeadd(tutc,erpv[2]); /* utc -> ut1 */
 

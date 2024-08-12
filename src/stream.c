@@ -594,7 +594,8 @@ static int openfile_(file_t *file, gtime_t time, char *msg)
     char *rw,tagpath[MAXSTRPATH+4]="";
     char tagh[TIMETAGH_LEN+1]="";
     
-    tracet(3,"openfile_: path=%s time=%s\n",file->path,time_str(time,0));
+    char tstr[40];
+    tracet(3,"openfile_: path=%s time=%s\n",file->path,time2str(time,tstr,0));
     
     file->time=utc2gpst(timeget());
     file->tick=file->tick_f=tickget();
@@ -750,7 +751,8 @@ static void swapfile(file_t *file, gtime_t time, char *msg)
 {
     char openpath[MAXSTRPATH];
     
-    tracet(3,"swapfile: fp=%d time=%s\n",file->fp,time_str(time,0));
+    char tstr[40];
+    tracet(3,"swapfile: fp=%d time=%s\n",file->fp,time2str(time,tstr,0));
     
     /* return if old swap file open */
     if (file->fp_tmp||file->fp_tag_tmp) return;
@@ -786,7 +788,7 @@ static int statefile(file_t *file)
 /* get extended state file ---------------------------------------------------*/
 static int statexfile(file_t *file, char *msg)
 {
-    char *p=msg,tstr1[32],tstr2[32];
+    char *p=msg,tstr1[40],tstr2[40];
     int state=file?2:0;
     
     p+=sprintf(p,"file:\n");
@@ -1887,7 +1889,8 @@ static void send_srctbl(ntripc_t *ntripc, socket_t sock)
             NTRIP_RSP_TBLEND);
     p+=sprintf(p,"%s",NTRIP_RSP_SRCTBL);
     p+=sprintf(p,"Server: %s %s %s\r\n","RTKLIB",VER_RTKLIB,PATCH_LEVEL);
-    p+=sprintf(p,"Date: %s UTC\r\n",time_str(timeget(),0));
+    char tstr[40];
+    p+=sprintf(p,"Date: %s UTC\r\n",time2str(timeget(),tstr,0));
     p+=sprintf(p,"Connection: close\r\n");
     p+=sprintf(p,"Content-Type: text/plain\r\n");
     p+=sprintf(p,"Content-Length: %d\r\n\r\n",(int)strlen(srctbl));

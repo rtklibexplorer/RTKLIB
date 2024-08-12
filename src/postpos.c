@@ -139,7 +139,7 @@ static void outheader(FILE *fp, const char **file, int n, const prcopt_t *popt,
     gtime_t ts,te;
     double t1,t2;
     int i,j,w1,w2;
-    char s2[32],s3[32];
+    char s2[40],s3[40];
 
     trace(3,"outheader: n=%d\n",n);
 
@@ -260,7 +260,8 @@ static int inputobs(obsd_t *obs, int solq, const prcopt_t *popt)
 
     if (0<=iobsu&&iobsu<obss.n) {
         settime((time=obss.data[iobsu].time));
-        if (checkbrk("processing : %s Q=%d",time_str(time,0),solq)) {
+        char tstr[40];
+        if (checkbrk("processing : %s Q=%d",time2str(time,tstr,0),solq)) {
             aborts=1; showmsg("aborted"); return -1;
         }
     }
@@ -503,7 +504,7 @@ static int valcomb(const sol_t *solf, const sol_t *solb, double *rbf,
 {
     double dr[3],var[3];
     int i;
-    char tstr[32];
+    char tstr[40];
 
     trace(4,"valcomb :\n");
 
@@ -720,7 +721,8 @@ static int readobsnav(gtime_t ts, gtime_t te, double ti, const char **infile,
 {
     int i,j,ind=0,nobs=0,rcv=1;
 
-    trace(3,"readobsnav: ts=%s n=%d\n",time_str(ts,0),n);
+    char tstr[40];
+    trace(3,"readobsnav: ts=%s n=%d\n",time2str(ts,tstr,0),n);
 
     obs->data=NULL; obs->n =obs->nmax =0;
     nav->eph =NULL; nav->n =nav->nmax =0;
@@ -948,7 +950,7 @@ static void setpcv(gtime_t time, prcopt_t *popt, nav_t *nav, const pcvs_t *pcvs,
     pcv_t *pcv,pcv0={0};
     double pos[3],del[3];
     int i,j,mode=PMODE_DGPS<=popt->mode&&popt->mode<=PMODE_FIXED;
-    char id[64];
+    char id[8];
 
     /* set satellite antenna parameters */
     for (i=0;i<MAXSAT;i++) {
@@ -1425,7 +1427,8 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
 
             strcpy(proc_rov ,"");
             strcpy(proc_base,"");
-            if (checkbrk("reading    : %s",time_str(tts,0))) {
+            char tstr[40];
+            if (checkbrk("reading    : %s",time2str(tts,tstr,0))) {
                 stat=1;
                 break;
             }

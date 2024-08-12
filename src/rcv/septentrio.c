@@ -3587,7 +3587,7 @@ static int decode_sbf(raw_t *raw)
 {
     unsigned short crc;
     uint32_t week, tow;
-    char tstr[32];
+    char tstr[40];
 
     /* read the SBF block ID and revision */
     int type = U2(raw->buff+4) & 0x1fff << 0;

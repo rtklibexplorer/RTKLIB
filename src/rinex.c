@@ -183,15 +183,15 @@ static gtime_t adjday(gtime_t t, gtime_t t0)
     return t;
 }
 /* time string for ver.3 (yyyymmdd hhmmss UTC) -------------------------------*/
-static void timestr_rnx(char *str)
+static void timestr_rnx(char str[32])
 {
     gtime_t time;
     double ep[6];
     time=timeget();
     time.sec=0.0;
     time2epoch(time,ep);
-    sprintf(str,"%04.0f%02.0f%02.0f %02.0f%02.0f%02.0f UTC",ep[0],ep[1],ep[2],
-            ep[3],ep[4],ep[5]);
+    snprintf(str,32,"%04.0f%02.0f%02.0f %02.0f%02.0f%02.0f UTC",ep[0],ep[1],ep[2],
+             ep[3],ep[4],ep[5]);
 }
 /* satellite to satellite code -----------------------------------------------*/
 static int sat2code(int sat, char *code)
@@ -760,7 +760,8 @@ static int decode_obsepoch(FILE *fp, char *buff, double ver, gtime_t *time,
             return 0;
         }
     }
-    trace(4,"decode_obsepoch: time=%s flag=%d\n",time_str(*time,3),*flag);
+    char tstr[40];
+    trace(4,"decode_obsepoch: time=%s flag=%d\n",time2str(*time,tstr,3),*flag);
     return n;
 }
 /* decode observation data ---------------------------------------------------*/
@@ -777,7 +778,7 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
     trace(4,"decode_obsdata: ver=%.2f\n",ver);
 
     if (ver>2.99) { /* ver.3 */
-        sprintf(satid,"%.3s",buff);
+        snprintf(satid,8,"%.3s",buff);
         obs->sat=(uint8_t)satid2no(satid);
     }
     if (!obs->sat) {
@@ -899,7 +900,8 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         trace(4, "obs: i=%d f=%d P=%14.3f L=%14.3f LLI=%d code=%d\n",i,p[i],obs->P[p[i]],
         obs->L[p[i]],obs->LLI[p[i]],obs->code[p[i]]);
     }
-    trace(4,"decode_obsdata: time=%s sat=%2d\n",time_str(obs->time,0),obs->sat);
+    char tstr[40];
+    trace(4,"decode_obsdata: time=%s sat=%2d\n",time2str(obs->time,tstr,0),obs->sat);
     return 1;
 }
 /* save cycle slips ----------------------------------------------------------*/
@@ -1383,7 +1385,7 @@ static int readrnxnavb(FILE *fp, const char *opt, double ver, int sys,
 
             /* decode satellite field */
             if (ver>=3.0||sys==SYS_GAL||sys==SYS_QZS) { /* ver.3 or GAL/QZS */
-                sprintf(id,"%.3s",buff);
+                snprintf(id,8,"%.3s",buff);
                 sat=satid2no(id);
                 sp=4;
                 if (ver>=3.0) {
@@ -2596,7 +2598,7 @@ static void out_leaps(FILE *fp, int sys, const rnxopt_t *opt, const nav_t *nav)
 extern int outrnxnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
-    char date[64],*sys;
+    char date[32],*sys;
 
     trace(3,"outrnxnavh:\n");
 
@@ -2763,7 +2765,7 @@ extern int outrnxnavb(FILE *fp, const rnxopt_t *opt, const eph_t *eph)
 extern int outrnxgnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
-    char date[64];
+    char date[32];
 
     trace(3,"outrnxgnavh:\n");
 
@@ -2861,7 +2863,7 @@ extern int outrnxgnavb(FILE *fp, const rnxopt_t *opt, const geph_t *geph)
 extern int outrnxhnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
-    char date[64];
+    char date[32];
 
     trace(3,"outrnxhnavh:\n");
 
@@ -2951,7 +2953,7 @@ extern int outrnxhnavb(FILE *fp, const rnxopt_t *opt, const seph_t *seph)
 extern int outrnxlnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
-    char date[64];
+    char date[32];
 
     trace(3,"outrnxlnavh:\n");
 
@@ -2985,7 +2987,7 @@ extern int outrnxlnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 extern int outrnxqnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
-    char date[64];
+    char date[32];
 
     trace(3,"outrnxqnavh:\n");
 
@@ -3019,7 +3021,7 @@ extern int outrnxqnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 extern int outrnxcnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
-    char date[64];
+    char date[32];
 
     trace(3,"outrnxcnavh:\n");
 
@@ -3053,7 +3055,7 @@ extern int outrnxcnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 extern int outrnxinavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
-    char date[64];
+    char date[32];
 
     trace(3,"outrnxinavh:\n");
 

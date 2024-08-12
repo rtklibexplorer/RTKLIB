@@ -1364,7 +1364,7 @@ EXPORT extern opt_t sysopts[];              /* system options table */
 EXPORT int  satno   (int sys, int prn);
 EXPORT int  satsys  (int sat, int *prn);
 EXPORT int  satid2no(const char *id);
-EXPORT void satno2id(int sat, char *id);
+EXPORT void satno2id(int sat, char id[8]);
 EXPORT uint8_t obs2code(const char *obs);
 EXPORT char *code2obs(uint8_t code);
 EXPORT double code2freq(int sys, uint8_t code, int fcn);
@@ -1411,7 +1411,7 @@ EXPORT void add_fatal(fatalfunc_t *func);
 /* time and string functions -------------------------------------------------*/
 EXPORT double  str2num(const char *s, int i, int n);
 EXPORT int     str2time(const char *s, int i, int n, gtime_t *t);
-EXPORT void    time2str(gtime_t t, char *str, int n);
+EXPORT char    *time2str(gtime_t t, char str[40], int n);
 EXPORT gtime_t epoch2time(const double *ep);
 EXPORT void    time2epoch(gtime_t t, double *ep);
 EXPORT void    time2epoch_n(gtime_t t, double *ep, int n);
@@ -1421,7 +1421,6 @@ EXPORT gtime_t gst2time(int week, double sec);
 EXPORT double  time2gst(gtime_t t, int *week);
 EXPORT gtime_t bdt2time(int week, double sec);
 EXPORT double  time2bdt(gtime_t t, int *week);
-EXPORT char    *time_str(gtime_t t, int n);
 
 EXPORT gtime_t timeadd  (gtime_t t, double sec);
 EXPORT double  timediff (gtime_t t1, gtime_t t2);

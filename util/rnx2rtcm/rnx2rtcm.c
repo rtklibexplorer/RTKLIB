@@ -166,8 +166,9 @@ static int conv_rtcm(const int *type, int n, const char *outfile,
         
         /* generate rtcm nav data messages */
         gen_rtcm_nav(rtcm.time,&rtcm,nav,index,type,n,fp);
-        
-        fprintf(stderr,"%s: NOBS=%2d\r",time_str(rtcm.time,0),rtcm.obs.n);
+
+        char tstr[40];
+        fprintf(stderr,"%s: NOBS=%2d\r",time2str(rtcm.time,tsrt,0),rtcm.obs.n);
     }
     /* generate rtcm nav data messages */
     gen_rtcm_nav(time0,&rtcm,nav,index,type,n,fp);

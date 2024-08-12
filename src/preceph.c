@@ -359,7 +359,8 @@ extern int readsap(const char *file, gtime_t time, nav_t *nav)
     pcv_t pcv0={0},*pcv;
     int i;
 
-    trace(3,"readsap : file=%s time=%s\n",file,time_str(time,0));
+    char tstr[40];
+    trace(3,"readsap : file=%s time=%s\n",file,time2str(time,tstr,0));
 
     if (!readpcv(file,&pcvs)) return 0;
 
@@ -559,14 +560,15 @@ static int pephpos(gtime_t time, int sat, const nav_t *nav, double *rs,
     double t[NMAX+1],p[3][NMAX+1],c[2],*pos,std=0.0,s[3],sinl,cosl;
     int i,j,k,index;
 
-    trace(4,"pephpos : time=%s sat=%2d\n",time_str(time,3),sat);
+    char tstr[40];
+    trace(4,"pephpos : time=%s sat=%2d\n",time2str(time,tstr,3),sat);
 
     rs[0]=rs[1]=rs[2]=dts[0]=0.0;
 
     if (nav->ne<NMAX+1||
         timediff(time,nav->peph[0].time)<-MAXDTE||
         timediff(time,nav->peph[nav->ne-1].time)>MAXDTE) {
-        trace(3,"no prec ephem %s sat=%2d\n",time_str(time,0),sat);
+        trace(3,"no prec ephem %s sat=%2d\n",time2str(time,tstr,0),sat);
         return 0;
     }
     /* binary search */
@@ -583,7 +585,7 @@ static int pephpos(gtime_t time, int sat, const nav_t *nav, double *rs,
     for (j=0;j<=NMAX;j++) {
         t[j]=timediff(nav->peph[i+j].time,time);
         if (norm(nav->peph[i+j].pos[sat-1],3)<=0.0) {
-            trace(3,"prec ephem outage %s sat=%2d\n",time_str(time,0),sat);
+            trace(3,"prec ephem outage %s sat=%2d\n",time2str(time,tstr,0),sat);
             return 0;
         }
     }
@@ -642,12 +644,13 @@ static int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
     double t[2],c[2],std;
     int i,j,k,index;
 
-    trace(4,"pephclk : time=%s sat=%2d\n",time_str(time,3),sat);
+    char tstr[40];
+    trace(4,"pephclk : time=%s sat=%2d\n",time2str(time,tstr,3),sat);
 
     if (nav->nc<2||
         timediff(time,nav->pclk[0].time)<-MAXDTE||
         timediff(time,nav->pclk[nav->nc-1].time)>MAXDTE) {
-        trace(3,"no prec clock %s sat=%2d\n",time_str(time,0),sat);
+        trace(3,"no prec clock %s sat=%2d\n",time2str(time,tstr,0),sat);
         return 1;
     }
     /* binary search */
@@ -677,7 +680,7 @@ static int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
         std=nav->pclk[index+i].std[sat-1][0]*CLIGHT+EXTERR_CLK*fabs(t[i]);
     }
     else {
-        trace(3,"prec clock outage %s sat=%2d\n",time_str(time,0),sat);
+        trace(3,"prec clock outage %s sat=%2d\n",time2str(time,tstr,0),sat);
         return 0;
     }
     if (varc) *varc=SQR(std);
@@ -708,7 +711,8 @@ extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
     double C1,C2,dant1,dant2;
     int i,sys;
 
-    trace(4,"satantoff: time=%s sat=%2d\n",time_str(time,3),sat);
+    char tstr[40];
+    trace(4,"satantoff: time=%s sat=%2d\n",time2str(time,tstr,3),sat);
 
     dant[0]=dant[1]=dant[2]=0.0;
 
@@ -783,7 +787,8 @@ extern int peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
     double rss[3],rst[3],dtss[1],dtst[1],dant[3]={0},vare=0.0,varc=0.0,tt=1E-3;
     int i;
 
-    trace(4,"peph2pos: time=%s sat=%2d opt=%d\n",time_str(time,3),sat,opt);
+    char tstr[40];
+    trace(4,"peph2pos: time=%s sat=%2d opt=%d\n",time2str(time,tstr,3),sat,opt);
 
     if (sat<=0||MAXSAT<sat) return 0;
 

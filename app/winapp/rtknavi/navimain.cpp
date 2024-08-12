@@ -1478,7 +1478,7 @@ void __fastcall TMainForm::UpdateTime(void)
     struct tm *t;
     double tow;
     int week;
-    char tstr[64];
+    char tstr[40];
     
     trace(4,"UpdateTime\n");
     
@@ -1487,9 +1487,9 @@ void __fastcall TMainForm::UpdateTime(void)
     else if (TimeSys==2) {
         time=gpst2utc(time);
         if (!(t=localtime(&time.time))) strcpy(tstr,"2000/01/01 00:00:00.0");
-        else sprintf(tstr,"%04d/%02d/%02d %02d:%02d:%02d.%d",t->tm_year+1900,
-                     t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec,
-                     (int)(time.sec*10));
+        else snprintf(tstr,sizeof(tstr),"%04d/%02d/%02d %02d:%02d:%02d.%d",t->tm_year+1900,
+                      t->tm_mon+1,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec,
+                      (int)(time.sec*10));
     }
     else if (TimeSys==3) {
         tow=time2gpst(time,&week); sprintf(tstr,"week %04d %8.1f s",week,tow);
@@ -1793,7 +1793,7 @@ void __fastcall TMainForm::DrawSnr(TCanvas *c, int w, int h, int x0, int y0,
     };
     UTF8String s; 
     int i,j,k,l,n,x1,x2,y1,y2,y3,k1,tm,bm,hh,ww,www,snr[NFREQ+1],mask[7]={0};
-    char id[16],sys[]="GREJCIS",*q;
+    char id[8],sys[]="GREJCIS",*q;
     
     trace(4,"DrawSnr: w=%d h=%d x0=%d y0=%d index=%d freq=%d\n",w,h,x0,y0,index,freq);
     
@@ -1869,7 +1869,7 @@ void __fastcall TMainForm::DrawSat(TCanvas *c, int w, int h, int x0, int y0,
     TPoint p(w/2,h/2);
     double r=MIN(w*0.95,h*0.95)/2,azel[MAXSAT*2],dop[4];
     int i,j,k,l,d,x[MAXSAT],y[MAXSAT],snr[NFREQ+1],ns=0;
-    char id[16],sys[]="GREJCIS",*q;
+    char id[8],sys[]="GREJCIS",*q;
     
     trace(4,"DrawSat: w=%d h=%d index=%d freq=%d\n",w,h,index,freq);
     
@@ -2345,7 +2345,7 @@ void __fastcall TMainForm::SaveNav(nav_t *nav)
 {
     TIniFile *ini=new TIniFile(IniFile);
     AnsiString str,s;
-    char id[32];
+    char id[8];
     int i;
     
     trace(3,"SaveNav\n");

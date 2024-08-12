@@ -353,8 +353,9 @@ static int decode_rangecmpb(raw_t *raw)
             raw->obs.data[index].code[pos]=code;
         }
 #if 0 /* for debug */
+        char tstr[40];
         trace(3,"sys=%d prn=%3d cp=%12.5f lli=%2d plock=%2d clock=%2d lockt=%4.2f halfc=%2d parity=%2d ts=%s\n",
-              sys,prn,adr,lli,plock,clock,lockt,halfc,parity,time_str(raw->tobs,3));
+              sys,prn,adr,lli,plock,clock,lockt,halfc,parity,time2str(raw->tobs,tstr,3));
 #endif
 
     }
@@ -614,8 +615,9 @@ static int decode_tersus(raw_t *raw)
     raw->time=gpst2time(week,tow);
     
     if (raw->outtype) {
+        char tstr[40];
         sprintf(raw->msgtype,"TERSUS%4d (%4d): msg=%d %s",type,raw->len,msg,
-                time_str(gpst2time(week,tow),2));
+                time2str(gpst2time(week,tow),tstr,2));
     }
     switch (type) {
         case ID_RANGE         : return decode_rangeb       (raw);

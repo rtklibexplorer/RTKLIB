@@ -901,7 +901,7 @@ void __fastcall TPlot::DrawObs(int level)
     obsd_t *obs;
     double xs,ys,xt,xl[2],yl[2],tt[MAXSAT]={0},xp,xc,yc,yp[MAXSAT]={0};
     int i,j,m=0,sats[MAXSAT]={0},ind=ObsIndex,prn;
-    char id[16];
+    char id[8];
     
     trace(3,"DrawObs: level=%d\n",level);
     
@@ -1240,7 +1240,7 @@ void __fastcall TPlot::DrawSky(int level)
             if (p0[i][0]!=0.0||p0[i][1]!=0.0) {
                 TPoint pnt;
                 if (GraphS->ToPoint(p0[i][0],p0[i][1],pnt)) {
-                    char id[16];
+                    char id[8];
                     satno2id(i+1,id);
                     UTF8String ustr=id;
                     DrawLabel(GraphS,pnt,ustr,1,0);
@@ -1295,7 +1295,7 @@ void __fastcall TPlot::DrawSky(int level)
             x=r*sin(Az[i])*(1.0-2.0*El[i]/PI);
             y=r*cos(Az[i])*(1.0-2.0*El[i]/PI);
             
-            char id[16];
+            char id[8];
             satno2id(obs->sat,id);
             UTF8String ustr=id;
             GraphS->DrawMark(x,y,0,col,Disp->Font->Size*2+5,0);
@@ -1318,7 +1318,7 @@ void __fastcall TPlot::DrawSky(int level)
     // show statistics
     if (ShowStats&&BtnShowTrack->Down&&0<=ind&&ind<NObs&&!SimObs) {
         UTF8String ustr,ss;
-        char id[16];
+        char id[8];
         
         if (!strcmp(obstype,"ALL")) {
             ustr.sprintf("%3s: %*s %*s%*s %*s","SAT",NFREQ,"PR",NFREQ,"CP",
@@ -1968,7 +1968,7 @@ void __fastcall TPlot::DrawMpS(int level)
             double x=r*sin(Az[i])*(1.0-2.0*El[i]/PI);
             double y=r*cos(Az[i])*(1.0-2.0*El[i]/PI);
             UTF8String ustr;
-            char id[32];
+            char id[8];
             satno2id(obs->sat,id);
             ustr=id;
             GraphS->DrawMark(x,y,0,col,Disp->Font->Size*2+5,0);

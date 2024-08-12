@@ -848,7 +848,7 @@ void __fastcall TMainWindow::ConvertFile(void)
 	AnsiString OutFile9_Text=OutFile9->Text;
 	int i,format,sat;
 	char file[1024]="",*ofile[9],ofile_[9][1024]={""},msg[256],*p;
-	char buff[256],tstr[32];
+	char buff[256],tstr[40];
 	int RNXVER[]={210,211,212,300,301,302,303,304};
 	FILE *fp;
 	

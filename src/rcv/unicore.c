@@ -816,7 +816,7 @@ static int decode_obsvmb(raw_t* raw)
 static int decode_unicore(raw_t* raw)
 {
     double tow;
-    char tstr[32];
+    char tstr[40];
     int stat, week, type = U2(raw->buff + 4);
 
     trace(3, "decode_unicore: type=%3d len=%d\n", type, raw->len);

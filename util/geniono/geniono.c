@@ -251,7 +251,7 @@ static void out_iono(gtime_t time, const ekf_t *ekf, const sstat_t *sstat,
                      FILE *fp)
 {
     double tow;
-    char id[64];
+    char id[8];
     int sat,week;
     
     tow=time2gpst(time,&week);

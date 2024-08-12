@@ -530,7 +530,7 @@ static void prtime(vt_t *vt, gtime_t time)
 {
     double tow;
     int week;
-    char tstr[64]="";
+    char tstr[40]="";
     
     if (timetype==1) {
         time2str(gpst2utc(time),tstr,2);
@@ -539,7 +539,7 @@ static void prtime(vt_t *vt, gtime_t time)
         time2str(timeadd(gpst2utc(time),9*3600.0),tstr,2);
     }
     else if (timetype==3) {
-        tow=time2gpst(time,&week); sprintf(tstr,"  %04d %9.2f",week,tow);
+        tow=time2gpst(time,&week); snprintf(tstr,sizeof(tstr),"  %04d %9.2f",week,tow);
     }
     else time2str(time,tstr,1);
     vt_printf(vt,"%s ",tstr);
@@ -654,7 +654,7 @@ static void prstatus(vt_t *vt)
     pthread_t thread;
     int i,j,n,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
     int cputime,nb[3]={0},nmsg[3][10]={{0}};
-    char tstr[64],tmstr[64],s[1024],*p;
+    char tstr[40],tmstr[40],s[1024],*p;
     double runtime,rt[3]={0},dop[4]={0},rr[3],bl1=0.0,bl2=0.0;
     double azel[MAXSAT*2],pos[3],vel[3],*del;
     
@@ -797,7 +797,7 @@ static void prsatellite(vt_t *vt, int nf)
 {
     rtk_t rtk;
     double az,el;
-    char id[32];
+    char id[8];
     int i,j,fix,frq[]={1,2,5,7,8,6};
     
     trace(4,"prsatellite:\n");
@@ -840,7 +840,7 @@ static void prsatellite(vt_t *vt, int nf)
 static void probserv(vt_t *vt, int nf)
 {
     obsd_t obs[MAXOBS*2];
-    char tstr[64],id[32];
+    char tstr[40],id[8];
     int i,j,n=0,frq[]={1,2,5,7,8,6,9};
     
     trace(4,"probserv:\n");
@@ -880,7 +880,7 @@ static void prnavidata(vt_t *vt)
     geph_t geph[MAXPRNGLO];
     double ion[8],utc[8];
     gtime_t time;
-    char id[32],s1[64],s2[64],s3[64];
+    char id[8],s1[64],s2[64],s3[64];
     int i,valid,prn;
     
     trace(4,"prnavidata:\n");
@@ -985,7 +985,7 @@ static void prssr(vt_t *vt)
     gtime_t time;
     ssr_t ssr[MAXSAT];
     int i,valid;
-    char tstr[64],id[32],*p=buff;
+    char tstr[40],id[8],*p=buff;
     
     rtksvrlock(&svr);
     time=svr.rtk.sol.time;
@@ -1277,7 +1277,7 @@ static void cmd_load(char **args, int narg, vt_t *vt)
 /* save command --------------------------------------------------------------*/
 static void cmd_save(char **args, int narg, vt_t *vt)
 {
-    char file[MAXSTR]="",comment[256],s[64];
+    char file[MAXSTR]="",comment[256],s[40];
     
     trace(3,"cmd_save:\n");
     

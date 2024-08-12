@@ -93,7 +93,7 @@ extern void tracemat_impl(int level, const double *A, int n, int m, int p,
 }
 extern void traceobs_impl(int level, const obsd_t *obs, int n)
 {
-    char str[64], id[16];
+    char str[40], id[8];
     int i;
 
     if (!fp_trace || level > level_trace) return;
@@ -112,7 +112,7 @@ extern void traceobs_impl(int level, const obsd_t *obs, int n)
 }
 extern void tracenav_impl(int level, const nav_t *nav)
 {
-    char s1[64], s2[64], id[16];
+    char s1[40], s2[40], id[8];
     int i;
 
     if (!fp_trace || level > level_trace) return;
@@ -132,7 +132,7 @@ extern void tracenav_impl(int level, const nav_t *nav)
 }
 extern void tracegnav_impl(int level, const nav_t *nav)
 {
-    char s1[64], s2[64], id[16];
+    char s1[40], s2[40], id[8];
     int i;
 
     if (!fp_trace || level > level_trace) return;
@@ -147,7 +147,7 @@ extern void tracegnav_impl(int level, const nav_t *nav)
 }
 extern void tracehnav_impl(int level, const nav_t *nav)
 {
-    char s1[64], s2[64], id[16];
+    char s1[40], s2[40], id[8];
     int i;
 
     if (!fp_trace || level > level_trace) return;
@@ -161,7 +161,7 @@ extern void tracehnav_impl(int level, const nav_t *nav)
 }
 extern void tracepeph_impl(int level, const nav_t *nav)
 {
-    char s[64], id[16];
+    char s[40], id[8];
     int i, j;
 
     if (!fp_trace || level > level_trace) return;
@@ -183,7 +183,7 @@ extern void tracepeph_impl(int level, const nav_t *nav)
 }
 extern void tracepclk_impl(int level, const nav_t *nav)
 {
-    char s[64], id[16];
+    char s[40], id[8];
     int i, j;
 
     if (!fp_trace || level > level_trace) return;

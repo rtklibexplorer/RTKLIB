@@ -71,7 +71,7 @@ static int decode_crespos(raw_t *raw)
 {
     int ns,week,mode;
     double tow,pos[3],vel[3],std;
-    char tstr[64];
+    char tstr[40];
     uint8_t *p=raw->buff+8;
     
     trace(4,"decode_crespos: len=%d\n",raw->len);

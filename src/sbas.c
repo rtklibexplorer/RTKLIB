@@ -795,8 +795,9 @@ static int sbslongcorr(gtime_t time, int sat, const sbssat_t *sbssat,
         if (p->sat!=sat||p->lcorr.t0.time==0) continue;
         t=timediff(time,p->lcorr.t0);
         if (fabs(t)>MAXSBSAGEL) {
+            char tstr[40];
             trace(2,"sbas long-term correction expired: %s sat=%2d t=%5.0f\n",
-                  time_str(time,0),sat,t);
+                  time2str(time,tstr,0),sat,t);
             return 0;
         }
         for (i=0;i<3;i++) drs[i]=p->lcorr.dpos[i]+p->lcorr.dvel[i]*t;
@@ -810,7 +811,8 @@ static int sbslongcorr(gtime_t time, int sat, const sbssat_t *sbssat,
     /* if sbas satellite without correction, no correction applied */
     if (satsys(sat,NULL)==SYS_SBS) return 1;
     
-    trace(2,"no sbas long-term correction: %s sat=%2d\n",time_str(time,0),sat);
+    char tstr[40];
+    trace(2,"no sbas long-term correction: %s sat=%2d\n",time2str(time,tstr,0),sat);
     return 0;
 }
 /* fast correction -----------------------------------------------------------*/
@@ -841,7 +843,8 @@ static int sbsfastcorr(gtime_t time, int sat, const sbssat_t *sbssat,
               *prc,sqrt(*var),t);
         return 1;
     }
-    trace(2,"no sbas fast correction: %s sat=%2d\n",time_str(time,0),sat);
+    char tstr[40];
+    trace(2,"no sbas fast correction: %s sat=%2d\n",time2str(time,tstr,0),sat);
     return 0;
 }
 /* sbas satellite ephemeris and clock correction -------------------------------

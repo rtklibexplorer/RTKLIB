@@ -849,9 +849,10 @@ extern void dl_test(gtime_t ts, gtime_t te, double ti, const url_t *urls,
     int i,j,n,m,*nc,*nt,week,flag,abort=0;
     
     if (ncol<1) ncol=1; else if (ncol>200) ncol=200;
-     
+
+    char tstr[40];
     fprintf(fp,"** LOCAL DATA AVAILABILITY (%s, %s) **\n\n",
-            time_str(timeget(),0),*dir?dir:"*");
+            time2str(timeget(),tstr,0),*dir?dir:"*");
     
     for (i=n=0;i<nurl;i++) {
         n+=strstr(urls[i].path,"%s")||strstr(urls[i].path,"%S")?nsta:1;

@@ -129,7 +129,7 @@ extern int pppoutstat(rtk_t *rtk, char *buff)
     ssat_t *ssat;
     double tow,pos[3],vel[3],acc[3],*x;
     int i,j,week;
-    char id[32],*p=buff;
+    char id[8],*p=buff;
 
     if (!rtk->sol.stat) return 0;
 
@@ -226,7 +226,8 @@ static void testeclipse(const obsd_t *obs, int n, const nav_t *nav, double *rs)
         /* test eclipse */
         if (ang<PI/2.0||r*sin(ang)>RE_WGS84) continue;
 
-        trace(3,"eclipsing sat excluded %s sat=%2d\n",time_str(obs[0].time,0),
+        char tstr[40];
+        trace(3,"eclipsing sat excluded %s sat=%2d\n",time2str(obs[0].time,tstr,0),
               obs[i].sat);
 
         for (j=0;j<3;j++) rs[j+i*6]=0.0;
@@ -781,8 +782,9 @@ static void udbias_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
                 j=IB(i+1,f,&rtk->opt);
                 if (rtk->x[j]!=0.0) rtk->x[j]+=offset/k;
             }
+            char tstr[40];
             trace(2,"phase-code jump corrected: %s n=%2d dt=%12.9fs\n",
-                  time_str(rtk->sol.time,0),k,offset/k/CLIGHT);
+                  time2str(rtk->sol.time,tstr,0),k,offset/k/CLIGHT);
         }
         for (i=0;i<n&&i<MAXOBS;i++) {
             sat=obs[i].sat;
@@ -938,7 +940,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
     double var[MAXOBS*2],dtrp=0.0,dion=0.0,vart=0.0,vari=0.0,dcb,freq;
     double dantr[NFREQ]={0},dants[NFREQ]={0};
     double ve[MAXOBS*2*NFREQ]={0},vmax=0;
-    char str[32];
+    char str[40];
     int ne=0,obsi[MAXOBS*2*NFREQ]={0},frqi[MAXOBS*2*NFREQ],maxobs,maxfrq,rej;
     int i,j,k,sat,sys,nv=0,nx=rtk->nx,stat=1,frq,code;
 
@@ -1181,7 +1183,7 @@ extern void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
 {
     const prcopt_t *opt=&rtk->opt;
     double *rs,*dts,*var,*v,*H,*R,*azel,*xp,*Pp,dr[3]={0},std[3];
-    char str[32];
+    char str[40];
     int i,j,nv,info,svh[MAXOBS],exc[MAXOBS]={0},stat=SOLQ_SINGLE;
 
     time2str(obs[0].time,str,2);

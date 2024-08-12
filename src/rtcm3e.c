@@ -2109,8 +2109,9 @@ static int encode_msm_int_rrng(rtcm_t *rtcm, int i, const double *rrng,
             int_ms=255;
         }
         else if (rrng[j]<0.0||rrng[j]>RANGE_MS*255.0) {
+            char tstr[40];
             trace(2,"msm rough range overflow %s rrng=%.3f\n",
-                 time_str(rtcm->time,0),rrng[j]);
+                  time2str(rtcm->time,tstr,0),rrng[j]);
             int_ms=255;
         }
         else {
@@ -2155,8 +2156,9 @@ static int encode_msm_rrate(rtcm_t *rtcm, int i, const double *rrate, int nsat)
     
     for (j=0;j<nsat;j++) {
         if (fabs(rrate[j])>8191.0) {
+            char tstr[40];
             trace(2,"msm rough phase-range-rate overflow %s rrate=%.4f\n",
-                 time_str(rtcm->time,0),rrate[j]);
+                 time2str(rtcm->time,tstr,0),rrate[j]);
             rrate_val=-8192;
         }
         else {
@@ -2176,8 +2178,9 @@ static int encode_msm_psrng(rtcm_t *rtcm, int i, const double *psrng, int ncell)
             psrng_val=-16384;
         }
         else if (fabs(psrng[j])>292.7) {
+            char tstr[40];
             trace(2,"msm fine pseudorange overflow %s psrng=%.3f\n",
-                 time_str(rtcm->time,0),psrng[j]);
+                 time2str(rtcm->time,tstr,0),psrng[j]);
             psrng_val=-16384;
         }
         else {
@@ -2198,8 +2201,9 @@ static int encode_msm_psrng_ex(rtcm_t *rtcm, int i, const double *psrng,
             psrng_val=-524288;
         }
         else if (fabs(psrng[j])>292.7) {
+            char tstr[40];
             trace(2,"msm fine pseudorange ext overflow %s psrng=%.3f\n",
-                 time_str(rtcm->time,0),psrng[j]);
+                 time2str(rtcm->time,tstr,0),psrng[j]);
             psrng_val=-524288;
         }
         else {
@@ -2219,8 +2223,9 @@ static int encode_msm_phrng(rtcm_t *rtcm, int i, const double *phrng, int ncell)
             phrng_val=-2097152;
         }
         else if (fabs(phrng[j])>1171.0) {
+            char tstr[40];
             trace(2,"msm fine phase-range overflow %s phrng=%.3f\n",
-                 time_str(rtcm->time,0),phrng[j]);
+                 time2str(rtcm->time,tstr,0),phrng[j]);
             phrng_val=-2097152;
         }
         else {
@@ -2241,8 +2246,9 @@ static int encode_msm_phrng_ex(rtcm_t *rtcm, int i, const double *phrng,
             phrng_val=-8388608;
         }
         else if (fabs(phrng[j])>1171.0) {
+            char tstr[40];
             trace(2,"msm fine phase-range ext overflow %s phrng=%.3f\n",
-                 time_str(rtcm->time,0),phrng[j]);
+                 time2str(rtcm->time,tstr,0),phrng[j]);
             phrng_val=-8388608;
         }
         else {
@@ -2318,8 +2324,9 @@ static int encode_msm_rate(rtcm_t *rtcm, int i, const double *rate, int ncell)
             rate_val=-16384;
         }
         else if (fabs(rate[j])>1.6384) {
+            char tstr[40];
             trace(2,"msm fine phase-range-rate overflow %s rate=%.3f\n",
-                 time_str(rtcm->time,0),rate[j]);
+                 time2str(rtcm->time,tstr,0),rate[j]);
             rate_val=-16384;
         }
         else {
