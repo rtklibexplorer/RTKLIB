@@ -2455,10 +2455,11 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
 /* output data field in RINEX navigation data --------------------------------*/
 static void outnavf_n(FILE *fp, double value, int n)
 {
-    double e=(fabs(value)<1E-99)?0.0:floor(log10(fabs(value))+1.0);
+    double e=(fabs(value)<1E-99)?0.0:floor(log10(fabs(value)));
+    int d=n-7;
 
-    fprintf(fp," %s.%0*.0f%s%+03.0f",value<0.0?"-":" ",n,
-            fabs(value)/pow(10.0,e-n),NAVEXP,e);
+    fprintf(fp,"%s%0*.12f%s%+03.0f",value<0.0?"-":" ",d,
+            fabs(value)/pow(10.0,e),NAVEXP,e);
 }
 static void outnavf(FILE *fp, double value)
 {
