@@ -738,15 +738,15 @@ static void resolve_halfc(const strfile_t *str, obsd_t *data, int n)
                 if (timediff(data[i].time,p->ts)<-DTTOL||
                     timediff(data[i].time,p->te)> DTTOL) continue;
 
-            if (p->stat==2) {    /* add half cycle */
-                data[i].L[j]+=0.5;
+                if (p->stat==2) {    /* add half cycle */
+                    data[i].L[j]+=0.5;
+                }
+                else if (p->stat==3) {  /* subtract half cycle  */
+                    data[i].L[j]-=0.5;
+                }
+                data[i].LLI[j]&=~LLI_HALFC;
             }
-            else if (p->stat==3) {  /* subtract half cycle  */
-                data[i].L[j]-=0.5;
-            }
-            data[i].LLI[j]&=~LLI_HALFC;
-        }
-        data[i].LLI[j]&=~(LLI_HALFA|LLI_HALFS);
+            data[i].LLI[j]&=~(LLI_HALFA|LLI_HALFS);
         }
     }
 }
@@ -1063,15 +1063,17 @@ static void convobs(FILE **ofp, rnxopt_t *opt, strfile_t *str, int *n,
         
         if (*staid>=0) { /* output RINEX event */
             outrnxevent(ofp[0],opt,str->time,EVENT_NEWSITE,str->stas,str->staid);
+            /* Set cycle slips */
+            for (i=0;i<str->obs->n;i++) {
+                for (j=0;j<NFREQ+NEXOBS;j++) {
+                    if (str->obs->data[i].L[j]!=0.0) {
+                        str->obs->data[i].LLI[j]|=LLI_SLIP;
+                    }
+                }
+            }
         }
         *staid=str->staid;
 
-        /* set cycle slips */
-        for (i=0;i<str->obs->n;i++) for (j=0;j<NFREQ+NEXOBS;j++) {
-            if (str->obs->data[i].L[j]!=0.0) {
-                str->obs->data[i].LLI[j]|=LLI_SLIP;
-            }
-        }
     }
     /* resolve half-cycle ambiguity */
     if (opt->halfcyc) {
@@ -1354,6 +1356,45 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
     }
     str->time=str->tstart;
     
+    // Reinitialize the input state. Don't want decoding state from the
+    // end of the scanning pass to affect the start of the next pass.
+    if (str->format == STRFMT_RTCM2 || str->format == STRFMT_RTCM3) {
+        free_rtcm(&str->rtcm);
+        if (!init_rtcm(&str->rtcm)) {
+            showmsg("init rtcm error");
+            for (int i = 0; i < MAXEXFILE; i++) free(epath[i]);
+            free_strfile(str);
+            return 0;
+        }
+        strcpy(str->rtcm.opt, opt->rcvopt);
+    } else if (str->format <= MAXRCVFMT) {
+        free_raw(&str->raw);
+        if (!init_raw(&str->raw, str->format)) {
+            showmsg("reinit raw error");
+            for (int i = 0; i < MAXEXFILE; i++) free(epath[i]);
+            free_strfile(str);
+            return 0;
+        }
+        strcpy(str->raw.opt, opt->rcvopt);
+    } else if (format == STRFMT_RINEX) {
+        free_rnxctr(&str->rnx);
+        if (!init_rnxctr(&str->rnx)) {
+            showmsg("reinit rnx error");
+            for (int i = 0; i < MAXEXFILE; i++) free(epath[i]);
+            free_strfile(str);
+            return 0;
+        }
+        strcpy(str->rnx.opt, opt->rcvopt);
+    }
+
+    // Don't want saved slips from the scanning pass to be flagged at
+    // the start of the next pass. But do want to retain the halfc data.
+    for (int i = 0; i < MAXSAT; i++) {
+       for (int code = 0; code < MAXCODE; code++) {
+           str->slips[i][code] = 0;
+       }
+    }
+
     for (i=0;i<nf&&!abort;i++) {
         if (!mask[i]) continue;
         
