@@ -300,6 +300,8 @@ static int open_strfile(strfile_t *str, const char *file)
             return 0;
         }
         str->raw.time=str->time;
+        // Clear the buffered subframes. Less risk of undetected iod wrapping.
+        memset(str->raw.subfrm,0,sizeof(str->raw.subfrm));
     }
     else if (str->format==STRFMT_RINEX) {
         if (!(str->fp=fopen(file,"r"))) {
