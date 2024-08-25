@@ -123,7 +123,7 @@ typedef enum { false, true } bool;
 #define I1(p) (*((int8_t  *)(p)))
 static uint16_t U2(uint8_t *p) {uint16_t u; memcpy(&u,p,2); return u;}
 static uint32_t U4(uint8_t *p) {uint32_t u; memcpy(&u,p,4); return u;}
-static int32_t  I4(uint8_t *p) {int32_t  u; memcpy(&u,p,4); return u;}
+static int32_t  I4(uint8_t *p) {int32_t  i; memcpy(&i,p,4); return i;}
 static float    R4(uint8_t *p) {float    r; memcpy(&r,p,4); return r;}
 static double   R8(uint8_t *p) {double   r; memcpy(&r,p,8); return r;}
 static double   I8(uint8_t *p) {return I4(p+4)*4294967296.0+U4(p);}
@@ -1439,8 +1439,7 @@ extern int input_ubx(raw_t *raw, uint8_t data)
     
     /* synchronize frame */
     if (raw->nbyte==0) {
-        if (!sync_ubx(raw->buff,data)) return 0;
-        raw->nbyte=2;
+        if (sync_ubx(raw->buff,data)) raw->nbyte=2;
         return 0;
     }
     raw->buff[raw->nbyte++]=data;
