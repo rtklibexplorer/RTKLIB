@@ -1432,6 +1432,10 @@ EXPORT char    *time_str(gtime_t t, int n);
 
 EXPORT gtime_t timeadd  (gtime_t t, double sec);
 EXPORT double  timediff (gtime_t t1, gtime_t t2);
+
+#define RTKBOUNDSCHECK(buff, size, index) rtkboundscheck(__func__, __LINE__, buff, size, index);
+EXPORT void rtkboundscheck(const char *func, int line, const void *buff, size_t size, size_t index);
+
 EXPORT gtime_t gpst2utc (gtime_t t);
 EXPORT gtime_t utc2gpst (gtime_t t);
 EXPORT gtime_t gpst2bdt (gtime_t t);
