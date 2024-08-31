@@ -685,7 +685,7 @@ void Plot::drawSolution(QPainter &c, int level, int type)
         if (!btn[panel]->isChecked()) continue;
 
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) : \
-            (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On);
+            (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
         graphTriple[panel]->week = week;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
@@ -928,7 +928,7 @@ void Plot::drawNsat(QPainter &c, int level)
         if (!btn[panel]->isChecked()) continue;
 
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) :
-                                                 (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On);
+                                                 (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
         graphTriple[panel]->week = week;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
@@ -1004,7 +1004,7 @@ void Plot::drawObservation(QPainter &c, int level)
         if (sats[i]) nSats++;
     
     graphSingle->xLabelPosition = plotOptDialog->getTimeFormat() ? Graph::LabelPosition::Time : Graph::LabelPosition::Outer;
-    graphSingle->yLabelPosition = Graph::LabelPosition::On;
+    graphSingle->yLabelPosition = Graph::LabelPosition::Off;
     graphSingle->week = week;
 
     graphSingle->getLimits(xl, yl);
@@ -1807,7 +1807,7 @@ void Plot::drawSnr(QPainter &c, int level)
         if (!btn[panel]->isChecked()) continue;
 
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) :
-                                        (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On);
+                                        (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
         graphTriple[panel]->week = week;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
@@ -1985,7 +1985,7 @@ void Plot::drawSnrE(QPainter &c, int level)
         double yl[2][2] = {{10.0, 65.0}, {-plotOptDialog->getMaxMP(), plotOptDialog->getMaxMP()}};
 
         // draw axis
-        graphDual[panel]->xLabelPosition = panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On;
+        graphDual[panel]->xLabelPosition = panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off;
         graphDual[panel]->yLabelPosition = Graph::LabelPosition::Outer;
         graphDual[panel]->setLimits(xl, yl[panel]);
         graphDual[panel]->setTick(0.0, 0.0);
@@ -2283,7 +2283,7 @@ void Plot::drawResidual(QPainter &c, int level)
         if (!btn[panel]->isChecked()) continue;
 
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) :
-                                        (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On);
+                                        (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
         graphTriple[panel]->week = week;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
@@ -2439,7 +2439,7 @@ void Plot::drawResidualE(QPainter &c, int level)
         double xl[2] = {-0.001, 90.0};
         double yl[2][2] = {{-plotOptDialog->getMaxMP(), plotOptDialog->getMaxMP()}, {-plotOptDialog->getMaxMP() / 100.0, plotOptDialog->getMaxMP() / 100.0}};
         
-        graphDual[i]->xLabelPosition = (i == bottomPanel) ? Graph::LabelPosition::Outer : Graph::LabelPosition::On;
+        graphDual[i]->xLabelPosition = (i == bottomPanel) ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off;
         graphDual[i]->yLabelPosition = Graph::LabelPosition::Outer;
 
         graphDual[i]->setLimits(xl, yl[i]);

@@ -22,6 +22,7 @@
 #include <clocale>
 
 #include <QTimer>
+#include <QTime>
 #include <QCommandLineParser>
 #include <QFileInfo>
 #include <QSystemTrayIcon>

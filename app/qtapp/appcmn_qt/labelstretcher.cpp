@@ -5,6 +5,9 @@
 #include <QWidget>
 #include <QEvent>
 #include <QLayout>
+#include <QDebug>
+#include <QtCore/QVariant>
+#include <math.h>
 
 LabelStretcher::LabelStretcher(QObject *parent) : QObject(parent) {
     apply(qobject_cast<QWidget*>(parent));

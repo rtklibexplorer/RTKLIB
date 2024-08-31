@@ -168,7 +168,7 @@ Plot::Plot(QWidget *parent) : QMainWindow(parent), ui(new Ui::Plot)
 
     for (int i = 0; i < 3; i++) {
         graphTriple[i] = new Graph(ui->lblDisplay);
-        graphTriple[i]->xLabelPosition = Graph::LabelPosition::On;
+        graphTriple[i]->xLabelPosition = Graph::LabelPosition::Off;
         graphTriple[i]->getLimits(xl, yl);
         graphTriple[i]->setLimits(xs, yl);
     }
