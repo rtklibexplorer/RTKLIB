@@ -173,7 +173,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
         { "misc-nmeacycle",   0, (void *)&nmeaCycle,        "ms"    },
         { "misc-buffsize",    0, (void *)&serverBufferSize, "bytes" },
         { "misc-navmsgsel",   3, (void *)&navSelect,        MSGOPT  },
-        { "misc-proxyaddr",   2, (void *)&proxyaddr,        ""      },
+        { "misc-proxyaddr",   2, (void *)proxyaddr,         ""      },
         { "misc-fswapmargin", 0, (void *)&fileSwapMargin,   "s"     },
         { "",		          0, NULL,		                ""      }
     };
