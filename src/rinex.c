@@ -915,20 +915,20 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
     return 1;
 }
 /* save cycle slips ----------------------------------------------------------*/
-static void saveslips(uint8_t slips[][NFREQ+NEXOBS], obsd_t *data)
+static void saveslips(uint8_t slips[][MAXCODE], obsd_t *data)
 {
-    int i;
-    for (i=0;i<NFREQ+NEXOBS;i++) {
-        if (data->LLI[i]&1) slips[data->sat-1][i]|=LLI_SLIP;
+    for (int i=0;i<NFREQ+NEXOBS;i++) {
+        int code = data->code[i];
+        if (data->LLI[i]&1) slips[data->sat-1][code]=1;
     }
 }
 /* restore cycle slips -------------------------------------------------------*/
-static void restslips(uint8_t slips[][NFREQ+NEXOBS], obsd_t *data)
+static void restslips(uint8_t slips[][MAXCODE], obsd_t *data)
 {
-    int i;
-    for (i=0;i<NFREQ+NEXOBS;i++) {
-        if (slips[data->sat-1][i]&1) data->LLI[i]|=LLI_SLIP;
-        slips[data->sat-1][i]=0;
+    for (int i=0;i<NFREQ+NEXOBS;i++) {
+        int code = data->code[i];
+        if (slips[data->sat-1][code]&1) data->LLI[i]|=LLI_SLIP;
+        slips[data->sat-1][code]=0;
     }
 }
 /* add observation data ------------------------------------------------------*/
@@ -1115,7 +1115,7 @@ static int readrnxobs(FILE *fp, gtime_t ts, gtime_t te, double tint,
 {
     gtime_t eventime={0},time0={0},time1={0};
     obsd_t *data;
-    uint8_t slips[MAXSAT][NFREQ+NEXOBS]={{0}};
+    uint8_t slips[MAXSAT][MAXCODE]={{0}};
     int i,n,n1=0,flag=0,stat=0;
     double dtime1=0;
 

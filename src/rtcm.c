@@ -70,7 +70,7 @@ extern int init_rtcm(rtcm_t *rtcm)
     eph_t  eph0 ={0,-1,-1};
     geph_t geph0={0,-1};
     ssr_t ssr0={{{0}}};
-    int i,j;
+    int i;
     
     trace(3,"init_rtcm:\n");
     
@@ -92,10 +92,11 @@ extern int init_rtcm(rtcm_t *rtcm)
     rtcm->msg[0]=rtcm->msgtype[0]=rtcm->opt[0]='\0';
     for (i=0;i<6;i++) rtcm->msmtype[i][0]='\0';
     rtcm->obsflag=rtcm->ephsat=0;
-    for (i=0;i<MAXSAT;i++) for (j=0;j<NFREQ+NEXOBS;j++) {
-        rtcm->cp[i][j]=0.0;
-        rtcm->lock[i][j]=rtcm->loss[i][j]=0;
-        rtcm->lltime[i][j]=time0;
+    for (i=0;i<MAXSAT;i++)
+      for (int code=0;code<MAXCODE;code++) {
+        rtcm->cp[i][code]=0.0;
+        rtcm->lock[i][code]=rtcm->loss[i][code]=0;
+        rtcm->lltime[i][code]=time0;
     }
     rtcm->nbyte=rtcm->nbit=rtcm->len=0;
     rtcm->word=0;

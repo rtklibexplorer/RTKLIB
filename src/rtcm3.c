@@ -199,19 +199,19 @@ static void adjday_glot(rtcm_t *rtcm, double tod)
     rtcm->time=utc2gpst(timeadd(time,-10800.0));
 }
 /* adjust carrier-phase rollover ---------------------------------------------*/
-static double adjcp(rtcm_t *rtcm, int sat, int idx, double cp)
+static double adjcp(rtcm_t *rtcm, int sat, int code, double cp)
 {
-    if (rtcm->cp[sat-1][idx]==0.0) ;
-    else if (cp<rtcm->cp[sat-1][idx]-750.0) cp+=1500.0;
-    else if (cp>rtcm->cp[sat-1][idx]+750.0) cp-=1500.0;
-    rtcm->cp[sat-1][idx]=cp;
+    if (rtcm->cp[sat-1][code]==0.0) ;
+    else if (cp<rtcm->cp[sat-1][code]-750.0) cp+=1500.0;
+    else if (cp>rtcm->cp[sat-1][code]+750.0) cp-=1500.0;
+    rtcm->cp[sat-1][code]=cp;
     return cp;
 }
 /* loss-of-lock indicator ----------------------------------------------------*/
-static int lossoflock(rtcm_t *rtcm, int sat, int idx, int lock)
+static int lossoflock(rtcm_t *rtcm, int sat, int code, int lock)
 {
-    int lli=(!lock&&!rtcm->lock[sat-1][idx])||lock<rtcm->lock[sat-1][idx];
-    rtcm->lock[sat-1][idx]=(uint16_t)lock;
+    int lli=(!lock&&!rtcm->lock[sat-1][code])||lock<rtcm->lock[sat-1][code];
+    rtcm->lock[sat-1][code]=(uint16_t)lock;
     return lli;
 }
 /* S/N ratio -----------------------------------------------------------------*/
@@ -308,7 +308,7 @@ static int decode_type1001(rtcm_t *rtcm)
 /* decode type 1002: extended L1-only GPS RTK observables --------------------*/
 static int decode_type1002(rtcm_t *rtcm)
 {
-    double pr1,cnr1,tt,cp1,freq=FREQL1;
+    double pr1,cnr1,tt;
     int i=24+64,j,index,nsat,sync,prn,code,sat,ppr1,lock1,amb,sys;
     
     if ((nsat=decode_head1001(rtcm,&sync))<0) return -1;
@@ -339,13 +339,15 @@ static int decode_type1002(rtcm_t *rtcm)
         pr1=pr1*0.02+amb*PRUNIT_GPS;
         rtcm->obs.data[index].P[0]=pr1;
         
+        int l1code = code ? CODE_L1P : CODE_L1C;
         if (ppr1!=(int)0xFFF80000) {
-            cp1=adjcp(rtcm,sat,0,ppr1*0.0005*freq/CLIGHT);
+            double freq=FREQL1;
+            double cp1=adjcp(rtcm,sat,l1code,ppr1*0.0005*freq/CLIGHT);
             rtcm->obs.data[index].L[0]=pr1*freq/CLIGHT+cp1;
         }
-        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,0,lock1);
+        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,l1code,lock1);
         rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
-        rtcm->obs.data[index].code[0]=code?CODE_L1P:CODE_L1C;
+        rtcm->obs.data[index].code[0]=l1code;
     }
     return sync?0:1;
 }
@@ -360,8 +362,7 @@ static int decode_type1003(rtcm_t *rtcm)
 /* decode type 1004: extended L1&L2 GPS RTK observables ----------------------*/
 static int decode_type1004(rtcm_t *rtcm)
 {
-    const int L2codes[]={CODE_L2X,CODE_L2P,CODE_L2D,CODE_L2W};
-    double pr1,cnr1,cnr2,tt,cp1,cp2,freq[2]={FREQL1,FREQL2};
+    double pr1,cnr1,cnr2,tt;
     int i=24+64,j,index,nsat,sync,prn,sat,code1,code2,pr21,ppr1,ppr2;
     int lock1,lock2,amb,sys;
     
@@ -398,24 +399,28 @@ static int decode_type1004(rtcm_t *rtcm)
         pr1=pr1*0.02+amb*PRUNIT_GPS;
         rtcm->obs.data[index].P[0]=pr1;
         
+        const double freq[2]={FREQL1,FREQL2};
+        int l1code = code1?CODE_L1P:CODE_L1C;
         if (ppr1!=(int)0xFFF80000) {
-            cp1=adjcp(rtcm,sat,0,ppr1*0.0005*freq[0]/CLIGHT);
+            double cp1=adjcp(rtcm,sat,l1code,ppr1*0.0005*freq[0]/CLIGHT);
             rtcm->obs.data[index].L[0]=pr1*freq[0]/CLIGHT+cp1;
         }
-        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,0,lock1);
+        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,l1code,lock1);
         rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
-        rtcm->obs.data[index].code[0]=code1?CODE_L1P:CODE_L1C;
+        rtcm->obs.data[index].code[0]=l1code;
         
         if (pr21!=(int)0xFFFFE000) {
             rtcm->obs.data[index].P[1]=pr1+pr21*0.02;
         }
+        const int L2codes[]={CODE_L2X,CODE_L2P,CODE_L2D,CODE_L2W};
+        int l2code=L2codes[code2];
         if (ppr2!=(int)0xFFF80000) {
-            cp2=adjcp(rtcm,sat,1,ppr2*0.0005*freq[1]/CLIGHT);
+            double cp2=adjcp(rtcm,sat,l2code,ppr2*0.0005*freq[1]/CLIGHT);
             rtcm->obs.data[index].L[1]=pr1*freq[1]/CLIGHT+cp2;
         }
-        rtcm->obs.data[index].LLI[1]=lossoflock(rtcm,sat,1,lock2);
+        rtcm->obs.data[index].LLI[1]=lossoflock(rtcm,sat,l2code,lock2);
         rtcm->obs.data[index].SNR[1]=snratio(cnr2*0.25);
-        rtcm->obs.data[index].code[1]=L2codes[code2];
+        rtcm->obs.data[index].code[1]=l2code;
     }
     rtcm->obsflag=!sync;
     return sync?0:1;
@@ -616,7 +621,7 @@ static int decode_type1009(rtcm_t *rtcm)
 /* decode type 1010: extended L1-only glonass rtk observables ----------------*/
 static int decode_type1010(rtcm_t *rtcm)
 {
-    double pr1,cnr1,tt,cp1,freq1;
+    double pr1,cnr1,tt;
     int i=24+61,j,index,nsat,sync,prn,sat,code,fcn,ppr1,lock1,amb,sys=SYS_GLO;
     
     if ((nsat=decode_head1009(rtcm,&sync))<0) return -1;
@@ -645,14 +650,15 @@ static int decode_type1010(rtcm_t *rtcm)
         pr1=pr1*0.02+amb*PRUNIT_GLO;
         rtcm->obs.data[index].P[0]=pr1;
         
+        int l1code=code?CODE_L1P:CODE_L1C;
         if (ppr1!=(int)0xFFF80000) {
-            freq1=code2freq(SYS_GLO,CODE_L1C,fcn-7);
-            cp1=adjcp(rtcm,sat,0,ppr1*0.0005*freq1/CLIGHT);
+            double freq1=code2freq(SYS_GLO,l1code,fcn-7);
+            double cp1=adjcp(rtcm,sat,l1code,ppr1*0.0005*freq1/CLIGHT);
             rtcm->obs.data[index].L[0]=pr1*freq1/CLIGHT+cp1;
         }
-        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,0,lock1);
+        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,l1code,lock1);
         rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
-        rtcm->obs.data[index].code[0]=code?CODE_L1P:CODE_L1C;
+        rtcm->obs.data[index].code[0]=l1code;
     }
     return sync?0:1;
 }
@@ -702,26 +708,28 @@ static int decode_type1012(rtcm_t *rtcm)
         pr1=pr1*0.02+amb*PRUNIT_GLO;
         rtcm->obs.data[index].P[0]=pr1;
         
+        int l1code=code1?CODE_L1P:CODE_L1C;
         if (ppr1!=(int)0xFFF80000) {
-            freq1=code2freq(SYS_GLO,CODE_L1C,fcn-7);
-            cp1=adjcp(rtcm,sat,0,ppr1*0.0005*freq1/CLIGHT);
+            freq1=code2freq(SYS_GLO,l1code,fcn-7);
+            cp1=adjcp(rtcm,sat,l1code,ppr1*0.0005*freq1/CLIGHT);
             rtcm->obs.data[index].L[0]=pr1*freq1/CLIGHT+cp1;
         }
-        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,0,lock1);
+        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,l1code,lock1);
         rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
-        rtcm->obs.data[index].code[0]=code1?CODE_L1P:CODE_L1C;
+        rtcm->obs.data[index].code[0]=l1code;
         
         if (pr21!=(int)0xFFFFE000) {
             rtcm->obs.data[index].P[1]=pr1+pr21*0.02;
         }
+        int l2code=code2?CODE_L2P:CODE_L2C;
         if (ppr2!=(int)0xFFF80000) {
-            freq2=code2freq(SYS_GLO,CODE_L2C,fcn-7);
-            cp2=adjcp(rtcm,sat,1,ppr2*0.0005*freq2/CLIGHT);
+            freq2=code2freq(SYS_GLO,l2code,fcn-7);
+            cp2=adjcp(rtcm,sat,l2code,ppr2*0.0005*freq2/CLIGHT);
             rtcm->obs.data[index].L[1]=pr1*freq2/CLIGHT+cp2;
         }
-        rtcm->obs.data[index].LLI[1]=lossoflock(rtcm,sat,1,lock2);
+        rtcm->obs.data[index].LLI[1]=lossoflock(rtcm,sat,l2code,lock2);
         rtcm->obs.data[index].SNR[1]=snratio(cnr2*0.25);
-        rtcm->obs.data[index].code[1]=code2?CODE_L2P:CODE_L2C;
+        rtcm->obs.data[index].code[1]=l2code;
     }
     rtcm->obsflag=!sync;
     return sync?0:1;
@@ -2089,8 +2097,8 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
                     rtcm->obs.data[index].D[idx[k]]=
                         (float)(-(rr[i]+rrf[j])*freq/CLIGHT);
                 }
-                rtcm->obs.data[index].LLI[idx[k]]=
-                    lossoflock(rtcm,sat,idx[k],lock[j])+(half[j]?2:0);
+                int LLI = lossoflock(rtcm,sat,code[k],lock[j])+(half[j]?LLI_HALFC:0);
+                rtcm->obs.data[index].LLI[idx[k]]=LLI;
                 rtcm->obs.data[index].SNR [idx[k]]=(uint16_t)(cnr[j]/SNR_UNIT+0.5);
                 rtcm->obs.data[index].code[idx[k]]=code[k];
             }
