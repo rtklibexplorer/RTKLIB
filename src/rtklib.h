@@ -952,10 +952,10 @@ typedef struct {        /* RTCM control struct type */
     int obsflag;        /* obs data complete flag (1:ok,0:not complete) */
     int ephsat;         /* input ephemeris satellite number */
     int ephset;         /* input ephemeris set (0-1) */
-    double cp[MAXSAT][NFREQ+NEXOBS]; /* carrier-phase measurement */
-    uint16_t lock[MAXSAT][NFREQ+NEXOBS]; /* lock time */
-    uint16_t loss[MAXSAT][NFREQ+NEXOBS]; /* loss of lock count */
-    gtime_t lltime[MAXSAT][NFREQ+NEXOBS]; /* last lock time */
+    double cp[MAXSAT][MAXCODE]; /* carrier-phase measurement */
+    uint16_t lock[MAXSAT][MAXCODE]; /* lock time */
+    uint16_t loss[MAXSAT][MAXCODE]; /* loss of lock count */
+    gtime_t lltime[MAXSAT][MAXCODE]; /* last lock time */
     int nbyte;          /* number of bytes in message buffer */
     int nbit;           /* number of bits in word buffer */
     int len;            /* message length (bytes) */
@@ -1203,7 +1203,7 @@ typedef struct {        /* RTK control/result type */
 
 typedef struct {        /* receiver raw data control type */
     gtime_t time;       /* message time */
-    gtime_t tobs[MAXSAT][NFREQ+NEXOBS]; /* observation data time */
+    gtime_t tobs[MAXSAT][MAXCODE]; /* observation data time */
     obs_t obs;          /* observation data */
     obs_t obuf;         /* observation data buffer */
     nav_t nav;          /* satellite ephemerides */
@@ -1213,11 +1213,11 @@ typedef struct {        /* receiver raw data control type */
     sbsmsg_t sbsmsg;    /* SBAS message */
     char msgtype[256];  /* last message type */
     uint8_t subfrm[MAXSAT][380]; /* subframe buffer */
-    double lockt[MAXSAT][NFREQ+NEXOBS]; /* lock time (s) */
-    unsigned char lockflag[MAXSAT][NFREQ+NEXOBS]; /* used for carrying forward cycle slip */
+    double lockt[MAXSAT][MAXCODE]; /* lock time (s) */
+    unsigned char lockflag[MAXSAT][MAXCODE]; /* used for carrying forward cycle slip */
     double icpp[MAXSAT],off[MAXSAT],icpc; /* carrier params for ss2 */
     double prCA[MAXSAT],dpCA[MAXSAT]; /* L1/CA pseudorange/doppler for javad */
-    uint8_t halfc[MAXSAT][NFREQ+NEXOBS]; /* half-cycle resolved */
+    uint8_t halfc[MAXSAT][MAXCODE]; /* half-cycle resolved */
     char freqn[MAXOBS]; /* frequency number for javad */
     int nbyte;          /* number of bytes in message buffer */
     int len;            /* message length (bytes) */
