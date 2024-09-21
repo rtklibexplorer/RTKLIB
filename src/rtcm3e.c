@@ -2026,12 +2026,13 @@ static void gen_msm_sig(rtcm_t *rtcm, int sys, int nsat, int nsig, int ncell,
         if (!(sat=to_satid(sys,data->sat))) continue;
         
         for (j=0;j<NFREQ+NEXOBS;j++) {
-            if (!(sig=to_sigid(sys,data->code[j]))) continue;
+            int code = data->code[j];
+            if (!(sig=to_sigid(sys,code))) continue;
             
             k=sat_ind[sat-1]-1;
             if ((cell=cell_ind[sig_ind[sig-1]-1+k*nsig])>=64) continue;
             
-            freq=code2freq(sys,data->code[j],fcn-7);
+            freq=code2freq(sys,code,fcn-7);
             lambda=freq==0.0?0.0:CLIGHT/freq;
             psrng_s=data->P[j]==0.0?0.0:data->P[j]-rrng[k];
             phrng_s=data->L[j]==0.0||lambda<=0.0?0.0: data->L[j]*lambda-rrng [k];
@@ -2039,13 +2040,13 @@ static void gen_msm_sig(rtcm_t *rtcm, int sys, int nsat, int nsig, int ncell,
             
             /* subtract phase - psudorange integer cycle offset */
             LLI=data->LLI[j];
-            if ((LLI&1)||fabs(phrng_s-rtcm->cp[data->sat-1][j])>1171.0) {
-                rtcm->cp[data->sat-1][j]=ROUND(phrng_s/lambda)*lambda;
+            if ((LLI&1)||fabs(phrng_s-rtcm->cp[data->sat-1][code])>1171.0) {
+                rtcm->cp[data->sat-1][code]=ROUND(phrng_s/lambda)*lambda;
                 LLI|=1;
             }
-            phrng_s-=rtcm->cp[data->sat-1][j];
+            phrng_s-=rtcm->cp[data->sat-1][code];
             
-            lt=locktime_d(data->time,rtcm->lltime[data->sat-1]+j,LLI);
+            lt=locktime_d(data->time,rtcm->lltime[data->sat-1]+code,LLI);
             
             if (psrng&&psrng_s!=0.0) psrng[cell-1]=psrng_s;
             if (phrng&&phrng_s!=0.0) phrng[cell-1]=phrng_s;

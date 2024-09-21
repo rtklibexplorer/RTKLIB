@@ -784,18 +784,18 @@ static int decode_obsvmb(raw_t* raw)
                 raw->nav.glo_fcn[prn - 1] = gfrq; /* fcn+8 */
             }
         }
-        if (raw->tobs[sat - 1][idx].time != 0) {
-            tt = timediff(raw->time, raw->tobs[sat - 1][idx]);
-            lli = lockt - raw->lockt[sat - 1][idx] + 0.05 <= tt ? LLI_SLIP : 0;
+        if (raw->tobs[sat - 1][code].time != 0) {
+            tt = timediff(raw->time, raw->tobs[sat - 1][code]);
+            lli = lockt - raw->lockt[sat - 1][code] + 0.05 <= tt ? LLI_SLIP : 0;
         }
         else {
             lli = 0;
         }
         //      if (!parity) lli |= LLI_HALFC;
         //      if (halfc) lli |= LLI_HALFA;
-        raw->tobs[sat - 1][idx] = raw->time;
-        raw->lockt[sat - 1][idx] = lockt;
-        raw->halfc[sat - 1][idx] = 0;
+        raw->tobs[sat - 1][code] = raw->time;
+        raw->lockt[sat - 1][code] = lockt;
+        raw->halfc[sat - 1][code] = 0;
 
         if (!clock) psr = 0.0;     /* code unlock */
         if (!plock) adr = dop = 0.0; /* phase unlock */

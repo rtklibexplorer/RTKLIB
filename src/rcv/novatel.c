@@ -414,18 +414,18 @@ static int decode_rangecmpb(raw_t *raw)
         }
         lockt=(U4(p+18)&0x1FFFFF)/32.0; /* lock time */
         
-        if (raw->tobs[sat-1][idx].time!=0) {
-            tt=timediff(raw->time,raw->tobs[sat-1][idx]);
-            lli=(lockt<65535.968&&lockt-raw->lockt[sat-1][idx]+0.05<=tt)?LLI_SLIP:0;
+        if (raw->tobs[sat-1][code].time!=0) {
+            tt=timediff(raw->time,raw->tobs[sat-1][code]);
+            lli=(lockt<65535.968&&lockt-raw->lockt[sat-1][code]+0.05<=tt)?LLI_SLIP:0;
         }
         else {
             lli=0;
         }
         if (!parity) lli|=LLI_HALFC;
         if (halfc  ) lli|=LLI_HALFA;
-        raw->tobs [sat-1][idx]=raw->time;
-        raw->lockt[sat-1][idx]=lockt;
-        raw->halfc[sat-1][idx]=halfc;
+        raw->tobs [sat-1][code]=raw->time;
+        raw->lockt[sat-1][code]=lockt;
+        raw->halfc[sat-1][code]=halfc;
         
         snr=((U2(p+20)&0x3FF)>>5)+20.0;
         if (!clock) psr=0.0;     /* code unlock */
@@ -498,18 +498,18 @@ static int decode_rangeb(raw_t *raw)
                 raw->nav.glo_fcn[prn-1]=gfrq; /* fcn+8 */
             }
         }
-        if (raw->tobs[sat-1][idx].time!=0) {
-            tt=timediff(raw->time,raw->tobs[sat-1][idx]);
-            lli=lockt-raw->lockt[sat-1][idx]+0.05<=tt?LLI_SLIP:0;
+        if (raw->tobs[sat-1][code].time!=0) {
+            tt=timediff(raw->time,raw->tobs[sat-1][code]);
+            lli=lockt-raw->lockt[sat-1][code]+0.05<=tt?LLI_SLIP:0;
         }
         else {
             lli=0;
         }
         if (!parity) lli|=LLI_HALFC;
         if (halfc  ) lli|=LLI_HALFA;
-        raw->tobs [sat-1][idx]=raw->time;
-        raw->lockt[sat-1][idx]=lockt;
-        raw->halfc[sat-1][idx]=halfc;
+        raw->tobs [sat-1][code]=raw->time;
+        raw->lockt[sat-1][code]=lockt;
+        raw->halfc[sat-1][code]=halfc;
         
         if (!clock) psr=0.0;     /* code unlock */
         if (!plock) adr=dop=0.0; /* phase unlock */
@@ -1093,18 +1093,19 @@ static int decode_rgeb(raw_t *raw)
             trace(2,"oem3 regb satellite number error: sys=%d prn=%d\n",sys,prn);
             continue;
         }
-        if (raw->tobs[sat-1][freq].time!=0) {
-            tt=timediff(raw->time,raw->tobs[sat-1][freq]);
-            lli=lockt-raw->lockt[sat-1][freq]+0.05<tt||
-                parity!=raw->halfc[sat-1][freq];
+        int code=freq==0?CODE_L1C:CODE_L2P;
+        if (raw->tobs[sat-1][code].time!=0) {
+            tt=timediff(raw->time,raw->tobs[sat-1][code]);
+            lli=lockt-raw->lockt[sat-1][code]+0.05<tt||
+                parity!=raw->halfc[sat-1][code];
         }
         else {
             lli=0;
         }
         if (!parity) lli|=2;
-        raw->tobs [sat-1][freq]=raw->time;
-        raw->lockt[sat-1][freq]=lockt;
-        raw->halfc[sat-1][freq]=parity;
+        raw->tobs [sat-1][code]=raw->time;
+        raw->lockt[sat-1][code]=lockt;
+        raw->halfc[sat-1][code]=parity;
         
         if (fabs(timediff(raw->obs.data[0].time,raw->time))>1E-9) {
             raw->obs.n=0;
@@ -1115,7 +1116,7 @@ static int decode_rgeb(raw_t *raw)
             raw->obs.data[index].D  [freq]=(float)dop;
             raw->obs.data[index].SNR[freq]=0.0<=snr&&snr<255.0?snr:0;
             raw->obs.data[index].LLI[freq]=(uint8_t)lli;
-            raw->obs.data[index].code[freq]=freq==0?CODE_L1C:CODE_L2P;
+            raw->obs.data[index].code[freq]=code;
         }
     }
     return 1;
@@ -1158,18 +1159,19 @@ static int decode_rged(raw_t *raw)
         adr_rolls=floor((psr/(freq==0?WL1:WL2)-adr)/MAXVAL+0.5);
         adr=adr+MAXVAL*adr_rolls;
         
-        if (raw->tobs[sat-1][freq].time!=0) {
-            tt=timediff(raw->time,raw->tobs[sat-1][freq]);
-            lli=lockt-raw->lockt[sat-1][freq]+0.05<tt||
-                parity!=raw->halfc[sat-1][freq];
+        int code = freq==0?CODE_L1C:CODE_L2P;
+        if (raw->tobs[sat-1][code].time!=0) {
+            tt=timediff(raw->time,raw->tobs[sat-1][code]);
+            lli=lockt-raw->lockt[sat-1][code]+0.05<tt||
+                parity!=raw->halfc[sat-1][code];
         }
         else {
             lli=0;
         }
         if (!parity) lli|=2;
-        raw->tobs [sat-1][freq]=raw->time;
-        raw->lockt[sat-1][freq]=lockt;
-        raw->halfc[sat-1][freq]=parity;
+        raw->tobs [sat-1][code]=raw->time;
+        raw->lockt[sat-1][code]=lockt;
+        raw->halfc[sat-1][code]=parity;
         
         if (fabs(timediff(raw->obs.data[0].time,raw->time))>1E-9) {
             raw->obs.n=0;
@@ -1180,7 +1182,7 @@ static int decode_rged(raw_t *raw)
             raw->obs.data[index].D  [freq]=(float)dop;
             raw->obs.data[index].SNR[freq]=snr;
             raw->obs.data[index].LLI[freq]=(uint8_t)lli;
-            raw->obs.data[index].code[freq]=freq==0?CODE_L1C:CODE_L2P;
+            raw->obs.data[index].code[freq]=code;
         }
     }
     return 1;

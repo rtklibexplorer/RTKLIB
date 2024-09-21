@@ -238,10 +238,10 @@ static int decode_type18(rtcm_t *rtcm)
         if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,time,sat))>=0) {
             rtcm->obs.data[index].L[freq]=-cp/256.0;
-            rtcm->obs.data[index].LLI[freq]=rtcm->loss[sat-1][freq]!=loss?LLI_SLIP:0;
-            rtcm->obs.data[index].code[freq]=
-                !freq?(code?CODE_L1P:CODE_L1C):(code?CODE_L2P:CODE_L2C);
-            rtcm->loss[sat-1][freq]=loss;
+            int lcode=!freq?(code?CODE_L1P:CODE_L1C):(code?CODE_L2P:CODE_L2C);
+            rtcm->obs.data[index].LLI[freq]=rtcm->loss[sat-1][lcode]!=loss?LLI_SLIP:0;
+            rtcm->obs.data[index].code[freq]=lcode;
+            rtcm->loss[sat-1][lcode]=loss;
         }
     }
     rtcm->obsflag=!sync;

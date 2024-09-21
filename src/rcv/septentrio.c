@@ -76,8 +76,7 @@ typedef struct {
   uint8_t signalIdx[MEAS3_SYS_MAX][MEAS3_SAT_MAX][MEAS3_SIG_MAX];  // Reference signal indeces
   uint32_t slaveSignalMask[MEAS3_SYS_MAX][MEAS3_SAT_MAX];  // Mask of available slave signals
   int16_t prRate[MEAS3_SYS_MAX][MEAS3_SAT_MAX];  // Pseudo-range change rate in 64 mm steps
-  uint32_t lockt[MEAS3_SYS_MAX][MEAS3_SAT_MAX][NFREQ + NEXOBS];  // Lock time of the PLL, in ms
-  uint8_t halfc[MEAS3_SYS_MAX][MEAS3_SAT_MAX][NFREQ + NEXOBS];   // Half cycle ambiguity
+  uint32_t lockt[MEAS3_SYS_MAX][MEAS3_SAT_MAX][MAXCODE];  // Lock time of the PLL, in ms
 
   uint8_t constellationHeader[MEAS3_SYS_MAX][32];  // Copy of constellation header
 } Meas3_RefEpoch_t;
@@ -781,9 +780,9 @@ static int decode_measepoch(raw_t *raw)
         if (P1!=0.0 && freq1>0.0 && lock!=65535 && (I1(p+14) != -128 || U2(p+12) != 0)) {
             L1 = I1(p+14)*65.536 + U2(p+12)*0.001;
             raw->obuf.data[n].L[idx] = P1*freq1/CLIGHT + L1;
-            LLI = (lock<raw->lockt[sat-1][idx] ? 1 : 0) + ((info & (1<<2)) ? 2 : 0);
+            LLI = (lock<raw->lockt[sat-1][code] ? 1 : 0) + ((info & (1<<2)) ? 2 : 0);
             raw->obuf.data[n].LLI[idx] = (uint8_t)LLI;
-            raw->lockt[sat-1][idx] = lock;
+            raw->lockt[sat-1][code] = lock;
         }
         if (U1(p+15) != 255) {
             S1 = U1(p+15)*0.25 + ((sig==1 || sig==2) ? 0.0 : 10.0);
@@ -809,9 +808,9 @@ static int decode_measepoch(raw_t *raw)
             P2 = 0.0;
             freq2 = code2freq(sys, code, fcn);
             if (lock != 255) {
-                LLI = (lock<raw->lockt[sat-1][idx] ? 1 : 0) + ((info&(1<<2)) ? 2 : 0);
+                LLI = (lock<raw->lockt[sat-1][code] ? 1 : 0) + ((info&(1<<2)) ? 2 : 0);
                 raw->obuf.data[n].LLI[idx] = (uint8_t)LLI;
-                raw->lockt[sat-1][idx] = lock;
+                raw->lockt[sat-1][code] = lock;
             }
             if (U1(p+2) != 255) {
                 S2 = U1(p+2)*0.25 + ((sig==1 || sig==2) ? 0.0 : 10.0);
@@ -1093,7 +1092,7 @@ static int decode_meas3ranges(raw_t *raw) {
                             raw->obuf.data[n].L[masterFreqIndex] = pr / (CLIGHT/freqMaster) - 131.072 + (double)cmc * .001;
 
                         raw->obuf.data[n].LLI[masterFreqIndex] = (lockTime < raw->lockt[satNo-1][masterFreqIndex] ? LLI_SLIP : 0) | (lti3 == 0 ? LLI_HALFC : 0);
-                        raw->lockt[satNo-1][masterFreqIndex] = lockTime;
+                        raw->lockt[satNo-1][codeMaster] = lockTime;
                         raw->obuf.data[n].freq = glofnc+7;
                         sbf->meas3_freqAssignment[navsys][svid][0] = masterFreqIndex;
                     };
@@ -1139,7 +1138,7 @@ static int decode_meas3ranges(raw_t *raw) {
                             raw->obuf.data[n].L[masterFreqIndex] = raw->obuf.data[n].P[masterFreqIndex] / (CLIGHT/freqMaster) - 2097.152 + (double)cmc * .001;
 
                         raw->obuf.data[n].LLI[masterFreqIndex] = (lockTime < raw->lockt[satNo-1][masterFreqIndex] ? LLI_SLIP : 0) | (lti4 == 0 ? LLI_HALFC : 0);
-                        raw->lockt[satNo-1][masterFreqIndex] = lockTime;
+                        raw->lockt[satNo-1][codeMaster] = lockTime;
                         raw->obuf.data[n].freq = glofnc+7;
                         sbf->meas3_freqAssignment[navsys][svid][0] = masterFreqIndex;
                     };
@@ -1175,7 +1174,7 @@ static int decode_meas3ranges(raw_t *raw) {
                                                            master_reference->L[masterFreqIndex] - 32.768 + (double)cmc * .001;
 
                         raw->obuf.data[n].LLI[masterFreqIndex] = master_reference->LLI[masterFreqIndex];
-                        raw->lockt[satNo-1][masterFreqIndex] = sbf->meas3_refEpoch.lockt[navsys][svid][masterFreqIndex];
+                        raw->lockt[satNo-1][codeMaster] = sbf->meas3_refEpoch.lockt[navsys][svid][codeMaster];
                         raw->obuf.data[n].freq = glofnc+7;
                         sbf->meas3_freqAssignment[navsys][svid][0] = masterFreqIndex;
                     }
@@ -1201,7 +1200,7 @@ static int decode_meas3ranges(raw_t *raw) {
                             raw->obuf.data[n].L[masterFreqIndex] = (raw->obuf.data[n].P[masterFreqIndex] - masterReference->P[masterFreqIndex]) / (CLIGHT/freqMaster) + masterReference->L[masterFreqIndex] - 8.192 + (double)cmc * .001;
                         raw->obuf.data[n].SNR[masterFreqIndex] = masterReference->SNR[masterFreqIndex] - 1.0 + CN0;
                         raw->obuf.data[n].LLI[masterFreqIndex] = masterReference->LLI[masterFreqIndex];
-                        raw->lockt[satNo-1][masterFreqIndex] = sbf->meas3_refEpoch.lockt[navsys][svid][masterFreqIndex];
+                        raw->lockt[satNo-1][codeMaster] = sbf->meas3_refEpoch.lockt[navsys][svid][codeMaster];
                         raw->obuf.data[n].code[masterFreqIndex] = codeMaster;
                         raw->obuf.data[n].freq = glofnc+8;
                         sbf->meas3_freqAssignment[navsys][svid][0] = masterFreqIndex;
@@ -1226,12 +1225,12 @@ static int decode_meas3ranges(raw_t *raw) {
                     sbf->meas3_refEpoch.obsData[navsys][svid].L[masterFreqIndex] = raw->obuf.data[n].L[masterFreqIndex];
                     sbf->meas3_refEpoch.obsData[navsys][svid].SNR[masterFreqIndex] = raw->obuf.data[n].SNR[masterFreqIndex];
                     sbf->meas3_refEpoch.obsData[navsys][svid].LLI[masterFreqIndex] = raw->obuf.data[n].LLI[masterFreqIndex];
-                    sbf->meas3_refEpoch.lockt[navsys][svid][masterFreqIndex] = raw->lockt[satNo-1][masterFreqIndex];
+                    sbf->meas3_refEpoch.lockt[navsys][svid][codeMaster] = raw->lockt[satNo-1][codeMaster];
                 }
 
                 // update PLL lock time
-                if (satNo > 0  && raw->lockt[satNo-1][masterFreqIndex] > sbf->meas3_refEpoch.lockt[navsys][svid][masterFreqIndex])
-                    sbf->meas3_refEpoch.lockt[navsys][svid][masterFreqIndex] = raw->lockt[satNo-1][masterFreqIndex];
+                if (satNo > 0  && raw->lockt[satNo-1][codeMaster] > sbf->meas3_refEpoch.lockt[navsys][svid][codeMaster])
+                    sbf->meas3_refEpoch.lockt[navsys][svid][codeMaster] = raw->lockt[satNo-1][codeMaster];
 
                 /* decode slave data */
                 int slaveCnt = 0;
@@ -1276,7 +1275,7 @@ static int decode_meas3ranges(raw_t *raw) {
 
                                 raw->obuf.data[n].code[slaveFreqIndex] = codeSlave;
                                 raw->obuf.data[n].LLI[slaveFreqIndex] = (lockTime < raw->lockt[satNo-1][slaveFreqIndex] ? LLI_SLIP : 0) | (lti3 == 0 ? LLI_HALFC : 0);
-                                raw->lockt[satNo-1][slaveFreqIndex] = lockTime;
+                                raw->lockt[satNo-1][codeSlave] = lockTime;
                                 sbf->meas3_freqAssignment[navsys][svid][slaveCnt+1] = slaveFreqIndex;
                             }
 
@@ -1306,8 +1305,8 @@ static int decode_meas3ranges(raw_t *raw) {
                                     raw->obuf.data[n].SNR[slaveFreqIndex] = CN0 + 10.0;
 
                                 raw->obuf.data[n].code[slaveFreqIndex] = codeSlave;
-                                raw->obuf.data[n].LLI[slaveFreqIndex] = (lockTime < raw->lockt[satNo-1][slaveFreqIndex] ? LLI_SLIP : 0) | (lti4 == 0 ? LLI_HALFC : 0);
-                                raw->lockt[satNo-1][slaveFreqIndex] = lockTime;
+                                raw->obuf.data[n].LLI[slaveFreqIndex] = (lockTime < raw->lockt[satNo-1][codeSlave] ? LLI_SLIP : 0) | (lti4 == 0 ? LLI_HALFC : 0);
+                                raw->lockt[satNo-1][codeSlave] = lockTime;
                                 sbf->meas3_freqAssignment[navsys][svid][slaveCnt+1] = slaveFreqIndex;
                             }
 
@@ -1339,7 +1338,7 @@ static int decode_meas3ranges(raw_t *raw) {
 
                                 raw->obuf.data[n].code[slaveFreqIndex] = codeSlave;
                                 raw->obuf.data[n].LLI[slaveFreqIndex] = slaveReference->LLI[slaveRefFreqIdx];
-                                raw->lockt[satNo-1][slaveFreqIndex] = sbf->meas3_refEpoch.lockt[navsys][svid][slaveCnt+1];
+                                raw->lockt[satNo-1][codeSlave] = sbf->meas3_refEpoch.lockt[navsys][svid][codeSlave];
                                 sbf->meas3_freqAssignment[navsys][svid][slaveCnt+1] = slaveFreqIndex;
                             }
 
@@ -1357,11 +1356,11 @@ static int decode_meas3ranges(raw_t *raw) {
                             sbf->meas3_refEpoch.obsData[navsys][svid].L[slaveFreqIndex] = raw->obuf.data[n].L[slaveFreqIndex];
                             sbf->meas3_refEpoch.obsData[navsys][svid].SNR[slaveFreqIndex] = raw->obuf.data[n].SNR[slaveFreqIndex];
                             sbf->meas3_refEpoch.obsData[navsys][svid].LLI[slaveFreqIndex] = raw->obuf.data[n].LLI[slaveFreqIndex];
-                            sbf->meas3_refEpoch.lockt[navsys][svid][slaveFreqIndex] = raw->lockt[satNo-1][slaveFreqIndex];
+                            sbf->meas3_refEpoch.lockt[navsys][svid][codeSlave] = raw->lockt[satNo-1][codeSlave];
                         }
 
-                        if (raw->lockt[satNo-1][slaveFreqIndex] > sbf->meas3_refEpoch.lockt[navsys][svid][slaveFreqIndex])
-                            sbf->meas3_refEpoch.lockt[navsys][svid][slaveFreqIndex] = raw->lockt[satNo-1][slaveFreqIndex];
+                        if (raw->lockt[satNo-1][codeSlave] > sbf->meas3_refEpoch.lockt[navsys][svid][codeSlave])
+                            sbf->meas3_refEpoch.lockt[navsys][svid][codeSlave] = raw->lockt[satNo-1][codeSlave];
 
                         slaveCnt++;
                         /* delete this bit of the mask */
