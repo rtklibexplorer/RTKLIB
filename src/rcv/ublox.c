@@ -334,9 +334,9 @@ static int decode_rxmraw(raw_t *raw)
         }
         raw->obs.data[n].sat=sat;
         
-        if (raw->obs.data[n].LLI[0]&1) raw->lockt[sat-1][0]=0.0;
-        else if (tt<1.0||10.0<tt) raw->lockt[sat-1][0]=0.0;
-        else raw->lockt[sat-1][0]+=tt;
+        if (raw->obs.data[n].LLI[0]&LLI_SLIP) raw->lockt[sat-1][CODE_L1C]=0.0;
+        else if (tt<1.0||10.0<tt) raw->lockt[sat-1][CODE_L1C]=0.0;
+        else raw->lockt[sat-1][CODE_L1C]+=tt;
         
         for (j=1;j<NFREQ+NEXOBS;j++) {
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
@@ -358,7 +358,7 @@ static int decode_rxmrawx(raw_t *raw)
     gtime_t time;
     char *q,tstr[64];
     double tow,P,L,D,tn,tadj=0.0,toff=0.0;
-    int i,j,k,idx,sys,prn,sat,code,slip,halfv,halfc,LLI,n=0;
+    int i,j,k,idx,sys,prn,sat,slip,halfv,halfc,LLI,n=0;
     int week,nmeas,ver,gnss,svid,sigid,frqid,lockt,cn0,cpstd=0,prstd=0,tstat;
     int multicode=0, rcvstds=0;
 
@@ -452,14 +452,17 @@ static int decode_rxmrawx(raw_t *raw)
         if (sys==SYS_GLO&&!raw->nav.glo_fcn[prn-1]) {
             raw->nav.glo_fcn[prn-1]=frqid-7+8;
         }
+        int mcode, code;
         if (ver>=1) {
+            mcode=ubx_sig(sys,sigid);
             if (multicode)
-                code=ubx_sig(sys,sigid);
+                code=mcode;
             else
                 code=ubx_sig_combined(sys,sigid);
         }
         else {
-            code=(sys==SYS_CMP)?CODE_L2I:((sys==SYS_GAL)?CODE_L1X:CODE_L1C);
+            mcode=(sys==SYS_CMP)?CODE_L2I:((sys==SYS_GAL)?CODE_L1X:CODE_L1C);
+            code=mcode;
         }
         /* signal index in obs data */
         if ((idx=sig_idx(sys,code))<0) {
@@ -480,20 +483,20 @@ static int decode_rxmrawx(raw_t *raw)
         else
             halfv=(tstat&4)?1:0; /* half cycle valid */
         halfc=(tstat&8)?1:0; /* half cycle subtracted from phase */
-        slip=lockt==0||lockt*1E-3<raw->lockt[sat-1][idx]||
-             halfc!=raw->halfc[sat-1][idx];
+        slip=lockt==0||lockt*1E-3<raw->lockt[sat-1][mcode]||
+             halfc!=raw->halfc[sat-1][mcode];
         if (cpstd>=cpstd_slip) slip=LLI_SLIP;
-        if (slip) raw->lockflag[sat-1][idx]=slip;
-        raw->lockt[sat-1][idx]=lockt*1E-3;
+        if (slip) raw->lockflag[sat-1][mcode]=slip;
+        raw->lockt[sat-1][mcode]=lockt*1E-3;
         /* LLI: bit0=slip,bit1=half-cycle-unresolved */
         LLI=!halfv&&L!=0.0?LLI_HALFC:0;
         /* half cycle adjusted */
         LLI|=halfc?LLI_HALFA:0; 
         /* set cycle slip if half cycle subtract bit changed state */
-        LLI|=halfc!=raw->halfc[sat-1][idx]?LLI_SLIP:0;
-        raw->halfc[sat-1][idx]=halfc;
+        LLI|=halfc!=raw->halfc[sat-1][mcode]?LLI_SLIP:0;
+        raw->halfc[sat-1][mcode]=halfc;
         /* set cycle slip flag if first valid phase since slip */
-        if (L!=0.0) LLI|=raw->lockflag[sat-1][idx]>0.0?LLI_SLIP:0;
+        if (L!=0.0) LLI|=raw->lockflag[sat-1][mcode]>0?LLI_SLIP:0;
 
         for (j=0;j<n;j++) {
             if (raw->obs.data[j].sat==sat) break;
@@ -519,7 +522,8 @@ static int decode_rxmrawx(raw_t *raw)
         raw->obs.data[j].SNR[idx]=(uint16_t)(cn0*1.0/SNR_UNIT+0.5);
         raw->obs.data[j].LLI[idx]=(uint8_t)LLI;
         raw->obs.data[j].code[idx]=(uint8_t)code;
-        if (L!=0.0) raw->lockflag[sat-1][idx]=0; /* clear slip carry-forward flag if valid phase*/
+        /* clear slip carry-forward flag if valid phase*/
+        if (L!=0.0) raw->lockflag[sat-1][mcode]=0;
     }
     raw->time=time;
     raw->obs.n=n;
@@ -647,10 +651,13 @@ static int decode_trkmeas(raw_t *raw)
         snr  =U2(p+20)/256.0;
         adr  =I8(p+32)*P2_32+(flag&0x40?0.5:0.0);
         dop  =I4(p+40)*P2_10*10.0;
-        
+
+        int code=sys==SYS_CMP?CODE_L2I:CODE_L1C;
+
         /* set slip flag */
-        if (lock2==0||lock2<raw->lockt[sat-1][0]) raw->lockt[sat-1][1]=1.0;
-        raw->lockt[sat-1][0]=lock2;
+        int slip = 0;
+        if (lock2==0||lock2<raw->lockt[sat-1][code]) slip=1;
+        raw->lockt[sat-1][code]=lock2;
         
 #if 0 /* for debug */
         trace(2,"[%2d] qi=%d sys=%d prn=%3d frq=%2d flag=%02X ?=%02X %02X "
@@ -671,16 +678,15 @@ static int decode_trkmeas(raw_t *raw)
         raw->obs.data[n].L[0]=-adr;
         raw->obs.data[n].D[0]=(float)dop;
         raw->obs.data[n].SNR[0]=(uint16_t)(snr/SNR_UNIT+0.5);
-        raw->obs.data[n].code[0]=sys==SYS_CMP?CODE_L2I:CODE_L1C;
+        raw->obs.data[n].code[0]=code;
         raw->obs.data[n].Lstd[0]=8-qi;
-        raw->obs.data[n].LLI[0]=raw->lockt[sat-1][1]>0.0?1:0;
+        raw->obs.data[n].LLI[0]=slip?LLI_SLIP:0;
         if (sys==SYS_SBS) { /* half-cycle valid */
-            raw->obs.data[n].LLI[0]|=lock2>142?0:2;
+            raw->obs.data[n].LLI[0]|=lock2>142?0:LLI_HALFC;
         }
         else {
-            raw->obs.data[n].LLI[0]|=flag&0x80?0:2;
+            raw->obs.data[n].LLI[0]|=flag&0x80?0:LLI_HALFC;
         }
-        raw->lockt[sat-1][1]=0.0;
         /* adjust code measurements for GLONASS sats */
         if (sys==SYS_GLO&&frq>=-7&&frq<=7) {
             if (fw==2) raw->obs.data[n].P[0]+=(double)P_adj_fw2[frq+7];
@@ -777,8 +783,9 @@ static int decode_trkd5(raw_t *raw)
         adr=qi<6?0.0:I8(p+8)*P2_32+(flag&0x01?0.5:0.0);
         dop=I4(p+16)*P2_10/4.0;
         snr=U2(p+32)/256.0;
-        
-        if (snr<=10.0) raw->lockt[sat-1][1]=1.0;
+
+        int slip = 0;
+        if (snr<=10.0) slip=1;
         
 #if 0 /* for debug */
         trace(2,"[%2d] qi=%d sys=%d prn=%3d frq=%2d flag=%02X ts=%1.3f "
@@ -798,8 +805,7 @@ static int decode_trkd5(raw_t *raw)
         raw->obs.data[n].D[0]=(float)dop;
         raw->obs.data[n].SNR[0]=(uint16_t)(snr/SNR_UNIT+0.5);
         raw->obs.data[n].code[0]=sys==SYS_CMP?CODE_L2I:CODE_L1C;
-        raw->obs.data[n].LLI[0]=raw->lockt[sat-1][1]>0.0?1:0;
-        raw->lockt[sat-1][1]=0.0;
+        raw->obs.data[n].LLI[0]=slip?LLI_SLIP:0;
         
         for (j=1;j<NFREQ+NEXOBS;j++) {
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;

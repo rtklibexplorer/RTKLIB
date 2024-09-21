@@ -1316,10 +1316,11 @@ extern int init_raw(raw_t *raw, int format)
     raw->msgtype[0]='\0';
     for (i=0;i<MAXSAT;i++) {
         for (j=0;j<380;j++) raw->subfrm[i][j]=0;
-        for (j=0;j<NFREQ+NEXOBS;j++) {
-            raw->tobs [i][j]=time0;
-            raw->lockt[i][j]=0.0;
-            raw->halfc[i][j]=0;
+        for (int code=0; code<MAXCODE; code++) {
+            raw->tobs [i][code]=time0;
+            raw->lockt[i][code]=0.0;
+            raw->halfc[i][code]=0;
+            raw->lockflag[i][code]=0;
         }
         raw->icpp[i]=raw->off[i]=raw->prCA[i]=raw->dpCA[i]=0.0;
     }
