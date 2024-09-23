@@ -30,7 +30,9 @@ void GloFcnDialog::readRinex()
 
     memset(&nav, 0, sizeof(nav_t));
 
-    filename = QFileDialog::getOpenFileName(this, tr("Open RINEX file"), "", "*.*");
+    filename = QFileDialog::getOpenFileName(this, tr("Open RINEX file"), "", tr("Rinex (*.obs *.*O);;All (*.*)"));
+
+    if (filename.isEmpty()) return;
     
     if (!readrnx(qPrintable(filename), 0, "", NULL, &nav, NULL)) return;
 	

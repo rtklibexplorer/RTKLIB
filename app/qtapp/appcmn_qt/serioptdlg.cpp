@@ -78,7 +78,7 @@ QString SerialOptDialog::getPath()
     QString BitRate_Text = ui->cBBitRate->currentText().split(" ").first();
     QString path;
 
-    path = QString("%1:%2:%3:%4:%5:%6")
+    path = QStringLiteral("%1:%2:%3:%4:%5:%6")
                .arg(Port_Text)
                .arg(BitRate_Text)
                .arg(ui->cBByteSize->currentIndex() ? 8 : 7)
@@ -87,7 +87,7 @@ QString SerialOptDialog::getPath()
                .arg(fctr[ui->cBFlowControl->currentIndex()]);
 
     if (ui->cBOutputTcpPort->isChecked())
-        path += QString("#%1").arg(ui->cBTcpPort->value());
+        path += QStringLiteral("#%1").arg(ui->cBTcpPort->value());
 
     return path;
 }

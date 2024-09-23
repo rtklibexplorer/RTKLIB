@@ -224,7 +224,7 @@ void LogStrDialog::setPath(int stream, int type, const QString &path)
 {
     QLineEdit *edits[] = {ui->lEFilePath1, ui->lEFilePath2, ui->lEFilePath3};
     if ((stream < 0 ) || (stream > 2)) return;
-    if ((type < 0 ) || (type > 4)) return;
+    if ((type < 0 ) || (type > 3)) return;
 
     paths[stream][type] = path;
     ui->cBTimeTag->setChecked(path.contains("::T"));
@@ -244,7 +244,7 @@ QString LogStrDialog::getPath(int stream, int type)
 {
     QLineEdit *edits[] = {ui->lEFilePath1, ui->lEFilePath2, ui->lEFilePath3};
     if ((stream < 0 ) || (stream > 2)) return "";
-    if ((type < 0 ) || (type > 4)) return "";
+    if ((type < 0 ) || (type > 3)) return "";
 
     if (type == 2)
         return setFilePath(edits[stream]->text());

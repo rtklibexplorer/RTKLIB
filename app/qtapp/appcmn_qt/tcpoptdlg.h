@@ -26,8 +26,8 @@ public:
         OPT_NTRIP_CLIENT = 3,
         OPT_NTRIP_CASTER_CLIENT = 4,
         OPT_NTRIP_CASTER_SERVER = 5,
-        UDP_SERVER = 6,
-        UDP_CLIENT = 7
+        OPT_UDP_SERVER = 6,
+        OPT_UDP_CLIENT = 7
     };
 
     explicit TcpOptDialog(QWidget* parent, int options = 0);

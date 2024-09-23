@@ -58,7 +58,7 @@ static const char *help[]={
 " -c        forward/backward combined solutions [off]",
 " -i        instantaneous integer ambiguity resolution [off]",
 " -h        fix and hold for integer ambiguity resolution [off]",
-" -bl bl,std baseline distance and stdev",
+" -bl bl,std     baseline distance and stdev",
 " -e        output x/y/z-ecef position [latitude/longitude/height]",
 " -a        output e/n/u-baseline [latitude/longitude/height]",
 " -n        output NMEA-0183 GGA sentence [off]",
@@ -72,7 +72,8 @@ static const char *help[]={
 " -l lat lon hgt reference (base) receiver latitude/longitude/height (deg/m)",
 "           rover latitude/longitude/height for fixed or ppp-fixed mode",
 " -y level  output solution status (0:off,1:states,2:residuals) [0]",
-" -x level  debug trace level (0:off) [0]"
+" -x level  debug trace level (0:off) [0]",
+" --version display release version",
 };
 /* show message --------------------------------------------------------------*/
 extern int showmsg(const char *format, ...)
@@ -167,12 +168,12 @@ int main(int argc, char **argv)
             for (j=0;j<2;j++) prcopt.baseline[j]=atof(argv[++i]);
         }
         else if (!strcmp(argv[i],"-r")&&i+3<argc) {
-            prcopt.refpos=prcopt.rovpos=0;
+            prcopt.refpos=prcopt.rovpos=POSOPT_POS_XYZ;
             for (j=0;j<3;j++) prcopt.rb[j]=atof(argv[++i]);
             matcpy(prcopt.ru,prcopt.rb,3,1);
         }
         else if (!strcmp(argv[i],"-l")&&i+3<argc) {
-            prcopt.refpos=prcopt.rovpos=0;
+            prcopt.refpos=prcopt.rovpos=POSOPT_POS_LLH;
             for (j=0;j<3;j++) pos[j]=atof(argv[++i]);
             for (j=0;j<2;j++) pos[j]*=D2R;
             pos2ecef(pos,prcopt.rb);

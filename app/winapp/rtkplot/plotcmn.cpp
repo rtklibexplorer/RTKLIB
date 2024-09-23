@@ -329,7 +329,7 @@ TColor __fastcall TPlot::ObsColor(const obsd_t *obs, double az, double el)
         color=SysColor(obs->sat);
     }
     else if (!strcmp(obstype,"ALL")) {
-        for (i=n=0;i<NFREQ&&n<5;i++) {
+        for (i=n=0;i<NFREQ+NEXOBS&&n<5;i++) {
             if (obs->L[i]!=0.0||obs->P[i]!=0.0) n++;
         }
         if (n==0) {

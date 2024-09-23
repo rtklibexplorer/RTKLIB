@@ -26,6 +26,23 @@ PlotOptDialog::PlotOptDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->cBReceiverPosition->setItemData(0, tr("Use single‐point results as receiver positions by using observation and navigation data. For moving receivers, you shall set it."), Qt::ToolTipRole);
+    ui->cBReceiverPosition->setItemData(1, tr("Use uses latitude, longitude and height for static receivers as specified in the Lat/Lon/Hgt fields to the right."), Qt::ToolTipRole);
+    ui->cBReceiverPosition->setItemData(2, tr("Use \"APPROX POSITION XYZ\" in RINEX observation data header as the receiver position."), Qt::ToolTipRole);
+
+    ui->cBOrigin->setItemData(0, tr("Use first solution position"), Qt::ToolTipRole);
+    ui->cBOrigin->setItemData(1, tr("Use last solution position"), Qt::ToolTipRole);
+    ui->cBOrigin->setItemData(2, tr("Use the average of all solution positions"), Qt::ToolTipRole);
+    ui->cBOrigin->setItemData(3, tr("Set origin based on the linearly fitted positions"), Qt::ToolTipRole);
+    ui->cBOrigin->setItemData(4, tr("Use the base station position"), Qt::ToolTipRole);
+    ui->cBOrigin->setItemData(5, tr("Use latitude, longitude and height specified"), Qt::ToolTipRole);
+    ui->cBOrigin->setItemData(6, tr("The receiver ID is assumed as the 4-charactors of the solution file name head and the position is read from the position file"), Qt::ToolTipRole);
+    ui->cBOrigin->setItemData(7, tr("Use image center"), Qt::ToolTipRole);
+    ui->cBOrigin->setItemData(8, tr("Use map center"), Qt::ToolTipRole);
+    for (int i = 0; i < 10; i++)
+        ui->cBOrigin->setItemData(9 + i, tr("Use Waypoint %1").arg(i+1), Qt::ToolTipRole);
+
+
     refDialog = new RefDialog(this, 1);
 
     QCompleter *fileCompleter = new QCompleter(this);
@@ -551,20 +568,20 @@ void PlotOptDialog::loadOptions(QSettings & settings)
     updateFont();
 
     markerColor[0][0] = settings.value("plot/mcolor0", QColor(0xc0, 0xc0, 0xc0)).value<QColor>();
-    markerColor[0][1] = settings.value("plot/mcolor1", QColor(Qt::green)).value<QColor>();
-    markerColor[0][2] = settings.value("plot/mcolor2", QColor(0x00, 0xAA, 0xFF)).value<QColor>();
+    markerColor[0][1] = settings.value("plot/mcolor1", QColor(Qt::darkGreen)).value<QColor>();
+    markerColor[0][2] = settings.value("plot/mcolor2", QColor(0xff, 0xAA, 0x00)).value<QColor>();
     markerColor[0][3] = settings.value("plot/mcolor3", QColor(0xff, 0x00, 0xff)).value<QColor>();
-    markerColor[0][4] = settings.value("plot/mcolor4", QColor(Qt::blue)).value<QColor>();
+    markerColor[0][4] = settings.value("plot/mcolor4", QColor(Qt::darkBlue)).value<QColor>();
     markerColor[0][5] = settings.value("plot/mcolor5", QColor(Qt::red)).value<QColor>();
     markerColor[0][6] = settings.value("plot/mcolor6", QColor(0x80, 0x80, 0x00)).value<QColor>();
     markerColor[0][7] = settings.value("plot/mcolor7", QColor(Qt::gray)).value<QColor>();
     markerColor[1][0] = settings.value("plot/mcolor8", QColor(0xc0, 0xc0, 0xc0)).value<QColor>();
-    markerColor[1][1] = settings.value("plot/mcolor9", QColor(0x80, 0x40, 0x00)).value<QColor>();
-    markerColor[1][2] = settings.value("plot/mcolor10", QColor(0x00, 0x80, 0x80)).value<QColor>();
-    markerColor[1][3] = settings.value("plot/mcolor11", QColor(0xFF, 0x00, 0x80)).value<QColor>();
-    markerColor[1][4] = settings.value("plot/mcolor12", QColor(0xFF, 0x80, 0x00)).value<QColor>();
-    markerColor[1][5] = settings.value("plot/mcolor13", QColor(0x80, 0x80, 0xFF)).value<QColor>();
-    markerColor[1][6] = settings.value("plot/mcolor14", QColor(0xFF, 0x80, 0x80)).value<QColor>();
+    markerColor[1][1] = settings.value("plot/mcolor9", QColor(0x00, 0x40, 0x80)).value<QColor>();
+    markerColor[1][2] = settings.value("plot/mcolor10", QColor(0x80, 0x80, 0x00)).value<QColor>();
+    markerColor[1][3] = settings.value("plot/mcolor11", QColor(0x80, 0x00, 0xff)).value<QColor>();
+    markerColor[1][4] = settings.value("plot/mcolor12", QColor(0x00, 0x80, 0xff)).value<QColor>();
+    markerColor[1][5] = settings.value("plot/mcolor13", QColor(0xff, 0x80, 0x80)).value<QColor>();
+    markerColor[1][6] = settings.value("plot/mcolor14", QColor(0x80, 0x80, 0xff)).value<QColor>();
     markerColor[1][7] = settings.value("plot/mcolor15", QColor(Qt::gray)).value<QColor>();
 
     ui->tBMColor1->setStyleSheet(QString("background-color: %1;").arg(color2String(markerColor[0][1])));

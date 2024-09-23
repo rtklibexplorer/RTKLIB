@@ -16,7 +16,7 @@ MarkDialog::MarkDialog(QWidget *parent)
     ui->setupUi(this);
 
     nMark = 1;
-    ui->lblMarker->setText(QString("%r=%1").arg(nMark, 3, 10, QLatin1Char('0')));
+    ui->lblMarker->setText(QStringLiteral("%r=%1").arg(nMark, 3, 10, QLatin1Char('0')));
 
     connect(ui->btnKeyDlg, &QPushButton::clicked, this, &MarkDialog::showKeyDialog);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &MarkDialog::accept);
@@ -34,7 +34,7 @@ void MarkDialog::accept()
 {
     if (ui->cBMarkerNameC->isChecked()) {
         nMark++;
-        ui->lblMarker->setText(QString("%r=%1").arg(nMark, 3, 10, QLatin1Char('0')));
+        ui->lblMarker->setText(QStringLiteral("%r=%1").arg(nMark, 3, 10, QLatin1Char('0')));
     }
 
     QDialog::accept();

@@ -38,6 +38,7 @@
 #include <QCompleter>
 #include <QFileSystemModel>
 #include <QAction>
+#include <QToolTip>
 
 #include "convmain.h"
 #include "timedlg.h"
@@ -91,7 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     QString app_filename = QApplication::applicationFilePath();
     QFileInfo fi(app_filename);
-    iniFile = fi.absolutePath() + "/" + fi.baseName() + ".ini";
+    iniFile = QDir(fi.absolutePath()).absoluteFilePath(fi.baseName() + ".ini");
 
     convOptDialog = new ConvOptDialog(this);
     timeDialog = new TimeDialog(this);
@@ -383,7 +384,7 @@ void MainWindow::callRtkPlot()
 // callback on button-post-proc ---------------------------------------------
 void MainWindow::callRtkPost()
 {
-    QStringList cmds = {commandPostExe, QString("../../../bin/") + commandPostExe, QString("../rtkpost_qt/") + commandPostExe};
+    QStringList cmds = {commandPostExe, QDir("../../../bin/").filePath(commandPostExe), QDir("../rtkpost_qt/").filePath(commandPostExe)};
     QStringList opts;
     QDir appDir = QDir(QCoreApplication::applicationDirPath());
 
@@ -609,7 +610,8 @@ void MainWindow::viewInputFile()
             (ext == "rnx") || (ext == "RNX")) {
         viewer->show();
         viewer->read(repPath(inputFilename));
-    }
+    } else
+        QToolTip::showText(ui->btnInputFileView->mapToGlobal( QPoint( 0, 0 ) ), tr("<font color='#ff0000'>Unrecognized file type</font>") );
 }
 // callback on button-view-file-1 -------------------------------------------
 void MainWindow::viewOutputFile1()
@@ -795,6 +797,8 @@ void MainWindow::convertFile()
             conversionThread->format = STRFMT_RT17;
         } else if (fi.completeSuffix() == "sbf") {
             conversionThread->format = STRFMT_SEPT;
+        } else if (fi.completeSuffix() == "unc") {
+            conversionThread->format = STRFMT_UNICORE;
         } else if (fi.completeSuffix().toLower() == "obs") {
             conversionThread->format = STRFMT_RINEX;
         } else if (fi.completeSuffix().toLower().contains("nav")) {
@@ -895,7 +899,8 @@ void MainWindow::convertFile()
     conversionThread->rnxopt.navsys = convOptDialog->navSys;
     conversionThread->rnxopt.obstype = convOptDialog->observationType;
     conversionThread->rnxopt.freqtype = convOptDialog->frequencyType;
-    for (i = 0; i < 2; i++) sprintf(conversionThread->rnxopt.comment[i], "%.63s", qPrintable(convOptDialog->comment[i]));
+    for (i = 0; i < 2; i++)
+        rnxcomment(&conversionThread->rnxopt, "%s", qPrintable(convOptDialog->comment[i]));
     for (i = 0; i < 7; i++) strncpy(conversionThread->rnxopt.mask[i], qPrintable(convOptDialog->codeMask[i]), 63);
     conversionThread->rnxopt.autopos = convOptDialog->autoPosition;
     conversionThread->rnxopt.phshift = convOptDialog->phaseShift;

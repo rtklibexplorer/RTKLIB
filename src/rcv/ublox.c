@@ -511,8 +511,6 @@ static int decode_rxmrawx(raw_t *raw)
             }
             n++;
         }
-        prstd=prstd<=9?prstd:9;  /* limit to 9 to fit RINEX format */
-        cpstd=cpstd<=9?cpstd:9;  /* limit to 9 to fit RINEX format */
         raw->obs.data[j].L[idx]=L;
         raw->obs.data[j].P[idx]=P;
         raw->obs.data[j].Lstd[idx]=rcvstds?cpstd:0;

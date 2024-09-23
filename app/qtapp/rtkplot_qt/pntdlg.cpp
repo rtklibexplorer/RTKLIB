@@ -16,7 +16,7 @@ PntDialog::PntDialog(Plot *_plot, QWidget *parent)
     : QDialog(parent), plot(_plot), ui(new Ui::PntDialog)
 {
     ui->setupUi(this);
-    int width[] = {90, 90, 80, 90};
+    int width[] = {150, 150, 120, 150};
     int fontScale = QFontMetrics(ui->tWPntList->font()).height() * 4;
     QStringList labels;
 

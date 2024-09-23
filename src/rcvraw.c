@@ -1371,6 +1371,7 @@ extern int init_raw(raw_t *raw, int format)
     raw->format=format;
     switch (format) {
         case STRFMT_RT17: ret=init_rt17(raw); break;
+        case STRFMT_SEPT: ret=init_sbf(raw); break;
     }
     if (!ret) {
         free_raw(raw);
@@ -1397,6 +1398,7 @@ extern void free_raw(raw_t *raw)
     /* free receiver dependent data */
     switch (raw->format) {
         case STRFMT_RT17: free_rt17(raw); break;
+        case STRFMT_SEPT: free_sbf(raw); break;
     }
     raw->rcv_data=NULL;
 }
@@ -1426,6 +1428,7 @@ extern int input_raw(raw_t *raw, int format, uint8_t data)
         case STRFMT_RT17 : return input_rt17 (raw,data);
         case STRFMT_SEPT : return input_sbf  (raw,data);
         /*case STRFMT_TERSUS: return input_tersus(raw,data);*/
+        case STRFMT_UNICORE : return input_unicore  (raw,data);
     }
     return 0;
 }
@@ -1453,6 +1456,7 @@ extern int input_rawf(raw_t *raw, int format, FILE *fp)
         case STRFMT_RT17 : return input_rt17f (raw,fp);
         case STRFMT_SEPT : return input_sbff  (raw,fp);
         /*case STRFMT_TERSUS: return input_tersusf(raw,fp); */
+        case STRFMT_UNICORE : return input_unicoref  (raw,fp);
     }
     return -2;
 }

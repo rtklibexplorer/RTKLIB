@@ -279,7 +279,7 @@
       <item>
        <widget class="QPushButton" name="btnUpdate">
         <property name="toolTip">
-         <string/>
+         <string>Update display</string>
         </property>
         <property name="text">
          <string>&amp;Update</string>
@@ -289,7 +289,7 @@
       <item>
        <widget class="QDialogButtonBox" name="buttonBox">
         <property name="standardButtons">
-         <set>QDialogButtonBox::Close</set>
+         <set>QDialogButtonBox::StandardButton::Close</set>
         </property>
        </widget>
       </item>

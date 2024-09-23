@@ -7,7 +7,7 @@
    viewBox="0 0 150 150"
    version="1.1"
    id="svg1"
-   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25)"
    sodipodi:docname="fith.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -24,7 +24,7 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="0.71624579"
-     inkscape:cx="181.50194"
+     inkscape:cx="182.20002"
      inkscape:cy="430.01998"
      inkscape:window-width="1920"
      inkscape:window-height="1008"
@@ -40,7 +40,7 @@
      id="layer1"
      transform="translate(-56.888057,-108.97388)">
     <path
-       style="fill:none;stroke:#808080;stroke-width:4.99998;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:none;stroke:#808080;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
        d="m 131.88806,168.97389 1e-5,29.99999"
        id="path1-86"
        sodipodi:nodetypes="cc" />
@@ -59,13 +59,13 @@
        d="m 154.38806,153.97389 40,29.31572 -40,30.68428 z"
        sodipodi:nodetypes="cccc" />
     <path
-       style="fill:none;stroke:#808080;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-       d="m 66.888053,133.97388 1e-5,100.00001"
+       style="fill:#000000;stroke:#808080;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 64.388057,133.97388 1e-5,100.00001"
        id="path1"
        sodipodi:nodetypes="cc" />
     <path
-       style="fill:none;stroke:#808080;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-       d="m 196.88805,133.97388 1e-5,100"
+       style="fill:none;stroke:#808080;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 199.38806,133.97388 1e-5,100"
        id="path1-8"
        sodipodi:nodetypes="cc" />
   </g>

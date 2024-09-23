@@ -57,7 +57,7 @@
 #include "navimain.h"
 #include "graph.h"
 #include "helper.h"
-#include "helper.h"
+#include "labelstretcher.h"
 
 #include "ui_navimain.h"
 
@@ -79,8 +79,6 @@ MainWindow *mainForm;
 #define MAXPANELMODE 7                  // max panel mode
 
 #define SQRT(x)     ((x)<0.0||(x)!=(x)?0.0:sqrt(x))
-
-const QChar degreeChar(0260);           // character code of degree (UTF-8)
 
 // receiver options table ---------------------------------------------------
 static int strtype[] = {                  /* stream types */
@@ -174,7 +172,9 @@ MainWindow::MainWindow(QWidget *parent)
         { "",		      0, NULL,		       ""      }
     };
 
-    rtksvrinit(&rtksvr);
+    rtksvr = (rtksvr_t *)malloc(sizeof(rtksvr_t));
+    if (rtksvr == NULL) std::exit(1);
+    rtksvrinit(rtksvr);
     strinit(&monistr);
 
     setWindowTitle(tr("%1 ver. %2 %3").arg(PRGNAME).arg(VER_RTKLIB, PATCH_LEVEL));
@@ -189,7 +189,7 @@ MainWindow::MainWindow(QWidget *parent)
     inputStrDialog = new InputStrDialog(this);
     outputStrDialog = new OutputStrDialog(this);
     logStrDialog = new LogStrDialog(this);
-    monitor = new MonitorDialog(this, &rtksvr, &monistr);
+    monitor = new MonitorDialog(this, rtksvr, &monistr);
     markDialog = new MarkDialog(this);
     systemTray = new QSystemTrayIcon(this);
 
@@ -199,6 +199,19 @@ MainWindow::MainWindow(QWidget *parent)
     timerCycle = timerInactive = 0;
 
     ui->btnStop->setVisible(false);
+
+    // setup stretcher to adjust label font size to avaiable space
+    stretch = new LabelStretcher(ui->panelSolutionData);
+    stretch->setManaged(ui->lblPosition1);
+    stretch->setManaged(ui->lblPosition2);
+    stretch->setManaged(ui->lblPosition3);
+    stretch->setManaged(ui->lblPositionText1);
+    stretch->setManaged(ui->lblPositionText2);
+    stretch->setManaged(ui->lblPositionText3);
+    stretch->setManaged(ui->lblSolution);
+    stretch->setManaged(ui->lblSolutionText);
+    stretch->setManaged(ui->lblStd);
+    stretch->setManaged(ui->lblNSatellites);
 
     // set up tray menu
     trayMenu->addAction(tr("Main Window..."), this, &MainWindow::expandFromTray);
@@ -265,7 +278,8 @@ MainWindow::~MainWindow()
     delete [] ages;
     delete [] ratioAR;
 
-    rtksvrfree(&rtksvr);
+    rtksvrfree(rtksvr);
+    free(rtksvr);
 }
 
 // callback on form create --------------------------------------------------
@@ -287,7 +301,7 @@ void MainWindow::showEvent(QShowEvent *event)
     strinitcom();
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("RTK navi");
+    parser.setApplicationDescription(tr("RTK Navigation Qt"));
     parser.addHelpOption();
     parser.addVersionOption();
 
@@ -315,7 +329,7 @@ void MainWindow::showEvent(QShowEvent *event)
     }
 
     loadOptions();
-    loadNavigation(&rtksvr.nav);
+    loadNavigation(&rtksvr->nav);
     openMonitorPort(optDialog->monitorPort);
 
     updatePanels();
@@ -326,6 +340,8 @@ void MainWindow::showEvent(QShowEvent *event)
     updateEnable();
 
     updatePlot();
+
+    stretch->resized(ui->panelSolutionData);
 
     if (parser.isSet(autoOption)) {
         serverStart();
@@ -346,7 +362,7 @@ void MainWindow::closeEvent(QCloseEvent *)
         strclose(&monistr);
     }
     saveOptions();
-    saveNavigation(&rtksvr.nav);
+    saveNavigation(&rtksvr->nav);
 }
 // update panel -------------------------------------------------------------
 void MainWindow::updatePanels()
@@ -364,8 +380,7 @@ void MainWindow::updatePanels()
     if (panelMode <= 3) {
         ui->panelSolution->setVisible(true);
         ui->panelSolutionStatus ->setVisible(false);
-    }
-    else {
+    } else {
         ui->panelSolution->setVisible(false);
         ui->panelSolutionStatus ->setVisible(true);
     }
@@ -405,18 +420,27 @@ void MainWindow::updatePanels()
         ui->splitter->setSizes({ui->splitter->size().height()/5, ui->splitter->size().height()/5,
                                 ui->splitter->size().height()/5, ui->splitter->size().height()/5, ui->splitter->size().height()/5});
     }
+
 }
 // update enabled -----------------------------------------------------------
 void MainWindow::updateEnable()
 {
-    ui->btnExpand1->setVisible(plotType[0] == 6);
-    ui->btnShrink1->setVisible(plotType[0] == 6);
-    ui->btnExpand2->setVisible(plotType[1] == 6);
-    ui->btnShrink2->setVisible(plotType[1] == 6);
-    ui->btnExpand3->setVisible(plotType[2] == 6);
-    ui->btnShrink3->setVisible(plotType[2] == 6);
-    ui->btnExpand4->setVisible(plotType[3] == 6);
-    ui->btnShrink4->setVisible(plotType[3] == 6);
+    QPushButton *btnFrequencyType[] = {ui->btnFrequencyType1, ui->btnFrequencyType2, ui->btnFrequencyType3, ui->btnFrequencyType4};
+    QPushButton *btnExpand[] = {ui->btnExpand1, ui->btnExpand2, ui->btnExpand3, ui->btnExpand4};
+    QPushButton *btnShrink[] = {ui->btnShrink1, ui->btnShrink3, ui->btnShrink3, ui->btnShrink4};
+
+    for (int i = 0; i < 4; i++)
+    {
+        btnExpand[i]->setVisible(plotType[i] == 6);
+        btnShrink[i]->setVisible(plotType[i] == 6);
+
+        if (plotType[i] == 5)  // baseline
+            btnFrequencyType[i]->setToolTip(tr("Change baseline mode"));
+        if (plotType[i] == 6)
+            btnFrequencyType[i]->setToolTip(tr("Change track type"));
+        else
+            btnFrequencyType[i]->setToolTip(tr("Change selected frqeuencies"));
+    }
 }
 // callback on button-exit --------------------------------------------------
 void MainWindow::exit()
@@ -457,7 +481,7 @@ void MainWindow::showRtkPlot()
                 .arg(windowTitle(), PRGNAME);
 
     for (const auto& path: cmds)
-        if (execCommand(appDir.filePath(path), opts, 1)) {
+        if (execCommand(appDir.filePath(path), opts)) {
             return;
         }
 
@@ -623,7 +647,7 @@ void MainWindow::showInputStreamDialog()
         inputStrDialog->setStreamFormat(i, inputFormat[i]);
         inputStrDialog->setReceiverOptions(i, receiverOptions[i]);
 
-        /* Paths -> [0]:serial,[1]:tcp,[2]:file,[3]:ftp */
+        /* Paths -> [0]:serial, [1]:tcp, [2]:file, [3]:ftp */
         for (j = 0; j < 4; j++) inputStrDialog->setPath(i, j, paths[i][j]);
     }
     for (i = 0; i < 3; i++)
@@ -761,7 +785,7 @@ void MainWindow::showOutputStreamDialog()
     for (i = 3; i < 5; i++) {
         if (!update[i - 3]) continue;
 
-        rtksvrclosestr(&rtksvr, i);
+        rtksvrclosestr(rtksvr, i);
 
         if (!streamEnabled[i]) continue;
 
@@ -775,7 +799,7 @@ void MainWindow::showOutputStreamDialog()
             continue;
         }
         optDialog->solutionOptions.posf = inputFormat[i];
-        rtksvropenstr(&rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions);
+        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions);
     }
 }
 // callback on button-log-streams -------------------------------------------
@@ -830,7 +854,7 @@ void MainWindow::showLogStreamDialog()
     for (i = 5; i < 8; i++) {
         if (!update[i - 5]) continue;
 
-        rtksvrclosestr(&rtksvr, i);
+        rtksvrclosestr(rtksvr, i);
 
         if (!streamEnabled[i]) continue;
 
@@ -843,7 +867,7 @@ void MainWindow::showLogStreamDialog()
             streamEnabled[i] = 0;
             continue;
         }
-        rtksvropenstr(&rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions);
+        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions);
     }
 }
 // callback on button-solution-show -----------------------------------------
@@ -878,46 +902,38 @@ void MainWindow::changePlotType1()
 {
     trace(3, "changePlotType1\n");
 
-    if (++plotType[0] > 6) plotType[0] = 0;
-
-    updatePlot();
-    updatePosition();
-    updateEnable();
+    changePlotType(0);
 }
 // callback on button-plottype-2 --------------------------------------------
 void MainWindow::changePlotType2()
 {
     trace(3, "changePlotType2\n");
 
-    if (++plotType[1] > 6) plotType[1] = 0;
-
-    updatePlot();
-    updatePosition();
-    updateEnable();
+    changePlotType(1);
 }
 //---------------------------------------------------------------------------
 void MainWindow::changePlotType3()
 {
     trace(3, "changePlotType3\n");
 
-    if (++plotType[2] > 6) plotType[2] = 0;
-
-    updatePlot();
-    updatePosition();
-    updateEnable();
+    changePlotType(2);
 }
 //---------------------------------------------------------------------------
 void MainWindow::changePlotType4()
 {
     trace(3, "changePlotType4\n");
 
-    if (++plotType[3] > 6) plotType[3] = 0;
+    changePlotType(3);
+}
+//---------------------------------------------------------------------------
+void MainWindow::changePlotType(int i)
+{
+    if (++plotType[i] > 6) plotType[i] = 0;
 
     updatePlot();
     updatePosition();
     updateEnable();
-}
-//---------------------------------------------------------------------------
+}//---------------------------------------------------------------------------
 void MainWindow::changeFrequencyType(int i)
 {
     trace(3, "changeFrequencyType\n");
@@ -1122,7 +1138,7 @@ void MainWindow::serverStart()
         }
         for (i = 0; i < MAXSAT; i++) {
             if (!(pcv = searchpcv(i + 1, "", time, &pcvs))) continue;
-            rtksvr.nav.pcvs[i] = *pcv;
+            rtksvr->nav.pcvs[i] = *pcv;
         }
         free(pcvs.pcv);
     }
@@ -1186,7 +1202,7 @@ void MainWindow::serverStart()
     if (optDialog->solutionOptions.geoid > 0 && strlen(optDialog->fileOptions.geoid) > 0)
         opengeoid(optDialog->solutionOptions.geoid, qPrintable(optDialog->fileOptions.geoid));
     if (strlen(optDialog->fileOptions.dcb) > 0)
-        readdcb(optDialog->fileOptions.dcb, &rtksvr.nav, NULL);
+        readdcb(optDialog->fileOptions.dcb, &rtksvr->nav, NULL);
 
     for (i = 0; i < 2; i++) {
         solopt[i] = optDialog->solutionOptions;
@@ -1198,11 +1214,11 @@ void MainWindow::serverStart()
     stropt[3] = optDialog->serverBufferSize;
     stropt[4] = optDialog->fileSwapMargin;
     strsetopt(stropt);
-    strncpy(rtksvr.cmd_reset, qPrintable(resetCommand), 4095);
-    rtksvr.bl_reset = maxBaseLine;
+    strncpy(rtksvr->cmd_reset, qPrintable(resetCommand), 4095);
+    rtksvr->bl_reset = maxBaseLine;
 
     // start rtk server
-    if (!rtksvrstart(&rtksvr, optDialog->serverCycle, optDialog->serverBufferSize, streamTypes, (const char **)serverPaths, inputFormat, optDialog->navSelect,
+    if (!rtksvrstart(rtksvr, optDialog->serverCycle, optDialog->serverBufferSize, streamTypes, (const char **)serverPaths, inputFormat, optDialog->navSelect,
                       (const char **)cmds, (const char **)cmds_periodic, (const char **)rcvopts, optDialog->nmeaCycle, nmeaRequestType, nmeapos,
                      &optDialog->processingOptions, solopt, &monistr, errmsg)) {
 
@@ -1260,7 +1276,7 @@ void MainWindow::serverStop()
 
     for (i = 0; i < 3; i++) {
         cmds[i] = NULL;
-        streamTypes = rtksvr.stream[i].type;
+        streamTypes = rtksvr->stream[i].type;
 
         if (streamTypes == STR_SERIAL) {
             cmds[i] = new char[1024];
@@ -1272,7 +1288,7 @@ void MainWindow::serverStop()
             if (commandEnableTcp[i][1]) strncpy(cmds[i], qPrintable(commandsTcp[i][1]), 1023);
         }
     }
-    rtksvrstop(&rtksvr, (const char **)cmds);
+    rtksvrstop(rtksvr, (const char **)cmds);
 
     for (i = 0; i < 3; i++) delete[] cmds[i];
 
@@ -1286,11 +1302,11 @@ void MainWindow::serverStop()
     ui->sBSolution->setEnabled(true);
     ui->btnStop->setVisible(false);
     menuStopAction->setEnabled(false);
-    setWidgetBackgroundColor(ui->lblServer, QColor(Qt::gray));
+    setWidgetBackgroundColor(ui->lblServer, QColor(Qt::darkGray));
 
     setTrayIcon(1);
 
-    setWidgetTextColor(ui->lblTime, QColor(Qt::gray));
+    setWidgetTextColor(ui->lblTime, QColor(Qt::darkGray));
     setWidgetBackgroundColor(ui->lblIndicatorSolution, QColor(Qt::white));
 
     n = solutionsEnd - solutionsStart; if (n < 0) n += optDialog->solutionBufferSize;
@@ -1315,17 +1331,17 @@ void MainWindow::updateServer()
 
     timerCycle++;
 
-    rtksvrlock(&rtksvr);
+    rtksvrlock(rtksvr);
 
-    for (i = 0; i < rtksvr.nsol; i++) {
-        sol = rtksvr.solbuf + i;
-        updateLog(sol->stat, sol->time, sol->rr, sol->qr, rtksvr.rtk.rb, sol->ns, sol->age, sol->ratio);
+    for (i = 0; i < rtksvr->nsol; i++) {
+        sol = rtksvr->solbuf + i;
+        updateLog(sol->stat, sol->time, sol->rr, sol->qr, rtksvr->rtk.rb, sol->ns, sol->age, sol->ratio);
         update = 1;
     }
-    rtksvr.nsol = 0;
-    solutionCurrentStatus = rtksvr.state ? rtksvr.rtk.sol.stat : 0;
+    rtksvr->nsol = 0;
+    solutionCurrentStatus = rtksvr->state ? rtksvr->rtk.sol.stat : 0;
 
-    rtksvrunlock(&rtksvr);
+    rtksvrunlock(rtksvr);
 
     if (update) {
         updateTime();
@@ -1340,8 +1356,8 @@ void MainWindow::updateServer()
         setWidgetTextColor(ui->lblTime, QColor(Qt::black));
     } else {
         setWidgetBackgroundColor(ui->lblIndicatorSolution, QColor(Qt::white));
-        setWidgetTextColor(ui->lblSolution, QColor(Qt::gray));
-        setWidgetBackgroundColor(ui->lblServer, rtksvr.state ? QColor(Qt::green) : QColor(Qt::gray));
+        setWidgetTextColor(ui->lblSolution, QColor(Qt::darkGray));
+        setWidgetBackgroundColor(ui->lblServer, rtksvr->state ? QColor(Qt::darkGreen) : QColor(Qt::darkGray));
     }
 
     if (!(++timerCycle % 5)) updatePlot();
@@ -1359,7 +1375,7 @@ void MainWindow::updateServer()
 // update time-system -------------------------------------------------------
 void MainWindow::updateTimeSystem()
 {
-    static const QString label[] = {tr("GPST"), tr("UTC"), tr("LT"), tr("GPST")};
+    static const QString label[] = {tr("GPST"), tr("UTC"), tr("Local"), tr("GPST")};
 
     trace(3, "updateTimeSystem\n");
 
@@ -1377,7 +1393,7 @@ void MainWindow::updateSolutionType()
 
     trace(3, "updateSolutionType\n");
 
-    ui->lblSolutionText->setText(label[solutionType]);
+    ui->lblLatLonHeight->setText(label[solutionType]);
 
     updatePosition();
 }
@@ -1429,12 +1445,10 @@ void MainWindow::updateFont()
         setWidgetTextColor(label[8], optDialog->positionFontColor);
     }
     QFont tmpFont = optDialog->positionFont;
-    tmpFont.setPointSize(9);
     label[0]->setFont(tmpFont);
     setWidgetTextColor(label[7], color);
-    tmpFont.setPointSize(8);
-    label[8]->setFont(tmpFont); setWidgetTextColor(label[8], QColor(Qt::gray));
-    label[9]->setFont(tmpFont); setWidgetTextColor(label[9], QColor(Qt::gray));
+    label[8]->setFont(tmpFont); setWidgetTextColor(label[8], QColor(Qt::darkGray));
+    label[9]->setFont(tmpFont); setWidgetTextColor(label[9], QColor(Qt::darkGray));
 }
 // update time --------------------------------------------------------------
 void MainWindow::updateTime()
@@ -1456,13 +1470,14 @@ void MainWindow::updateTime()
         str = tstr;
     } else if (timeSystem == 2) {  // local time
         time = gpst2utc(time);
+
         if (!(t = localtime(&time.time))) str = "2000/01/01 00:00:00.0";
         else str = QString("%1/%2/%3 %4:%5:%6.%7").arg(t->tm_year + 1900, 4, 10, QChar('0'))
                .arg(t->tm_mon + 1, 2, 10, QChar('0')).arg(t->tm_mday, 2, 10, QChar('0')).arg(t->tm_hour, 2, 10, QChar('0')).arg(t->tm_min, 2, 10, QChar('0'))
                .arg(t->tm_sec, 2, 10, QChar('0')).arg(static_cast<int>(time.sec * 10));
     } else if (timeSystem == 3) {  // GPS time (week & TOW)
         tow = time2gpst(time, &week);
-        str = tr("week %1 %2 s").arg(week, 4, 10, QChar('0')).arg(tow, 8, 'f', 1);
+        str = tr("week: %L1, %L2 s").arg(week, 4, 10, QChar('0')).arg(tow, 8, 'f', 1);
     }
     ui->lblTime->setText(str);
 }
@@ -1473,7 +1488,7 @@ void MainWindow::updatePosition()
                        ui->lblPosition1, ui->lblPosition2, ui->lblPosition3, ui->lblStd, ui->lblNSatellites};
     static const QString sol[] = {tr("----"), tr("FIX"), tr("FLOAT"), tr("SBAS"), tr("DGPS"), tr("SINGLE"), tr("PPP")};
     QString s[9], ext;
-    static const QColor color[] = {QColor(QColorConstants::Svg::silver), QColor(Qt::green), Color::Orange, Color::Fuchsia, QColor(Qt::blue), QColor(Qt::red), Color::Teal};
+    static const QColor color[] = {QColor(Qt::lightGray), QColor(Qt::darkGreen), Color::Orange, Color::Fuchsia, QColor(Qt::blue), QColor(Qt::red), Color::Teal};
     double *rrover = solutionRover + solutionsCurrent * 3;
     double *rbase = solutionReference + solutionsCurrent * 3;
     double *qrover = solutionQr + solutionsCurrent * 9;
@@ -1483,15 +1498,15 @@ void MainWindow::updatePosition()
 
     trace(4, "updatePosition\n");
 
-    if (rtksvr.rtk.opt.mode == PMODE_STATIC || rtksvr.rtk.opt.mode == PMODE_PPP_STATIC)
+    if (rtksvr->rtk.opt.mode == PMODE_STATIC || rtksvr->rtk.opt.mode == PMODE_PPP_STATIC)
         ext = " (S)";
-    else if (rtksvr.rtk.opt.mode == PMODE_FIXED || rtksvr.rtk.opt.mode == PMODE_PPP_FIXED)
+    else if (rtksvr->rtk.opt.mode == PMODE_FIXED || rtksvr->rtk.opt.mode == PMODE_PPP_FIXED)
         ext = " (F)";
     ui->lblSolutionText->setText(tr("Solution%1:").arg(ext));
 
     ui->lblSolution->setText(sol[stat]);
-    setWidgetTextColor(ui->lblSolution, rtksvr.state ? color[stat] : QColor(Qt::gray));
-    setWidgetBackgroundColor(ui->lblIndicatorSolution, rtksvr.state ? color[stat] : QColor(Qt::white));
+    setWidgetTextColor(ui->lblSolution, rtksvr->state ? color[stat] : QColor(Qt::darkGray));
+    setWidgetBackgroundColor(ui->lblIndicatorSolution, rtksvr->state ? color[stat] : QColor(Qt::white));
     ui->lblIndicatorSolution->setToolTip(sol[stat]);
 
     if (norm(rrover, 3) > 0.0 && norm(rbase, 3) > 0.0)
@@ -1510,10 +1525,10 @@ void MainWindow::updatePosition()
         s[0] = pos[0] < 0 ? tr("S:") : tr("N:");
         s[1] = pos[1] < 0 ? tr("W:") : tr("E:");
         s[2] = optDialog->solutionOptions.height == 1 ? tr("H:") : tr("He:");
-        s[3] = tr("%1%2 %3' %4\"").arg(fabs(dms1[0]), 0, 'f', 0).arg(degreeChar).arg(dms1[1], 2, 'f', 0, '0').arg(dms1[2], 7, 'f', 4, '0');
-        s[4] = tr("%1%2 %3' %4\"").arg(fabs(dms2[0]), 0, 'f', 0).arg(degreeChar).arg(dms2[1], 2, 'f', 0, '0').arg(dms2[2], 7, 'f', 4, '0');
-        s[5] = tr("%1 m").arg(pos[2], 0, 'f', 3);
-        s[6] = tr("N: %1, E: %2, U: %3 m").arg(SQRT(Qe[4]), 6, 'f', 3).arg(SQRT(Qe[0]), 6, 'f', 3).arg(SQRT(Qe[8]), 6, 'f', 3);
+        s[3] = tr("%L1° %L2' %L3\"").arg(fabs(dms1[0]), 0, 'f', 0).arg(dms1[1], 2, 'f', 0, '0').arg(dms1[2], 7, 'f', 4, '0');
+        s[4] = tr("%L1° %L2' %L3\"").arg(fabs(dms2[0]), 0, 'f', 0).arg(dms2[1], 2, 'f', 0, '0').arg(dms2[2], 7, 'f', 4, '0');
+        s[5] = tr("%L1 m").arg(pos[2], 0, 'f', 3);
+        s[6] = tr("N: %L1 m, E: %L2 m, U: %L3 m").arg(SQRT(Qe[4]), 6, 'f', 3).arg(SQRT(Qe[0]), 6, 'f', 3).arg(SQRT(Qe[8]), 6, 'f', 3);
     } else if (solutionType == 1) {  // deg
         if (norm(rrover, 3) > 0.0) {
             ecef2pos(rrover, pos); covenu(pos, qrover, Qe);
@@ -1522,29 +1537,29 @@ void MainWindow::updatePosition()
         s[0] = pos[0] < 0 ? tr("S:") : tr("N:");
         s[1] = pos[1] < 0 ? tr("W:") : tr("E:");
         s[2] = optDialog->solutionOptions.height == 1 ? tr("H:") : tr("He:");
-        s[3] = QStringLiteral("%1 %2").arg(fabs(pos[0]) * R2D, 0, 'f', 8).arg(degreeChar);
-        s[4] = QStringLiteral("%1 %2").arg(fabs(pos[1]) * R2D, 0, 'f', 8).arg(degreeChar);
-        s[5] = QStringLiteral("%1").arg(pos[2], 0, 'f', 3);
-        s[6] = tr("N: %1, E: %2, U: %3, m").arg(SQRT(Qe[4]), 6, 'f', 3).arg(SQRT(Qe[0]), 6, 'f', 3).arg(SQRT(Qe[8]), 6, 'f', 3);
+        s[3] = QStringLiteral("%L1°").arg(fabs(pos[0]) * R2D, 0, 'f', 8);
+        s[4] = QStringLiteral("%L1°").arg(fabs(pos[1]) * R2D, 0, 'f', 8);
+        s[5] = QStringLiteral("%L1").arg(pos[2], 0, 'f', 3);
+        s[6] = tr("N: %L1 m, E: %L2 m, U: %L3 m").arg(SQRT(Qe[4]), 6, 'f', 3).arg(SQRT(Qe[0]), 6, 'f', 3).arg(SQRT(Qe[8]), 6, 'f', 3);
     } else if (solutionType == 2) {  // XYZ
         s[0] = "X:";
         s[1] = "Y:";
         s[2] = "Z:";
-        s[3] = tr("%1 m").arg(rrover[0], 0, 'f', 3);
-        s[4] = tr("%1 m").arg(rrover[1], 0, 'f', 3);
-        s[5] = tr("%1 m").arg(rrover[2], 0, 'f', 3);
-        s[6] = tr("X: %1, Y: %2, Z: %3 m").arg(SQRT(qrover[0]), 6, 'f', 3).arg(SQRT(qrover[4]), 6, 'f', 3).arg(SQRT(qrover[8]), 6, 'f', 3);
+        s[3] = tr("%L1 m").arg(rrover[0], 0, 'f', 3);
+        s[4] = tr("%L1 m").arg(rrover[1], 0, 'f', 3);
+        s[5] = tr("%L1 m").arg(rrover[2], 0, 'f', 3);
+        s[6] = tr("X: %L1 m, Y: %L2 m, Z: %L3 m").arg(SQRT(qrover[0]), 6, 'f', 3).arg(SQRT(qrover[4]), 6, 'f', 3).arg(SQRT(qrover[8]), 6, 'f', 3);
     } else if (solutionType == 3) {  // ENU
         if (len > 0.0) {
             ecef2pos(rbase, pos);
             ecef2enu(pos, baseline, enu);
             covenu(pos, qrover, Qe);
         }
-        s[0] = "E:"; s[1] = "N:"; s[2] = "U:";
-        s[3] = tr("%1 m").arg(enu[0], 0, 'f', 3);
-        s[4] = tr("%1 m").arg(enu[1], 0, 'f', 3);
-        s[5] = tr("%1 m").arg(enu[2], 0, 'f', 3);
-        s[6] = tr("N: %1, E: %2, U: %3 m").arg(SQRT(Qe[4]), 6, 'f', 3).arg(SQRT(Qe[0]), 6, 'f', 3).arg(SQRT(Qe[8]), 6, 'f', 3);
+        s[0] = tr("E:"); s[1] = tr("N:"); s[2] = tr("U:");
+        s[3] = tr("%L1 m").arg(enu[0], 0, 'f', 3);
+        s[4] = tr("%L1 m").arg(enu[1], 0, 'f', 3);
+        s[5] = tr("%L1 m").arg(enu[2], 0, 'f', 3);
+        s[6] = tr("N: %L1 m, E: %L2 m, U: %L3 m").arg(SQRT(Qe[4]), 6, 'f', 3).arg(SQRT(Qe[0]), 6, 'f', 3).arg(SQRT(Qe[8]), 6, 'f', 3);
     } else {  // pitch/yaw/len
         if (len > 0.0) {
             ecef2pos(rbase, pos);
@@ -1556,26 +1571,26 @@ void MainWindow::updatePosition()
         s[0] = tr("P:");
         s[1] = tr("Y:");
         s[2] = tr("L:");
-        s[3] = QStringLiteral("%1 %2").arg(pitch * R2D, 0, 'f', 3).arg(degreeChar);
-        s[4] = QStringLiteral("%1 %2").arg(yaw * R2D, 0, 'f', 3).arg(degreeChar);
-        s[5] = tr("%1 m").arg(len, 0, 'f', 3);
-        s[6] = tr("N: %1, E: %2, U: %3 m").arg(SQRT(Qe[4]), 6, 'f', 3).arg(SQRT(Qe[0]), 6, 'f', 3).arg(SQRT(Qe[8]), 6, 'f', 3);
+        s[3] = tr("%L1°").arg(pitch * R2D, 0, 'f', 3);
+        s[4] = tr("%L1°").arg(yaw * R2D, 0, 'f', 3);
+        s[5] = tr("%L1 m").arg(len, 0, 'f', 3);
+        s[6] = tr("N: %L1 m, E: %L2 m, U: %L3 m").arg(SQRT(Qe[4]), 6, 'f', 3).arg(SQRT(Qe[0]), 6, 'f', 3).arg(SQRT(Qe[8]), 6, 'f', 3);
     }
-    s[7] = tr("Age: %1 s, Ratio: %2, #Sat: %3").arg(ages[solutionsCurrent], 4, 'f', 1).arg(ratioAR[solutionsCurrent], 4, 'f', 1).arg(numValidSatellites[solutionsCurrent], 2);
+    s[7] = tr("Age: %L1 s, Ratio: %L2, #Sat: %L3").arg(ages[solutionsCurrent], 4, 'f', 1).arg(ratioAR[solutionsCurrent], 4, 'f', 1).arg(numValidSatellites[solutionsCurrent], 2);
 
     if (ratioAR[solutionsCurrent] > 0.0)
-        s[8] = tr(" R: %1").arg(ratioAR[solutionsCurrent], 4, 'f', 1);
+        s[8] = tr(" R: %L1").arg(ratioAR[solutionsCurrent], 4, 'f', 1);
 
     for (i = 0; i < 8; i++)
         label[i]->setText(s[i]);
     for (i = 3; i < 6; i++)
-        setWidgetTextColor(label[i], optDialog->processingOptions.mode == PMODE_MOVEB && solutionType <= 2 ? QColor(Qt::gray) : QColor(Qt::black));
+        setWidgetTextColor(label[i], optDialog->processingOptions.mode == PMODE_MOVEB && solutionType <= 2 ? QColor(Qt::darkGray) : QColor(Qt::black));
 
-    setWidgetBackgroundColor(ui->lblIndicatorQ, ui->lblIndicatorSolution->palette().color(ui->lblIndicatorSolution->foregroundRole()));
+    setWidgetBackgroundColor(ui->lblIndicatorQ, ui->lblIndicatorSolution->palette().color(ui->lblIndicatorSolution->backgroundRole()));
     ui->lblIndicatorQ->setToolTip(ui->lblIndicatorSolution->toolTip());
     ui->lblSolutionS->setText(ui->lblSolution->text());
     setWidgetTextColor(ui->lblSolutionS, ui->lblSolution->palette().color(ui->lblSolution->foregroundRole()));
-    ui->lblSolutionQ->setText(QStringLiteral("%1 %2 %3 %4 %5 %6 %7%8").arg(
+    ui->lblSolutionQ->setText(QStringLiteral("%1 %2 %3, %4 %5, %6 %7 %8").arg(
                                                                 ext,
                                                                 label[0]->text(),
                                                                 label[3]->text(),
@@ -1588,14 +1603,14 @@ void MainWindow::updatePosition()
 // update stream status indicators ------------------------------------------
 void MainWindow::updateStream()
 {
-    static const QColor color[] = {QColor(Qt::red), QColor(Qt::white), Color::Orange, Color::Green, Color::Lime};
+    static const QColor color[] = {QColor(Qt::red), QColor(Qt::white), Color::Orange, Qt::darkGreen, Color::Lime};
     QLabel *ind[MAXSTRRTK] = {ui->lblStream1, ui->lblStream2, ui->lblStream3, ui->lblStream4, ui->lblStream5, ui->lblStream6, ui->lblStream7, ui->lblStream8};
     int i, sstat[MAXSTRRTK] = {0};
     char msg[MAXSTRMSG] = "";
 
     trace(4, "updateStream\n");
 
-    rtksvrsstat(&rtksvr, sstat, msg);
+    rtksvrsstat(rtksvr, sstat, msg);
     for (i = 0; i < MAXSTRRTK; i++) {
         setWidgetBackgroundColor(ind[i], color[sstat[i]+1]);
         if (sstat[i]) {
@@ -1616,6 +1631,7 @@ void MainWindow::drawSolutionPlot(QLabel *plot, int type, int freq)
     QPixmap buffer(plot->size());
 
     QPainter c(&buffer);
+    c.setRenderHint(QPainter::Antialiasing);
     QFont font;
     font.setPixelSize(8);
     c.setFont(font);
@@ -1642,13 +1658,13 @@ void MainWindow::drawSolutionPlot(QLabel *plot, int type, int freq)
         snr0[i] = snr[0][i];
         snr1[i] = snr[1][i];
     }
-    ns[0] = rtksvrostat(&rtksvr, 0, &time, sat[0], az[0], el[0], snr0, vsat[0]);
-    ns[1] = rtksvrostat(&rtksvr, 1, &time, sat[1], az[1], el[1], snr1, vsat[1]);
+    ns[0] = rtksvrostat(rtksvr, 0, &time, sat[0], az[0], el[0], snr0, vsat[0]);
+    ns[1] = rtksvrostat(rtksvr, 1, &time, sat[1], az[1], el[1], snr1, vsat[1]);
 
-    rtksvrlock(&rtksvr);
-    matcpy(rr, rtksvr.rtk.sol.rr, 3, 1);
+    rtksvrlock(rtksvr);
+    matcpy(rr, rtksvr->rtk.sol.rr, 3, 1);
     ecef2pos(rr, pos);
-    rtksvrunlock(&rtksvr);
+    rtksvrunlock(rtksvr);
 
     for (i = 0; i < 2; i++) {
         if (ns[i] > 0) {
@@ -1675,57 +1691,57 @@ void MainWindow::drawSolutionPlot(QLabel *plot, int type, int freq)
         if (w <= 3 * h) { // vertical
             drawSnr(c, w, (h - topMargin) / 2, 0, topMargin, 0, freq);
             drawSnr(c, w, (h - topMargin) / 2, 0, topMargin + (h - topMargin) / 2, 1, freq);
-            s1 = tr("Rover: Base %1 SNR (dBHz)").arg(fstr[freq]);
-            drawText(c, x, 1, s1, Qt::gray, 1, 2);
+            s1 = tr("Rover: Base %L1 SNR (dBHz)").arg(fstr[freq]);
+            drawText(c, x, 1, s1, Qt::darkGray, 1, 2);
         } else { // horizontal
             drawSnr(c, w / 2, h - topMargin, 0, topMargin, 0, freq);
             drawSnr(c, w / 2, h - topMargin, w / 2, topMargin, 1, freq);
-            s1 = tr("Rover %1 SNR (dBHz)").arg(fstr[freq]);
-            s2 = tr("Base %1 SNR (dBHz)").arg(fstr[freq]);
-            drawText(c, x, 1, s1, Qt::gray, 1, 2);
-            drawText(c, w / 2 + x, 1, s2, Qt::gray, 1, 2);
+            s1 = tr("Rover %L1 SNR (dBHz)").arg(fstr[freq]);
+            s2 = tr("Base %L1 SNR (dBHz)").arg(fstr[freq]);
+            drawText(c, x, 1, s1, Qt::darkGray, 1, 2);
+            drawText(c, w / 2 + x, 1, s2, Qt::darkGray, 1, 2);
         }
     } else if (type == 1) { // snr plot rover
         drawSnr(c, w, h - topMargin, 0, topMargin, 0, type);
-        s1 = tr("Rover %1 SNR (dBHz)").arg(fstr[freq]);
-        drawText(c, x, 1, s1, Qt::gray, 1, 2);
+        s1 = tr("Rover %L1 SNR (dBHz)").arg(fstr[freq]);
+        drawText(c, x, 1, s1, Qt::darkGray, 1, 2);
     } else if (type == 2) { // skyplot rover
         drawSatellites(c, w, h, 0, 0, 0, type);
-        s1 = tr("Rover %1").arg(fstr[type]);
-        drawText(c, x, 1, s1, Qt::gray, 1, 2);
+        s1 = tr("Rover %L1").arg(fstr[type]);
+        drawText(c, x, 1, s1, Qt::darkGray, 1, 2);
     } else if (type == 3) { // skyplot+snr plot rover
-        s1 = tr("Rover %1").arg(fstr[freq]);
+        s1 = tr("Rover %L1").arg(fstr[freq]);
         s2 = tr("SNR (dBHz)");
         if (w >= h * 2) { // horizontal
             drawSatellites(c, h, h, 0, 0, 0, freq);
             drawSnr(c, w - h, h - topMargin, h, topMargin, 0, freq);
-            drawText(c, x, 1, s1, Qt::gray, 1, 2);
-            drawText(c, x + h, 1, s2, Qt::gray, 1, 2);
+            drawText(c, x, 1, s1, Qt::darkGray, 1, 2);
+            drawText(c, x + h, 1, s2, Qt::darkGray, 1, 2);
         } else { // vertical
             drawSatellites(c, w, h / 2, 0, 0, 0, freq);
             drawSnr(c, w, (h - topMargin) / 2, 0, topMargin + (h - topMargin) / 2, 0, freq);
-            drawText(c, x, 1, s1, Qt::gray, 1, 2);
+            drawText(c, x, 1, s1, Qt::darkGray, 1, 2);
         }
     } else if (type == 4) { // skyplot rover+base
-        s1 = tr("Rover %1").arg(fstr[freq]);
-        s2 = tr("Base %1").arg(fstr[freq]);
+        s1 = tr("Rover %L1").arg(fstr[freq]);
+        s2 = tr("Base %L1").arg(fstr[freq]);
         if (w >= h) { // horizontal
             drawSatellites(c, w / 2, h, 0, 0, 0, freq);
             drawSatellites(c, w / 2, h, w / 2, 0, 1, freq);
-            drawText(c, x, 1, s1, Qt::gray, 1, 2);
-            drawText(c, x + w / 2, 1, s2, Qt::gray, 1, 2);
+            drawText(c, x, 1, s1, Qt::darkGray, 1, 2);
+            drawText(c, x + w / 2, 1, s2, Qt::darkGray, 1, 2);
         } else { // vertical
             drawSatellites(c, w, h / 2, 0, 0, 0, freq);
             drawSatellites(c, w, h / 2, 0, h / 2, 1, freq);
-            drawText(c, x, 1, s1, Qt::gray, 1, 2);
-            drawText(c, x, h / 2 + 1, s2, Qt::gray, 1, 2);
+            drawText(c, x, 1, s1, Qt::darkGray, 1, 2);
+            drawText(c, x, h / 2 + 1, s2, Qt::darkGray, 1, 2);
         }
     } else if (type == 5) { // baseline plot
         drawBaseline(c, id, w, h);
-        drawText(c, x, 1, tr("Baseline"), Qt::gray, 1, 2);
+        drawText(c, x, 1, tr("Baseline"), Qt::darkGray, 1, 2);
     } else if (type == 6) { // track plot
         drawTrack(c, id, &buffer);
-        drawText(c, x, 3, tr("Gnd Trk"), Qt::gray, 1, 2);
+        drawText(c, x, 3, tr("Gnd Trk"), Qt::darkGray, 1, 2);
     }
     plot->setPixmap(buffer);
 }
@@ -1748,7 +1764,7 @@ void MainWindow::updatePlot()
 // snr color ----------------------------------------------------------------
 QColor MainWindow::snrColor(int snr)
 {
-    QColor color[] = {Qt::green, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Qt::gray};
+    QColor color[] = {Qt::darkGreen, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Qt::darkGray};
     uint32_t r1, g1, b1;
     QColor c1, c2;
     double a;
@@ -1773,11 +1789,11 @@ void MainWindow::drawSnr(QPainter &c, int w, int h, int x0, int y0,
              int index, int freq)
 {
     static const QColor color[] = {
-        QColor(0,   128, 0), QColor(0, 128, 128), QColor(0xA0,   0, 0xA0),
-        QColor(128, 0,	 0), QColor(0, 0,   128), QColor( 128, 128,    0),
+        QColor(0  , 128,   0), QColor(128, 128,  0), QColor(0xA0,   0, 0xA0),
+        QColor(0  ,   0, 128), QColor(128,   0,  0), QColor(   0, 128,  128),
         QColor(128, 128, 128)
     };
-    static const QColor color_sys[] = {Qt::green, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Color::Teal, Qt::gray};
+    static const QColor color_sys[] = {Qt::darkGreen, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Color::Teal, Qt::darkGray};
     int i, j, snrIdx, sysIdx, numSystems, x1, y1, height, offset, topMargin, bottomMargin, hh, barDistance, barWidth, snr[NFREQ + 1], sysMask[7] = {0};
     char id[16], sys[] = "GREJCS", *q;
 
@@ -1794,16 +1810,17 @@ void MainWindow::drawSnr(QPainter &c, int w, int h, int x0, int y0,
     for (snr[0] = MINSNR + 10; snr[0] < MAXSNR; snr[0] += 10) {
         y1 = y0 + hh - (snr[0] - MINSNR) * hh / (MAXSNR - MINSNR);
         c.drawLine(x0 + 2, y1, x0 + w - 20, y1);
-        drawText(c, x0 + w - 4, y1, QString::number(snr[0]), Qt::gray, 2, 0);
+        drawText(c, x0 + w - 4, y1, QLocale().toString(snr[0]), Qt::darkGray, 2, 0);
     }
 
     // draw outer box
     y1 = y0 + hh;
     QRect b(x0 + 2, y0, w - 2, hh);
     c.setBrush(Qt::NoBrush);
-    c.setPen(Qt::gray);
+    c.setPen(Qt::darkGray);
     c.drawRect(b);
 
+    // draw SNR bars
     for (i = 0; i < numSatellites[index] && i < MAXSAT; i++) {
         barDistance = (w - 16) / numSatellites[index];
         barWidth = barDistance - 2 < 8 ? barDistance - 2 : 8;
@@ -1829,7 +1846,7 @@ void MainWindow::drawSnr(QPainter &c, int w, int h, int x0, int y0,
                 if (!validSatellites[index][i])
                     c.setBrush(QBrush(QColor(QColorConstants::LightGray), Qt::SolidPattern));
             } else {  // outline only
-                c.setPen(j < NFREQ + 1 ? QColor(QColorConstants::LightGray) : Qt::gray);
+                c.setPen(j < NFREQ + 1 ? QColor(QColorConstants::LightGray) : Qt::darkGray);
                 c.setBrush(Qt::NoBrush);
             }
             c.drawRect(r1);
@@ -1853,12 +1870,12 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
                                 int index, int freq)
 {
     static const QColor color_sys[] = {
-        Qt::green, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Qt::darkCyan, Qt::gray
+        Qt::darkGreen, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Qt::darkCyan, Qt::darkGray
     };
     QColor color_text;
     QPoint p(w / 2, h / 2);
     double r = qMin(w * 0.95, h * 0.95) / 2, azel[MAXSAT * 2], dop[4];
-    int i, j, k, sysIdx, radius, x[MAXSAT], y[MAXSAT], snr[NFREQ+1], nsats = 0;
+    int i, j, k, sysIdx, radius, x[MAXSAT], y[MAXSAT], snr[NFREQ + 1], nsats = 0;
     char id[16], sys[] = "GREJCIS", *q;
 
     trace(4, "drawSatellites: w=%d h=%d index=%d freq=%d\n", w, h, index, freq);
@@ -1887,7 +1904,7 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
 
         c.setBrush(!validSatellites[index][k] ? Color::Silver :
                         (freq < NFREQ ? snrColor(snr[freq]) : color_sys[sysIdx]));
-        c.setPen(Qt::gray);
+        c.setPen(Qt::darkGray);
         color_text = Qt::white;
         if (freq < NFREQ + 1 && snr[freq] <= 0) {
             c.setPen(Color::Silver);
@@ -1900,14 +1917,14 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
 
     // draw annotations
     dops(nsats, azel, 0.0, dop);
-    drawText(c, x0 + 3, y0 + h, tr("# Sat: %1/%2").arg(nsats,2).arg(numSatellites[index], 2), Qt::gray, 1, 1);
-    drawText(c, x0 + w - 3, y0 + h, tr("GDOP: %1").arg(dop[0], 0, 'f', 1), Qt::gray, 2, 1);
+    drawText(c, x0 + 3, y0 + h, tr("# Sat: %L1/%L2").arg(nsats, 2).arg(numSatellites[index], 2), Qt::darkGray, 1, 1);
+    drawText(c, x0 + w - 3, y0 + h, tr("GDOP: %L1").arg(dop[0], 0, 'f', 1), Qt::darkGray, 2, 1);
 }
 // draw baseline plot -------------------------------------------------------
 void MainWindow::drawBaseline(QPainter &c, int id, int w, int h)
 {
-    static const QColor colors[] = {Color::Silver, Qt::green, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Color::Teal};
-    static const QString directions[] = {tr("N"), tr("E"), tr("S"), tr("W")};
+    static const QColor colors[] = {Color::Silver, Qt::darkGreen, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Color::Teal};
+    static const QString directions = tr("NESW");
     QPoint center(w / 2, h / 2), p1, p2, pp;
     double radius = qMin(w * 0.95, h * 0.95) / 2;
     double *rrover = solutionRover + solutionsCurrent * 3;
@@ -1920,7 +1937,7 @@ void MainWindow::drawBaseline(QPainter &c, int id, int w, int h)
     trace(4, "drawBaseline: w=%d h=%d\n", w, h);
 
     if (PMODE_DGPS <= optDialog->processingOptions.mode && optDialog->processingOptions.mode <= PMODE_FIXED) {
-        col = (rtksvr.state && solutionStatus[solutionsCurrent] && solutionCurrentStatus) ? colors[solutionStatus[solutionsCurrent]] : Qt::white;
+        col = (rtksvr->state && solutionStatus[solutionsCurrent] && solutionCurrentStatus) ? colors[solutionStatus[solutionsCurrent]] : Qt::white;
 
         if (norm(rrover, 3) > 0.0 && norm(rbase, 3) > 0.0)
             for (i = 0; i < 3; i++)
@@ -1946,7 +1963,7 @@ void MainWindow::drawBaseline(QPainter &c, int id, int w, int h)
     p2 = QPoint(center.x() + sy, center.y() - cy);       // rover
 
     // draw two outer circles
-    c.setPen(Qt::gray);
+    c.setPen(Qt::darkGray);
     c.drawEllipse(center.x() - radius, center.y() - radius, 2 * radius + 1, 2 * radius + 1);
     radius2 = static_cast<int>(radius - d1 / 2);
     c.drawEllipse(center.x() - radius2, center.y() - radius2, 2 * radius2 + 1, 2 * radius2 + 1);
@@ -1960,7 +1977,7 @@ void MainWindow::drawBaseline(QPainter &c, int id, int w, int h)
         c.drawLine(center.x() + x1, center.y() - y1, center.x() + x2, center.y() - y2);
         c.setBrush(Qt::white);
         if (a % 90 == 0)  // draw label
-            drawText(c, center.x() + x1, center.y() - y1, directions[a / 90], Qt::gray, 0, 0);
+            drawText(c, center.x() + x1, center.y() - y1, directions[a / 90], Qt::darkGray, 0, 0);
         if (a == 0) {  // raw arrow to north
             x1 = static_cast<int>((radius - d1 * 3 / 2) * sin(a * D2R - az));
             y1 = static_cast<int>((radius - d1 * 3 / 2) * cos(a * D2R - az));
@@ -1980,12 +1997,12 @@ void MainWindow::drawBaseline(QPainter &c, int id, int w, int h)
     c.drawEllipse(pp.x() - d2 / 2 + 2, pp.y() - d2 / 2 + 2, d2 - 1, d2 - 1);
 
     pp = pitch >= 0.0 ? p2 : p1;
-    c.setPen(Qt::gray);
+    c.setPen(Qt::darkGray);
     c.drawLine(center, pp);
     if (pitch >= 0.0) {
         c.setBrush(Qt::white);
         c.drawEllipse(pp.x() - d2 / 2, pp.y() - d2 / 2, d2, d2);
-        drawArrow(c, center.x() + sya, center.y() - cya, d3, static_cast<int>((yaw - az) * R2D), Qt::gray);
+        drawArrow(c, center.x() + sya, center.y() - cya, d3, static_cast<int>((yaw - az) * R2D), Qt::darkGray);
     }
     c.setBrush(col);
     c.drawEllipse(pp.x() - d2 / 2 + 2, pp.y() - d2 / 2 + 2, d2 - 4, d2 - 4);
@@ -1993,14 +2010,14 @@ void MainWindow::drawBaseline(QPainter &c, int id, int w, int h)
     // draw annotations
     c.setBrush(Qt::white);
     digit = len < 1000.0 ? 3 : (len < 10000.0 ? 2 : (len < 100000.0 ? 1 : 0));
-    drawText(c, center.x(), center.y(), tr("%1 m").arg(len, 0, 'f', digit), Qt::gray, 0, 0);
-    drawText(c, 3, h, tr("Y: %1%2").arg(yaw * R2D, 0, 'f', 1).arg(degreeChar), Qt::gray, 1, 1);
-    drawText(c, w - 3, h, tr("P: %1%2").arg(pitch * R2D, 0, 'f', 1).arg(degreeChar), Qt::gray, 2, 1);
+    drawText(c, center.x(), center.y(), tr("%L1 m").arg(len, 0, 'f', digit), Qt::darkGray, 0, 0);
+    drawText(c, 3, h, tr("Y: %L1°").arg(yaw * R2D, 0, 'f', 1), Qt::darkGray, 1, 1);
+    drawText(c, w - 3, h, tr("P: %L1°").arg(pitch * R2D, 0, 'f', 1), Qt::darkGray, 2, 1);
 }
 // draw track plot ----------------------------------------------------------
 void MainWindow::drawTrack(QPainter &c, int id, QPaintDevice *plot)
 {
-    static const QColor mcolor[] = {Color::Silver, Qt::green, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Color::Teal};
+    static const QColor mcolor[] = {Color::Silver, Qt::darkGreen, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Color::Teal};
     QColor *color;
     Graph *graph = new Graph(plot);
     QPoint p1, p2;
@@ -2068,10 +2085,10 @@ void MainWindow::drawTrack(QPainter &c, int id, QPaintDevice *plot)
     if (numPoints > 0) {
         graph->toPoint(x[currentPointNo], y[currentPointNo], p1);
         graph->drawMark(c, p1, Graph::MarkerTypes::Dot, Qt::white, 18, 0);
-        graph->drawMark(c, p1, Graph::MarkerTypes::Circle, rtksvr.state ? Qt::black : Qt::gray, 16, 0);
-        graph->drawMark(c, p1, Graph::MarkerTypes::Plus, rtksvr.state ? Qt::black : Qt::gray, 20, 0);
-        graph->drawMark(c, p1, Graph::MarkerTypes::Dot, rtksvr.state ? Qt::black : Qt::gray, 12, 0);
-        graph->drawMark(c, p1, Graph::MarkerTypes::Dot, rtksvr.state ? color[currentPointNo] : Qt::white, 10, 0);
+        graph->drawMark(c, p1, Graph::MarkerTypes::Circle, rtksvr->state ? Qt::black : Qt::darkGray, 16, 0);
+        graph->drawMark(c, p1, Graph::MarkerTypes::Plus, rtksvr->state ? Qt::black : Qt::darkGray, 20, 0);
+        graph->drawMark(c, p1, Graph::MarkerTypes::Dot, rtksvr->state ? Qt::black : Qt::darkGray, 12, 0);
+        graph->drawMark(c, p1, Graph::MarkerTypes::Dot, rtksvr->state ? color[currentPointNo] : Qt::white, 10, 0);
     }
 
     // draw scale
@@ -2080,26 +2097,26 @@ void MainWindow::drawTrack(QPainter &c, int id, QPaintDevice *plot)
     graph->getScale(sx, sy);
     p2.rx() -= 35;
     p2.ry() -= 12;
-    graph->drawMark(c, p2, Graph::MarkerTypes::HScale, Qt::gray, static_cast<int>(xt / sx + 0.5), 0);
+    graph->drawMark(c, p2, Graph::MarkerTypes::HScale, Qt::darkGray, static_cast<int>(xt / sx + 0.5), 0);
 
     // scale text
     p2.ry() -= 2;
     if (xt < 0.01)
-        label = tr("%1 mm").arg(xt * 1000.0, 0, 'f', 0);
+        label = tr("%L1 mm").arg(xt * 1000.0, 0, 'f', 0);
     else if (xt < 1.0)
-        label = tr("%1 cm").arg(xt * 100.0, 0, 'f', 0);
+        label = tr("%L1 cm").arg(xt * 100.0, 0, 'f', 0);
     else if (xt < 1000.0)
-        label = tr("%1 m").arg(xt, 0, 'f', 0);
+        label = tr("%L1 m").arg(xt, 0, 'f', 0);
     else
-        label = tr("%1 km").arg(xt / 1000.0, 0, 'f', 0);
-    graph->drawText(c, p2, label, Qt::gray, Qt::white, 0, 1, 0);
+        label = tr("%L1 km").arg(xt / 1000.0, 0, 'f', 0);
+    graph->drawText(c, p2, label, Qt::darkGray, Qt::white, 0, 1, 0);
 
     // reference position
     if (norm(ref, 3) > 1E-6) {
         p1.rx() += 2;
         p1.ry() = p2.y() + 11;
-        label = tr("%1° %2°").arg(pos[0] * R2D, 0, 'f', 9).arg(pos[1] * R2D, 0, 'f', 9);
-        graph->drawText(c, p1, label, Qt::gray, Qt::white, 1, 1, 0);
+        label = tr("%L1° %L2°").arg(pos[0] * R2D, 0, 'f', 9).arg(pos[1] * R2D, 0, 'f', 9);
+        graph->drawText(c, p1, label, Qt::darkGray, Qt::white, 1, 1, 0);
     }
 
     delete graph;
@@ -2110,7 +2127,7 @@ void MainWindow::drawTrack(QPainter &c, int id, QPaintDevice *plot)
 // draw skyplot -------------------------------------------------------------
 void MainWindow::drawSky(QPainter &c, int w, int h, int x0, int y0)
 {
-    static const QString label[] = {tr("N"), tr("E"), tr("S"), tr("W")};
+    static const QString label = tr("NESW");
     QPoint p(x0 + w / 2, y0 + h / 2);
     double radius = qMin(w * 0.95, h * 0.95) / 2;
     int a, e, d, x, y;
@@ -2119,7 +2136,7 @@ void MainWindow::drawSky(QPainter &c, int w, int h, int x0, int y0)
     // draw elevation circles every 30 deg
     for (e = 0; e < 90; e += 30) {
         d = static_cast<int>(radius * (90 - e) / 90);
-        c.setPen(e == 0 ? Qt::gray : Color::Silver);  // outline in gray, other lines in silver
+        c.setPen(e == 0 ? Qt::darkGray : Color::Silver);  // outline in gray, other lines in silver
         c.drawEllipse(p.x() - d, p.y() - d, 2 * d + 1, 2 * d + 1);
     }
     // draw azimuth lines from center outwards every 45 deg
@@ -2129,7 +2146,7 @@ void MainWindow::drawSky(QPainter &c, int w, int h, int x0, int y0)
         c.setPen(Color::Silver);
         c.drawLine(p.x(), p.y(), p.x() + x, p.y() - y);
         if (a % 90 == 0)  // draw labels every 90 deg
-            drawText(c, p.x() + x, p.y() - y, label[a / 90], Qt::gray, 0, 0);
+            drawText(c, p.x() + x, p.y() - y, label[a / 90], Qt::darkGray, 0, 0);
     }
 }
 // draw text ----------------------------------------------------------------
@@ -2205,7 +2222,7 @@ void MainWindow::openMonitorPort(int port)
             return;
         }
     }
-    QMessageBox::critical(this, tr("Error"), tr("Could not open any monitor port betwenn %1-%2").arg(port).arg(port + MAX_PORT_OFFSET));
+    QMessageBox::critical(this, tr("Error"), tr("Could not open any monitor port betwenn %L1-%L2").arg(port).arg(port + MAX_PORT_OFFSET));
     monitorPortOpen = 0;
 }
 // initialize solution buffer -----------------------------------------------
@@ -2284,12 +2301,12 @@ void MainWindow::saveLogs()
     if (optDialog->solutionOptions.outhead) {
         QString data;
 
-        data = QString(tr("%% program : %1 ver. %2 %3\n")).arg(PRGNAME, VER_RTKLIB, PATCH_LEVEL);
+        data = tr("%% program : %1 ver. %2 %3\n").arg(PRGNAME, VER_RTKLIB, PATCH_LEVEL);
         str << data;
         if (optDialog->processingOptions.mode == PMODE_DGPS || optDialog->processingOptions.mode == PMODE_KINEMA ||
             optDialog->processingOptions.mode == PMODE_STATIC) {
             ecef2pos(optDialog->processingOptions.rb, pos);
-            data = QString("%% ref pos   :%1 %2 %3\n").arg(pos[0] * R2D, 13, 'f', 9)
+            data = QStringLiteral("%% ref pos   :%1 %2 %3\n").arg(pos[0] * R2D, 13, 'f', 9)
                    .arg(pos[1] * R2D, 14, 'f', 9).arg(pos[2], 10, 'f', 4);
             str << data;
         }
@@ -2632,27 +2649,25 @@ void MainWindow::saveOptions()
 //---------------------------------------------------------------------------
 void MainWindow::btnMarkClicked()
 {
-    markDialog->setPositionMode(rtksvr.rtk.opt.mode);
+    markDialog->setPositionMode(rtksvr->rtk.opt.mode);
     markDialog->setName(markerName);
     markDialog->setComment(markerComment);
     markDialog->setStationPositionFile(optDialog->fileOptions.stapos);
 
     if (markDialog->exec() != QDialog::Accepted) return;
 
-    rtksvr.rtk.opt.mode = markDialog->getPositionMode();
+    rtksvr->rtk.opt.mode = markDialog->getPositionMode();
     markerName = markDialog->getName();
     markerComment = markDialog->getComment();
 
     if (!markerName.isEmpty())
-        rtksvrmark(&rtksvr, qPrintable(markerName), qPrintable(markerComment));
+        rtksvrmark(rtksvr, qPrintable(markerName), qPrintable(markerComment));
     
     updatePosition();
 }
 // execute command ----------------------------------------------------------
-int MainWindow::execCommand(const QString &cmd, const QStringList &opt, int show)
+int MainWindow::execCommand(const QString &cmd, const QStringList &opt)
 {
-    Q_UNUSED(show);
-
-    return QProcess::startDetached(cmd, opt); /* FIXME: show option not yet supported */
+    return QProcess::startDetached(cmd, opt);
 }
 //---------------------------------------------------------------------------

@@ -652,7 +652,7 @@ static void *rtksvrthread(void *arg)
                 /* write solution */
                 writesol(svr,i);
             }
-            /* if cpu overload, inclement obs outage counter and break */
+            /* if cpu overload, increment obs outage counter and break */
             if ((int)(tickget()-tick)>=svr->cycle) {
                 svr->prcout+=fobs[0]-i-1;
             }

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>745</width>
-    <height>585</height>
+    <width>701</width>
+    <height>672</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -45,7 +45,7 @@
           <bool>true</bool>
          </property>
          <property name="timeSpec">
-          <enum>Qt::UTC</enum>
+          <enum>Qt::TimeSpec::UTC</enum>
          </property>
         </widget>
        </item>
@@ -85,7 +85,7 @@
           <bool>true</bool>
          </property>
          <property name="timeSpec">
-          <enum>Qt::UTC</enum>
+          <enum>Qt::TimeSpec::UTC</enum>
          </property>
         </widget>
        </item>
@@ -219,8 +219,11 @@
          <property name="suffix">
           <string> h</string>
          </property>
+         <property name="maximum">
+          <double>168.000000000000000</double>
+         </property>
          <property name="singleStep">
-          <double>25.000000000000000</double>
+          <double>1.000000000000000</double>
          </property>
         </widget>
        </item>
@@ -242,7 +245,86 @@
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <item row="6" column="0">
+       <item row="11" column="1" colspan="4">
+        <widget class="QLineEdit" name="lEOutputFile3"/>
+       </item>
+       <item row="10" column="1" colspan="4">
+        <widget class="QLineEdit" name="lEOutputFile2"/>
+       </item>
+       <item row="9" column="1" colspan="4">
+        <widget class="QLineEdit" name="lEOutputFile1"/>
+       </item>
+       <item row="14" column="1" colspan="4">
+        <widget class="QLineEdit" name="lEOutputFile6"/>
+       </item>
+       <item row="15" column="1" colspan="4">
+        <widget class="QLineEdit" name="lEOutputFile7"/>
+       </item>
+       <item row="8" column="0" colspan="2">
+        <widget class="QLabel" name="lbOutputFile">
+         <property name="text">
+          <string>RINEX OBS/NAV/GNAV/HNAV/QNAV/LNAV and SBS</string>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="0">
+        <widget class="QCheckBox" name="cBOutputFileEnable7">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="3" colspan="2">
+        <widget class="QComboBox" name="cBFormat">
+         <property name="toolTip">
+          <string>File format</string>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="1" colspan="4">
+        <widget class="QLineEdit" name="lEOutputFile5"/>
+       </item>
+       <item row="12" column="1" colspan="4">
+        <widget class="QLineEdit" name="lEOutputFile4"/>
+       </item>
+       <item row="14" column="0">
+        <widget class="QCheckBox" name="cBOutputFileEnable6">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="0">
+        <widget class="QCheckBox" name="cBOutputFileEnable4">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QCheckBox" name="cBOutputFileEnable2">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0" colspan="3">
+        <widget class="QLineEdit" name="lEOutputDirectory"/>
+       </item>
+       <item row="13" column="0">
+        <widget class="QCheckBox" name="cBOutputFileEnable5">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="1" colspan="4">
+        <widget class="QLineEdit" name="lEOutputFile8"/>
+       </item>
+       <item row="9" column="0">
         <widget class="QCheckBox" name="cBOutputFileEnable1">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -255,198 +337,31 @@
          </property>
         </widget>
        </item>
-       <item row="7" column="0">
-        <widget class="QCheckBox" name="cBOutputFileEnable2">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
+       <item row="17" column="1" colspan="4">
+        <widget class="QLineEdit" name="lEOutputFile9"/>
        </item>
-       <item row="9" column="0">
-        <widget class="QCheckBox" name="cBOutputFileEnable4">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="3" colspan="2">
-        <widget class="QComboBox" name="cBFormat">
-         <property name="toolTip">
-          <string>File format</string>
-         </property>
-         <property name="sizeAdjustPolicy">
-          <enum>QComboBox::AdjustToContents</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="1" colspan="4">
-        <widget class="QLineEdit" name="lEOutputFile1"/>
-       </item>
-       <item row="7" column="1" colspan="4">
-        <widget class="QLineEdit" name="lEOutputFile2"/>
-       </item>
-       <item row="3" column="0" colspan="3">
-        <widget class="QCheckBox" name="cBOutputDirectoryEnable">
-         <property name="text">
-          <string>Output Directory</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0" colspan="2">
-        <widget class="QLabel" name="lbOutputFile">
-         <property name="text">
-          <string>RINEX OBS/NAV/GNAV/HNAV/QNAV/LNAV and SBS</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="4">
-        <widget class="QPushButton" name="btnKey">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>Show available placeholder keys</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../icon/resources.qrc">
-           <normaloff>:/buttons/key</normaloff>:/buttons/key</iconset>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="1" colspan="4">
-        <widget class="QLineEdit" name="lEOutputFile4"/>
-       </item>
-       <item row="2" column="3">
-        <widget class="QPushButton" name="btnInputFileView">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>Show file content</string>
-         </property>
-         <property name="icon">
-          <iconset resource="../icon/resources.qrc">
-           <normaloff>:/buttons/doc</normaloff>:/buttons/doc</iconset>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="0">
-        <widget class="QCheckBox" name="cBOutputFileEnable3">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="13" column="1" colspan="4">
-        <widget class="QLineEdit" name="lEOutputFile8"/>
-       </item>
-       <item row="8" column="1" colspan="4">
-        <widget class="QLineEdit" name="lEOutputFile3"/>
-       </item>
-       <item row="14" column="0">
-        <widget class="QCheckBox" name="cBOutputFileEnable9">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="0">
-        <widget class="QCheckBox" name="cBOutputFileEnable6">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="13" column="0">
+       <item row="16" column="0">
         <widget class="QCheckBox" name="cBOutputFileEnable8">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="10" column="0">
-        <widget class="QCheckBox" name="cBOutputFileEnable5">
+       <item row="17" column="0">
+        <widget class="QCheckBox" name="cBOutputFileEnable9">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="14" column="1" colspan="4">
-        <widget class="QLineEdit" name="lEOutputFile9"/>
-       </item>
-       <item row="12" column="0">
-        <widget class="QCheckBox" name="cBOutputFileEnable7">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="3">
-        <widget class="QLineEdit" name="lEOutputDirectory"/>
-       </item>
-       <item row="2" column="0" colspan="3">
-        <widget class="QComboBox" name="cBInputFile">
-         <property name="toolTip">
-          <string>Input file</string>
-         </property>
-         <property name="editable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QLabel" name="lbInputFile">
-         <property name="text">
-          <string>Input (RTCM, RCV RAW or RINEX OBS)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="1" colspan="4">
-        <widget class="QLineEdit" name="lEOutputFile5"/>
-       </item>
-       <item row="12" column="1" colspan="4">
-        <widget class="QLineEdit" name="lEOutputFile7"/>
-       </item>
-       <item row="3" column="3" colspan="2">
+       <item row="6" column="3" colspan="2">
         <widget class="QLabel" name="lbFormat">
          <property name="text">
           <string>Format</string>
          </property>
         </widget>
        </item>
-       <item row="11" column="1" colspan="4">
-        <widget class="QLineEdit" name="lEOutputFile6"/>
-       </item>
-       <item row="2" column="4">
-        <widget class="QPushButton" name="btnInputFile">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>Choose input file</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="../icon/resources.qrc">
-           <normaloff>:/buttons/folder</normaloff>:/buttons/folder</iconset>
-         </property>
-        </widget>
-       </item>
-       <item row="15" column="0" colspan="5">
+       <item row="18" column="0" colspan="5">
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QLabel" name="lblMessage"/>
@@ -465,6 +380,98 @@
            <property name="icon">
             <iconset resource="../icon/resources.qrc">
              <normaloff>:/icons/rtkconv</normaloff>:/icons/rtkconv</iconset>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="11" column="0">
+        <widget class="QCheckBox" name="cBOutputFileEnable3">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0" colspan="3">
+        <widget class="QCheckBox" name="cBOutputDirectoryEnable">
+         <property name="text">
+          <string>Output Directory</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0" colspan="5">
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="0" column="0">
+          <widget class="QLabel" name="lbInputFile">
+           <property name="text">
+            <string>Input (RTCM, RCV RAW or RINEX OBS)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QComboBox" name="cBInputFile">
+           <property name="toolTip">
+            <string>Input file</string>
+           </property>
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QPushButton" name="btnInputFileView">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Show file content</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../icon/resources.qrc">
+             <normaloff>:/buttons/doc</normaloff>:/buttons/doc</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QPushButton" name="btnInputFile">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Choose input file</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../icon/resources.qrc">
+             <normaloff>:/buttons/folder</normaloff>:/buttons/folder</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="btnKey">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Show available placeholder keys</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../icon/resources.qrc">
+             <normaloff>:/buttons/key</normaloff>:/buttons/key</iconset>
            </property>
           </widget>
          </item>
@@ -566,9 +573,6 @@
   <tabstop>dateTimeStart</tabstop>
   <tabstop>dateTimeStop</tabstop>
   <tabstop>comboTimeInterval</tabstop>
-  <tabstop>cBInputFile</tabstop>
-  <tabstop>btnInputFileView</tabstop>
-  <tabstop>btnInputFile</tabstop>
   <tabstop>lEOutputDirectory</tabstop>
   <tabstop>cBFormat</tabstop>
   <tabstop>cBOutputFileEnable1</tabstop>

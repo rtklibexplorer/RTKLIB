@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>395</width>
-    <height>284</height>
+    <height>286</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -80,7 +80,7 @@
    <item row="5" column="1">
     <widget class="QLabel" name="labelDoW">
      <property name="text">
-      <string>: Day of Week (0-6)</string>
+      <string>: Day of GPS Week (0-6)</string>
      </property>
     </widget>
    </item>
@@ -143,7 +143,7 @@
    <item row="10" column="3" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>
@@ -259,38 +259,52 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="3">
-    <widget class="QLabel" name="labelN">
-     <property name="text">
-      <string>%N</string>
+   <item row="0" column="2" rowspan="10">
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Orientation::Vertical</enum>
      </property>
     </widget>
    </item>
-   <item row="7" column="4">
-    <widget class="QLabel" name="labelSequenceNumber">
-     <property name="text">
-      <string>: Sequence Number</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="4">
+   <item row="9" column="4">
     <widget class="QLabel" name="labelBaseStationID">
      <property name="text">
       <string>: Base Station ID</string>
      </property>
     </widget>
    </item>
-   <item row="8" column="3">
+   <item row="9" column="3">
     <widget class="QLabel" name="labelb">
      <property name="text">
       <string>%b</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="2" rowspan="9">
-    <widget class="Line" name="line">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+   <item row="8" column="3">
+    <widget class="QLabel" name="labelN">
+     <property name="text">
+      <string>%N</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="4">
+    <widget class="QLabel" name="labelSequenceNumber">
+     <property name="text">
+      <string>: Sequence Number</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="3">
+    <widget class="QLabel" name="labelt">
+     <property name="text">
+      <string>%t</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="4">
+    <widget class="QLabel" name="label15_min">
+     <property name="text">
+      <string>: 15 minutes (00, 15,30, 45)</string>
      </property>
     </widget>
    </item>

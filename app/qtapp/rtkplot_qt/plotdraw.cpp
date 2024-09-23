@@ -16,8 +16,6 @@
 
 #include "ui_plotmain.h"
 
-#define MS_FONT     "Consolas"      // monospace font name
-
 #define COL_ELMASK  Qt::red
 #define ATAN2(x, y)  ((x) * (x) + (y) * (y) > 1E-12 ? atan2(x, y) : 0.0)
 
@@ -45,13 +43,18 @@ void Plot::updateDisplay()
     trace(3, "updateDisplay\n");
 
     if (flush) {
-        buffer = QPixmap(ui->lblDisplay->size());
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+        QApplication::processEvents();
+        if (buffer.size() != ui->lblDisplay->size())
+            buffer = QPixmap(ui->lblDisplay->size());
+
         if (buffer.isNull()) return;
         buffer.fill(plotOptDialog->getCColor(0));
 
         QPainter c(&buffer);
+        c.setRenderHint(QPainter::Antialiasing);
 
-        c.setFont(ui->lblDisplay->font());
+        c.setFont(plotOptDialog->getFont());
         c.setPen(plotOptDialog->getCColor(0));
         c.setBrush(plotOptDialog->getCColor(0));
 
@@ -72,6 +75,7 @@ void Plot::updateDisplay()
         }
 
         ui->lblDisplay->setPixmap(buffer);
+        QGuiApplication::restoreOverrideCursor();
     }
 
     flush = 0;
@@ -120,6 +124,8 @@ void Plot::drawTrack(QPainter &c, int level)
 
     // grid
     if (ui->btnShowGrid->isChecked()) {
+        graphTrack->setLabelUnits(tr(" m"), tr(" m"));
+
         if (level) { // draw "+" at center
             graphTrack->getExtent(p1, p2);
             p1.setX((p1.x() + p2.x()) / 2);
@@ -140,7 +146,7 @@ void Plot::drawTrack(QPainter &c, int level)
 
     if (norm(originPosition, 3) > 0.0) {
         ecef2pos(originPosition, opos);
-        header = tr("ORI = %1, %2 m").arg(latLonString(opos, 9)).arg(opos[2], 0, 'f', 4);
+        header = tr("ORI = %1, %L2 m").arg(latLonString(opos, 9)).arg(opos[2], 0, 'f', 4);
     }
 
     // draw tracks
@@ -342,7 +348,9 @@ void Plot::drawTrackImage(QPainter &c, int level)
     graphTrack->toPoint(x1, y2, p1);
     graphTrack->toPoint(x2, y1, p2);
     QRect r(p1, p2);
-    c.drawImage(r, mapImage);
+    if (mapImageScaled.size() != r.size())  // avoid scaling the image each time it is drawn
+        mapImageScaled = mapImageOriginal.scaled(r.size());
+    c.drawImage(r, mapImageScaled);
 }
 // check in boundary --------------------------------------------------------
 #define P_IN_B(pos, bound) \
@@ -439,7 +447,7 @@ void Plot::drawTrackGis(QPainter &c, int level)
                 if ((n = polygon->npnt) <= 0 || !B_IN_B(polygon->bound, bound))
                     continue;
 
-                p = new QPoint [n];
+                p = new QPoint[n];
                 for (j = m = 0; j < n; j++) {
                     positionToXyz(time, polygon->pos + j * 3, 0, xyz);
                     if (xyz[2] < -RE_WGS84) {
@@ -519,7 +527,7 @@ void Plot::drawTrackStatistics(QPainter &c, const TIMEPOS *pos, const QString &h
     QString s[6];
     QPoint p1, p2;
     double *d, ave[4], std[4], rms[4];
-    int i, n = 0, fonth = (int)(QFontMetrics(ui->lblDisplay->font()).height() * 1.5);
+    int i, n = 0, fonth = (int)(QFontMetrics(plotOptDialog->getFont()).height() * 1.2);
 
     trace(3, "drawTrackStatistics: p=%d\n", p);
 
@@ -538,9 +546,9 @@ void Plot::drawTrackStatistics(QPainter &c, const TIMEPOS *pos, const QString &h
         calcStats(pos->z, pos->n, 0.0, ave[2], std[2], rms[2]);
         calcStats(d, pos->n, 0.0, ave[3], std[3], rms[3]);
 
-        s[n++] = tr("AVE = E:%1 m, N:%2 m, U:%3 m").arg(ave[0], 7, 'f', 4).arg(ave[1], 7, 'f', 4).arg(ave[2], 7, 'f', 4);
-        s[n++] = tr("STD = E:%1 m, N:%2 m, U:%3 m").arg(std[0], 7, 'f', 4).arg(std[1], 7, 'f', 4).arg(std[2], 7, 'f', 4);
-        s[n++] = tr("RMS = E:%1 m, N:%2 m, U:%3 m, 2D:%4 m").arg(rms[0], 7, 'f', 4).arg(rms[1], 7, 'f', 4).arg(rms[2], 7, 'f', 4).arg(2.0 * rms[3], 7, 'f', 4);
+        s[n++] = tr("AVE = E: %L1 m, N: %L2 m, U: %L3 m").arg(ave[0], 7, 'f', 4).arg(ave[1], 7, 'f', 4).arg(ave[2], 7, 'f', 4);
+        s[n++] = tr("STD = E: %L1 m, N: %L2 m, U: %L3 m").arg(std[0], 7, 'f', 4).arg(std[1], 7, 'f', 4).arg(std[2], 7, 'f', 4);
+        s[n++] = tr("RMS = E: %L1 m, N: %L2 m, U: %L3 m, 2D: %L4 m").arg(rms[0], 7, 'f', 4).arg(rms[1], 7, 'f', 4).arg(rms[2], 7, 'f', 4).arg(2.0 * rms[3], 7, 'f', 4);
 
         delete [] d;
     }
@@ -645,7 +653,7 @@ void Plot::drawTrackVelocityIndicator(QPainter &c, const TIMEPOS *vel)
 // draw solution-plot -------------------------------------------------------
 void Plot::drawSolution(QPainter &c, int level, int type)
 {
-    QString label[] = { tr("E-W"), tr("N-S"), tr("U-D") }, unit[] = { "m", "m/s", QString("m/s%1").arg(up2Char) };
+    QString label[] = { tr("E-W"), tr("N-S"), tr("U-D") }, unit[] = { "m", "m/s", QString("m/s²") };
     QPushButton *btn[] = {ui->btnOn1, ui->btnOn2, ui->btnOn3 };
     TIMEPOS *pos, *pos1, *pos2;
     gtime_t time1 = {0, 0}, time2 = {0, 0};
@@ -684,8 +692,9 @@ void Plot::drawSolution(QPainter &c, int level, int type)
     for (int panel = 0; panel < 3; panel++) {
         if (!btn[panel]->isChecked()) continue;
 
+        graphTriple[panel]->setLabelUnits("", " " + unit[type]);
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) : \
-            (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On);
+            (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
         graphTriple[panel]->week = week;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
@@ -788,7 +797,7 @@ void Plot::drawSolution(QPainter &c, int level, int type)
         graphTriple[i]->getExtent(p1, p2);
         p1.rx() += 5;
         p1.ry() += 3;
-        drawLabel(graphTriple[i], c, p1, label[i] + " (" + unit[type] + ")", Graph::Alignment::Left, Graph::Alignment::Top);
+        drawLabel(graphTriple[i], c, p1, label[i], Graph::Alignment::Left, Graph::Alignment::Top);
     }
 }
 // draw points and line on solution-plot ------------------------------------
@@ -855,7 +864,7 @@ void Plot::drawSolutionStat(QPainter &c, const TIMEPOS *pos, const QString &unit
     QPushButton *btn[] = {ui->btnOn1, ui->btnOn2, ui->btnOn3 };
     QPoint p1, p2;
     double ave, std, rms, *y, opos[3];
-    int j = 0, k = 0, fonth = (int)(QFontMetrics(ui->lblDisplay->font()).height() * 1.5);
+    int j = 0, k = 0, fonth = (int)(QFontMetrics(plotOptDialog->getFont()).height() * 1.2);
     QString label, s;
 
     trace(3, "drawSolutionStat: p=%d\n", p);
@@ -876,13 +885,13 @@ void Plot::drawSolutionStat(QPainter &c, const TIMEPOS *pos, const QString &unit
         if (j == 0 && p == 0) {
             if (norm(originPosition, 3) > 0.0) {
                 ecef2pos(originPosition, opos);
-                label = tr("ORI = %1, %2 m").arg(latLonString(opos, 9) ).arg(opos[2], 0, 'f', 4);
+                label = tr("ORI = %1, %L2 m").arg(latLonString(opos, 9) ).arg(opos[2], 0, 'f', 4);
                 drawLabel(graphTriple[j], c, p1, label, Graph::Alignment::Right, Graph::Alignment::Top);
                 p1.ry() += fonth;
                 j++;
             }
         }
-        s = tr("AVE = %1 %2, STD = %3 %2, RMS = %4 %2").arg(ave, 0, 'f', 4).arg(unit).arg(std, 0, 'f', 4).arg(rms, 0, 'f', 4);
+        s = tr("AVE = %L1 %2, STD = %L3 %2, RMS = %L4 %2").arg(ave, 0, 'f', 4).arg(unit).arg(std, 0, 'f', 4).arg(rms, 0, 'f', 4);
         drawLabel(graphTriple[panel], c, p1, s, Graph::Alignment::Right, Graph::Alignment::Top);
     }
 }
@@ -891,7 +900,7 @@ void Plot::drawNsat(QPainter &c, int level)
 {
     QString label[] = {
         tr("# of Valid Satellites"),
-        tr("Age of Differential (s)"),
+        tr("Age of Differential"),
         tr("Ratio Factor for AR Validation")
     };
     QPushButton *btn[] = {ui->btnOn1, ui->btnOn2, ui->btnOn3 };
@@ -927,8 +936,9 @@ void Plot::drawNsat(QPainter &c, int level)
     for (panel = 0; panel < 3; panel++) {
         if (!btn[panel]->isChecked()) continue;
 
+        graphTriple[panel]->setLabelUnits("", panel == 1 ? tr(" s") : "" );
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) :
-                                                 (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On);
+                                                 (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
         graphTriple[panel]->week = week;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
@@ -986,7 +996,7 @@ void Plot::drawNsat(QPainter &c, int level)
 void Plot::drawObservation(QPainter &c, int level)
 {
     QPoint p1, p2, p;
-    QVariant obstype = ui->cBObservationType->currentData();;
+    QVariant obstype = ui->cBObservationType->currentData();
     gtime_t time;
     obsd_t *obs;
     double xs, ys, xt, xl[2], yl[2], tt[MAXSAT] = { 0 }, xp, xc, yc, yp[MAXSAT] = { 0 };
@@ -1004,7 +1014,7 @@ void Plot::drawObservation(QPainter &c, int level)
         if (sats[i]) nSats++;
     
     graphSingle->xLabelPosition = plotOptDialog->getTimeFormat() ? Graph::LabelPosition::Time : Graph::LabelPosition::Outer;
-    graphSingle->yLabelPosition = Graph::LabelPosition::On;
+    graphSingle->yLabelPosition = Graph::LabelPosition::Off;
     graphSingle->week = week;
 
     graphSingle->getLimits(xl, yl);
@@ -1028,14 +1038,14 @@ void Plot::drawObservation(QPainter &c, int level)
         }
     }
 
-    graphSingle->drawAxis(c, 1, 1);
+    graphSingle->drawAxis(c, true, true);
     graphSingle->getExtent(p1, p2);
 
     // draw sat labels
     for (i = 0, j = 0; i < MAXSAT; i++) {
         if (!sats[i]) continue;
 
-        p.setX(p1.x());
+        p.setX(p1.x() - 2);
         p.setY(p1.y() + static_cast<int>((p2.y() - p1.y()) * (j + 0.5) / nSats));
         yp[i] = nSats - (j++);
         satno2id(i + 1, id);
@@ -1043,9 +1053,9 @@ void Plot::drawObservation(QPainter &c, int level)
     }
 
     // draw title
-    p1.setX((int)(QFontMetrics(ui->lblDisplay->font()).height()));
+    p1.setX(plotOptDialog->getFont().pointSize());
     p1.setY((p1.y() + p2.y()) / 2);
-    graphSingle->drawText(c, p1, tr("SATELLITE NO"), plotOptDialog->getCColor(2), Graph::Alignment::Center, Graph::Alignment::Center, 90);
+    graphSingle->drawText(c, p1, tr("Satellite No."), plotOptDialog->getCColor(2), Graph::Alignment::Center, Graph::Alignment::Center, 90);
 
     if (!ui->btnSolution1->isChecked()) return;
 
@@ -1324,7 +1334,7 @@ void Plot::drawSky(QPainter &c, int level)
     double prevPoint[MAXSAT][2] = {{0}}, p0[MAXSAT][2] = {{0}};
     double x, y, xp, yp, xs, ys, dt, dx, dy, xl[2], yl[2], radius;
     int i, j, freq, ind = observationIndex;
-    int hh = (int)(QFontMetrics(ui->lblDisplay->font()).height() * 1.5);
+    int hh = (int)(QFontMetrics(plotOptDialog->getFont()).height() * 1.5);
     char satId[16];
 
     trace(3, "drawSky: level=%d\n", level);
@@ -1426,7 +1436,7 @@ void Plot::drawSky(QPainter &c, int level)
 
     // draw current observation
     if (ui->btnShowTrack->isChecked() && 0 <= ind && ind < nObservation) {
-        int fontsize = (int)(QFontMetrics(ui->lblDisplay->font()).height());
+        int fontsize = plotOptDialog->getFont().pointSize();
 
         for (i = indexObservation[ind]; i < observation.n && i < indexObservation[ind + 1]; i++) {
             obs = &observation.data[i];
@@ -1466,12 +1476,14 @@ void Plot::drawSky(QPainter &c, int level)
     if (plotOptDialog->getShowStats() && ui->btnShowTrack->isChecked() && 0 <= ind && ind < nObservation && !simulatedObservation) {
 
         if (obstype.isNull()) {  // "ALL" selected
-            s = QString::asprintf("%3s: %*s %*s%*s %*s","SAT", NFREQ, "PR", NFREQ, "CP",
+            s = QString::asprintf("%3s: %*s %*s%*s %*s", "SAT", NFREQ, "PR", NFREQ, "CP",
                          NFREQ*3, "CN0", NFREQ, "LLI");
         } else {
             s = tr("SAT: SIG  OBS   CN0 LLI");
         }
-        graphSky->drawText(c, p2, s, Qt::black, Graph::Alignment::Right, Graph::Alignment::Top, 0, QFont(MS_FONT));
+        QFont monoFont("Monospace");
+        monoFont.setStyleHint(QFont::TypeWriter);
+        graphSky->drawText(c, p2, s, Qt::black, Graph::Alignment::Right, Graph::Alignment::Top, 0, monoFont);
 
         p2.ry() += 3;
 
@@ -1512,7 +1524,7 @@ void Plot::drawSky(QPainter &c, int level)
 
                 if (!obs->code[freq-1]) continue;
 
-                s += QStringLiteral("%1  %2 %3 %4  ").arg(code2obs(obs->code[freq - 1]),3 ).arg(
+                s += QStringLiteral("%1  %2 %3 %4  ").arg(code2obs(obs->code[freq - 1]), 3).arg(
                               obs->P[freq - 1] == 0.0 ? "-" : "C",
                               obs->L[freq - 1] == 0.0 ? "-" : "L",
                               obs->D[freq - 1] == 0.0 ? "-" : "D");
@@ -1527,14 +1539,14 @@ void Plot::drawSky(QPainter &c, int level)
                 if (obs->L[freq-1] == 0.0)
                     s += " -";
                 else
-                    s += QString::number(obs->LLI[freq - 1]);
+                    s += QString("%1").arg(obs->LLI[freq - 1], 2);
 
             } else {  // code
                 for (j = 0; j < NFREQ + NEXOBS; j++)
                     if (!strcmp(code2obs(obs->code[j]), qPrintable(obstype.toString()))) break;
                 if (j >= NFREQ + NEXOBS) continue;
 
-                s += QStringLiteral("%1  %2 %3 %4  ").arg(code2obs(obs->code[j]), 3).arg(
+                s += QStringLiteral("%1  %2 %3 %4 ").arg(code2obs(obs->code[j]), 3).arg(
                                  obs->P[j] == 0.0 ? "-" : "C",
                                  obs->L[j] == 0.0 ? "-" : "L",
                                  obs->D[j] == 0.0 ? "-" : "D");
@@ -1549,12 +1561,13 @@ void Plot::drawSky(QPainter &c, int level)
                 if (obs->L[j] == 0.0)
                     s += " -";
                 else
-                    s += QString::number(obs->LLI[j]);
+                    s += QString("%1").arg(obs->LLI[j], 2);
             }
 
             QColor col = observationColor(obs, azimuth[i], elevation[i], obstype);
             p2.ry() += hh;
-            graphSky->drawText(c, p2, s, col == Qt::black ? plotOptDialog->getMarkerColor(0, 0) : col, Graph::Alignment::Right, Graph::Alignment::Top, 0);
+
+            graphSky->drawText(c, p2, s, col == Qt::black ? plotOptDialog->getMarkerColor(0, 0) : col, Graph::Alignment::Right, Graph::Alignment::Top, 0, monoFont);
         }
     }
 
@@ -1601,14 +1614,14 @@ void Plot::drawDop(QPainter &c, int level)
 
     // draw title
     graphSingle->getExtent(p1, p2);
-    p1.setX((int)(QFontMetrics(ui->lblDisplay->font()).height()));
+    p1.setX((int)(QFontMetrics(plotOptDialog->getFont()).height()));
     p1.setY((p1.y() + p2.y()) / 2);    
     if (doptype == 0)  // ALL
-        label = tr("# OF SATELLITES / DOP (EL>=%1%2)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0).arg(degreeChar);
+        label = tr("# of Satellites / DOP (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
     else if (doptype == 1)  // NSAT
-        label = tr("# OF SATELLITES (EL>=%1%2)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0).arg(degreeChar);
+        label = tr("# of Satellites (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
     else
-        label = tr("DOP (EL>=%1%2)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0).arg(degreeChar);
+        label = tr("DOP (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
     graphSingle->drawText(c, p1, label, plotOptDialog->getCColor(2), Graph::Alignment::Center, Graph::Alignment::Center, 90);
 
     if (!ui->btnSolution1->isChecked()) return;
@@ -1735,9 +1748,9 @@ void Plot::drawDopStat(QPainter &c, double *dop, int *ns, int n)
     }
 
     if (ui->cBDopType->currentIndex() == 0 || ui->cBDopType->currentIndex() >= 2) {  // DopType != NSAT
-        s2[m++] = tr("AVE = GDOP: %1, PDOP: %2, HDOP: %3, VDOP: %4")
+        s2[m++] = tr("AVE = GDOP: %L1, PDOP: %L2, HDOP: %L3, VDOP: %L4")
               .arg(ave[0], 4, 'f', 1).arg(ave[1], 4, 'f', 1).arg(ave[2], 4, 'f', 1).arg(ave[3], 4, 'f', 1);
-        s2[m++] = tr("NDOP = %1 (%2%), %3 (%4%), %5 (%6%), %7 (%8f%)")
+        s2[m++] = tr("NDOP = %1 (%L2%), %3 (%L4%), %5 (%L6%), %7 (%L8%)")
               .arg(ndop[0]).arg(n > 0 ? ndop[0] * 100.0 / n : 0.0, 4, 'f', 1)
               .arg(ndop[1]).arg(n > 0 ? ndop[1] * 100.0 / n : 0.0, 4, 'f', 1)
               .arg(ndop[2]).arg(n > 0 ? ndop[2] * 100.0 / n : 0.0, 4, 'f', 1)
@@ -1753,7 +1766,7 @@ void Plot::drawDopStat(QPainter &c, double *dop, int *ns, int n)
         }
     }
     QPoint p1, p2, p3;
-    int fonth = (int)(QFontMetrics(ui->lblDisplay->font()).height() * 1.2);
+    int fonth = (int)(QFontMetrics(plotOptDialog->getFont()).height() * 1.2);
 
     // calculate text position on the right side of the plot
     graphSingle->getExtent(p1, p2);
@@ -1776,7 +1789,7 @@ void Plot::drawSnr(QPainter &c, int level)
 {
     QPushButton *btn[] = {ui->btnOn1, ui->btnOn2, ui->btnOn3};
     const QString label[] = {tr("SNR"), tr("Multipath"), tr("Elevation")};
-    static const QString unit[] = { "dBHz", "m", degreeChar };
+    static const QString unit[] = { "dBHz", "m", "°"};
     gtime_t time_selected = {0, 0};
     int idx;
 
@@ -1792,9 +1805,9 @@ void Plot::drawSnr(QPainter &c, int level)
 
         graphTriple[0]->getLimits(xl, yl);
         xp -= centX * (xl[1] - xl[0]) / 2.0;
-        for (int i=0;i<3;i++) {
-            graphTriple[i]->getCenter(xc,yc);
-            graphTriple[i]->setCenter(xp,yc);
+        for (int panel=0; panel < 3; panel++) {
+            graphTriple[panel]->getCenter(xc,yc);
+            graphTriple[panel]->setCenter(xp,yc);
         }
     }
 
@@ -1806,8 +1819,9 @@ void Plot::drawSnr(QPainter &c, int level)
     for (int panel = 0; panel < 3; panel++) {
         if (!btn[panel]->isChecked()) continue;
 
+        graphTriple[panel]->setLabelUnits("", " " + unit[panel]);
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) :
-                                        (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On);
+                                        (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
         graphTriple[panel]->week = week;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
@@ -1904,7 +1918,7 @@ void Plot::drawSnr(QPainter &c, int level)
                 graphTriple[panel]->getExtent(p1, p2);
                 p1.rx() = p2.x() - 8;
                 p1.ry() += 3;
-                drawLabel(graphTriple[panel], c, p1, tr("AVE = %1 m, RMS = %2 m").arg(ave, 0, 'f', 4).arg(rms, 0, 'f', 4),
+                drawLabel(graphTriple[panel], c, p1, tr("AVE = %L1 m, RMS = %L2 m").arg(ave, 0, 'f', 4).arg(rms, 0, 'f', 4),
                           Graph::Alignment::Right, Graph::Alignment::Top);
             }
 
@@ -1957,7 +1971,7 @@ void Plot::drawSnr(QPainter &c, int level)
         graphTriple[panel]->getExtent(p1, p2);
         p1.rx() += 5;
         p1.ry() += 3;
-        drawLabel(graphTriple[panel], c, p1, QStringLiteral("%1 (%2)").arg(label[panel], unit[panel]), Graph::Alignment::Left, Graph::Alignment::Top);
+        drawLabel(graphTriple[panel], c, p1, QStringLiteral("%1").arg(label[panel]), Graph::Alignment::Left, Graph::Alignment::Top);
     }
 }
 // draw SNR, MP to elevation-plot ----------------------------------------------
@@ -1965,8 +1979,7 @@ void Plot::drawSnrE(QPainter &c, int level)
 {
     QPushButton *btn[] = {ui->btnOn1, ui->btnOn2, ui->btnOn3};
     QString s;
-    QVariant obstype = ui->cBObservationTypeSNR->currentData();
-    const QString label[] = {tr("SNR (dBHz)"), tr("Multipath (m)")};
+    const QString label[] = {tr("SNR"), tr("Multipath")};
     gtime_t time_selected = {0, 0};
     double ave = 0.0, rms = 0.0;
     int nrms = 0;
@@ -1985,7 +1998,8 @@ void Plot::drawSnrE(QPainter &c, int level)
         double yl[2][2] = {{10.0, 65.0}, {-plotOptDialog->getMaxMP(), plotOptDialog->getMaxMP()}};
 
         // draw axis
-        graphDual[panel]->xLabelPosition = panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On;
+        graphDual[panel]->setLabelUnits(panel == bottomPanel ? "°" : "", panel == 0 ? tr(" dBHz") : tr("m"));
+        graphDual[panel]->xLabelPosition = panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off;
         graphDual[panel]->yLabelPosition = Graph::LabelPosition::Outer;
         graphDual[panel]->setLimits(xl, yl[panel]);
         graphDual[panel]->setTick(0.0, 0.0);
@@ -2000,7 +2014,7 @@ void Plot::drawSnrE(QPainter &c, int level)
         if (panel == bottomPanel) {
             p2.rx() -= 8;
             p2.ry() -= 6;
-            graphDual[panel]->drawText(c, p2, tr("Elevation ( %1 )").arg(degreeChar), plotOptDialog->getCColor(2),
+            graphDual[panel]->drawText(c, p2, tr("Elevation"), plotOptDialog->getCColor(2),
                                 Graph::Alignment::Right, Graph::Alignment::Bottom, 0);
         }
     }
@@ -2121,7 +2135,7 @@ void Plot::drawSnrE(QPainter &c, int level)
 
         if (topPanel < 2) {
             QPoint p1, p2;
-            int hh = (int)(QFontMetrics(ui->lblDisplay->font()).height() * 1.5);
+            int hh = (int)(QFontMetrics(plotOptDialog->getFont()).height() * 1.5);
 
             // get top left position to draw station properties
             graphDual[topPanel]->getExtent(p1, p2);
@@ -2144,7 +2158,7 @@ void Plot::drawSnrE(QPainter &c, int level)
             graphDual[1]->getExtent(p1, p2);
             p1.setX(p2.x() - 8);
             p1.ry() += 6;
-            drawLabel(graphDual[1], c, p1, tr("AVE = %1 m, RMS = %2 m").arg(ave, 0, 'f', 4).arg(rms, 0, 'f', 4),
+            drawLabel(graphDual[1], c, p1, tr("AVE = %L1 m, RMS = %L2 m").arg(ave, 0, 'f', 4).arg(rms, 0, 'f', 4),
                       Graph::Alignment::Right, Graph::Alignment::Top);
         }
     }
@@ -2185,7 +2199,7 @@ void Plot::drawMpSky(QPainter &c, int level)
 
             if (strcmp(obstype.typeName(), "int") == 0) {
                 int freq = obstype.toInt();
-                idx = freq > 2 ? freq - 3 : freq - 1;  /* L1,L2,L5,L6 ... */
+                idx = freq > 2 ? freq - 3 : freq - 1;  /* L1, L2, L5, L6 ... */
             } else {
                 for (idx = 0; idx < NFREQ + NEXOBS; idx++) {
                     if (!strcmp(code2obs(obs->code[idx]), qPrintable(obstype.toString()))) break;
@@ -2212,10 +2226,12 @@ void Plot::drawMpSky(QPainter &c, int level)
     // highlight selected data
     if (ui->btnShowTrack->isChecked() && 0 <= observationIndex && observationIndex < nObservation) {
         char id[32];
-        int fontsize = (int)(QFontMetrics(ui->lblDisplay->font()).height());
+        int fontsize = plotOptDialog->getFont().pointSize();
         for (int i = indexObservation[observationIndex]; i < observation.n && i < indexObservation[observationIndex + 1]; i++) {
             obsd_t *obs = observation.data+i;
             int idx;
+
+            if (satelliteMask[obs->sat-1] || !satelliteSelection[obs->sat-1] || elevation[i] <= 0.0) continue;
 
             if (strcmp(obstype.typeName(), "int") == 0) {
                 int freq = obstype.toInt();
@@ -2242,8 +2258,8 @@ void Plot::drawMpSky(QPainter &c, int level)
 void Plot::drawResidual(QPainter &c, int level)
 {
     const QString label[] = {
-        tr("Pseudorange Residuals (m)"),
-        tr("Carrier-Phase Residuals (m)"),
+        tr("Pseudorange Residuals"),
+        tr("Carrier-Phase Residuals"),
         tr("Elevation Angle (deg) / Signal Strength (dBHz)")
     };
     QString str;
@@ -2282,8 +2298,9 @@ void Plot::drawResidual(QPainter &c, int level)
     for (int panel = 0; panel < 3; panel++) {
         if (!btn[panel]->isChecked()) continue;
 
+        graphTriple[panel]->setLabelUnits("", panel == 2 ? tr("") : tr(" m"));
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) :
-                                        (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::On);
+                                        (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
         graphTriple[panel]->week = week;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
@@ -2379,7 +2396,7 @@ void Plot::drawResidual(QPainter &c, int level)
                 graphTriple[panel]->getExtent(p1, p2);
                 p1.setX(p2.x() - 5);
                 p1.ry() += 3;
-                str = tr("AVE = %1 m, STD = %2 m, RMS = %3 m").arg(ave, 0, 'f', 3).arg(std, 0, 'f', 3).arg(rms, 0, 'f', 3);
+                str = tr("AVE = %L1 m, STD = %L2 m, RMS = %L3 m").arg(ave, 0, 'f', 3).arg(std, 0, 'f', 3).arg(rms, 0, 'f', 3);
                 drawLabel(graphTriple[panel], c, p1, str, Graph::Alignment::Right, Graph::Alignment::Top);
             }
         }
@@ -2420,7 +2437,7 @@ void Plot::drawResidual(QPainter &c, int level)
 void Plot::drawResidualE(QPainter &c, int level)
 {
     QPushButton *btn[] = {ui->btnOn1, ui->btnOn2, ui->btnOn3};
-    const QString label[] = {tr("Pseudorange Residuals (m)"), tr("Carrier-Phase Residuals (m)")};
+    const QString label[] = {tr("Pseudorange Residuals"), tr("Carrier-Phase Residuals")};
     int bottomPanel, sel = !ui->btnSolution1->isChecked() && ui->btnSolution2->isChecked() ? 1 : 0;
     int frq = ui->cBFrequencyType->currentIndex() + 1;
     int n = solutionStat[sel].n;
@@ -2432,29 +2449,30 @@ void Plot::drawResidualE(QPainter &c, int level)
     for (int panel = 0; panel < 2; panel++)
         if (btn[panel]->isChecked()) bottomPanel = panel;
 
-    for (int i = 0; i < 2; i++) {
-        if (!btn[i]->isChecked()) continue;
+    for (int panel = 0; panel < 2; panel++) {
+        if (!btn[panel]->isChecked()) continue;
 
         QPoint p1, p2;
         double xl[2] = {-0.001, 90.0};
         double yl[2][2] = {{-plotOptDialog->getMaxMP(), plotOptDialog->getMaxMP()}, {-plotOptDialog->getMaxMP() / 100.0, plotOptDialog->getMaxMP() / 100.0}};
         
-        graphDual[i]->xLabelPosition = (i == bottomPanel) ? Graph::LabelPosition::Outer : Graph::LabelPosition::On;
-        graphDual[i]->yLabelPosition = Graph::LabelPosition::Outer;
+        graphDual[panel]->xLabelPosition = (panel == bottomPanel) ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off;
+        graphDual[panel]->yLabelPosition = Graph::LabelPosition::Outer;
 
-        graphDual[i]->setLimits(xl, yl[i]);
-        graphDual[i]->setTick(0.0, 0.0);
-        graphDual[i]->drawAxis(c, 1, 1);
+        graphDual[panel]->setLabelUnits(panel == bottomPanel ? "°" :"", tr(" m"));
+        graphDual[panel]->setLimits(xl, yl[panel]);
+        graphDual[panel]->setTick(0.0, 0.0);
+        graphDual[panel]->drawAxis(c, true, true);
 
-        graphDual[i]->getExtent(p1, p2);
-        p1.setX((int)(QFontMetrics(ui->lblDisplay->font()).height()));
+        graphDual[panel]->getExtent(p1, p2);
+        p1.setX((int)(QFontMetrics(plotOptDialog->getFont()).height()));
         p1.setY((p1.y() + p2.y()) / 2);
-        graphDual[i]->drawText(c, p1, label[i], plotOptDialog->getCColor(2), Graph::Alignment::Center, Graph::Alignment::Center, 90);
+        graphDual[panel]->drawText(c, p1, label[panel], plotOptDialog->getCColor(2), Graph::Alignment::Center, Graph::Alignment::Center, 90);
 
-        if (i == bottomPanel) {
+        if (panel == bottomPanel) {
             p2.rx() -= 8;
             p2.ry() -= 6;
-            graphDual[i]->drawText(c, p2, tr("Elevation (°)"), plotOptDialog->getCColor(2), Graph::Alignment::Right, Graph::Alignment::Bottom, 0);
+            graphDual[panel]->drawText(c, p2, tr("Elevation"), plotOptDialog->getCColor(2), Graph::Alignment::Right, Graph::Alignment::Bottom, 0);
         }
     }
 
@@ -2538,7 +2556,7 @@ void Plot::drawResidualE(QPainter &c, int level)
                 graphDual[panel]->getExtent(p1, p2);
                 p1.setX(p2.x() - 5);
                 p1.ry() += 3;
-                str = tr("AVE = %1 m, STD = %2 m, RMS = %3 m").arg(ave, 0, 'f', 3).arg(std, 0, 'f', 3).arg(rms, 0, 'f', 3);
+                str = tr("AVE = %L1 m, STD = %L2 m, RMS = %L3 m").arg(ave, 0, 'f', 3).arg(std, 0, 'f', 3).arg(rms, 0, 'f', 3);
                 drawLabel(graphTriple[panel], c, p1, str, Graph::Alignment::Right, Graph::Alignment::Top);
             }
         }

@@ -4,28 +4,29 @@
 #include <QDateTime>
 #include <QTimeZone>
 
-#include "rtklib.h"
 #include "plotmain.h"
 #include "tspandlg.h"
 #include "timedlg.h"
 
+#include "ui_tspandlg.h"
+
 //---------------------------------------------------------------------------
 SpanDialog::SpanDialog(QWidget *parent)
-    : QDialog(parent)
+    : QDialog(parent), ui(new Ui::SpanDialog)
 {
-    setupUi(this);
+    ui->setupUi(this);
 
     for (int i = 0; i < 3; i++) {
         timeValid[i] = true;
 	}
 
-    connect(buttonBox, &QDialogButtonBox::accepted, this, &SpanDialog::accept);
-    connect(buttonBox, &QDialogButtonBox::rejected, this, &SpanDialog::reject);
-    connect(cBTimeEndEnabled, &QCheckBox::clicked, this, &SpanDialog::updateEnable);
-    connect(cBTimeIntervalEnabled, &QCheckBox::clicked, this, &SpanDialog::updateEnable);
-    connect(cBTimeStartEnabled, &QCheckBox::clicked, this, &SpanDialog::updateEnable);
-    connect(btnTimeStart, &QPushButton::clicked, this, &SpanDialog::showStartTimeDialog);
-    connect(btnTimeEnd, &QPushButton::clicked, this, &SpanDialog::showEndTimeDialog);
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SpanDialog::accept);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &SpanDialog::reject);
+    connect(ui->cBTimeEndEnabled, &QCheckBox::clicked, this, &SpanDialog::updateEnable);
+    connect(ui->cBTimeIntervalEnabled, &QCheckBox::clicked, this, &SpanDialog::updateEnable);
+    connect(ui->cBTimeStartEnabled, &QCheckBox::clicked, this, &SpanDialog::updateEnable);
+    connect(ui->btnTimeStart, &QPushButton::clicked, this, &SpanDialog::showStartTimeDialog);
+    connect(ui->btnTimeEnd, &QPushButton::clicked, this, &SpanDialog::showEndTimeDialog);
 }
 //---------------------------------------------------------------------------
 void SpanDialog::showEvent(QShowEvent *event)
@@ -37,12 +38,12 @@ void SpanDialog::showEvent(QShowEvent *event)
 //---------------------------------------------------------------------------
 void SpanDialog::updateEnable()
 {
-    dTTimeStart->setEnabled(cBTimeStartEnabled->isChecked() && timeValid[0]);
-    dTTimeEnd->setEnabled(cBTimeEndEnabled->isChecked() && timeValid[1]);
-    sBTimeInterval->setEnabled(cBTimeIntervalEnabled->isChecked() && timeValid[2]);
-    cBTimeStartEnabled->setEnabled(timeValid[0] == 1);
-    cBTimeEndEnabled->setEnabled(timeValid[1] == 1);
-    cBTimeIntervalEnabled->setEnabled(timeValid[2] == 1);
+    ui->dTTimeStart->setEnabled(ui->cBTimeStartEnabled->isChecked() && timeValid[0]);
+    ui->dTTimeEnd->setEnabled(ui->cBTimeEndEnabled->isChecked() && timeValid[1]);
+    ui->sBTimeInterval->setEnabled(ui->cBTimeIntervalEnabled->isChecked() && timeValid[2]);
+    ui->cBTimeStartEnabled->setEnabled(timeValid[0] == 1);
+    ui->cBTimeEndEnabled->setEnabled(timeValid[1] == 1);
+    ui->cBTimeIntervalEnabled->setEnabled(timeValid[2] == 1);
 }
 //---------------------------------------------------------------------------
 void SpanDialog::showStartTimeDialog()
@@ -50,8 +51,8 @@ void SpanDialog::showStartTimeDialog()
     TimeDialog * timeDialog = new TimeDialog(this);
 
     gtime_t time;
-    time.time = dTTimeStart->dateTime().toUTC().toSecsSinceEpoch();
-    time.sec = dTTimeStart->dateTime().toUTC().time().msec() / 1000;
+    time.time = ui->dTTimeStart->dateTime().toUTC().toSecsSinceEpoch();
+    time.sec = ui->dTTimeStart->dateTime().toUTC().time().msec() / 1000;
     timeDialog->setTime(time);
 
     timeDialog->exec();
@@ -62,8 +63,8 @@ void SpanDialog::showEndTimeDialog()
     TimeDialog * timeDialog = new TimeDialog(this);
 
     gtime_t time;
-    time.time = dTTimeEnd->dateTime().toSecsSinceEpoch();
-    time.sec = dTTimeEnd->dateTime().time().msec() / 1000;
+    time.time = ui->dTTimeEnd->dateTime().toSecsSinceEpoch();
+    time.sec = ui->dTTimeEnd->dateTime().time().msec() / 1000;
     timeDialog->setTime(time);
 
     timeDialog->exec();
@@ -71,11 +72,13 @@ void SpanDialog::showEndTimeDialog()
 //---------------------------------------------------------------------------
 gtime_t SpanDialog::getStartTime()
 {
-    QDateTime start(dTTimeStart->dateTime());
-    gtime_t timeStart;
+    gtime_t timeStart = {0, 0};
 
-    timeStart.time = start.toSecsSinceEpoch();
-    timeStart.sec = start.time().msec() / 1000;
+    if (ui->cBTimeStartEnabled->isChecked()) {
+        QDateTime start(ui->dTTimeStart->dateTime());
+        timeStart.time = start.toSecsSinceEpoch();
+        timeStart.sec = start.time().msec() / 1000;
+    }
 
     return timeStart;
 }
@@ -86,16 +89,20 @@ void SpanDialog::setStartTime(gtime_t timeStart)
 
     start = start.addMSecs(timeStart.sec * 1000);
 
-    dTTimeStart->setDateTime(start);
+    ui->dTTimeStart->setDateTime(start);
+
+    ui->cBTimeStartEnabled->setCheckState(Qt::Checked);
 }
 //---------------------------------------------------------------------------
 gtime_t SpanDialog::getEndTime()
 {
-    QDateTime end(dTTimeEnd->dateTime());
-    gtime_t timeEnd;
+    gtime_t timeEnd = {0, 0};
 
-    timeEnd.time = end.toSecsSinceEpoch();
-    timeEnd.sec = end.time().msec() / 1000;
+    if (ui->cBTimeEndEnabled->isChecked()) {
+        QDateTime end(ui->dTTimeEnd->dateTime());
+        timeEnd.time = end.toSecsSinceEpoch();
+        timeEnd.sec = end.time().msec() / 1000;
+    }
 
     return timeEnd;
 }
@@ -105,26 +112,32 @@ void SpanDialog::setEndTime(gtime_t timeEnd)
     QDateTime end = QDateTime::fromSecsSinceEpoch(timeEnd.time, QTimeZone::utc());
     end = end.addMSecs(timeEnd.sec * 1000);
 
-    dTTimeEnd->setDateTime(end);
+    ui->dTTimeEnd->setDateTime(end);
+    ui->cBTimeEndEnabled->setCheckState(Qt::Checked);
 }
 //---------------------------------------------------------------------------
 double SpanDialog::getTimeInterval()
 {
-    return sBTimeInterval->value();
+    if (ui->cBTimeIntervalEnabled->isChecked())
+        return ui->sBTimeInterval->value();
+    else
+        return 0;
 }
 //---------------------------------------------------------------------------
 void SpanDialog::setTimeInterval(double timeInterval)
 {
-    sBTimeInterval->setValue(timeInterval);
+    ui->sBTimeInterval->setValue(timeInterval);
+    ui->cBTimeIntervalEnabled->setCheckState(Qt::Checked);
+
 }
 //---------------------------------------------------------------------------
 int SpanDialog::getTimeEnable(int i)
 {
     switch(i)
     {
-        case 0: return cBTimeStartEnabled->isChecked();
-        case 1: return cBTimeEndEnabled->isChecked();
-        case 2: return cBTimeIntervalEnabled->isChecked();
+        case 0: return ui->cBTimeStartEnabled->isChecked();
+        case 1: return ui->cBTimeEndEnabled->isChecked();
+        case 2: return ui->cBTimeIntervalEnabled->isChecked();
         default: return -1;
     }
 }
@@ -133,9 +146,9 @@ void SpanDialog::setTimeEnable(int i, bool enable)
 {
     switch(i)
     {
-        case 0: cBTimeStartEnabled->setChecked(enable);break;
-        case 1: cBTimeEndEnabled->setChecked(enable);break;
-        case 2: cBTimeIntervalEnabled->setChecked(enable);break;
+        case 0: ui->cBTimeStartEnabled->setChecked(enable);break;
+        case 1: ui->cBTimeEndEnabled->setChecked(enable);break;
+        case 2: ui->cBTimeIntervalEnabled->setChecked(enable);break;
     }
 }
 //---------------------------------------------------------------------------

@@ -61,8 +61,6 @@ void FileOptDialog::setOptions(int options)
     ui->lbSwapInterval->setVisible(options);
     ui->cBSwapInterval->setVisible(options);
     ui->btnKey->setVisible(options);
-    ui->cBTimeTag->setChecked(false);
-
 }
 //---------------------------------------------------------------------------
 void FileOptDialog::setPathEnabled(int pathEnabled)
@@ -74,6 +72,7 @@ void FileOptDialog::setPathEnabled(int pathEnabled)
 //---------------------------------------------------------------------------
 void FileOptDialog::setPath(const QString &path)
 {
+    ui->cBTimeTag->setChecked(false);
     if (!options) { // input
         double speed = 1.0, start = 0.0;
         int size_fpos = 4;
@@ -82,20 +81,20 @@ void FileOptDialog::setPath(const QString &path)
 
         QString token;
         foreach(token, tokens){
-            if (token == "T") ui->cBTimeTag->setChecked(true);
-            if (token.contains("+")) start = token.toDouble();
-            if (token.contains("x")) speed = QStringView{token}.mid(1).toDouble();
+            if (token == 'T') ui->cBTimeTag->setChecked(true);
+            if (token.contains('+')) start = token.toDouble();
+            if (token.contains('x')) speed = QStringView{token}.mid(1).toDouble();
             if (token.contains('P')) size_fpos = QStringView{token}.mid(2).toInt();
         }
 
         if (start <= 0.0) start = 0.0;
         if (speed <= 0.0) speed = 1.0;
 
-        int index = ui->cBTimeSpeed->findText(QString("x%1").arg(speed));
+        int index = ui->cBTimeSpeed->findText(QStringLiteral("x%1").arg(speed));
         if (index != -1) {
             ui->cBTimeSpeed->setCurrentIndex(index);
         } else {
-            ui->cBTimeSpeed->addItem(QString("x%1").arg(speed), speed);
+            ui->cBTimeSpeed->addItem(QStringLiteral("x%1").arg(speed), speed);
             ui->cBTimeSpeed->setCurrentIndex(ui->cBTimeSpeed->count());
         }
         ui->sBTimeStart->setValue(start);
@@ -112,14 +111,14 @@ void FileOptDialog::setPath(const QString &path)
             if (token == "T") ui->cBTimeTag->setChecked(true);
             if (token.contains("S=")) intv = QStringView{token}.mid(2).toDouble();
         };
-        int index = ui->cBSwapInterval->findText(QString("%1 h").arg(intv, 0, 'g', 3));
+        int index = ui->cBSwapInterval->findText(QStringLiteral("%1 h").arg(intv, 0, 'g', 3));
         if (index != -1) {
             ui->cBSwapInterval->setCurrentIndex(index);
         } else {
             if (intv == 0) {
                 ui->cBSwapInterval->setCurrentIndex(0);
             } else {
-                ui->cBSwapInterval->addItem(QString("%1 h").arg(intv, 0, 'g', 3), intv);
+                ui->cBSwapInterval->addItem(QStringLiteral("%1 h").arg(intv, 0, 'g', 3), intv);
                 ui->cBSwapInterval->setCurrentIndex(ui->cBTimeSpeed->count());
             }
         }
@@ -127,6 +126,7 @@ void FileOptDialog::setPath(const QString &path)
         ui->lEFilePath->setText(tokens.at(0));
         setPathEnabled(ui->cBPathEnable->isChecked());
 	}
+    updateEnable();
 }
 //---------------------------------------------------------------------------
 QString FileOptDialog::getPath()
@@ -137,7 +137,7 @@ QString FileOptDialog::getPath()
     if (!options) {  // input
         path = ui->lEFilePath->text();
         if (ui->cBTimeTag->isChecked())
-            path = path + "::T" + "::" + ui->cBTimeSpeed->currentText() + "::+" + ui->sBTimeStart->text();
+            path = path + "::T" + "::" + ui->cBTimeSpeed->currentText() + "::+" + QString::number(ui->sBTimeStart->value());
         if (ui->cB64Bit->isChecked()) {
             path = path + "::P=8";
         }
@@ -168,11 +168,14 @@ void FileOptDialog::keyDialogShow()
 //---------------------------------------------------------------------------
 void FileOptDialog::updateEnable()
 {
-    ui->lEFilePath->setEnabled(ui->cBPathEnable->isChecked());
+
     ui->cBTimeSpeed->setEnabled(ui->cBTimeTag->isChecked());
     ui->sBTimeStart->setEnabled(ui->cBTimeTag->isChecked());
-    ui->cB64Bit ->setEnabled(ui->cBTimeTag->isChecked());
-    ui->lbSwapInterval->setEnabled(ui->cBTimeTag->isChecked());
+    ui->lbPlus->setEnabled(ui->cBTimeTag->isChecked());
+    ui->cB64Bit->setEnabled(ui->cBTimeTag->isChecked());
+
+    ui->lEFilePath->setEnabled(ui->cBPathEnable->isChecked());
+    ui->lbSwapInterval->setEnabled(ui->cBPathEnable->isChecked());
     ui->cBSwapInterval->setEnabled(ui->cBPathEnable->isChecked());
     ui->lbFilePath->setEnabled(ui->cBPathEnable->isChecked());
     ui->cBTimeTag->setEnabled(ui->cBPathEnable->isChecked());

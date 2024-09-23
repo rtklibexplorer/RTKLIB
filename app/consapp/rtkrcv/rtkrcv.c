@@ -98,6 +98,7 @@ static char strpath[8][MAXSTR]={"","","","","","","",""}; /* stream paths */
 static int strfmt[]={                   /* stream formats */
     STRFMT_UBX,STRFMT_RTCM3,STRFMT_SP3,SOLF_LLH,SOLF_NMEA
 };
+static char rcvopt[3][256]={""};        /* Receiver options */
 static int svrcycle     =10;            /* server cycle (ms) */
 static int timeout      =10000;         /* timeout time (ms) */
 static int reconnect    =10000;         /* reconnect interval (ms) */
@@ -202,6 +203,9 @@ static opt_t rcvopts[]={
     {"inpstr1-format",  3,  (void *)&strfmt [0],         FMTOPT },
     {"inpstr2-format",  3,  (void *)&strfmt [1],         FMTOPT },
     {"inpstr3-format",  3,  (void *)&strfmt [2],         FMTOPT },
+    {"inpstr1-rcvopt",  2,  (void *)rcvopt[0],           ""     },
+    {"inpstr2-rcvopt",  2,  (void *)rcvopt[1],           ""     },
+    {"inpstr3-rcvopt",  2,  (void *)rcvopt[2],           ""     },
     {"inpstr2-nmeareq", 3,  (void *)&nmeareq,            NMEOPT },
     {"inpstr2-nmealat", 1,  (void *)&nmeapos[0],         "deg"  },
     {"inpstr2-nmealon", 1,  (void *)&nmeapos[1],         "deg"  },
@@ -401,7 +405,7 @@ static int startsvr(vt_t *vt)
     double pos[3],npos[3];
     char s1[3][MAXRCVCMD]={"","",""},*cmds[]={NULL,NULL,NULL};
     char s2[3][MAXRCVCMD]={"","",""},*cmds_periodic[]={NULL,NULL,NULL};
-    char *ropts[]={"","",""};
+    char *ropts[]={rcvopt[0],rcvopt[1],rcvopt[2]};
     char *paths[]={
         strpath[0],strpath[1],strpath[2],strpath[3],strpath[4],strpath[5],
         strpath[6],strpath[7]
@@ -429,7 +433,7 @@ static int startsvr(vt_t *vt)
             if (strtype[i]==STR_FILE&&!confwrite(vt,strpath[i])) return 0;
         }
     }
-    if (prcopt.refpos==4) { /* rtcm */
+    if (prcopt.refpos==POSOPT_RTCM) { /* rtcm */
         for (i=0;i<3;i++) prcopt.rb[i]=0.0;
     }
     pos[0]=nmeapos[0]*D2R;

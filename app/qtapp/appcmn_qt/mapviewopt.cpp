@@ -1,6 +1,7 @@
 //---------------------------------------------------------------------------
 #include <QShowEvent>
 #include <QFile>
+#include <QDir>
 #include <QAction>
 
 #include "viewer.h"
@@ -29,9 +30,9 @@ void MapViewOptDialog::showNotes()
     TextViewer *viewer;
     
     dir = qApp->applicationDirPath(); // exe directory
-    file = dir + "/gmview_notes.txt";
+    file = QDir(dir).absoluteFilePath("gmview_notes.txt");
     if (!QFile::exists(file))
-        file = dir + "../appcmn_qt/gmview_notes.txt";
+        file = QDir(dir).absoluteFilePath("../appcmn_qt/gmview_notes.txt");
     viewer = new TextViewer(this);
     viewer->setWindowTitle(file);
     viewer->setOption(0);

@@ -26,6 +26,7 @@ class LogStrDialog;
 class MonitorDialog;
 class MarkDialog;
 class QLabel;
+class LabelStretcher;
 
 //---------------------------------------------------------------------------
 class MainWindow : public QDialog
@@ -43,32 +44,33 @@ public slots:
     void stopServer();
     void showRtkPlot();
     void showOptionsDialog();
+    void btnMarkClicked();
+    void btnSaveClicked();
     void exit();
 
     void changeTimeSystem();
+    void changeSolutionType();
     void showInputStreamDialog();
     void showOutputStreamDialog();
     void showLogStreamDialog();
-    void changeSolutionType();
-    void changePlotType1();
-
     void showMonitorDialog();
-    void btnSaveClicked();
     void showAboutDialog();
     void minimizeToTray();
 
     void expandFromTray();
-    void changeSolutionIndex();
-
     void maximizeFromTray(QSystemTrayIcon::ActivationReason);
+
+    void changeSolutionIndex();
     void changeFrequencyType1();
-    void changePanelMode();
-    void changePlotType2();
     void changeFrequencyType2();
-    void changePlotType3();
     void changeFrequencyType3();
-    void changePlotType4();
     void changeFrequencyType4();
+    void changePlotType1();
+    void changePlotType2();
+    void changePlotType3();
+    void changePlotType4();
+    void changePanelMode();
+
     void expandPlot1();
     void shrinkPlot1();
     void expandPlot2();
@@ -77,13 +79,12 @@ public slots:
     void shrinkPlot3();
     void expandPlot4();
     void shrinkPlot4();
-    void btnMarkClicked();
 
 protected:
     void showEvent(QShowEvent*);
     void closeEvent(QCloseEvent *);
 
-    rtksvr_t rtksvr;                        // rtk server struct
+    rtksvr_t *rtksvr;                       // rtk server struct
     stream_t monistr;                       // monitor stream
 
 private:
@@ -94,13 +95,15 @@ private:
     QSystemTrayIcon *systemTray;
     QMenu *trayMenu;
     QAction *menuStartAction, *menuStopAction, *menuExitAction;
+    LabelStretcher *stretch;
 
     Ui::MainForm *ui;
 
-    void updateLog (int stat, gtime_t time, double *rr, float *qr,
-                     double *rb, int ns, double age, double ratio);
     void serverStart();
     void serverStop();
+
+    void updateLog (int stat, gtime_t time, double *rr, float *qr,
+                     double *rb, int ns, double age, double ratio);
     void updatePanels();
     void updateTimeSystem();
     void updateSolutionType();
@@ -108,21 +111,18 @@ private:
     void updateTime();
     void updatePosition();
     void updateStream();
-    void drawSolutionPlot(QLabel *plot, int type, int freq);
     void updatePlot();
     void updateEnable();
-    void ChangePlot();
     int confirmOverwrite(const QString &path);
 
+    void drawSolutionPlot(QLabel *plot, int type, int freq);
     void drawSnr(QPainter &c, int w, int h, int x0, int y0, int index, int freq);
     void drawSatellites(QPainter &c, int w, int h, int x0, int y0, int index, int freq);
     void drawBaseline(QPainter &c, int id, int w, int h);
     void drawTrack(QPainter &c, int id, QPaintDevice * plot);
     void drawSky(QPainter &c, int w, int h, int x0, int y0);
-    void drawText(QPainter &c, int x, int y, const QString &s,
-                   const QColor &color, int ha, int va);
-    void drawArrow(QPainter &c, int x, int y, int siz,
-                                  int ang, const QColor &color);
+    void drawText(QPainter &c, int x, int y, const QString &s, const QColor &color, int ha, int va);
+    void drawArrow(QPainter &c, int x, int y, int size, int ang, const QColor &color);
     void openMonitorPort(int port);
     void initSolutionBuffer();
     void saveLogs();
@@ -131,8 +131,9 @@ private:
     void loadOptions();
     void saveOptions();
     void setTrayIcon(int index);
-    int execCommand(const QString &cmd, const QStringList &opt, int show);
+    int execCommand(const QString &cmd, const QStringList &opt);
     void changeFrequencyType(int i);
+    void changePlotType(int i);
     void showFrequenciesDialog();
     void showMaskDialog();
     void showKeyDialog();
@@ -177,13 +178,11 @@ public:
 
     QString history[10];
 
-
     QString pointName[MAXMAPPNT];
     double pointPosition[MAXMAPPNT][3];
     int nMapPoint;
 
     QString markerName, markerComment;
-
 };
 //---------------------------------------------------------------------------
 #endif

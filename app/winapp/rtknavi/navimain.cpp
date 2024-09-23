@@ -1139,7 +1139,7 @@ void __fastcall TMainForm::SvrStart(void)
         tracelevel(DebugTraceF);
     }
     if (RovPosTypeF<=2) { // LLH,XYZ
-        PrcOpt.rovpos=POSOPT_POS;
+        PrcOpt.rovpos = RovPosTypeF < 2 ? POSOPT_POS_LLH : POSOPT_POS_XYZ;
         PrcOpt.ru[0]=RovPos[0];
         PrcOpt.ru[1]=RovPos[1];
         PrcOpt.ru[2]=RovPos[2];
@@ -1149,7 +1149,7 @@ void __fastcall TMainForm::SvrStart(void)
         for (i=0;i<3;i++) PrcOpt.ru[i]=0.0;
     }
     if (RefPosTypeF<=2) { // LLH,XYZ
-        PrcOpt.refpos=POSOPT_POS;
+        PrcOpt.refpos = RefPosTypeF < 2 ? POSOPT_POS_LLH : POSOPT_POS_XYZ;
         PrcOpt.rb[0]=RefPos[0];
         PrcOpt.rb[1]=RefPos[1];
         PrcOpt.rb[2]=RefPos[2];

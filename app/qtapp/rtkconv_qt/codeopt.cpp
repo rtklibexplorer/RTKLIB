@@ -30,6 +30,7 @@ void CodeOptDialog::setCodeMask(int i, const QString &mask)
         ui->G06->setChecked(mask[5] == '1');
         ui->G07->setChecked(mask[6] == '1');
         ui->G08->setChecked(mask[7] == '1');
+        ui->G12->setChecked(mask[11] == '1');
         ui->G14->setChecked(mask[13] == '1');
         ui->G15->setChecked(mask[14] == '1');
         ui->G16->setChecked(mask[15] == '1');
@@ -43,7 +44,7 @@ void CodeOptDialog::setCodeMask(int i, const QString &mask)
         ui->G24->setChecked(mask[23] == '1');
         ui->G25->setChecked(mask[24] == '1');
         ui->G26->setChecked(mask[25] == '1');
-    } else if (i == 1) { // GLONAui->Sui->S
+    } else if (i == 1) { // GLONASS
         ui->R01->setChecked(mask[0] == '1');
         ui->R02->setChecked(mask[1] == '1');
         ui->R14->setChecked(mask[13] == '1');
@@ -77,10 +78,11 @@ void CodeOptDialog::setCodeMask(int i, const QString &mask)
         ui->E37->setChecked(mask[36] == '1');
         ui->E38->setChecked(mask[37] == '1');
         ui->E39->setChecked(mask[38] == '1');
-    } else if (i==3) { // QZui->Sui->S
+    } else if (i==3) { // QZSS
         ui->J01->setChecked(mask[0] == '1');
         ui->J07->setChecked(mask[6] == '1');
         ui->J08->setChecked(mask[7] == '1');
+        ui->J11->setChecked(mask[11] == '1');
         ui->J12->setChecked(mask[11] == '1');
         ui->J13->setChecked(mask[12] == '1');
         ui->J16->setChecked(mask[15] == '1');
@@ -97,22 +99,22 @@ void CodeOptDialog::setCodeMask(int i, const QString &mask)
         ui->J58->setChecked(mask[57] == '1');
         ui->J59->setChecked(mask[58] == '1');
         ui->J60->setChecked(mask[59] == '1');
-    } else if (i == 4){ // ui->SBAui->S
+    } else if (i == 4){ // SBAS
         ui->S01->setChecked(mask[0] == '1');
         ui->S24->setChecked(mask[23] == '1');
         ui->S25->setChecked(mask[24] == '1');
         ui->S26->setChecked(mask[25] == '1');
-    } else if (i == 5) { //BDui->S
+    } else if (i == 5) { //BDS
         ui->C02->setChecked(mask[1] == '1');
-        ui->C06->setChecked(mask[5] == '1');
-        ui->C10->setChecked(mask[9] == '1');
+        ui->C08->setChecked(mask[7] == '1');
+        ui->C09->setChecked(mask[8] == '1');
         ui->C12->setChecked(mask[11] == '1');
+        ui->C13->setChecked(mask[12] == '1');
         ui->C18->setChecked(mask[17] == '1');
         ui->C26->setChecked(mask[25] == '1');
         ui->C27->setChecked(mask[26] == '1');
         ui->C28->setChecked(mask[27] == '1');
         ui->C29->setChecked(mask[28] == '1');
-        ui->C30->setChecked(mask[29] == '1');
         ui->C33->setChecked(mask[32] == '1');
         ui->C39->setChecked(mask[38] == '1');
         ui->C40->setChecked(mask[39] == '1');
@@ -145,7 +147,7 @@ QString CodeOptDialog::getCodeMask(int i)
 
     mask.fill('0', MAXCODE);
 
-    if (i == 0) { // GPui->S
+    if (i == 0) { // GPS
         if (ui->G01->isChecked()) mask[0] = '1';
         if (ui->G02->isChecked()) mask[1] = '1';
         if (ui->G03->isChecked()) mask[2] = '1';
@@ -154,6 +156,7 @@ QString CodeOptDialog::getCodeMask(int i)
         if (ui->G06->isChecked()) mask[5] = '1';
         if (ui->G07->isChecked()) mask[6] = '1';
         if (ui->G08->isChecked()) mask[7] = '1';
+        if (ui->G12->isChecked()) mask[11] = '1';
         if (ui->G14->isChecked()) mask[13] = '1';
         if (ui->G15->isChecked()) mask[14] = '1';
         if (ui->G16->isChecked()) mask[15] = '1';
@@ -167,7 +170,7 @@ QString CodeOptDialog::getCodeMask(int i)
         if (ui->G24->isChecked()) mask[23] = '1';
         if (ui->G25->isChecked()) mask[24] = '1';
         if (ui->G26->isChecked()) mask[25] = '1';
-    } else if (i == 1) { // GLONAui->Sui->S
+    } else if (i == 1) { // GLONASS
         if (ui->R01->isChecked()) mask[0] = '1';
         if (ui->R02->isChecked()) mask[1] = '1';
         if (ui->R14->isChecked()) mask[13] = '1';
@@ -201,12 +204,13 @@ QString CodeOptDialog::getCodeMask(int i)
         if (ui->E37->isChecked()) mask[36] = '1';
         if (ui->E38->isChecked()) mask[37] = '1';
         if (ui->E39->isChecked()) mask[38] = '1';
-    } else if (i == 3) { // QZui->Sui->S
+    } else if (i == 3) { // QZSS
         if (ui->J01->isChecked()) mask[0] = '1';
         if (ui->J07->isChecked()) mask[6] = '1';
         if (ui->J08->isChecked()) mask[7] = '1';
-        if (ui->J13->isChecked()) mask[12] = '1';
+        if (ui->J11->isChecked()) mask[11] = '1';
         if (ui->J12->isChecked()) mask[11] = '1';
+        if (ui->J13->isChecked()) mask[12] = '1';
         if (ui->J16->isChecked()) mask[15] = '1';
         if (ui->J17->isChecked()) mask[16] = '1';
         if (ui->J18->isChecked()) mask[17] = '1';
@@ -221,22 +225,22 @@ QString CodeOptDialog::getCodeMask(int i)
         if (ui->J58->isChecked()) mask[57] = '1';
         if (ui->J59->isChecked()) mask[58] = '1';
         if (ui->J60->isChecked()) mask[59] = '1';
-    } else if (i == 4) { // ui->SBAui->S
+    } else if (i == 4) { // SBAS
         if (ui->S01->isChecked()) mask[0] = '1';
         if (ui->S24->isChecked()) mask[23] = '1';
         if (ui->S25->isChecked()) mask[24] = '1';
         if (ui->S26->isChecked()) mask[25] = '1';
-    } else if (i == 5) { // BDui->S
+    } else if (i == 5) { // BDS
         if (ui->C02->isChecked()) mask[1] = '1';
-        if (ui->C06->isChecked()) mask[5] = '1';
-        if (ui->C10->isChecked()) mask[9] = '1';
+        if (ui->C08->isChecked()) mask[7] = '1';
+        if (ui->C09->isChecked()) mask[8] = '1';
         if (ui->C12->isChecked()) mask[11] = '1';
+        if (ui->C13->isChecked()) mask[12] = '1';
         if (ui->C18->isChecked()) mask[17] = '1';
         if (ui->C26->isChecked()) mask[25] = '1';
         if (ui->C27->isChecked()) mask[26] = '1';
         if (ui->C28->isChecked()) mask[27] = '1';
         if (ui->C29->isChecked()) mask[28] = '1';
-        if (ui->C30->isChecked()) mask[29] = '1';
         if (ui->C33->isChecked()) mask[32] = '1';
         if (ui->C39->isChecked()) mask[38] = '1';
         if (ui->C40->isChecked()) mask[39] = '1';
@@ -277,6 +281,7 @@ void CodeOptDialog::setUnsetAll()
     ui->G06->setChecked(set);
     ui->G07->setChecked(set);
     ui->G08->setChecked(set);
+    ui->G12->setChecked(set);
     ui->G14->setChecked(set);
     ui->G15->setChecked(set);
     ui->G16->setChecked(set);
@@ -290,19 +295,21 @@ void CodeOptDialog::setUnsetAll()
     ui->G24->setChecked(set);
     ui->G25->setChecked(set);
     ui->G26->setChecked(set);
+
     ui->R01->setChecked(set);
     ui->R02->setChecked(set);
     ui->R14->setChecked(set);
     ui->R19->setChecked(set);
+    ui->R30->setChecked(set);
+    ui->R31->setChecked(set);
+    ui->R33->setChecked(set);
     ui->R44->setChecked(set);
     ui->R45->setChecked(set);
     ui->R46->setChecked(set);
     ui->R66->setChecked(set);
     ui->R67->setChecked(set);
     ui->R68->setChecked(set);
-    ui->R30->setChecked(set);
-    ui->R31->setChecked(set);
-    ui->R33->setChecked(set);
+
     ui->E01->setChecked(set);
     ui->E10->setChecked(set);
     ui->E11->setChecked(set);
@@ -322,9 +329,11 @@ void CodeOptDialog::setUnsetAll()
     ui->E37->setChecked(set);
     ui->E38->setChecked(set);
     ui->E39->setChecked(set);
+
     ui->J01->setChecked(set);
     ui->J07->setChecked(set);
     ui->J08->setChecked(set);
+    ui->J11->setChecked(set);
     ui->J12->setChecked(set);
     ui->J13->setChecked(set);
     ui->J16->setChecked(set);
@@ -341,16 +350,22 @@ void CodeOptDialog::setUnsetAll()
     ui->J58->setChecked(set);
     ui->J59->setChecked(set);
     ui->J60->setChecked(set);
+
+    ui->S01->setChecked(set);
+    ui->S24->setChecked(set);
+    ui->S25->setChecked(set);
+    ui->S26->setChecked(set);
+
     ui->C02->setChecked(set);
-    ui->C06->setChecked(set);
-    ui->C10->setChecked(set);
+    ui->C08->setChecked(set);
+    ui->C09->setChecked(set);
     ui->C12->setChecked(set);
+    ui->C13->setChecked(set);
     ui->C18->setChecked(set);
     ui->C26->setChecked(set);
     ui->C27->setChecked(set);
     ui->C28->setChecked(set);
     ui->C29->setChecked(set);
-    ui->C30->setChecked(set);
     ui->C33->setChecked(set);
     ui->C39->setChecked(set);
     ui->C40->setChecked(set);
@@ -365,6 +380,7 @@ void CodeOptDialog::setUnsetAll()
     ui->C63->setChecked(set);
     ui->C64->setChecked(set);
     ui->C65->setChecked(set);
+
     ui->I26->setChecked(set);
     ui->I49->setChecked(set);
     ui->I50->setChecked(set);
@@ -373,10 +389,6 @@ void CodeOptDialog::setUnsetAll()
     ui->I53->setChecked(set);
     ui->I54->setChecked(set);
     ui->I55->setChecked(set);
-    ui->S01->setChecked(set);
-    ui->S24->setChecked(set);
-    ui->S25->setChecked(set);
-    ui->S26->setChecked(set);
 
     ui->btnSetAll->setText(ui->btnSetAll->text() == tr("&Set All") ? tr("Un&set All") : tr("&Set All"));
 }
@@ -405,6 +417,7 @@ void CodeOptDialog::updateEnable()
     ui->G06->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L1));
     ui->G07->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L1));
     ui->G08->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L1));
+    ui->G12->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L1));
     ui->G14->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L2));
     ui->G15->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L2));
     ui->G16->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L2));
@@ -418,19 +431,21 @@ void CodeOptDialog::updateEnable()
     ui->G24->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L3));
     ui->G25->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L3));
     ui->G26->setEnabled((navSystem & SYS_GPS) && (frequencyType & FREQTYPE_L3));
+
     ui->R01->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L1));
     ui->R02->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L1));
     ui->R14->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L2));
     ui->R19->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L2));
+    ui->R30->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L2));
+    ui->R31->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L2));
+    ui->R33->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L2));
     ui->R44->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L3));
     ui->R45->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L3));
     ui->R46->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L3));
     ui->R66->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L1));
     ui->R67->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L1));
     ui->R68->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L1));
-    ui->R30->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L2));
-    ui->R31->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L2));
-    ui->R33->setEnabled((navSystem & SYS_GLO) && (frequencyType & FREQTYPE_L2));
+
     ui->E01->setEnabled((navSystem & SYS_GAL) && (frequencyType & FREQTYPE_L1));
     ui->E10->setEnabled((navSystem & SYS_GAL) && (frequencyType & FREQTYPE_L1));
     ui->E11->setEnabled((navSystem & SYS_GAL) && (frequencyType & FREQTYPE_L1));
@@ -450,42 +465,49 @@ void CodeOptDialog::updateEnable()
     ui->E37->setEnabled((navSystem & SYS_GAL) && (frequencyType & FREQTYPE_L5));
     ui->E38->setEnabled((navSystem & SYS_GAL) && (frequencyType & FREQTYPE_L5));
     ui->E39->setEnabled((navSystem & SYS_GAL) && (frequencyType & FREQTYPE_L5));
+
     ui->J01->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L1));
     ui->J07->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L1));
     ui->J08->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L1));
-    ui->J13->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L1));
+    ui->J11->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L1));
     ui->J12->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L1));
+    ui->J13->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L1));
     ui->J16->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L2));
     ui->J17->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L2));
     ui->J18->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L2));
     ui->J24->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L3));
     ui->J25->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L3));
     ui->J26->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L3));
-    ui->J57->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L3));
-    ui->J58->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L3));
-    ui->J59->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L3));
-    ui->J60->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L4));
+    ui->J33->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L4));
     ui->J34->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L4));
     ui->J35->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L4));
     ui->J36->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L4));
-    ui->J33->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L4));
+    ui->J57->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L3));
+    ui->J58->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L3));
+    ui->J59->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L3));
+    ui->J60->setEnabled((navSystem & SYS_QZS) && (frequencyType & FREQTYPE_L4));    
+
+    ui->S01->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L1));
+    ui->S24->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L3));
+    ui->S25->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L3));
+    ui->S26->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L3));
+
     ui->C02->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
-    ui->C06->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
-    ui->C10->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
+    ui->C08->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
+    ui->C09->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C12->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
+    ui->C13->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C18->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C26->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L3));
     ui->C27->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
     ui->C28->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
     ui->C29->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
-    ui->C30->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
     ui->C33->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
     ui->C39->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
     ui->C40->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C41->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C42->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
     ui->C43->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
-    ui->I49->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L1));
     ui->C56->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C57->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L3));
     ui->C58->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L3));
@@ -494,16 +516,18 @@ void CodeOptDialog::updateEnable()
     ui->C63->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
     ui->C64->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
     ui->C65->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
+
+    ui->I26->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L1));
+    ui->I49->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L1));
     ui->I50->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L1));
     ui->I51->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L1));
-    ui->I26->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L1));
     ui->I52->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L2));
     ui->I53->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L2));
     ui->I54->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L2));
-    ui->I55->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L3));
-    ui->S01->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L1));
-    ui->S24->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L3));
-    ui->S25->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L3));
-    ui->S26->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L3));
+    ui->I55->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L2));
+
+    if ((navSystem == (SYS_GPS | SYS_GAL | SYS_GLO | SYS_SBS | SYS_CMP | SYS_IRN | SYS_QZS)) &&
+        (frequencyType == (FREQTYPE_L1 | FREQTYPE_L2 | FREQTYPE_L3 | FREQTYPE_L4 | FREQTYPE_L5)))
+        ui->btnSetAll->setText(tr("Un&set All"));
 }
 //---------------------------------------------------------------------------

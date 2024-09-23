@@ -27,6 +27,8 @@ void KeyDialog::setFlag(int flag)
     ui->label6H_Hour->setVisible(flag != 3);
     ui->labelhc->setVisible(flag != 3);
     ui->label12H_Hour->setVisible(flag != 3);
+    ui->labelt->setVisible(flag != 3);
+    ui->label15_min->setVisible(flag != 3);
 
     ui->labelr->setVisible(flag >= 1);
     ui->labelStationID->setVisible(flag >= 1);

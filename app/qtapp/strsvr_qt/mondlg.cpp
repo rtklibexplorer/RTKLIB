@@ -24,8 +24,7 @@ StrMonDialog::StrMonDialog(QWidget *parent)
     connect(ui->btnDown, &QPushButton::clicked, this, &StrMonDialog::scrollDown);
     connect(ui->cBSelectFormat, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &StrMonDialog::changeFormat);
 
-    consoleBuffer.clear();
-    ui->tWConsole->clear();
+    clearConsole();
 
     for (int i = 0; i <= MAXRCVFMT; i++) {
         ui->cBSelectFormat->addItem(formatstrs[i]);
@@ -46,7 +45,7 @@ void StrMonDialog::changeFormat()
     }
 
     streamFormat = ui->cBSelectFormat->currentIndex();
-    consoleBuffer.clear();
+    clearConsole();
 
     if ((streamFormat - 3 == STRFMT_RTCM2) || (streamFormat - 3 == STRFMT_RTCM3)) {
         init_rtcm(&rtcm);
@@ -55,7 +54,6 @@ void StrMonDialog::changeFormat()
         init_raw(&raw, streamFormat - 3);
         raw.outtype = 1;
     }
-    ui->tWConsole->clear();
 }
 //---------------------------------------------------------------------------
 void StrMonDialog::addMessage(unsigned char *msg, int len)
@@ -85,7 +83,7 @@ void StrMonDialog::addMessage(unsigned char *msg, int len)
         for (i = 0; i < len; i++) {
             input_raw(&raw, streamFormat - 3, msg[i]);
             if (raw.msgtype[0]) {
-                addConsole((unsigned char*)rtcm.msgtype, strlen(rtcm.msgtype), 1, true);
+                addConsole((unsigned char*)raw.msgtype, strlen(raw.msgtype), 1, true);
                 raw.msgtype[0] = '\0';
             }
         }
@@ -101,45 +99,45 @@ void StrMonDialog::addConsole(unsigned char *msg, int n, int mode, bool newline)
 {
     char buff[MAXLEN + 16], *p = buff;
 
-     if (ui->btnStop->isChecked()) return;
-     if (n <= 0) return;
+    if (ui->btnStop->isChecked()) return;
+    if (n <= 0) return;
 
-     if (consoleBuffer.count() == 0) consoleBuffer.append(""); // make sure that there is always at least one line in consoleBuffer
+    if (consoleBuffer.count() == 0) consoleBuffer.append(""); // make sure that there is always at least one line in consoleBuffer
 
-     // fill buffer with last incomplete line
-     p += sprintf(p, "%s", qPrintable(consoleBuffer.at(consoleBuffer.count() - 1)));
+    // fill buffer with last incomplete line
+    p += sprintf(p, "%s", qPrintable(consoleBuffer.at(consoleBuffer.count() - 1)));
 
-     for (int i = 0; i < n; i++) {
-         if (mode) {
-             if (msg[i] == '\r') continue;
-             p += sprintf(p, "%c", (msg[i] == '\n' || isprint(msg[i])) ? msg[i] : '.');
-         } else {  // add a space after 16 and a line break after 67 characters
-             p += sprintf(p, "%s%02X", (p - buff) % 17 == 16 ? " " : "", msg[i]);
-             if (p - buff >= 67) p += sprintf(p, "\n");
-         }
-         if (p - buff >= MAXLEN) p += sprintf(p, "\n");
+    for (int i = 0; i < n; i++) {
+        if (mode) {
+            if (msg[i] == '\r') continue;
+            p += sprintf(p, "%c", (msg[i] == '\n' || isprint(msg[i])) ? msg[i] : '.');
+        } else {  // add a space after 16 and a line break after 67 characters
+            p += sprintf(p, "%s%02X", (p - buff) % 17 == 16 ? " " : "", msg[i]);
+            if (p - buff >= 67) p += sprintf(p, "\n");
+        }
+        if (p - buff >= MAXLEN) p += sprintf(p, "\n");
 
-         if (*(p - 1) == '\n') {
-             consoleBuffer[consoleBuffer.count() - 1] = QString(buff).remove(QString(buff).size()-1, 1);
-             consoleBuffer.append("");
-             *(p = buff) = 0;
-             while (consoleBuffer.count() >= MAXLINE) consoleBuffer.removeFirst();
-         }
-     }
-     // store last (incomplete) line
-     consoleBuffer[consoleBuffer.count() - 1] = QString(buff).remove(QString(buff).size()-1, 1);
+        if (*(p - 1) == '\n') {
+            consoleBuffer[consoleBuffer.count() - 1] = QString(buff).remove(QString(buff).size()-1, 1);
+            consoleBuffer.append("");
+            *(p = buff) = 0;
+            while (consoleBuffer.count() >= MAXLINE) consoleBuffer.removeFirst();
+        }
+    }
+    // store last (incomplete) line
+    consoleBuffer[consoleBuffer.count() - 1] = QString(buff);
 
-     // write consoleBuffer to table widget
-     ui->tWConsole->setColumnCount(1);
-     ui->tWConsole->setRowCount(consoleBuffer.size());
-     for (int i = 0; i < consoleBuffer.size(); i++)
-         ui->tWConsole->setItem(i, 0, new QTableWidgetItem(consoleBuffer.at(i)));
+    // write consoleBuffer to table widget
+    ui->tWConsole->setColumnCount(1);
+    ui->tWConsole->setRowCount(consoleBuffer.size());
+    for (int i = 0; i < consoleBuffer.size(); i++)
+        ui->tWConsole->setItem(i, 0, new QTableWidgetItem(consoleBuffer.at(i)));
 
-     if (ui->btnDown->isChecked())
-        ui->tWConsole->verticalScrollBar()->setValue(ui->tWConsole->verticalScrollBar()->maximum());
+    if (ui->btnDown->isChecked())
+       ui->tWConsole->verticalScrollBar()->setValue(ui->tWConsole->verticalScrollBar()->maximum());
 
-     if (newline)
-         consoleBuffer.append("");
+    if (newline)
+        consoleBuffer.append("");
 }
 //---------------------------------------------------------------------------
 void StrMonDialog::clearConsole()
@@ -152,6 +150,10 @@ void StrMonDialog::clearConsole()
 void StrMonDialog::scrollDown()
 {
     ui->tWConsole->verticalScrollBar()->setValue(ui->tWConsole->verticalScrollBar()->maximum());
+    if (ui->btnDown->isChecked())
+        ui->tWConsole->verticalScrollBar()->setEnabled(false);
+    else
+        ui->tWConsole->verticalScrollBar()->setEnabled(true);
 }
 //---------------------------------------------------------------------------
 

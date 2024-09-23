@@ -17,7 +17,7 @@
    <string/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" rowspan="2" colspan="6">
+   <item row="0" column="0" rowspan="2" colspan="5">
     <widget class="QFrame" name="Panel1">
      <property name="enabled">
       <bool>true</bool>
@@ -26,10 +26,10 @@
       <string/>
      </property>
      <property name="layoutDirection">
-      <enum>Qt::LeftToRight</enum>
+      <enum>Qt::LayoutDirection::LeftToRight</enum>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="text" stdset="0">
       <string/>
@@ -43,11 +43,7 @@
        </widget>
       </item>
       <item row="12" column="3">
-       <widget class="QPushButton" name="btnColor12F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor12F"/>
       </item>
       <item row="7" column="0">
        <widget class="QCheckBox" name="cBVisible7">
@@ -57,18 +53,10 @@
        </widget>
       </item>
       <item row="3" column="2">
-       <widget class="QPushButton" name="btnColor3">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor3"/>
       </item>
       <item row="9" column="3">
-       <widget class="QPushButton" name="btnColor9F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor9F"/>
       </item>
       <item row="5" column="0">
        <widget class="QCheckBox" name="cBVisible5">
@@ -78,11 +66,7 @@
        </widget>
       </item>
       <item row="9" column="2">
-       <widget class="QPushButton" name="btnColor9">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor9"/>
       </item>
       <item row="1" column="0">
        <widget class="QCheckBox" name="cBVisible1">
@@ -113,18 +97,10 @@
        </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QPushButton" name="btnColor1">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor1"/>
       </item>
       <item row="4" column="3">
-       <widget class="QPushButton" name="btnColor4F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor4F"/>
       </item>
       <item row="10" column="0">
        <widget class="QCheckBox" name="cBVisible10">
@@ -148,25 +124,13 @@
        </widget>
       </item>
       <item row="3" column="3">
-       <widget class="QPushButton" name="btnColor3F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor3F"/>
       </item>
       <item row="5" column="2">
-       <widget class="QPushButton" name="btnColor5">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor5"/>
       </item>
       <item row="12" column="2">
-       <widget class="QPushButton" name="btnColor12">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor12"/>
       </item>
       <item row="8" column="0">
        <widget class="QCheckBox" name="cBVisible8">
@@ -192,11 +156,7 @@
        </widget>
       </item>
       <item row="5" column="3">
-       <widget class="QPushButton" name="btnColor5F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor5F"/>
       </item>
       <item row="0" column="2">
        <widget class="QLabel" name="lblLine">
@@ -215,25 +175,13 @@
        </widget>
       </item>
       <item row="8" column="2">
-       <widget class="QPushButton" name="btnColor8">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor8"/>
       </item>
       <item row="10" column="2">
-       <widget class="QPushButton" name="btnColor10">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor10"/>
       </item>
       <item row="8" column="3">
-       <widget class="QPushButton" name="btnColor8F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor8F"/>
       </item>
       <item row="1" column="1">
        <widget class="QRadioButton" name="rBLayer1">
@@ -250,11 +198,7 @@
        </widget>
       </item>
       <item row="11" column="2">
-       <widget class="QPushButton" name="btnColor11">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor11"/>
       </item>
       <item row="8" column="1">
        <widget class="QRadioButton" name="rBLayer8">
@@ -264,32 +208,16 @@
        </widget>
       </item>
       <item row="6" column="2">
-       <widget class="QPushButton" name="btnColor6">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor6"/>
       </item>
       <item row="4" column="2">
-       <widget class="QPushButton" name="btnColor4">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor4"/>
       </item>
       <item row="7" column="2">
-       <widget class="QPushButton" name="btnColor7">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor7"/>
       </item>
       <item row="7" column="3">
-       <widget class="QPushButton" name="btnColor7F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor7F"/>
       </item>
       <item row="6" column="0">
        <widget class="QCheckBox" name="cBVisible6">
@@ -320,11 +248,7 @@
        </widget>
       </item>
       <item row="2" column="2">
-       <widget class="QPushButton" name="btnColor2">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor2"/>
       </item>
       <item row="12" column="1">
        <widget class="QRadioButton" name="rBLayer12">
@@ -364,39 +288,19 @@
        </widget>
       </item>
       <item row="1" column="3">
-       <widget class="QPushButton" name="btnColor1F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor1F"/>
       </item>
       <item row="10" column="3">
-       <widget class="QPushButton" name="btnColor10F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor10F"/>
       </item>
       <item row="11" column="3">
-       <widget class="QPushButton" name="btnColor11F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor11F"/>
       </item>
       <item row="2" column="3">
-       <widget class="QPushButton" name="btnColor2F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor2F"/>
       </item>
       <item row="6" column="3">
-       <widget class="QPushButton" name="btnColor6F">
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QPushButton" name="btnColor6F"/>
       </item>
       <item row="7" column="1">
        <widget class="QRadioButton" name="rBLayer7">
@@ -435,24 +339,10 @@
      </layout>
     </widget>
    </item>
-   <item row="2" column="0">
-    <widget class="QPushButton" name="btnUp">
-     <property name="toolTip">
-      <string/>
-     </property>
-     <property name="text">
-      <string>&amp;Up</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../icon/resources.qrc">
-       <normaloff>:/buttons/up2</normaloff>:/buttons/up2</iconset>
-     </property>
-    </widget>
-   </item>
    <item row="2" column="1" colspan="2">
     <widget class="QPushButton" name="btnDown">
      <property name="toolTip">
-      <string/>
+      <string>Move layer down in the stack</string>
      </property>
      <property name="text">
       <string>&amp;Down</string>
@@ -463,36 +353,24 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="4">
-    <widget class="QPushButton" name="btnApply">
+   <item row="2" column="0">
+    <widget class="QPushButton" name="btnUp">
      <property name="toolTip">
-      <string/>
+      <string>Move layer up the stack</string>
      </property>
      <property name="text">
-      <string>&amp;Apply</string>
+      <string>&amp;Up</string>
      </property>
-     <property name="autoDefault">
-      <bool>true</bool>
-     </property>
-     <property name="default">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="5">
-    <widget class="QPushButton" name="btnClose">
-     <property name="toolTip">
-      <string/>
-     </property>
-     <property name="text">
-      <string>&amp;Close</string>
+     <property name="icon">
+      <iconset resource="../icon/resources.qrc">
+       <normaloff>:/buttons/up2</normaloff>:/buttons/up2</iconset>
      </property>
     </widget>
    </item>
    <item row="2" column="3">
     <spacer name="horizontalSpacer">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -501,6 +379,13 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="2" column="4">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::StandardButton::Apply|QDialogButtonBox::StandardButton::Close</set>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
@@ -555,8 +440,6 @@
   <tabstop>btnColor12F</tabstop>
   <tabstop>btnUp</tabstop>
   <tabstop>btnDown</tabstop>
-  <tabstop>btnApply</tabstop>
-  <tabstop>btnClose</tabstop>
  </tabstops>
  <resources>
   <include location="../icon/resources.qrc"/>

@@ -26,7 +26,7 @@ public:
         Compass = 13
     };
     enum LabelPosition {
-        On = 0,
+        Off = 0,
         Outer = 1,
         Inner = 2,
         OuterRot = 3,
@@ -63,6 +63,8 @@ public:
     void getLimits(double *xl, double *yl);
     void setTick(const double xt, const double yt);
     void getTick(double &xt, double &yt);
+    void setLabelUnits(const QString & xUnit, const QString & yUnit);
+    void getLabelUnits(QString &xUnit, QString &yUnit);
     void drawAxis(QPainter &c, bool label, bool glabel);
     void drawMark(QPainter &c, const QPoint &p, int mark, const QColor &color, int size, int rot);
     void drawMark(QPainter &c, double x, double y, int mark, const QColor &color, int size, int rot);
@@ -89,9 +91,9 @@ public:
     void drawSkyPlot(QPainter &c, const QPoint &p, const QColor &color1, const QColor &color2, const QColor &bgcolor, int size);
     void drawSkyPlot(QPainter &c, double x, double y, const QColor &color1, const QColor &color2, const QColor &bgcolor,double size);
 
-    int box;  // show box (0:off, 1:on)
-    int fit;  // fit scale on resize (0:off, 1:on)
-    int xGrid, yGrid;  // show grid (0:off, 1:on)
+    bool box;  // show box
+    bool fit;  // fit scale on resize
+    bool xGrid, yGrid;  // show grid
     int xLabelPosition, yLabelPosition; // grid label pos (0:off, 1:outer, 2:inner, 3:outer-rot, 4:inner-rot, 5/6:time, 7:axis)
     int week;  // gpsweek no. for time label
     QString title, xLabel, yLabel;  // lable string ("":no label)
@@ -104,7 +106,7 @@ private:
     void drawLabel(QPainter &c);
     void drawGrid(QPainter &c,double xt, double yt);
     void drawGridLabel(QPainter &c, double xt, double yt);
-    void rotatePoint(QPoint *ps, int n, const QPoint &pc, int rot, QPoint *pr);
+    void rotatePoints(QPoint *ps, int n, const QPoint &pc, int rot, QPoint *pr);
     int clipPoint(QPoint *p0, int area, QPoint *p1);
 
     QPoint p_;
@@ -113,5 +115,6 @@ private:
     double xCenter, yCenter;  // center coordinate (unit)
     double xScale, yScale;  // scale factor (unit/pixel)
     double xTick, yTick;   // grid interval (unit) (0:auto)
+    QString xLabelUnit, yLabelUnit;
 };
 #endif

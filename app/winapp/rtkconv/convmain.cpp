@@ -869,8 +869,9 @@ void __fastcall TMainWindow::ConvertFile(void)
 		else if (!strcmp(p,".binex")) format=STRFMT_BINEX;
 		else if (!strcmp(p,".rt17" )) format=STRFMT_RT17;
 		else if (!strcmp(p,".sbf"  )) format=STRFMT_SEPT;
-		else if (!strcmp(p,".trs"  )) format=STRFMT_TERSUS;
-        else if (!strcmp(p,".cnb"  )) format=STRFMT_CNAV;
+		else if (!strcmp(p,".unc"  )) format=STRFMT_UNICORE;
+		/* else if (!strcmp(p,".trs"  )) format=STRFMT_TERSUS; */
+		/* else if (!strcmp(p,".cnb"  )) format=STRFMT_CNAV; */
 		else if (!strcmp(p,".obs"  )) format=STRFMT_RINEX;
 		else if (!strcmp(p,".OBS"  )) format=STRFMT_RINEX;
 		else if (!strcmp(p,".nav"  )) format=STRFMT_RINEX;
@@ -952,7 +953,7 @@ void __fastcall TMainWindow::ConvertFile(void)
 	rnxopt.navsys=NavSys;
 	rnxopt.obstype=ObsType;
 	rnxopt.freqtype=FreqType;
-	for (i=0;i<2;i++) sprintf(rnxopt.comment[i],"%.63s",Comment[i].c_str());
+	for (i=0;i<2;i++) rnxcomment(&rnxopt, "%s", Comment[i].c_str());
 	for (i=0;i<7;i++) strcpy(rnxopt.mask[i],CodeMask[i].c_str());
         for (i=0;i<7;i++) {
             /* strncpy is appropriate here, the elements are accessed randomly */

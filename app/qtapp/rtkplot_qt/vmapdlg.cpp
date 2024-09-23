@@ -27,8 +27,8 @@ VecMapDialog::VecMapDialog(Plot *_plot, QWidget *parent)
     cBVisible << ui->cBVisible1 << ui->cBVisible2 << ui->cBVisible3 << ui->cBVisible4 << ui->cBVisible5 << ui->cBVisible6 << ui->cBVisible7 << ui->cBVisible8 <<
         ui->cBVisible9 << ui->cBVisible10 << ui->cBVisible11 << ui->cBVisible12;
 
-    connect(ui->btnApply, &QPushButton::clicked, this, &VecMapDialog::saveClose);
-    connect(ui->btnClose, &QPushButton::clicked, this, &VecMapDialog::reject);
+    connect(ui->buttonBox, &QDialogButtonBox::clicked, this, &VecMapDialog::saveClose);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &VecMapDialog::reject);
     connect(ui->btnUp, &QPushButton::clicked, this, &VecMapDialog::moveUp);
     connect(ui->btnDown, &QPushButton::clicked, this, &VecMapDialog::moveDown);
 
@@ -61,10 +61,10 @@ VecMapDialog::VecMapDialog(Plot *_plot, QWidget *parent)
 void VecMapDialog::selectColor()
 {
     int idx;
-    QList<QPushButton*> btnColor;
-    btnColor << btnColor << btnColorf;
+    QList<QPushButton*> buttons;
+    buttons << btnColor << btnColorf;
 
-    idx = btnColor.indexOf(static_cast<QPushButton*>(sender()));
+    idx = buttons.indexOf(static_cast<QPushButton*>(sender()));
     if (idx >= 0) {
         QColorDialog dialog(this);
 
@@ -73,7 +73,7 @@ void VecMapDialog::selectColor()
         if (dialog.exec() != QDialog::Accepted) return;
 
         color[idx] = dialog.currentColor();
-        btnColor[idx]->setStyleSheet(QString("QPushButton {background-color: %1;}").arg(color2String(color[idx])));
+        setWidgetBackgroundColor(buttons[idx], color[idx]);
     }
 }
 //---------------------------------------------------------------------------
@@ -149,16 +149,20 @@ void VecMapDialog::showEvent(QShowEvent *event)
         rBLayer[i]->setText(plot->gis.name[i]);
         cBVisible[i]->setChecked(plot->gis.flag[i]);
         gis_data[i] = plot->gis.data[i];
+        color[i] = mapColor[i];
+        color[i+MAXMAPLAYER] = mapColor[i+MAXMAPLAYER];
     }
 }
 //---------------------------------------------------------------------------
-void VecMapDialog::saveClose()
+void VecMapDialog::saveClose(QAbstractButton *button)
 {
+    if (button != ui->buttonBox->button(QDialogButtonBox::Apply))
+        return;
     for (int i = 0; i < MAXMAPLAYER; i++) {
         strncpy(plot->gis.name[i], qPrintable(rBLayer[i]->text()), 255);
         plot->gis.flag[i] = cBVisible[i]->isChecked();
         mapColor[i] = color[i];
-        mapColor[i+12] = color[i+12];
+        mapColor[i+MAXMAPLAYER] = color[i+MAXMAPLAYER];
         plot->gis.data[i] = gis_data[i];
     }
 
@@ -172,69 +176,47 @@ QColor VecMapDialog::getMapColor(int i)
 //---------------------------------------------------------------------------
 QColor VecMapDialog::getMapColorF(int i)
 {
-    return mapColor[i + 12];
+    return mapColor[i + MAXMAPLAYER];
 }
 //---------------------------------------------------------------------------
 void VecMapDialog::loadOptions(QSettings &settings)
 {
     mapColor[0] = settings.value("plot/mapcolor1", QColor(0xc0, 0xc0, 0xc0)).value<QColor>();
     mapColor[1] = settings.value("plot/mapcolor2", QColor(0xc0, 0xc0, 0xc0)).value<QColor>();
-    mapColor[2] = settings.value("plot/mapcolor3", QColor(0xf0, 0xd0, 0xd0)).value<QColor>();
+    mapColor[2] = settings.value("plot/mapcolor3", QColor(0xd0, 0xd0, 0xf0)).value<QColor>();
     mapColor[3] = settings.value("plot/mapcolor4", QColor(0xd0, 0xf0, 0xd0)).value<QColor>();
     mapColor[4] = settings.value("plot/mapcolor5", QColor(0xd0, 0xd0, 0xf0)).value<QColor>();
     mapColor[5] = settings.value("plot/mapcolor6", QColor(0xd0, 0xf0, 0xf0)).value<QColor>();
-    mapColor[6] = settings.value("plot/mapcolor7", QColor(0xf8, 0xf8, 0xd0)).value<QColor>();
+    mapColor[6] = settings.value("plot/mapcolor7", QColor(0xd0, 0xf8, 0xf8)).value<QColor>();
     mapColor[7] = settings.value("plot/mapcolor8", QColor(0xf0, 0xf0, 0xf0)).value<QColor>();
     mapColor[8] = settings.value("plot/mapcolor9", QColor(0xf0, 0xf0, 0xf0)).value<QColor>();
     mapColor[9] = settings.value("plot/mapcolor10", QColor(0xf0, 0xf0, 0xf0)).value<QColor>();
     mapColor[10] = settings.value("plot/mapcolor11", QColor(Qt::white)).value<QColor>();
     mapColor[11] = settings.value("plot/mapcolor12", QColor(Qt::white)).value<QColor>();
-    mapColor[0] = settings.value("plot/mapcolorf1", QColor(Qt::white)).value<QColor>();
-    mapColor[1] = settings.value("plot/mapcolorf2", QColor(Qt::white)).value<QColor>();
-    mapColor[2] = settings.value("plot/mapcolorf3", QColor(Qt::white)).value<QColor>();
-    mapColor[3] = settings.value("plot/mapcolorf4", QColor(Qt::white)).value<QColor>();
-    mapColor[4] = settings.value("plot/mapcolorf5", QColor(Qt::white)).value<QColor>();
-    mapColor[5] = settings.value("plot/mapcolorf6", QColor(Qt::white)).value<QColor>();
-    mapColor[6] = settings.value("plot/mapcolorf7", QColor(Qt::white)).value<QColor>();
-    mapColor[7] = settings.value("plot/mapcolorf8", QColor(Qt::white)).value<QColor>();
-    mapColor[8] = settings.value("plot/mapcolorf9", QColor(Qt::white)).value<QColor>();
-    mapColor[9] = settings.value("plot/mapcolorf10", QColor(Qt::white)).value<QColor>();
-    mapColor[10] = settings.value("plot/mapcolorf11", QColor(Qt::white)).value<QColor>();
-    mapColor[11] = settings.value("plot/mapcolorf12", QColor(Qt::white)).value<QColor>();
+    mapColor[12] = settings.value("plot/mapcolorf1", QColor(Qt::white)).value<QColor>();
+    mapColor[13] = settings.value("plot/mapcolorf2", QColor(Qt::white)).value<QColor>();
+    mapColor[14] = settings.value("plot/mapcolorf3", QColor(Qt::white)).value<QColor>();
+    mapColor[15] = settings.value("plot/mapcolorf4", QColor(Qt::white)).value<QColor>();
+    mapColor[16] = settings.value("plot/mapcolorf5", QColor(Qt::white)).value<QColor>();
+    mapColor[17] = settings.value("plot/mapcolorf6", QColor(Qt::white)).value<QColor>();
+    mapColor[18] = settings.value("plot/mapcolorf7", QColor(Qt::white)).value<QColor>();
+    mapColor[19] = settings.value("plot/mapcolorf8", QColor(Qt::white)).value<QColor>();
+    mapColor[20] = settings.value("plot/mapcolorf9", QColor(Qt::white)).value<QColor>();
+    mapColor[21] = settings.value("plot/mapcolorf10", QColor(Qt::white)).value<QColor>();
+    mapColor[22] = settings.value("plot/mapcolorf11", QColor(Qt::white)).value<QColor>();
+    mapColor[23] = settings.value("plot/mapcolorf12", QColor(Qt::white)).value<QColor>();
 
     for (int i = 0; i < MAXMAPLAYER; i++) {
         rBLayer[i]->setChecked(false);
-        btnColor[i]->setStyleSheet(QString("QPushButton {background-color: %1;}").arg(color2String(mapColor[i])));
-        btnColorf[i]->setStyleSheet(QString("QPushButton {background-color: %1;}").arg(color2String(mapColor[i])));
+        setWidgetBackgroundColor(btnColor[i], mapColor[i]);
+        setWidgetBackgroundColor(btnColorf[i], mapColor[i+MAXMAPLAYER]);
     }
 
 }
 //---------------------------------------------------------------------------
 void VecMapDialog::saveOptions(QSettings &settings)
 {
-    settings.setValue("plot/mapcolor1", mapColor[0]);
-    settings.setValue("plot/mapcolor2", mapColor[1]);
-    settings.setValue("plot/mapcolor3", mapColor[2]);
-    settings.setValue("plot/mapcolor4", mapColor[3]);
-    settings.setValue("plot/mapcolor5", mapColor[4]);
-    settings.setValue("plot/mapcolor6", mapColor[5]);
-    settings.setValue("plot/mapcolor7", mapColor[6]);
-    settings.setValue("plot/mapcolor8", mapColor[7]);
-    settings.setValue("plot/mapcolor9", mapColor[8]);
-    settings.setValue("plot/mapcolor10", mapColor[9]);
-    settings.setValue("plot/mapcolor11", mapColor[10]);
-    settings.setValue("plot/mapcolor12", mapColor[11]);
-    settings.setValue("plot/mapcolorf1", mapColor[0]);
-    settings.setValue("plot/mapcolorf2", mapColor[1]);
-    settings.setValue("plot/mapcolorf3", mapColor[2]);
-    settings.setValue("plot/mapcolorf4", mapColor[3]);
-    settings.setValue("plot/mapcolorf5", mapColor[4]);
-    settings.setValue("plot/mapcolorf6", mapColor[5]);
-    settings.setValue("plot/mapcolorf7", mapColor[6]);
-    settings.setValue("plot/mapcolorf8", mapColor[7]);
-    settings.setValue("plot/mapcolorf9", mapColor[8]);
-    settings.setValue("plot/mapcolorf10", mapColor[9]);
-    settings.setValue("plot/mapcolorf11", mapColor[10]);
-    settings.setValue("plot/mapcolorf12", mapColor[11]);
+    for (int i = 0; i < 2*MAXMAPLAYER; i++)
+        settings.setValue(QString("plot/mapcolor%1").arg(i), mapColor[i]);
 }
 //---------------------------------------------------------------------------

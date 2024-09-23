@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>535</width>
-    <height>274</height>
+    <height>276</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,7 +32,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="Label2">
         <property name="text">
-         <string>Download &amp;Address (address/file-path)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Download &amp;amp;Address (&lt;span style=&quot; font-style:italic;&quot;&gt;address/file-path&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="buddy">
          <cstring>cBAddress</cstring>
@@ -119,7 +119,7 @@
       <item row="2" column="1">
        <widget class="QComboBox" name="cBPathOffset">
         <property name="toolTip">
-         <string/>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Optionally specifying an time offset for the keys used in the path above.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="editable">
          <bool>true</bool>
@@ -210,7 +210,7 @@
       <item row="1" column="1">
        <widget class="QComboBox" name="cBOffset">
         <property name="toolTip">
-         <string/>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Time offset for data download to be used in combination with the download interval.&lt;/p&gt;&lt;p&gt;If the download interval is e.g. 6 h and the offset 2 h, the download will start at 2:00, 8:00,14:00, and 20:00 UTC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="editable">
          <bool>true</bool>
@@ -279,6 +279,9 @@
       </item>
       <item row="3" column="1">
        <widget class="QSpinBox" name="sBRetryInterval">
+        <property name="toolTip">
+         <string>Time between retries if download fails.</string>
+        </property>
         <property name="suffix">
          <string> s</string>
         </property>
@@ -306,7 +309,7 @@
       <item row="0" column="1">
        <widget class="QComboBox" name="cBInterval">
         <property name="toolTip">
-         <string/>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Time interval to download new data. &lt;/p&gt;&lt;p&gt;Useful in combination with certain keys (e.g. %hb) in the download path.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="editable">
          <bool>true</bool>
@@ -351,7 +354,7 @@
       <item row="0" column="3">
        <widget class="QLineEdit" name="lEUser">
         <property name="toolTip">
-         <string/>
+         <string>Username for login to the server.</string>
         </property>
         <property name="text">
          <string>anonymous</string>
@@ -374,7 +377,7 @@
       <item row="1" column="3">
        <widget class="QLineEdit" name="lEPassword">
         <property name="toolTip">
-         <string/>
+         <string>Password for the login to the server.</string>
         </property>
         <property name="echoMode">
          <enum>QLineEdit::EchoMode::Password</enum>
@@ -394,14 +397,14 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>cBAddress</tabstop>
   <tabstop>btnKey</tabstop>
+  <tabstop>cBAddress</tabstop>
   <tabstop>cBInterval</tabstop>
-  <tabstop>lEUser</tabstop>
   <tabstop>cBOffset</tabstop>
-  <tabstop>lEPassword</tabstop>
   <tabstop>cBPathOffset</tabstop>
   <tabstop>sBRetryInterval</tabstop>
+  <tabstop>lEUser</tabstop>
+  <tabstop>lEPassword</tabstop>
  </tabstops>
  <resources>
   <include location="../icon/resources.qrc"/>

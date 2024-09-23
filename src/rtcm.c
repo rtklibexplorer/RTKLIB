@@ -206,6 +206,7 @@ extern int input_rtcm2(rtcm_t *rtcm, uint8_t data)
 *          strings separated by spaces.
 *
 *          -EPHALL  : input all ephemerides (default: only new)
+*          -INVPRR  : invert polarity of PhaseRangeRate
 *          -STA=nnn : input only message with STAID=nnn (default: all)
 *          -GLss    : select signal ss for GPS MSM (ss=1C,1P,...)
 *          -RLss    : select signal ss for GLO MSM (ss=1C,1P,...)
@@ -215,6 +216,7 @@ extern int input_rtcm2(rtcm_t *rtcm, uint8_t data)
 *          -ILss    : select signal ss for IRN MSM (ss=5A,9A,...)
 *          -GALINAV : select I/NAV for Galileo ephemeris (default: all)
 *          -GALFNAV : select F/NAV for Galileo ephemeris (default: all)
+*          -RT_INP  : select real-time input
 *
 *          supported RTCM 3 messages (ref [7][10][15][16][17][18])
 *

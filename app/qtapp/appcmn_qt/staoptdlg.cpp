@@ -45,7 +45,7 @@ void StaListDialog::loadFile()
     filename = QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open...")));
 
     file.setFileName(filename);
-    if (!file.open(QIODevice::ReadOnly)) return;
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
 
     ui->lWStationList->clear();
     ui->lWStationList->setVisible(false);
@@ -53,7 +53,7 @@ void StaListDialog::loadFile()
     while (!file.atEnd()) {
         buffer = file.readLine();
         buffer = buffer.mid(buffer.indexOf('#'));
-        ui->lWStationList->addItem(buffer);
+        ui->lWStationList->addItem(buffer.trimmed());
     }
 
     ui->lWStationList->setVisible(true);
@@ -65,9 +65,9 @@ void StaListDialog::saveFile()
     QFile file;
 
     file.setFileName(filename);
-    if (!file.open(QIODevice::WriteOnly)) return;
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return;
 
     for (int i = 0; i < ui->lWStationList->count(); i++)
-        file.write((ui->lWStationList->item(i)->text() + "\n").toLatin1());
+        file.write((ui->lWStationList->item(i)->text() + '\n').toLatin1());
 }
 //---------------------------------------------------------------------------

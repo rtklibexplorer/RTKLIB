@@ -7,6 +7,7 @@
 #include <QPalette>
 #include <QColorDialog>
 #include <QFontDialog>
+#include <QLocale>
 
 #include "helper.h"
 #include "viewer.h"
@@ -31,7 +32,7 @@ ViewerOptDialog::ViewerOptDialog(QWidget *parent)
 void ViewerOptDialog::setFont(const QFont &font)
 {
     ui->fontLabel->setFont(font);
-    ui->fontLabel->setText(QString("%1 %2 px").arg(font.family()).arg(font.pointSize()));
+    ui->fontLabel->setText(QStringLiteral("%1 %2 px").arg(font.family()).arg(font.pointSize()));
 }
 //---------------------------------------------------------------------------
 void ViewerOptDialog::setTextColor(const QColor &color)
@@ -78,6 +79,6 @@ void ViewerOptDialog::selectFont()
     font = d.selectedFont();
 
     ui->fontLabel->setFont(font);
-    ui->fontLabel->setText(font.family() + QString::number(font.pointSize()) + "pt");
+    ui->fontLabel->setText(font.family() + QLocale().toString(font.pointSize()) + "pt");
 }
 //---------------------------------------------------------------------------

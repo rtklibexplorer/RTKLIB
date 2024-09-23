@@ -383,7 +383,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
 {
     double eps[]={1980,1,1,0,0,0},epe[]={2037,12,31,0,0,0};
     double epr[]={2010,1,1,0,0,0},span=0.0;
-    int i,j,k,sat,nf=5,nc=2,format=-1;
+    int i,j,k,sat,nf=5,format=-1;
     char *p,*sys,*fmt="",*paths[1],path[1024],buff[256];
     
     opt->rnxver=304;
@@ -431,7 +431,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
             nf=atoi(argv[++i]);
         }
         else if (!strcmp(argv[i],"-hc")&&i+1<argc) {
-            if (nc<MAXCOMMENT) strcpy(opt->comment[nc++],argv[++i]);
+            rnxcomment(opt, argv[++i]);
         }
         else if (!strcmp(argv[i],"-hm")&&i+1<argc) {
             strcpy(opt->marker,argv[++i]);
@@ -566,7 +566,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         if      (!strcmp(fmt,"rtcm2")) format=STRFMT_RTCM2;
         else if (!strcmp(fmt,"rtcm3")) format=STRFMT_RTCM3;
         else if (!strcmp(fmt,"nov"  )) format=STRFMT_OEM4;
-        else if (!strcmp(fmt,"cnav" )) format=STRFMT_CNAV;
+        /* else if (!strcmp(fmt,"cnav" )) format=STRFMT_CNAV; */
         else if (!strcmp(fmt,"ubx"  )) format=STRFMT_UBX;
         else if (!strcmp(fmt,"sbp"  )) format=STRFMT_SBP;
         else if (!strcmp(fmt,"hemis")) format=STRFMT_CRES;
@@ -576,7 +576,8 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         else if (!strcmp(fmt,"binex")) format=STRFMT_BINEX;
         else if (!strcmp(fmt,"rt17" )) format=STRFMT_RT17;
         else if (!strcmp(fmt,"sbf"  )) format=STRFMT_SEPT;
-        else if (!strcmp(fmt,"tersus")) format=STRFMT_TERSUS;
+        else if (!strcmp(fmt,"unicore")) format=STRFMT_UNICORE;
+        /* else if (!strcmp(fmt,"tersus")) format=STRFMT_TERSUS; */
         else if (!strcmp(fmt,"rinex")) format=STRFMT_RINEX;
     }
     else {
@@ -585,6 +586,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         if      (!strcmp(p,".rtcm2"))  format=STRFMT_RTCM2;
         else if (!strcmp(p,".rtcm3"))  format=STRFMT_RTCM3;
         else if (!strcmp(p,".gps"  ))  format=STRFMT_OEM4;
+        /* else if (!strcmp(p,"cnav" )) format=STRFMT_CNAV; */
         else if (!strcmp(p,".ubx"  ))  format=STRFMT_UBX;
         else if (!strcmp(p,".sbp"  ))  format=STRFMT_SBP;
         else if (!strcmp(p,".bin"  ))  format=STRFMT_CRES;
@@ -594,7 +596,8 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         else if (!strcmp(p,".binex"))  format=STRFMT_BINEX;
         else if (!strcmp(p,".rt17" ))  format=STRFMT_RT17;
         else if (!strcmp(p,".sbf"  ))  format=STRFMT_SEPT;
-        else if (!strcmp(p,".trs"  ))  format=STRFMT_TERSUS;
+        else if (!strcmp(p,".unc"  ))  format=STRFMT_UNICORE;
+        /* else if (!strcmp(p,".trs"  ))  format=STRFMT_TERSUS; */
         else if (!strcmp(p,".obs"  ))  format=STRFMT_RINEX;
         else if (!strcmp(p+3,"o"   ))  format=STRFMT_RINEX;
         else if (!strcmp(p+3,"O"   ))  format=STRFMT_RINEX;
@@ -624,12 +627,6 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     sprintf(opt.prog,"%s %s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
-    sprintf(opt.comment[0],"log: %-55.55s",ifile);
-    sprintf(opt.comment[1],"format: %s",formatstrs[format]);
-    if (*opt.rcvopt) {
-        strcat(opt.comment[1],", option: ");
-        strcat(opt.comment[1],opt.rcvopt);
-    }
     if (trace>0) {
         traceopen(TRACEFILE);
         tracelevel(trace);

@@ -25,6 +25,8 @@ public:
     void setOptions(int option); // 0(default): FTP options; 1: HTTP options
     QString getPath();
     void setPath(const QString&);
+    void setHistory(QString tcpHistory[], int size);
+    QString* getHistory();
 
 protected slots:
     void accept();
@@ -36,7 +38,7 @@ private:
 
     KeyDialog *keyDlg;
     int options;
-    QString history[MAXHIST], MountpointHistory[MAXHIST];
+    QString history[MAXHIST];
 
     Ui::FtpOptDialog *ui;
 

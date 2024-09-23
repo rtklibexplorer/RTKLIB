@@ -15,7 +15,11 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QTableWidget" name="tWPntList"/>
+    <widget class="QTableWidget" name="tWPntList">
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+    </widget>
    </item>
    <item>
     <widget class="QWidget" name="panelButtons" native="true">
@@ -71,7 +75,7 @@
       <item>
        <widget class="QDialogButtonBox" name="buttonBox">
         <property name="standardButtons">
-         <set>QDialogButtonBox::Close</set>
+         <set>QDialogButtonBox::StandardButton::Close</set>
         </property>
        </widget>
       </item>

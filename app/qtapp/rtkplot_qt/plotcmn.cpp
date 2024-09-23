@@ -77,10 +77,24 @@ void Plot::showLegend(const QStringList &msgs)
     trace(3, "showLegend\n");
 
     for (int i = 0; (i < 7) & (i < msgs.count()); i++) {
-        lblQL[i]->setText(msgs[i]);
-        setWidgetTextColor(lblQL[i], plotOptDialog->getMarkerColor(sel, i + 1));
-        lblQL[i]->adjustSize();
-        lblQL[i]->updateGeometry();
+        lblQL[i]->setText(msgs[i] + " ");
+        int col = i + 1; // Default coloring follows the marker color index
+        if (msgs[0] == " #OBS = 5 ") {
+            // Match the legend color to the observation color, see observationColor()
+            int n = i < 5 ? 5 - i : 0;
+            col = 3 - n + (n > 2 ? 5 : 0);
+        }
+        setWidgetTextColor(lblQL[i], plotOptDialog->getMarkerColor(sel, col));
+        auto policy = lblQL[i]->sizePolicy();
+        if (msgs[i].isEmpty())
+        {
+            policy.setHorizontalPolicy(QSizePolicy::Ignored);
+        } else {
+            policy.setHorizontalPolicy(QSizePolicy::Preferred);
+            lblQL[i]->adjustSize();
+            lblQL[i]->updateGeometry();
+        }
+        lblQL[i]->setSizePolicy(policy);
     }
     ui->wgStatus->updateGeometry();
 }
@@ -316,7 +330,7 @@ QColor Plot::observationColor(const obsd_t *obs, double az, double el, QVariant 
     if (simulatedObservation) {
         color = sysColor(obs->sat);
     } else if (obstype.isNull()) {  // "ALL" selected
-        for (i = n = 0; i < NFREQ && n < 5; i++) {
+        for (i = n = 0; i < NFREQ + NEXOBS && n < 5; i++) {
             if (obs->L[i] != 0.0 || obs->P[i] != 0.0) n++;
         }
         if (n == 0) {
@@ -389,14 +403,14 @@ QColor Plot::mpColor(double mp)
     if (mp >= 0.6) return colors[4];
     if (mp <= -0.6) return colors[0];
 
-    a = mp / 0.4 + 0.6;
+    a = (mp+0.8) / 0.4;
     i = static_cast<int>(a);
     remainder = a - i;
     c1 = colors[i];
     c2 = colors[i + 1];
-    r1 = static_cast<uint32_t>(remainder * c1.red() + (1.0 - remainder) * c2.red()) & 0xFF;
-    g1 = static_cast<uint32_t>(remainder * c1.green() + (1.0 - remainder) * c2.green()) & 0xFF;
-    b1 = static_cast<uint32_t>(remainder * c1.blue() + (1.0 - remainder) * c2.blue()) & 0xFF;
+    r1 = static_cast<uint32_t>(remainder * c2.red() + (1.0 - remainder) * c1.red()) & 0xFF;
+    g1 = static_cast<uint32_t>(remainder * c2.green() + (1.0 - remainder) * c1.green()) & 0xFF;
+    b1 = static_cast<uint32_t>(remainder * c2.blue() + (1.0 - remainder) * c1.blue()) & 0xFF;
 
     return QColor(r1, g1, b1);
 }
@@ -467,14 +481,14 @@ QString Plot::latLonString(const double *pos, int ndec)
     double dms1[3], dms2[3];
 
     if (plotOptDialog->getLatLonFormat() == 0) {
-        s = QStringLiteral(u"%1%2%3, %4%5%6").arg(fabs(pos[0] * R2D), ndec + 4, 'f', ndec).arg(degreeChar).arg(pos[0] < 0.0 ? tr("S") : tr("N"))
-                .arg(fabs(pos[1] * R2D), ndec + 5, 'f', ndec).arg(degreeChar).arg(pos[1] < 0.0 ? tr("W") : tr("E"));
+        s = QStringLiteral(u"%L1°%2, %L3°%4").arg(fabs(pos[0] * R2D), ndec + 4, 'f', ndec).arg(pos[0] < 0.0 ? tr("S") : tr("N"))
+                .arg(fabs(pos[1] * R2D), ndec + 5, 'f', ndec).arg(pos[1] < 0.0 ? tr("W") : tr("E"));
     } else {
         deg2dms(pos[0] * R2D, dms1, ndec - 5);
         deg2dms(pos[1] * R2D, dms2, ndec - 5);
-        s = QStringLiteral(u"%1%2 %3' %4\" %5, %6%7 %8' %9\" %10")
-                .arg(fabs(dms1[0]), 3, 'f', 0).arg(degreeChar).arg(dms1[1], 2, 'f', 0, QChar('0')).arg(dms1[2], ndec - 2, 'f', ndec - 5, QChar('0')).arg(pos[0] < 0.0 ? tr("S") : tr("N"))
-                .arg(fabs(dms2[0]), 4, 'f', 0).arg(degreeChar).arg(dms2[1], 2, 'f', 0, QChar('0')).arg(dms2[2], ndec - 2, 'f', ndec - 5, QChar('0')).arg(pos[1] < 0.0 ? tr("W") : tr("E"));
+        s = QStringLiteral(u"%L1° %L2' %L3\" %4, %L5 %L6' %L7\" %8")
+                .arg(fabs(dms1[0]), 3, 'f', 0).arg(dms1[1], 2, 'f', 0, QChar('0')).arg(dms1[2], ndec - 2, 'f', ndec - 5, QChar('0')).arg(pos[0] < 0.0 ? tr("S") : tr("N"))
+                .arg(fabs(dms2[0]), 4, 'f', 0).arg(dms2[1], 2, 'f', 0, QChar('0')).arg(dms2[2], ndec - 2, 'f', ndec - 5, QChar('0')).arg(pos[1] < 0.0 ? tr("W") : tr("E"));
     }
     return s;
 }

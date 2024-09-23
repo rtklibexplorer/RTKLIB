@@ -38,8 +38,7 @@ void MapOptDialog::showEvent(QShowEvent* event)
 void MapOptDialog::saveTag()
 {
     if (plot->getMapImageFileName().isEmpty()) return;
-    QFileInfo fi(plot->getMapImageFileName());
-    QString file = fi.absoluteDir().filePath(fi.baseName()) + ".tag";
+    QString file = plot->getMapImageFileName() + ".tag";
 
     QFile fp(file);
     if (!fp.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -78,11 +77,11 @@ void MapOptDialog::readMapTag(const QString &file)
         QList<QByteArray> tokens = buff.split('=');
         if (tokens.size() < 2) continue;
 
-        if (tokens.at(0) == "scalex") ui->sBScaleX->setValue(tokens.at(1).toDouble());
-        else if (tokens.at(0) == "scaley") ui->sBScaleY->setValue(tokens.at(1).toDouble());
-        else if (tokens.at(0) == "scaleeq") ui->cBScaleEqual->setChecked(tokens.at(1).toInt());
-        else if (tokens.at(0) == "lat") ui->sBLatitude->setValue(tokens.at(1).toDouble());
-        else if (tokens.at(0) == "lon") ui->sBLongitude->setValue(tokens.at(1).toDouble());
+        if (tokens.at(0).simplified() == "scalex") ui->sBScaleX->setValue(tokens.at(1).toDouble());
+        else if (tokens.at(0).simplified() == "scaley") ui->sBScaleY->setValue(tokens.at(1).toDouble());
+        else if (tokens.at(0).simplified() == "scaleeq") ui->cBScaleEqual->setChecked(tokens.at(1).toInt());
+        else if (tokens.at(0).simplified() == "lat") ui->sBLatitude->setValue(tokens.at(1).toDouble());
+        else if (tokens.at(0).simplified() == "lon") ui->sBLongitude->setValue(tokens.at(1).toDouble());
     }
 
     setWindowTitle(file);

@@ -328,7 +328,7 @@ void InputStrDialog::setPath(int stream, int type, const QString & path)
     QLineEdit *edits[] = {ui->lEFilePath1, ui->lEFilePath2, ui->lEFilePath3};
 
     if ((stream < 0) || (stream > 2)) return;
-    if ((type < 0) || (type > 2)) return;
+    if ((type < 0) || (type > 3)) return;
 
     paths[stream][type] = path;
     ui->cBTimeTag->setChecked(path.contains("::T"));
@@ -355,7 +355,7 @@ QString InputStrDialog::getPath(int stream, int type)
 {
     QLineEdit *edits[] = {ui->lEFilePath1, ui->lEFilePath2, ui->lEFilePath3};
     if ((stream < 0) || (stream > 2)) return QString();
-    if ((type < 0) || (type > 2)) return QString();
+    if ((type < 0) || (type > 3)) return QString();
 
     if (type == 2)
         return makePath(edits[stream]->text());
@@ -557,7 +557,7 @@ void InputStrDialog::showFtpOptionsDialog(int index, int opt)
 //---------------------------------------------------------------------------
 void InputStrDialog::updateEnable()
 {
-    // (cBStream->currentIndex() == 4) -> Ffile stream
+    // (cBStream->currentIndex() == 4) -> File stream
     int enaFile = (ui->cBStreamC1->isChecked() && (ui->cBStream1->currentIndex() == 4)) ||
                   (ui->cBStreamC2->isChecked() && (ui->cBStream2->currentIndex() == 4)) ||
                   (ui->cBStreamC3->isChecked() && (ui->cBStream3->currentIndex() == 4));

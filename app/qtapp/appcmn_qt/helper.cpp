@@ -13,7 +13,7 @@
 //---------------------------------------------------------------------------
 QString color2String(const QColor &c)
 {
-    return QString("rgb(%1,%2,%3)").arg(c.red()).arg(c.green()).arg(c.blue());
+    return QStringLiteral("rgb(%1,%2,%3)").arg(c.red()).arg(c.green()).arg(c.blue());
 }
 //---------------------------------------------------------------------------
 void setWidgetBackgroundColor(QWidget * label, const QColor &color)
@@ -25,7 +25,7 @@ void setWidgetBackgroundColor(QWidget * label, const QColor &color)
         palette.setColor(label->backgroundRole(), color);
         label->setPalette(palette);
     } else
-        label->setStyleSheet(QString("QLabel {background-color: %1}").arg(color2String(color)));
+        label->setStyleSheet(QStringLiteral("QLabel {background-color: %1}").arg(color2String(color)));
 }
 //---------------------------------------------------------------------------
 void setWidgetTextColor(QWidget * label, const QColor &color)
@@ -36,7 +36,7 @@ void setWidgetTextColor(QWidget * label, const QColor &color)
         palette.setColor(label->foregroundRole(), color);
         label->setPalette(palette);
     } else
-        label->setStyleSheet(QString("QLabel {color: %1}").arg(color2String(color)));
+        label->setStyleSheet(QStringLiteral("QLabel {color: %1}").arg(color2String(color)));
 }
 
 // convert degree to deg-min-sec --------------------------------------------

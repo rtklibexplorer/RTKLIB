@@ -91,14 +91,14 @@ MainForm::MainForm(QWidget *parent)
 
     QCoreApplication::setApplicationName(PRGNAME);
     QCoreApplication::setApplicationVersion(PRGVERSION);
-    setWindowTitle(QString("%1 ver.%2 %3").arg(PRGNAME).arg(VER_RTKLIB, PATCH_LEVEL));
+    setWindowTitle(QStringLiteral("%1 ver.%2 %3").arg(PRGNAME).arg(VER_RTKLIB, PATCH_LEVEL));
 
     setWindowIcon(QIcon(":/icons/srctblbrows"));
 
     // retrieve config file name
     QString prg_filename = QApplication::applicationFilePath();
     QFileInfo prg_fileinfo(prg_filename);
-    iniFile = prg_fileinfo.absoluteDir().filePath(prg_fileinfo.baseName()) + ".ini";
+    iniFile = prg_fileinfo.absoluteDir().filePath(prg_fileinfo.baseName() + ".ini");
 
     mapView = new MapView(this);
     staListDialog = new StaListDialog(this);
@@ -153,9 +153,9 @@ void MainForm::showEvent(QShowEvent *event)
 {
     if (event->spontaneous()) return;
 
-    const QString colw0 = "30,74,116,56,244,18,52,62,28,50,50,18,18,120,28,18,18,40,600,";
-    const QString colw1 = "30,112,40,96,126,18,28,50,50,160,40,600,0,0,0,0,0,0,0,";
-    const QString colw2 = "30,80,126,18,18,300,300,300,600,0,0,0,0,0,0,0,0,0,0,";
+    const QString default_column_width0 = "30,74,116,56,244,18,52,62,28,50,50,18,18,120,28,18,18,40,600,";
+    const QString default_column_width1 = "30,112,40,96,126,18,28,50,50,160,40,600,0,0,0,0,0,0,0,";
+    const QString default_column_width2 = "30,80,126,18,18,300,300,300,600,0,0,0,0,0,0,0,0,0,0,";
     QSettings settings(iniFile, QSettings::IniFormat);
     QString list, url;
     QStringList colw, stas;
@@ -191,26 +191,26 @@ void MainForm::showEvent(QShowEvent *event)
 
     fontScale = QFontMetrics(ui->tWTableStr->font()).height() * 4;
 
-    colw = settings.value("srctbl/colwidth0", colw0).toString().split(",");
+    colw = settings.value("srctbl/colwidth0", default_column_width0).toString().split(',');
     i = 0;
     foreach(QString width, colw){
         ui->tWTableStr->setColumnWidth(i++, width.toDouble() * fontScale / 96);
     }
 
-    colw = settings.value("srctbl/colwidth1", colw1).toString().split(",");
+    colw = settings.value("srctbl/colwidth1", default_column_width1).toString().split(',');
     i = 0;
     foreach(QString width, colw){
         ui->tWTableCas->setColumnWidth(i++, width.toDouble() * fontScale / 96);
     }
 
-    colw = settings.value("srctbl/colwidth2", colw2).toString().split(",");
+    colw = settings.value("srctbl/colwidth2", default_column_width2).toString().split(',');
     i = 0;
     foreach(QString width, colw){
         ui->tWTableNet->setColumnWidth(i++, width.toDouble() * fontScale / 96);
 	}
 
     stationList.clear();
-    stas = settings.value("sta/stations", "").toString().split(",");
+    stas = settings.value("sta/stations", "").toString().split(',');
     foreach(QString sta, stas){
         stationList.append(sta);
     }
@@ -250,7 +250,7 @@ void MainForm::closeEvent(QCloseEvent *)
         colw = colw + QString::number(ui->tWTableNet->columnWidth(i) * 96 / fontScale);
     settings.setValue("srctbl/colwidth2", colw);
 
-    settings.setValue(QString("sta/stations"), stationList.join(','));
+    settings.setValue("sta/stations", stationList.join(','));
 
     mapView->saveOptions(settings);
 }
@@ -381,7 +381,7 @@ void MainForm::streamTableSelectItem(int row, int col)
     if (0 <= row && row < ui->tWTableStr->rowCount()) {
         title = ui->tWTableStr->item(row, 1)->text();
         mapView->highlightMark(row);
-        mapView->setWindowTitle(QString(tr("NTRIP Data Stream Map: %1/%2")).arg(ui->cBAddress->currentText(), title));
+        mapView->setWindowTitle(tr("NTRIP Data Stream Map: %1/%2").arg(ui->cBAddress->currentText(), title));
 	}
 }
 //---------------------------------------------------------------------------
@@ -391,13 +391,13 @@ void MainForm::streamTableShowMountpoint(int row, int col)
     if (ui->tWTableStr->columnCount() < 2) return;
 
     if (0 <= row && row < ui->tWTableStr->rowCount()) {
+        mountPointDialog->setOption(0);
         mountPointDialog->setMountPoint(ui->tWTableStr->item(row, 1)->text());
         QString mntpStr;
         for (int i = 0; i < ui->tWTableStr->columnCount(); i++)
             mntpStr += ui->tWTableStr->item(row, i)->text() + ";" ;
 
         mountPointDialog->setMountPointString(mntpStr);
-        mountPointDialog->setOption(1);
         mountPointDialog->show();
     }
 }
@@ -412,7 +412,7 @@ void MainForm::casterTableSelectItem(int row, int col)
 
         QString address = ui->tWTableCas->item(row, 1)->text();
         QString port = ui->tWTableCas->item(row, 2)->text();
-        ui->cBAddress->setCurrentText(QString("%1:%2").arg(address, port));
+        ui->cBAddress->setCurrentText(QStringLiteral("%1:%2").arg(address, port));
 
         getTable();
     }
@@ -592,7 +592,7 @@ void MainForm::updateMap()
     if (ui->cBAddress->currentText().isEmpty())
         mapView->setWindowTitle(tr("NTRIP Data Stream Map"));
     else
-        mapView->setWindowTitle(QString(tr("NTRIP Data Stream Map: %1")).arg(ui->cBAddress->currentText()));
+        mapView->setWindowTitle(tr("NTRIP Data Stream Map: %1").arg(ui->cBAddress->currentText()));
     mapView->clearMark();
 
     if (ui->tWTableStr->columnCount() < 14) return;

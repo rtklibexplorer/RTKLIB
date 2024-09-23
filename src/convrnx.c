@@ -335,28 +335,20 @@ static void close_strfile(strfile_t *str)
 static void setopt_file(int format, char **paths, int n, const int *mask,
                         rnxopt_t *opt)
 {
-    int i,j;
-
-    for (i=0;i<MAXCOMMENT;i++) {
-        if (!*opt->comment[i]) break;
-    }
-    if (i<MAXCOMMENT) {
-        sprintf(opt->comment[i++],"format: %.55s",formatstrs[format]);
-    }
-    for (j=0;j<n&&i<MAXCOMMENT;j++) {
+    rnxcomment(opt,"format: %s",formatstrs[format]);
+    if (*opt->rcvopt)
+        rnxcomment(opt, "options: %s", opt->rcvopt);
+    for (int j=0; j<n; j++) {
         if (!mask[j]) continue;
-        sprintf(opt->comment[i++],"log: %.58s",paths[j]);
-    }
-    if (*opt->rcvopt) {
-        sprintf(opt->comment[i++], "options: %.54s", opt->rcvopt);
+        rnxcomment(opt,"log: %s",paths[j]);
     }
 }
 /* unset RINEX options comments ----------------------------------------------*/
 static void unsetopt_file(rnxopt_t *opt)
 {
-    int i,brk=0;
+    int brk=0;
 
-    for (i=MAXCOMMENT-1;i>=0&&!brk;i--) {
+    for (int i=MAXCOMMENT-1;i>=0&&!brk;i--) {
         if (!*opt->comment[i]) continue;
         if (!strncmp(opt->comment[i],"format: ",8)) brk=1;
         *opt->comment[i]='\0';
@@ -493,25 +485,19 @@ static void setopt_sta_list(const strfile_t *str, rnxopt_t *opt)
 {
     const stas_t *p;
     char s1[32],s2[32];
-    int i,n=0;
+    int n=0;
 
     for (p=str->stas;p;p=p->next) {
         n++;
     }
     if (n<=1) return;
 
-    for (i=0;i<MAXCOMMENT;i++) {
-        if (!*opt->comment[i]) break;
-    }
-    if (i>=MAXCOMMENT) return;
-    sprintf(opt->comment[i++],"%5s  %22s  %22s","STAID","TIME OF FIRST OBS",
-            "TIME OF LAST OBS");
+    rnxcomment(opt,"%5s  %22s  %22s", "STAID", "TIME OF FIRST OBS", "TIME OF LAST OBS");
     
     for (p=str->stas,n--;p&&n>=0;p=p->next,n--) {
-        if (i+n>=MAXCOMMENT) continue;
         time2str(p->ts,s1,2);
         time2str(p->te,s2,2);
-        sprintf(opt->comment[i+n]," %04d  %s  %s",p->staid,s1,s2);
+        rnxcomment(opt," %04d  %s  %s",p->staid,s1,s2);
     }
 }
 /* set station info in RINEX options -----------------------------------------*/

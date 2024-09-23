@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>483</width>
-    <height>184</height>
+    <width>492</width>
+    <height>196</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,17 +15,21 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QCheckBox" name="cBPathEnable">
-     <property name="toolTip">
-      <string>Specify file path</string>
-     </property>
-     <property name="text">
-      <string>File &amp;Path</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QCheckBox" name="cBPathEnable">
+       <property name="toolTip">
+        <string>Specify file path</string>
+       </property>
+       <property name="text">
+        <string>File &amp;Path</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -43,6 +47,26 @@
       <widget class="QLineEdit" name="lEFilePath">
        <property name="toolTip">
         <string>File path</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnKey">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Show placeholder keys</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="../icon/resources.qrc">
+         <normaloff>:/buttons/key</normaloff>:/buttons/key</iconset>
        </property>
       </widget>
      </item>
@@ -201,26 +225,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnKey">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="toolTip">
-        <string>Show placeholder keys</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset resource="../icon/resources.qrc">
-         <normaloff>:/buttons/key</normaloff>:/buttons/key</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QCheckBox" name="cB64Bit">
        <property name="toolTip">
         <string>64 bit format for time tag file</string>
@@ -242,13 +246,11 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>cBPathEnable</tabstop>
   <tabstop>lEFilePath</tabstop>
   <tabstop>cBTimeTag</tabstop>
   <tabstop>cBTimeSpeed</tabstop>
   <tabstop>sBTimeStart</tabstop>
   <tabstop>cBSwapInterval</tabstop>
-  <tabstop>btnKey</tabstop>
   <tabstop>cB64Bit</tabstop>
  </tabstops>
  <resources>

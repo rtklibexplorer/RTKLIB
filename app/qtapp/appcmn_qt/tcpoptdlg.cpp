@@ -16,7 +16,7 @@
 
 //---------------------------------------------------------------------------
 
-#define NTRIP_TIMEOUT   10000                           // response timeout (ms)
+#define NTRIP_TIMEOUT           10000                   // response timeout (ms)
 #define NTRIP_CYCLE             50                      // processing cycle (ms)
 #define MAXSRCTBL               512000                  // max source table size (bytes)
 #define ENDSRCTBL               "ENDSOURCETABLE"        // end marker of table
@@ -34,6 +34,7 @@ TcpOptDialog::TcpOptDialog(QWidget *parent, int options)
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &TcpOptDialog::reject);
     connect(ui->btnNtrip, &QPushButton::clicked, this, &TcpOptDialog::btnNtripClicked);
     connect(ui->btnMountpointOptions, &QPushButton::clicked, this, &TcpOptDialog::btnMountpointClicked);
+    connect(ui->btnBrowse, &QPushButton::clicked, this, &TcpOptDialog::btnBrowseClicked);
 
     setOptions(options);
 }
@@ -96,7 +97,8 @@ void TcpOptDialog::setPath(QString path)
     QString mntpntstr;
     if (mntpntStart >= 0) {
         int pathStart = mntpntStart + 1;
-        if (showOptions == OPT_NTRIP_SERVER || showOptions == OPT_NTRIP_CASTER_CLIENT) {
+        if (showOptions == OPT_NTRIP_SERVER || showOptions == OPT_NTRIP_CLIENT
+            || showOptions == OPT_NTRIP_CASTER_SERVER || showOptions == OPT_NTRIP_CASTER_CLIENT) {
             int mntpntEnd = path.indexOf(":", pathStart);
             if (mntpntEnd >= pathStart) {
                 mntpnt = path.mid(pathStart, mntpntEnd - pathStart);
@@ -148,19 +150,19 @@ QString TcpOptDialog::getPath() {
     if (!user.isEmpty() || !password.isEmpty()) {
         path = user;
         if (!password.isEmpty())
-            path = QString("%1:%2").arg(path, password);
+            path = QStringLiteral("%1:%2").arg(path, password);
         path += "@";
     }
-    path = QString("%1%2").arg(path, ui->cBAddress->currentText());
+    path = QStringLiteral("%1%2").arg(path, ui->cBAddress->currentText());
     QString port = ui->sBPort->text();
     if (!port.isEmpty())
-        path = QString("%1:%2").arg(path, port);
+        path = QStringLiteral("%1:%2").arg(path, port);
     QString mntpnt = ui->cBMountPoint->currentText();
     QString str = ui->cBMountPoint->currentData().toString();
     if (!mntpnt.isEmpty() || !str.isEmpty()) {
-        path = QString("%1/%2").arg(path, mntpnt);
+        path = QStringLiteral("%1/%2").arg(path, mntpnt);
         if (!str.isEmpty())
-            path = QString("%1:%2").arg(path, str);
+            path = QStringLiteral("%1:%2").arg(path, str);
     }
     return path;
 }
@@ -188,6 +190,7 @@ void TcpOptDialog::addHistory(QComboBox *list, QString *hist)
     list->clear();
     for (int i = 0; i < MAXHIST; i++)
         if (!hist[i].isEmpty()) list->addItem(hist[i]);
+    list->setCurrentIndex(0);
 }
 //---------------------------------------------------------------------------
 void TcpOptDialog::btnNtripClicked()
@@ -224,7 +227,7 @@ void TcpOptDialog::btnNtripClicked()
 //---------------------------------------------------------------------------
 void TcpOptDialog::btnBrowseClicked()
 {
-    QStringList cmds = {"srctblbrows_qt", "../../../bin/srctblbrows_qt" "../srctblbrows_qt/srctblbrows_qt"};
+    QStringList cmds = {"srctblbrows_qt", "../../../bin/srctblbrows_qt", "../srctblbrows_qt/srctblbrows_qt"};
     QDir appDir = QDir(QCoreApplication::applicationDirPath());
     QString addrText = ui->cBAddress->currentText();
     QString portText = ui->sBPort->text();
@@ -251,11 +254,8 @@ void TcpOptDialog::btnMountpointClicked()
 //---------------------------------------------------------------------------
 int TcpOptDialog::execCommand(const QString &cmd, const QStringList &opt, int show)
 {
-    QProcess prog;
-
     Q_UNUSED(show);
 
-    prog.start(cmd, opt); /* FIXME: show option not yet supported */
-    return 1;
+    return QProcess::startDetached(cmd, opt);
 }
 //---------------------------------------------------------------------------

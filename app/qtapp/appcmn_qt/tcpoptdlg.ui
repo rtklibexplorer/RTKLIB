@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>572</width>
+    <width>574</width>
     <height>244</height>
    </rect>
   </property>
@@ -174,22 +174,22 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnNtrip">
+        <property name="toolTip">
+         <string>Get available mount points</string>
+        </property>
+        <property name="text">
+         <string>&amp;Get Mountpoints</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="btnMountpointOptions">
         <property name="toolTip">
          <string>Mount point option</string>
         </property>
         <property name="text">
          <string>Mountpoint &amp;Options...</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnNtrip">
-        <property name="toolTip">
-         <string>Get available mount points</string>
-        </property>
-        <property name="text">
-         <string>&amp;Get Mountpoint</string>
         </property>
        </widget>
       </item>
@@ -223,7 +223,6 @@
   <tabstop>lEPassword</tabstop>
   <tabstop>btnBrowse</tabstop>
   <tabstop>btnMountpointOptions</tabstop>
-  <tabstop>btnNtrip</tabstop>
  </tabstops>
  <resources/>
  <connections/>

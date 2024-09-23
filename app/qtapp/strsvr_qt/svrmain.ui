@@ -30,14 +30,14 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QWidget" name="panelTop" native="true">
+       <widget class="QFrame" name="panelTop">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout">
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,1">
          <property name="leftMargin">
           <number>0</number>
          </property>
@@ -84,7 +84,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="panelStreams" native="true">
+       <widget class="QFrame" name="panelStreams">
         <layout class="QGridLayout" name="gridLayout">
          <property name="leftMargin">
           <number>0</number>
@@ -124,7 +124,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -134,7 +134,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -179,10 +179,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -205,7 +205,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -282,7 +282,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -311,10 +311,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -400,10 +400,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -435,10 +435,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -448,7 +448,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -458,7 +458,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -525,7 +525,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -598,10 +598,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
            <property name="text">
             <string/>
@@ -637,7 +637,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -647,7 +647,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -657,7 +657,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -676,10 +676,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -741,10 +741,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -763,10 +763,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -828,10 +828,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -894,10 +894,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -907,7 +907,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -1000,7 +1000,7 @@
             <string>Bytes</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -1029,10 +1029,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -1051,7 +1051,7 @@
             <string>bps</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -1070,13 +1070,13 @@
             </size>
            </property>
            <property name="layoutDirection">
-            <enum>Qt::LeftToRight</enum>
+            <enum>Qt::LayoutDirection::LeftToRight</enum>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -1095,10 +1095,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -1164,10 +1164,10 @@
             </size>
            </property>
            <property name="frameShape">
-            <enum>QFrame::Box</enum>
+            <enum>QFrame::Shape::Box</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+            <enum>QFrame::Shadow::Sunken</enum>
            </property>
           </widget>
          </item>
@@ -1177,7 +1177,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -1194,7 +1194,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -1221,7 +1221,7 @@
             <string>0</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -1503,7 +1503,7 @@
   </action>
   <action name="acMenuStop">
    <property name="text">
-    <string>&amp;Stop</string>
+    <string>S&amp;top</string>
    </property>
   </action>
   <action name="acMenuExit">

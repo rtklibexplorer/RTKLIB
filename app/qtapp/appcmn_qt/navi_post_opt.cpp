@@ -43,92 +43,92 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     ui->setupUi(this);
 
     // add tooltips to items of combo boxes
-    ui->cBPositionMode->setItemData(PMODE_SINGLE, "Single point positioning or SBAS DGPS", Qt::ToolTipRole);
-    ui->cBPositionMode->setItemData(PMODE_DGPS, "Code-based differential GPS", Qt::ToolTipRole);
-    ui->cBPositionMode->setItemData(PMODE_KINEMA, "Carrier-based Kinematic positioning", Qt::ToolTipRole);
-    ui->cBPositionMode->setItemData(PMODE_STATIC, "Carrier-based Static positioning", Qt::ToolTipRole);
-    ui->cBPositionMode->setItemData(PMODE_STATIC_START, "Static till first fix, then Kinematic", Qt::ToolTipRole);
-    ui->cBPositionMode->setItemData(PMODE_MOVEB, "Moving baseline", Qt::ToolTipRole);
-    ui->cBPositionMode->setItemData(PMODE_FIXED, "Rover receiver position fixed (for residual analysis)", Qt::ToolTipRole);
-    ui->cBPositionMode->setItemData(PMODE_PPP_KINEMA, "Precise Point Positioning with kinematic mode", Qt::ToolTipRole);
-    ui->cBPositionMode->setItemData(PMODE_PPP_STATIC, "Precise Point Positioning with static mode", Qt::ToolTipRole);
-    ui->cBPositionMode->setItemData(PMODE_PPP_FIXED, "Rover receiver position is fixed with PPP mode (for residual analysis)", Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_SINGLE, tr("Single point positioning or SBAS DGPS"), Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_DGPS, tr("Code-based differential GPS"), Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_KINEMA, tr("Carrier-based Kinematic positioning"), Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_STATIC, tr("Carrier-based Static positioning"), Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_STATIC_START, tr("Static till first fix, then Kinematic"), Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_MOVEB, tr("Moving baseline"), Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_FIXED, tr("Rover receiver position fixed (for residual analysis)"), Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_PPP_KINEMA, tr("Precise Point Positioning with kinematic mode"), Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_PPP_STATIC, tr("Precise Point Positioning with static mode"), Qt::ToolTipRole);
+    ui->cBPositionMode->setItemData(PMODE_PPP_FIXED, tr("Rover receiver position is fixed with PPP mode (for residual analysis)"), Qt::ToolTipRole);
 
-    ui->cBSolution->setItemData(SOLTYPE_FORWARD, "Forward filter solution", Qt::ToolTipRole);
-    ui->cBSolution->setItemData(SOLTYPE_BACKWARD, "Backward filter solution", Qt::ToolTipRole);
-    ui->cBSolution->setItemData(SOLTYPE_COMBINED, "Smoother combined solution with forward and backward filter solutions, \n"
-                                                  "phase bias states reset between forward and backward solutions", Qt::ToolTipRole);
-    ui->cBSolution->setItemData(SOLTYPE_COMBINED_NORESET, "Smoother combined solution with forward and backward filter solutions, \n"
-                                                          "phase bias states not reset between forward and backward solutions.", Qt::ToolTipRole);
+    ui->cBSolution->setItemData(SOLTYPE_FORWARD, tr("Forward filter solution"), Qt::ToolTipRole);
+    ui->cBSolution->setItemData(SOLTYPE_BACKWARD, tr("Backward filter solution"), Qt::ToolTipRole);
+    ui->cBSolution->setItemData(SOLTYPE_COMBINED, tr("Smoother combined solution with forward and backward filter solutions, \n"
+                                                     "phase bias states reset between forward and backward solutions"), Qt::ToolTipRole);
+    ui->cBSolution->setItemData(SOLTYPE_COMBINED_NORESET, tr("Smoother combined solution with forward and backward filter solutions, \n"
+                                                             "phase bias states not reset between forward and backward solutions."), Qt::ToolTipRole);
 
-    ui->cBDynamicModel->setItemData(0, "Dynamics is not used", Qt::ToolTipRole);
-    ui->cBDynamicModel->setItemData(1, "Receiver velocity and acceleration are estimated", Qt::ToolTipRole);
+    ui->cBDynamicModel->setItemData(0, tr("Dynamics is not used"), Qt::ToolTipRole);
+    ui->cBDynamicModel->setItemData(1, tr("Receiver velocity and acceleration are estimated"), Qt::ToolTipRole);
 
-    ui->cBTideCorrection->setItemData(0, "Not apply earth tides correction", Qt::ToolTipRole);
-    ui->cBTideCorrection->setItemData(1, "Apply solid earth tides correction", Qt::ToolTipRole);
-    ui->cBTideCorrection->setItemData(2, "Apply solid earth tides, OTL (ocean tide loading) and pole tide corrections", Qt::ToolTipRole);
+    ui->cBTideCorrection->setItemData(0, tr("Not apply earth tides correction"), Qt::ToolTipRole);
+    ui->cBTideCorrection->setItemData(1, tr("Apply solid earth tides correction"), Qt::ToolTipRole);
+    ui->cBTideCorrection->setItemData(2, tr("Apply solid earth tides, OTL (ocean tide loading) and pole tide corrections"), Qt::ToolTipRole);
 
-    ui->cBIonosphereOption->setItemData(IONOOPT_OFF, "Not apply ionospheric correction", Qt::ToolTipRole);
-    ui->cBIonosphereOption->setItemData(IONOOPT_BRDC, "Apply broadcast ionospheric model", Qt::ToolTipRole);
-    ui->cBIonosphereOption->setItemData(IONOOPT_SBAS, "Apply SBAS ionospheric model", Qt::ToolTipRole);
-    ui->cBIonosphereOption->setItemData(IONOOPT_IFLC, "Ionosphere-free linear combination with dual frequency (L1-L2 for GPS/ GLONASS/QZSS \n"
-                                                      "or L1-L5 for Galileo) measurements is used for ionospheric correction", Qt::ToolTipRole);
-    ui->cBIonosphereOption->setItemData(IONOOPT_EST, "Estimate ionospheric parameter STEC (slant total electron content)", Qt::ToolTipRole);
-    ui->cBIonosphereOption->setItemData(IONOOPT_TEC, "Use IONEX TEC grid data", Qt::ToolTipRole);
-    ui->cBIonosphereOption->setItemData(IONOOPT_QZS, "Apply broadcast ionosphere model provided by QZSS", Qt::ToolTipRole);
+    ui->cBIonosphereOption->setItemData(IONOOPT_OFF, tr("Not apply ionospheric correction"), Qt::ToolTipRole);
+    ui->cBIonosphereOption->setItemData(IONOOPT_BRDC, tr("Apply broadcast ionospheric model"), Qt::ToolTipRole);
+    ui->cBIonosphereOption->setItemData(IONOOPT_SBAS, tr("Apply SBAS ionospheric model"), Qt::ToolTipRole);
+    ui->cBIonosphereOption->setItemData(IONOOPT_IFLC, tr("Ionosphere-free linear combination with dual frequency (L1-L2 for GPS/ GLONASS/QZSS \n"
+                                                         "or L1-L5 for Galileo) measurements is used for ionospheric correction"), Qt::ToolTipRole);
+    ui->cBIonosphereOption->setItemData(IONOOPT_EST, tr("Estimate ionospheric parameter STEC (slant total electron content)"), Qt::ToolTipRole);
+    ui->cBIonosphereOption->setItemData(IONOOPT_TEC, tr("Use IONEX TEC grid data"), Qt::ToolTipRole);
+    ui->cBIonosphereOption->setItemData(IONOOPT_QZS, tr("Apply broadcast ionosphere model provided by QZSS"), Qt::ToolTipRole);
 
-    ui->cBTroposphereOption->setItemData(TROPOPT_OFF, "Not apply troposphere correction", Qt::ToolTipRole);
-    ui->cBTroposphereOption->setItemData(TROPOPT_SAAS, "Apply Saastamoinen model", Qt::ToolTipRole);
-    ui->cBTroposphereOption->setItemData(TROPOPT_SBAS, "Apply SBAS tropospheric model (MOPS)", Qt::ToolTipRole);
-    ui->cBTroposphereOption->setItemData(TROPOPT_EST, "Estimate ZTD (zenith total delay) parameters as EKF states", Qt::ToolTipRole);
-    ui->cBTroposphereOption->setItemData(TROPOPT_ESTG, "ZTD and horizontal gradient parameters as EKF states", Qt::ToolTipRole);
-    ui->cBTroposphereOption->setItemData(TROPOPT_ESTG, "ZTD and horizontal gradient parameters as EKF states", Qt::ToolTipRole);
+    ui->cBTroposphereOption->setItemData(TROPOPT_OFF, tr("Not apply troposphere correction"), Qt::ToolTipRole);
+    ui->cBTroposphereOption->setItemData(TROPOPT_SAAS, tr("Apply Saastamoinen model"), Qt::ToolTipRole);
+    ui->cBTroposphereOption->setItemData(TROPOPT_SBAS, tr("Apply SBAS tropospheric model (MOPS)"), Qt::ToolTipRole);
+    ui->cBTroposphereOption->setItemData(TROPOPT_EST, tr("Estimate ZTD (zenith total delay) parameters as EKF states"), Qt::ToolTipRole);
+    ui->cBTroposphereOption->setItemData(TROPOPT_ESTG, tr("ZTD and horizontal gradient parameters as EKF states"), Qt::ToolTipRole);
+    ui->cBTroposphereOption->setItemData(TROPOPT_ESTG, tr("ZTD and horizontal gradient parameters as EKF states"), Qt::ToolTipRole);
 
-    ui->cBSatelliteEphemeris->setItemData(EPHOPT_BRDC, "Use broadcast ephemeris", Qt::ToolTipRole);
-    ui->cBSatelliteEphemeris->setItemData(EPHOPT_PREC, "Use precise ephemeris", Qt::ToolTipRole);
-    ui->cBSatelliteEphemeris->setItemData(EPHOPT_SBAS, " Broadcast ephemeris with SBAS long-term and fast correction", Qt::ToolTipRole);
-    ui->cBSatelliteEphemeris->setItemData(EPHOPT_SSRAPC, "Broadcast ephemeris with RTCM SSR correction (antenna phase center value)", Qt::ToolTipRole);
-    ui->cBSatelliteEphemeris->setItemData(EPHOPT_SSRCOM, "Broadcast ephemeris with RTCM SSR correction (satellite center of mass value)", Qt::ToolTipRole);
+    ui->cBSatelliteEphemeris->setItemData(EPHOPT_BRDC, tr("Use broadcast ephemeris"), Qt::ToolTipRole);
+    ui->cBSatelliteEphemeris->setItemData(EPHOPT_PREC, tr("Use precise ephemeris"), Qt::ToolTipRole);
+    ui->cBSatelliteEphemeris->setItemData(EPHOPT_SBAS, tr("Broadcast ephemeris with SBAS long-term and fast correction"), Qt::ToolTipRole);
+    ui->cBSatelliteEphemeris->setItemData(EPHOPT_SSRAPC, tr("Broadcast ephemeris with RTCM SSR correction (antenna phase center value)"), Qt::ToolTipRole);
+    ui->cBSatelliteEphemeris->setItemData(EPHOPT_SSRCOM, tr("Broadcast ephemeris with RTCM SSR correction (satellite center of mass value)"), Qt::ToolTipRole);
 
-    ui->cBAmbiguityResolutionGPS->setItemData(0, "No ambiguity resolution", Qt::ToolTipRole);
-    ui->cBAmbiguityResolutionGPS->setItemData(1, "Continuously static integer ambiguities are estimated and resolved", Qt::ToolTipRole);
-    ui->cBAmbiguityResolutionGPS->setItemData(2, "Integer ambiguity is estimated and resolved by epoch-by-epoch basis", Qt::ToolTipRole);
-    ui->cBAmbiguityResolutionGPS->setItemData(3, "Continuously static integer ambiguities are estimated and resolved.\n"
-                                                 "If the validation OK, the ambiguities are constrained to the resolved values.", Qt::ToolTipRole);
+    ui->cBAmbiguityResolutionGPS->setItemData(0, tr("No ambiguity resolution"), Qt::ToolTipRole);
+    ui->cBAmbiguityResolutionGPS->setItemData(1, tr("Continuously static integer ambiguities are estimated and resolved"), Qt::ToolTipRole);
+    ui->cBAmbiguityResolutionGPS->setItemData(2, tr("Integer ambiguity is estimated and resolved by epoch-by-epoch basis"), Qt::ToolTipRole);
+    ui->cBAmbiguityResolutionGPS->setItemData(3, tr("Continuously static integer ambiguities are estimated and resolved.\n"
+                                                    "If the validation OK, the ambiguities are constrained to the resolved values."), Qt::ToolTipRole);
 
-    ui->cBAmbiguityResolutionGLO->setItemData(0, "No ambiguity resolution", Qt::ToolTipRole);
-    ui->cBAmbiguityResolutionGLO->setItemData(1, "Ambiguities are fixed. Usually the ambiguity of only the same types receiver pair for the rover and\n"
-                                                 "the base station can be fixed. If he different receiver types have IFB (inter-frequency bias),\n"
-                                                 "they cannot be canceled by DD.", Qt::ToolTipRole);
-    ui->cBAmbiguityResolutionGLO->setItemData(2, "Nulls out inter-frequency biases after first fix-and-hold of GPS satellites", Qt::ToolTipRole);
-    ui->cBAmbiguityResolutionGLO->setItemData(3, "Receiver inter-frequency biases auto-calibrate but require\n"
-                                                 "reasonably accurate initial estimates (see GLO HW Bias)", Qt::ToolTipRole);
+    ui->cBAmbiguityResolutionGLO->setItemData(0, tr("No ambiguity resolution"), Qt::ToolTipRole);
+    ui->cBAmbiguityResolutionGLO->setItemData(1, tr("Ambiguities are fixed. Usually the ambiguity of only the same types receiver pair for the rover and\n"
+                                                    "the base station can be fixed. If he different receiver types have IFB (inter-frequency bias),\n"
+                                                    "they cannot be canceled by DD."), Qt::ToolTipRole);
+    ui->cBAmbiguityResolutionGLO->setItemData(2, tr("Nulls out inter-frequency biases after first fix-and-hold of GPS satellites"), Qt::ToolTipRole);
+    ui->cBAmbiguityResolutionGLO->setItemData(3, tr("Receiver inter-frequency biases auto-calibrate but require\n"
+                                                    "reasonably accurate initial estimates (see GLO HW Bias)"), Qt::ToolTipRole);
 
-    ui->cBSolutionFormat->setItemData(0, "Latitude, longitude and height", Qt::ToolTipRole);
-    ui->cBSolutionFormat->setItemData(1, "X/Y/Z components of ECEF coordinates", Qt::ToolTipRole);
-    ui->cBSolutionFormat->setItemData(2, "E/N/U components of baseline vector", Qt::ToolTipRole);
-    ui->cBSolutionFormat->setItemData(3, "NMEA GPRMC, GPGGA, GPGSA, GLGSA, GAGSA, GPGSV, GLGSV and GAGSV", Qt::ToolTipRole);
+    ui->cBSolutionFormat->setItemData(0, tr("Latitude, longitude and height"), Qt::ToolTipRole);
+    ui->cBSolutionFormat->setItemData(1, tr("X/Y/Z components of ECEF coordinates"), Qt::ToolTipRole);
+    ui->cBSolutionFormat->setItemData(2, tr("E/N/U components of baseline vector"), Qt::ToolTipRole);
+    ui->cBSolutionFormat->setItemData(3, tr("NMEA GPRMC, GPGGA, GPGSA, GLGSA, GAGSA, GPGSV, GLGSV and GAGSV"), Qt::ToolTipRole);
 
-    ui->cBOutputGeoid->setItemData(0, "Internal geoid model", Qt::ToolTipRole);
-    ui->cBOutputGeoid->setItemData(1, "EGM96 (15\" x 15\" grid)", Qt::ToolTipRole);
-    ui->cBOutputGeoid->setItemData(2, "EGM2008 (2.5\" x 2.5\" grid)", Qt::ToolTipRole);
-    ui->cBOutputGeoid->setItemData(3, "EGM2008 (1\" x 1\" grid)", Qt::ToolTipRole);
-    ui->cBOutputGeoid->setItemData(4, "GSI2000 (1\"x1.5\" grid)", Qt::ToolTipRole);
+    ui->cBOutputGeoid->setItemData(0, tr("Internal geoid model"), Qt::ToolTipRole);
+    ui->cBOutputGeoid->setItemData(1, tr("EGM96 (15\" x 15\" grid)"), Qt::ToolTipRole);
+    ui->cBOutputGeoid->setItemData(2, tr("EGM2008 (2.5\" x 2.5\" grid)"), Qt::ToolTipRole);
+    ui->cBOutputGeoid->setItemData(3, tr("EGM2008 (1\" x 1\" grid)"), Qt::ToolTipRole);
+    ui->cBOutputGeoid->setItemData(4, tr("GSI2000 (1\"x1.5\" grid)"), Qt::ToolTipRole);
 
-    ui->cBReferencePositionType->setItemData(0, "Latitude/longitude/height in degree and m", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(1, "Latitude/longitude/height in degree/minute/second and m", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(2, "X/Y/Z components in ECEF frame.", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(3, "Use the average of single point solutions", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(4, "Use the position in the position file. The station is searched by using the\n"
-                                                "head 4-character ID of the rover observation data file path", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(5, "Use the approximate position in RINEX OBS header", Qt::ToolTipRole);
-    ui->cBReferencePositionType->setItemData(6, "Use the antenna position included in RTCM messages", Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(0, tr("Latitude/longitude/height in degree and m"), Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(1, tr("Latitude/longitude/height in degree/minute/second and m"), Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(2, tr("X/Y/Z components in ECEF frame."), Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(3, tr("Use the average of single point solutions"), Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(4, tr("Use the position in the position file. The station is searched by using the\n"
+                                                   "head 4-character ID of the rover observation data file path"), Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(5, tr("Use the approximate position in RINEX OBS header"), Qt::ToolTipRole);
+    ui->cBReferencePositionType->setItemData(6, tr("Use the antenna position included in RTCM messages"), Qt::ToolTipRole);
 
     // inspired by https://stackoverflow.com/questions/18321779/degrees-minutes-and-seconds-regex
     // and https://stackoverflow.com/questions/3518504/regular-expression-for-matching-latitude-longitude-coordinates
-    QString posSign = QRegularExpression::escape(QLocale::system().positiveSign());
-    QString negSign = QRegularExpression::escape(QLocale::system().negativeSign());
-    QString decSep = QRegularExpression::escape(QLocale::system().decimalPoint());
+    QString posSign = QRegularExpression::escape(QLocale().positiveSign());
+    QString negSign = QRegularExpression::escape(QLocale().negativeSign());
+    QString decSep = QRegularExpression::escape(QLocale().decimalPoint());
 
     regExDMSLat = QRegularExpression(QString("^\\s*(?:(?<deg1>[%0%1]?90)[°\\s]\\s*(?<min1>0{1,2})['\\s]\\s*(?<sec1>0{1,2}(?:[%2]0*)?)\"?\\s*)|"
                                              "(?:(?<deg2>[%0%1]?(?:[1-8][0-9]|[0-9]))[°\\s]\\s*(?<min2>(?:[0-5][0-9]|[0-9]))['\\s]\\s*(?<sec2>(?:[0-5][0-9]|[0-9])(?:[%2][0-9]*)?)\"?)\\s*$").arg(posSign, negSign, decSep));
@@ -172,18 +172,20 @@ OptDialog::OptDialog(QWidget *parent, int opts)
         { "misc-reconnect",   0, (void *)&reconnectTime,    "ms"    },
         { "misc-nmeacycle",   0, (void *)&nmeaCycle,        "ms"    },
         { "misc-buffsize",    0, (void *)&serverBufferSize, "bytes" },
-        { "misc-navmsgsel",   3, (void *)&navSelect,   MSGOPT  },
-        { "misc-proxyaddr",   2, (void *)proxyaddr,    ""      },
-        { "misc-fswapmargin", 0, (void *)&fileSwapMargin, "s"     },
-
-        { "",		      0, NULL,		       ""      }
+        { "misc-navmsgsel",   3, (void *)&navSelect,        MSGOPT  },
+        { "misc-proxyaddr",   2, (void *)proxyaddr,         ""      },
+        { "misc-fswapmargin", 0, (void *)&fileSwapMargin,   "s"     },
+        { "",		          0, NULL,		                ""      }
     };
     this->naviopts = _naviopt;
 
     textViewer = new TextViewer(this);
     freqDialog = new FreqDialog(this);
     
-    QStringList freq_tooltips = {"Single Frequency", "L1 and L2 Dual-Frequency", "L1, L2 and L5 Triple-Frequency", "Experimental, not fully supported"};
+    QStringList freq_tooltips = {tr("Single Frequency"),
+                                 tr("L1 and L2 Dual-Frequency"),
+                                 tr("L1, L2 and L5 Triple-Frequency"),
+                                 tr("Experimental, not fully supported")};
 
     for (int i = 0; i < NFREQ; i++) {
         label = label + (i > 0 ? "+" : "") + QString("L%1").arg(freq[i]);
@@ -338,10 +340,10 @@ OptDialog::OptDialog(QWidget *parent, int opts)
         qobject_cast<QStandardItemModel *>(ui->cBRoverPositionType->model());
 
     if (options == PostOptions) {
-        refPosModel->item(3)->setFlags(refPosModel->item(3)->flags() & ~Qt::ItemIsEnabled); // disable "RTCM/Raw Antenna Position"
+        refPosModel->item(6)->setFlags(refPosModel->item(6)->flags() & ~Qt::ItemIsEnabled); // disable "RTCM/Raw Antenna Position"
     } else if (options == NaviOptions) {
-        refPosModel->item(5)->setFlags(refPosModel->item(5)->flags() & ~Qt::ItemIsEnabled); // disable "Get from Position File"
-        refPosModel->item(6)->setFlags(refPosModel->item(6)->flags() & ~Qt::ItemIsEnabled); // disable "RINEX Header Position"
+        refPosModel->item(4)->setFlags(refPosModel->item(4)->flags() & ~Qt::ItemIsEnabled); // disable "Get from Position File"
+        refPosModel->item(5)->setFlags(refPosModel->item(5)->flags() & ~Qt::ItemIsEnabled); // disable "RINEX Header Position"
 
         rovPosModel->item(3)->setFlags(rovPosModel->item(3)->flags() & ~Qt::ItemIsEnabled); // disable "Average of Single Pos"
         rovPosModel->item(4)->setFlags(rovPosModel->item(4)->flags() & ~Qt::ItemIsEnabled); // disable "Get from Position File"
@@ -626,7 +628,7 @@ void OptDialog::selectPanelFont()
     dialog.exec();
 
     ui->fontLabelPanel->setFont(dialog.selectedFont());
-    ui->fontLabelPanel->setText(QString("%1 %2 pt").arg(ui->fontLabelPanel->font().family()).arg(ui->fontLabelPanel->font().pointSize()));
+    ui->fontLabelPanel->setText(tr("%1 %2 pt").arg(ui->fontLabelPanel->font().family()).arg(ui->fontLabelPanel->font().pointSize()));
     setWidgetTextColor(ui->fontLabelPanel, panelFontColor);
 }
 //---------------------------------------------------------------------------
@@ -638,7 +640,7 @@ void OptDialog::selectSolutionFont()
     dialog.exec();
 
     ui->fontLabelSolution->setFont(dialog.selectedFont());
-    ui->fontLabelSolution->setText(QString("%1 %2 pt").arg(ui->fontLabelSolution->font().family()).arg(ui->fontLabelSolution->font().pointSize()));
+    ui->fontLabelSolution->setText(tr("%1 %2 pt").arg(ui->fontLabelSolution->font().family()).arg(ui->fontLabelSolution->font().pointSize()));
     setWidgetTextColor(ui->fontLabelSolution, positionFontColor);
 }
 //---------------------------------------------------------------------------
@@ -666,10 +668,9 @@ void OptDialog::updateOptions()
     strncpy(fileOptions.blq, qPrintable(ui->lEBLQFile->text()), MAXSTRPATH-1);
     if (options == NaviOptions)
         strncpy(fileOptions.tempdir, qPrintable(ui->lELocalDirectory->text()), MAXSTRPATH-1);
-    // geexe
-    // solstat
-    // trace
-
+    // fileOptions.geexe
+    // fileOptions.solstat
+    // fileOptions.trace
 
     processingOptions.mode = ui->cBPositionMode->currentIndex();
     processingOptions.soltype = ui->cBSolution->currentIndex();
@@ -683,7 +684,7 @@ void OptDialog::updateOptions()
     if (ui->cBNavSys6->isChecked()) processingOptions.navsys |= SYS_CMP;
     if (ui->cBNavSys7->isChecked()) processingOptions.navsys |= SYS_IRN;
     processingOptions.elmin = ui->cBElevationMask->currentText().toDouble() * D2R;
-    // snrmask: already set by calling mask dialoh
+    // snrmask: already set by calling mask dialog
     processingOptions.sateph = ui->cBSatelliteEphemeris->currentIndex();
     processingOptions.modear = ui->cBAmbiguityResolutionGPS->currentIndex();
     processingOptions.glomodear = ui->cBAmbiguityResolutionGLO->currentIndex();
@@ -752,36 +753,23 @@ void OptDialog::updateOptions()
     getPosition(ui->cBRoverPositionType->currentIndex(), editu, rovPos);
     getPosition(ui->cBReferencePositionType->currentIndex(), editr, refPos);
 
-    if (options == NaviOptions) {
-        processingOptions.refpos = POSOPT_POS;
-        if      (ui->cBReferencePositionType->currentIndex() == 3) processingOptions.refpos = POSOPT_RTCM;
-        else if (ui->cBReferencePositionType->currentIndex() == 4) processingOptions.refpos = POSOPT_SINGLE;
+    for (int i = 0; i < 3; i++) processingOptions.rb[i] = refPos[i];
+    processingOptions.refpos = POSOPT_POS_LLH;  /* Fallback */
+    if (ui->cBReferencePositionType->currentIndex() < 2) processingOptions.refpos = POSOPT_POS_LLH;
+    else if (ui->cBReferencePositionType->currentIndex() == 2) processingOptions.refpos = POSOPT_POS_XYZ;
+    else if (options == NaviOptions) {
+        if (ui->cBReferencePositionType->currentIndex() == 3) processingOptions.refpos = POSOPT_SINGLE;
+        else if (ui->cBReferencePositionType->currentIndex() == 6) processingOptions.refpos = POSOPT_RTCM;
     } else if (options == PostOptions) {
-        processingOptions.refpos = ui->cBReferencePositionType->currentIndex() < 3 ? 0 : ui->cBReferencePositionType->currentIndex() - 2;
+        processingOptions.refpos = ui->cBReferencePositionType->currentIndex() - 1; /* 2:single, 3:posfile, 4:rinex, 5: rtcm */
     }
 
-    if (processingOptions.mode != PMODE_FIXED && processingOptions.mode != PMODE_PPP_FIXED) {
-        processingOptions.rovpos = POSOPT_POS;
-        for (int i = 0; i < 3; i++) processingOptions.ru[i] = 0.0;
-    } else if (ui->cBRoverPositionType->currentIndex() <= 2) {
-        processingOptions.rovpos = POSOPT_POS;
-        for (int i = 0; i < 3; i++) processingOptions.ru[i] = rovPos[i];
-    } else {  // RTKPost, only
-        processingOptions.rovpos = ui->cBRoverPositionType->currentIndex() - 2; /* 1:single, 2:posfile, 3:rinex */
-    }
-
-    if (processingOptions.mode == PMODE_SINGLE || processingOptions.mode == PMODE_MOVEB) {
-        processingOptions.refpos = POSOPT_POS;
-        for (int i = 0; i < 3; i++) processingOptions.rb[i] = 0.0;
-    } else if (ui->cBReferencePositionType->currentIndex() <= 2) {
-        processingOptions.refpos = POSOPT_POS;
-        for (int i = 0; i < 3; i++) processingOptions.rb[i] = refPos[i];
-    } else if (ui->cBRoverPositionType->currentIndex() == 3) {   // RTCM/Raw position, RTKNavi only
-        processingOptions.refpos = POSOPT_RTCM;
-        for (int i = 0; i < 3; i++) processingOptions.rb[i] = 0.0;
-    } else {
-        processingOptions.refpos = ui->cBReferencePositionType->currentIndex() - 3;
-        for (int i = 0; i < 3; i++) processingOptions.rb[i] = 0.0;
+    for (int i = 0; i < 3; i++) processingOptions.ru[i] = rovPos[i];
+    processingOptions.rovpos = POSOPT_POS_LLH;
+    if (ui->cBRoverPositionType->currentIndex() < 2) processingOptions.rovpos = POSOPT_POS_LLH;
+    else if (ui->cBRoverPositionType->currentIndex() == 2) processingOptions.rovpos = POSOPT_POS_XYZ;
+    else if (options == PostOptions) {
+        processingOptions.rovpos = ui->cBRoverPositionType->currentIndex() - 1; /* 2:single, 3:posfile, 4:rinex */
     }
 
     if (ui->cBRoverAntennaPcv->isChecked()) {
@@ -819,7 +807,7 @@ void OptDialog::updateOptions()
         else
             QMessageBox::warning(this, tr("Error"), tr("No rover antenna PCV: \"%1\"").arg(processingOptions.anttype[0]));
     }
-    if (ui->cBReferenceAntennaPcv->isChecked()&& (processingOptions.anttype[0] != QStringLiteral("*"))) {
+    if (ui->cBReferenceAntennaPcv->isChecked()&& (processingOptions.anttype[1] != QStringLiteral("*"))) {
         if ((pcv = searchpcv(0, processingOptions.anttype[1], time, &pcvr)))
             processingOptions.pcvr[1] = *pcv;
         else
@@ -843,8 +831,8 @@ void OptDialog::updateOptions()
     processingOptions.posopt[5] = ui->cBPositionOption6->isChecked();
     if (options == NaviOptions)
         processingOptions.syncsol = ui->cBSyncSolution->currentIndex();
-    /// odisp
-    /// freqopt
+    /// processingOptions.odisp
+    /// processingOptions.freqopt
     if (options == PostOptions)
         strncpy(processingOptions.pppopt, qPrintable(ui->lEPPPOptions->text()), 255);
 
@@ -852,7 +840,7 @@ void OptDialog::updateOptions()
     solutionOptions.posf = ui->cBSolutionFormat->currentIndex();
     solutionOptions.times = ui->cBTimeFormat->currentIndex() == 0 ? TIMES_GPST : ui->cBTimeFormat->currentIndex() - 1;
     solutionOptions.timef = ui->cBTimeFormat->currentIndex() == 0 ? 0 : 1;
-    solutionOptions.timeu = static_cast<int>(ui->sBTimeDecimal->value());
+    solutionOptions.timeu =ui->sBTimeDecimal->value();
     solutionOptions.degf = ui->cBLatLonFormat->currentIndex();
     solutionOptions.outhead = ui->cBOutputHeader->currentIndex();
     solutionOptions.outopt = ui->cBOutputOptions->currentIndex();
@@ -949,18 +937,22 @@ void OptDialog::load(const QString &file)
     ui->cBDynamicModel->setCurrentIndex(prcopt.dynamics);
     ui->cBTideCorrection->setCurrentIndex(prcopt.tidecorr);
     ui->sBNumIteration->setValue(prcopt.niter);
-    // codesmooth
+    //prcopt.codesmooth
     if (options == PostOptions) {
         ui->cBIntputReferenceObservation->setCurrentIndex(prcopt.intpref);
-        // sbassatsel
         ui->sBSbasSat->setValue(prcopt.sbassatsel);
-        ui->cBRoverPositionType->setCurrentIndex(prcopt.rovpos == 0 ? 0 : prcopt.rovpos + 2);
-        ui->cBReferencePositionType->setCurrentIndex(prcopt.refpos == 0 ? 0 : prcopt.refpos + 2);
+        ui->cBRoverPositionType->setCurrentIndex(prcopt.rovpos == POSOPT_POS_LLH ? 0 : prcopt.rovpos == POSOPT_POS_XYZ ? 2 : prcopt.rovpos + 1);
+        ui->cBReferencePositionType->setCurrentIndex(prcopt.refpos == POSOPT_POS_LLH ? 0 : prcopt.refpos == POSOPT_POS_XYZ ? 2 : prcopt.refpos + 1);
     } else if (options == NaviOptions) {
         ui->cBRoverPositionType->setCurrentIndex(0);
+        if (prcopt.rovpos == POSOPT_POS_LLH) ui->cBRoverPositionType->setCurrentIndex(0);
+        else if (prcopt.rovpos == POSOPT_POS_XYZ) ui->cBRoverPositionType->setCurrentIndex(2);
+
         ui->cBReferencePositionType->setCurrentIndex(0);
-        if (prcopt.refpos == POSOPT_RTCM) ui->cBReferencePositionType->setCurrentIndex(3);
-        else if (prcopt.refpos == POSOPT_SINGLE) ui->cBReferencePositionType->setCurrentIndex(4);
+        if (prcopt.refpos == POSOPT_POS_LLH) ui->cBReferencePositionType->setCurrentIndex(0);
+        else if (prcopt.refpos == POSOPT_POS_XYZ) ui->cBReferencePositionType->setCurrentIndex(2);
+        else if (prcopt.refpos == POSOPT_SINGLE) ui->cBReferencePositionType->setCurrentIndex(3);
+        else if (prcopt.refpos == POSOPT_RTCM) ui->cBReferencePositionType->setCurrentIndex(6);
     }
     current_roverPositionType = ui->cBRoverPositionType->currentIndex();
     current_referencePositionType = ui->cBReferencePositionType->currentIndex();
@@ -1010,7 +1002,7 @@ void OptDialog::load(const QString &file)
     ui->sBReferenceAntennaE->setValue(prcopt.antdel[1][0]);
     ui->sBReferenceAntennaN->setValue(prcopt.antdel[1][1]);
     ui->sBReferenceAntennaU->setValue(prcopt.antdel[1][2]);
-    // pcvr
+    // prcopt.pcvr
 
     ui->lEExcludedSatellites->setText(excludedSatellitesString(&prcopt));
     ui->sBMaxAveEp->setValue(prcopt.maxaveep);
@@ -1025,8 +1017,8 @@ void OptDialog::load(const QString &file)
     ui->cBPositionOption5->setChecked(prcopt.posopt[4]);
     ui->cBPositionOption6->setChecked(prcopt.posopt[5]);
     ui->cBSyncSolution->setCurrentIndex(prcopt.syncsol);
-    /// odisp
-    /// freqopt
+    /// prcopt.odisp
+    /// prcopt.freqopt
     ui->lEPPPOptions->setText(prcopt.pppopt);
 
     // solution options
@@ -1060,9 +1052,9 @@ void OptDialog::load(const QString &file)
     ui->lEBLQFile->setText(filopt.blq);
     if (options == NaviOptions)
         ui->lELocalDirectory->setText(filopt.tempdir);
-    // geexe
-    // solstat
-    // trace
+    // filopt.geexe
+    // filopt.solstat
+    // filopt.trace
 
     readAntennaList();
 	updateEnable();
@@ -1119,22 +1111,23 @@ void OptDialog::save(const QString &file)
     procOpts.dynamics = ui->cBDynamicModel->currentIndex();
     procOpts.tidecorr = ui->cBTideCorrection->currentIndex();
     procOpts.niter = ui->sBNumIteration->value();
-    // codesmooth
+    // procOpts.codesmooth
     procOpts.intpref = ui->cBIntputReferenceObservation->currentIndex();
-    // sbascorr
+    // procOpts.sbascorr
     if (options == NaviOptions)
         procOpts.sbassatsel = ui->sBSbasSatellite->value();
     else if (options == PostOptions)
         procOpts.sbassatsel = ui->sBSbasSat->value();
 
+    procOpts.rovpos = ui->cBRoverPositionType->currentIndex() < 2 ? POSOPT_POS_LLH : ui->cBRoverPositionType->currentIndex() == 2 ? POSOPT_POS_XYZ : ui->cBRoverPositionType->currentIndex() - 1;
     if (options == NaviOptions) {
-        procOpts.rovpos = POSOPT_POS;
-        procOpts.refpos = POSOPT_POS;
-        if      (ui->cBReferencePositionType->currentIndex() == 3) procOpts.refpos = POSOPT_RTCM;
-        else if (ui->cBReferencePositionType->currentIndex() == 4) procOpts.refpos = POSOPT_SINGLE;
+        procOpts.refpos = POSOPT_POS_LLH;
+        if      (ui->cBReferencePositionType->currentIndex() < 2) procOpts.refpos = POSOPT_POS_LLH;
+        else if (ui->cBReferencePositionType->currentIndex() == 2) procOpts.refpos = POSOPT_POS_XYZ;
+        else if (ui->cBReferencePositionType->currentIndex() == 3) procOpts.refpos = POSOPT_SINGLE;
+        else if (ui->cBReferencePositionType->currentIndex() == 6) procOpts.refpos = POSOPT_RTCM;
     } else if (options == PostOptions) {
-        procOpts.rovpos = ui->cBRoverPositionType->currentIndex() < 3 ? 0 : ui->cBRoverPositionType->currentIndex() - 2;
-        procOpts.refpos = ui->cBReferencePositionType->currentIndex() < 3 ? 0 : ui->cBReferencePositionType->currentIndex() - 2;
+        procOpts.refpos = ui->cBReferencePositionType->currentIndex() < 2 ? POSOPT_POS_LLH : ui->cBReferencePositionType->currentIndex() == 2 ? POSOPT_POS_XYZ : ui->cBReferencePositionType->currentIndex() - 1;
     }
     procOpts.eratio[0] = ui->sBMeasurementErrorR1->value();
     procOpts.eratio[1] = ui->sBMeasurementErrorR2->value();
@@ -1172,8 +1165,8 @@ void OptDialog::save(const QString &file)
         procOpts.baseline[0] = ui->sBBaselineLen->value();
         procOpts.baseline[1] = ui->sBBaselineSig->value();
     }
-    if (procOpts.rovpos == POSOPT_POS) getPosition(ui->cBRoverPositionType->currentIndex(), editu, procOpts.ru);
-    if (procOpts.refpos == POSOPT_POS) getPosition(ui->cBReferencePositionType->currentIndex(), editr, procOpts.rb);
+    if (procOpts.rovpos == POSOPT_POS_LLH || procOpts.rovpos == POSOPT_POS_XYZ) getPosition(ui->cBRoverPositionType->currentIndex(), editu, procOpts.ru);
+    if (procOpts.refpos == POSOPT_POS_LLH || procOpts.refpos == POSOPT_POS_XYZ) getPosition(ui->cBReferencePositionType->currentIndex(), editr, procOpts.rb);
     if (ui->cBRoverAntennaPcv->isChecked()) strncpy(procOpts.anttype[0], qPrintable(ui->cBRoverAntenna->currentText()), MAXANT-1);
     if (ui->cBReferenceAntennaPcv->isChecked()) strncpy(procOpts.anttype[1], qPrintable(ui->cBReferenceAntenna->currentText()), MAXANT-1);
     procOpts.antdel[0][0] = ui->sBRoverAntennaE->value();
@@ -1182,7 +1175,7 @@ void OptDialog::save(const QString &file)
     procOpts.antdel[1][0] = ui->sBReferenceAntennaE->value();
     procOpts.antdel[1][1] = ui->sBReferenceAntennaN->value();
     procOpts.antdel[1][2] = ui->sBReferenceAntennaU->value();
-    // pcvr
+    // procOpts.pcvr
     fillExcludedSatellites(&procOpts, ui->lEExcludedSatellites->text());
     procOpts.maxaveep = ui->sBMaxAveEp->value();
     procOpts.initrst = ui->cBInitRestart->isChecked();
@@ -1198,8 +1191,8 @@ void OptDialog::save(const QString &file)
     procOpts.posopt[4] = ui->cBPositionOption5->isChecked();
     procOpts.posopt[5] = ui->cBPositionOption6->isChecked();
     procOpts.syncsol = ui->cBSyncSolution->currentIndex();
-    /// odisp
-    /// freqopt
+    /// proc.Opts.odisp
+    /// procOptsfreqopt
     if (options == PostOptions)
         strncpy(procOpts.pppopt, qPrintable(ui->lEPPPOptions->text()), 255);
 
@@ -1233,12 +1226,12 @@ void OptDialog::save(const QString &file)
     strncpy(filopt.blq, qPrintable(ui->lEBLQFile->text()), MAXSTRPATH-1);
     if (options == NaviOptions)
         strncpy(filopt.tempdir, qPrintable(ui->lELocalDirectory->text()), MAXSTRPATH-1);
-    // geexe
-    // solstat
-    // trace
+    // filopt.geexe
+    // filopt.solstat
+    // filopt.trace
 
     time2str(utc2gpst(timeget()), s, 0);
-    sprintf(comment, qPrintable(tr("rtk options (%s, v.%s %s)")), s, VER_RTKLIB, PATCH_LEVEL);
+    sprintf(comment, "rtk options (%s, v.%s %s)", s, VER_RTKLIB, PATCH_LEVEL);
 
     setsysopts(&procOpts, &solOpts, &filopt);
 
@@ -1273,7 +1266,7 @@ void OptDialog::saveOptions(QSettings &settings)
     settings.setValue("prcopt/snrmask_ena2", snrmask.ena[1]);
     for (int i = 0; i < NFREQ; i++)
         for (int j = 0; j < 9; j++)
-            settings.setValue(QString("prcopt/snrmask_%1_%2").arg(i + 1).arg(j + 1),
+            settings.setValue(QStringLiteral("prcopt/snrmask_%1_%2").arg(i + 1).arg(j + 1),
                               snrmask.mask[i][j]);
 
     settings.setValue("prcopt/ephopt", ui->cBSatelliteEphemeris->currentIndex());
@@ -1340,13 +1333,13 @@ void OptDialog::saveOptions(QSettings &settings)
     settings.setValue("prcopt/maxtdiff", ui->sBMaxAgeDifferences->value());
     settings.setValue("prcopt/maxinno1", ui->sBRejectPhase->value());
     settings.setValue("prcopt/maxinno2", ui->sBRejectCode->value());
-    settings.setValue("prcopt/baselinec", ui->cBBaselineConstrain->isChecked());
+    settings.setValue("prcopt/baselinec", int(ui->cBBaselineConstrain->isChecked()));
     settings.setValue("prcopt/baseline1", ui->sBBaselineLen->value());
     settings.setValue("prcopt/baseline2", ui->sBBaselineSig->value());
     // ru
     // rb
     settings.setValue("prcopt/anttype1", ui->cBRoverAntennaPcv->isChecked() ? ui->cBRoverAntenna->currentText() : "");
-    settings.setValue("prcopt/anttype2", ui->cBRoverAntennaPcv->isChecked() ? ui->cBReferenceAntenna->currentText() : "");
+    settings.setValue("prcopt/anttype2", ui->cBReferenceAntennaPcv->isChecked() ? ui->cBReferenceAntenna->currentText() : "");
     settings.setValue(QString("setting/rovantdel_0"), ui->sBRoverAntennaE->value());
     settings.setValue(QString("setting/rovantdel_1"), ui->sBRoverAntennaN->value());
     settings.setValue(QString("setting/rovantdel_2"), ui->sBRoverAntennaU->value());
@@ -1356,24 +1349,23 @@ void OptDialog::saveOptions(QSettings &settings)
     // pcvr
     settings.setValue("prcopt/exsats", ui->lEExcludedSatellites->text());
     settings.setValue("prcopt/maxaveep", ui->sBMaxAveEp->value());
-    settings.setValue("prcopt/initrst", ui->cBInitRestart->isChecked());
+    settings.setValue("prcopt/initrst", int(ui->cBInitRestart->isChecked()));
     settings.setValue("prcopt/outsingle", ui->cBOutputSingle->currentIndex());
     if (options == PostOptions) {
         settings.setValue("opt/rnxopts1", ui->lERnxOptions1->text());
         settings.setValue("opt/rnxopts2", ui->lERnxOptions2->text());
     }
-    settings.setValue("prcopt/posopt1", ui->cBPositionOption1->isChecked());
-    settings.setValue("prcopt/posopt2", ui->cBPositionOption2->isChecked());
-    settings.setValue("prcopt/posopt3", ui->cBPositionOption3->isChecked());
-    settings.setValue("prcopt/posopt4", ui->cBPositionOption4->isChecked());
-    settings.setValue("prcopt/posopt5", ui->cBPositionOption5->isChecked());
-    settings.setValue("prcopt/posopt6", ui->cBPositionOption6->isChecked());
+    settings.setValue("prcopt/posopt1", int(ui->cBPositionOption1->isChecked()));
+    settings.setValue("prcopt/posopt2", int(ui->cBPositionOption2->isChecked()));
+    settings.setValue("prcopt/posopt3", int(ui->cBPositionOption3->isChecked()));
+    settings.setValue("prcopt/posopt4", int(ui->cBPositionOption4->isChecked()));
+    settings.setValue("prcopt/posopt5", int(ui->cBPositionOption5->isChecked()));
+    settings.setValue("prcopt/posopt6", int(ui->cBPositionOption6->isChecked()));
     settings.setValue("prcopt/syncsol", ui->cBSyncSolution->currentIndex());
     // odisp
     // freqopt
     if (options == PostOptions)
         settings.setValue("opt/pppopts", ui->lEPPPOptions->text());
-
 
     // solution options
     settings.setValue("solopt/posf", ui->cBSolutionFormat->currentIndex());
@@ -1441,12 +1433,12 @@ void OptDialog::saveOptions(QSettings &settings)
 
         rovList.replace("\n", "@@");
         for (int i = 0; i < 10; i++) {
-            settings.setValue(QString("opt/rovlist%1").arg(i + 1), rovList.mid(i*2000, 2000));
+            settings.setValue(QStringLiteral("opt/rovlist%1").arg(i + 1), rovList.mid(i*2000, 2000));
         }
 
         refList.replace("\n", "@@");
         for (int i = 0; i < 10; i++) {
-            settings.setValue(QString("opt/baselist%1").arg(i + 1), refList.mid(i*2000, 2000));
+            settings.setValue(QStringLiteral("opt/baselist%1").arg(i + 1), refList.mid(i*2000, 2000));
         }
     }
 }
@@ -1509,7 +1501,6 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->sBMeasurementErrorR1->setValue(settings.value("prcopt/eratio0", 100.0).toDouble());
     ui->sBMeasurementErrorR2->setValue(settings.value("prcopt/eratio1", 100.0).toDouble());
     ui->sBMeasurementErrorR5->setValue(settings.value("prcopt/eratio5", 100.0).toDouble());
-    // ui->sBMeasurementError1->setValue(settings.value("prcopt/err0", 0.003).toDouble());
     ui->sBMeasurementError2->setValue(settings.value("prcopt/err1", 0.003).toDouble());
     ui->sBMeasurementError3->setValue(settings.value("prcopt/err2", 0.003).toDouble());
     ui->sBMeasurementError4->setValue(settings.value("prcopt/err3", 0.0).toDouble());
@@ -1546,22 +1537,22 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->lEAntennaPcvFile->setText(settings.value("setting/antpcvfile", "").toString());
     readAntennaList();
     ui->cBRoverAntennaPcv->setChecked(!settings.value("prcopt/anttype1", "").toString().isEmpty());
-    ui->cBReferenceAntennaPcv->setChecked(!settings.value("prcopt/anttype1", "").toString().isEmpty());
+    ui->cBReferenceAntennaPcv->setChecked(!settings.value("prcopt/anttype2", "").toString().isEmpty());
     ui->cBRoverAntenna->setCurrentIndex(ui->cBRoverAntenna->findText(settings.value("prcopt/anttype1", "").toString()));
     ui->cBReferenceAntenna->setCurrentIndex(ui->cBReferenceAntenna->findText(settings.value("prcopt/anttype2", "").toString()));
 
     for (int i = 0; i < 3; i++) {
-        rovPos[i] = settings.value(QString("setting/rovpos_%1").arg(i), 0.0).toDouble();
-        refPos[i] = settings.value(QString("setting/refpos_%1").arg(i), 0.0).toDouble();
+        rovPos[i] = settings.value(QStringLiteral("setting/rovpos_%1").arg(i), 0.0).toDouble();
+        refPos[i] = settings.value(QStringLiteral("setting/refpos_%1").arg(i), 0.0).toDouble();
     }
     setPosition(ui->cBRoverPositionType->currentIndex(), editu, rovPos);
     setPosition(ui->cBReferencePositionType->currentIndex(), editr, refPos);
-    ui->sBRoverAntennaE->setValue(settings.value(QString("setting/rovantdel_0"), 0.0).toDouble());
-    ui->sBRoverAntennaN->setValue(settings.value(QString("setting/rovantdel_1"), 0.0).toDouble());
-    ui->sBRoverAntennaU->setValue(settings.value(QString("setting/rovantdel_2"), 0.0).toDouble());
-    ui->sBReferenceAntennaE->setValue(settings.value(QString("setting/refantdel_0"), 0.0).toDouble());
-    ui->sBReferenceAntennaN->setValue(settings.value(QString("setting/refantdel_1"), 0.0).toDouble());
-    ui->sBReferenceAntennaU->setValue(settings.value(QString("setting/refantdel_2"), 0.0).toDouble());
+    ui->sBRoverAntennaE->setValue(settings.value("setting/rovantdel_0", 0.0).toDouble());
+    ui->sBRoverAntennaN->setValue(settings.value("setting/rovantdel_1", 0.0).toDouble());
+    ui->sBRoverAntennaU->setValue(settings.value("setting/rovantdel_2", 0.0).toDouble());
+    ui->sBReferenceAntennaE->setValue(settings.value("setting/refantdel_0", 0.0).toDouble());
+    ui->sBReferenceAntennaN->setValue(settings.value("setting/refantdel_1", 0.0).toDouble());
+    ui->sBReferenceAntennaU->setValue(settings.value("setting/refantdel_2", 0.0).toDouble());
     // pcvr
     ui->lEExcludedSatellites->setText(settings.value("prcopt/exsats", "").toString());
     ui->sBMaxAveEp->setValue(settings.value("prcopt/maxaveep", 3600).toInt());
@@ -1639,19 +1630,19 @@ void OptDialog::loadOptions(QSettings &settings)
         if (settings.value("setting/posfontitalic", 0).toInt()) positionFnt.setItalic(true);
 
         ui->fontLabelPanel->setFont(panelFnt);
-        ui->fontLabelPanel->setText(QString("%1 %2 pt").arg(ui->fontLabelPanel->font().family()).arg(ui->fontLabelPanel->font().pointSize()));
+        ui->fontLabelPanel->setText(tr("%1 %2 pt").arg(ui->fontLabelPanel->font().family()).arg(ui->fontLabelPanel->font().pointSize()));
         setWidgetTextColor(ui->fontLabelPanel, panelFontColor);
         ui->fontLabelSolution->setFont(positionFnt);
-        ui->fontLabelSolution->setText(QString("%1 %2 pt").arg(ui->fontLabelSolution->font().family()).arg(ui->fontLabelSolution->font().pointSize()));
+        ui->fontLabelSolution->setText(tr("%1 %2 pt").arg(ui->fontLabelSolution->font().family()).arg(ui->fontLabelSolution->font().pointSize()));
         setWidgetTextColor(ui->fontLabelSolution, positionFontColor);
     } else if (options == PostOptions) {
         QString rovList;
         for (int i = 0; i < 10; i++) {
-            rovList += settings.value(QString("opt/rovlist%1").arg(i + 1), "").toString();
+            rovList += settings.value(QStringLiteral("opt/rovlist%1").arg(i + 1), "").toString();
         }
         QString refList;
         for (int i = 0; i < 10; i++) {
-            refList += settings.value(QString("opt/baselist%1").arg(i + 1), "").toString();
+            refList += settings.value(QStringLiteral("opt/baselist%1").arg(i + 1), "").toString();
         }
         rovList.replace("@@", "\n");
         refList.replace("@@", "\n");
@@ -1751,9 +1742,9 @@ void OptDialog::updateEnable()
     ui->sBReferenceAntennaN->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
     ui->sBReferenceAntennaU->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
     ui->lblReferenceAntennaD->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
-    ui->lblMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 4);
-    ui->sBMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 4);
-    ui->cBInitRestart->setVisible(ui->cBReferencePositionType->currentIndex() == 4);
+    ui->lblMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
+    ui->sBMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
+    ui->cBInitRestart->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
     ui->cBOutputSingle->setEnabled(ui->cBPositionMode->currentIndex() != 0);
     ui->cBSyncSolution->setEnabled(options == NaviOptions ? rel || ppp : false);
 
@@ -1801,12 +1792,12 @@ int OptDialog::getPosition(int type, QLineEdit **edit, double *pos)
     if (type == 1) { /* lat/lon/height dms/m */
         auto lat = regExDMSLat.match(edit[0]->text());
         if (lat.hasMatch()) {
-          double deg1 = QLocale::system().toDouble(lat.captured("deg1"));
-          double min1 = QLocale::system().toDouble(lat.captured("min1"));
-          double sec1 = QLocale::system().toDouble(lat.captured("sec1"));
-          double deg2 = QLocale::system().toDouble(lat.captured("deg2"));
-          double min2 = QLocale::system().toDouble(lat.captured("min2"));
-          double sec2 = QLocale::system().toDouble(lat.captured("sec2"));
+          double deg1 = QLocale().toDouble(lat.captured("deg1"));
+          double min1 = QLocale().toDouble(lat.captured("min1"));
+          double sec1 = QLocale().toDouble(lat.captured("sec1"));
+          double deg2 = QLocale().toDouble(lat.captured("deg2"));
+          double min2 = QLocale().toDouble(lat.captured("min2"));
+          double sec2 = QLocale().toDouble(lat.captured("sec2"));
           if (fabs(fabs(deg1) - 90) < 1e-12 && fabs(min1) < 1e-12 && fabs(sec1) < 1e-12)
             p[0] = (deg1 < 0 ? -1 : 1) * fabs(deg1) * D2R;
           else
@@ -1816,12 +1807,12 @@ int OptDialog::getPosition(int type, QLineEdit **edit, double *pos)
 
         auto lon = regExDMSLon.match(edit[1]->text());
         if (lon.hasMatch()) {
-          double deg1 = QLocale::system().toDouble(lon.captured("deg1"));
-          double min1 = QLocale::system().toDouble(lon.captured("min1"));
-          double sec1 = QLocale::system().toDouble(lon.captured("sec1"));
-          double deg2 = QLocale::system().toDouble(lon.captured("deg2"));
-          double min2 = QLocale::system().toDouble(lon.captured("min2"));
-          double sec2 = QLocale::system().toDouble(lon.captured("sec2"));
+          double deg1 = QLocale().toDouble(lon.captured("deg1"));
+          double min1 = QLocale().toDouble(lon.captured("min1"));
+          double sec1 = QLocale().toDouble(lon.captured("sec1"));
+          double deg2 = QLocale().toDouble(lon.captured("deg2"));
+          double min2 = QLocale().toDouble(lon.captured("min2"));
+          double sec2 = QLocale().toDouble(lon.captured("sec2"));
           if (fabs(fabs(deg1) - 180) < 1e-12 && fabs(min1) < 1e-12 && fabs(sec1) < 1e-12)
             p[1] = (deg1 < 0 ? -1 : 1) * fabs(deg1) * D2R;
           else
@@ -1830,7 +1821,7 @@ int OptDialog::getPosition(int type, QLineEdit **edit, double *pos)
           p[1] = 0;
 
         auto height = stripped(edit[2]->text(), "m");
-        p[2] = QLocale::system().toDouble(height, &okay);
+        p[2] = QLocale().toDouble(height, &okay);
         if (!okay) {ret |= 0x4; p[2] = 0;};
 
         pos2ecef(p, pos);
@@ -1839,22 +1830,22 @@ int OptDialog::getPosition(int type, QLineEdit **edit, double *pos)
         auto y = stripped(edit[1]->text(), "m");
         auto z = stripped(edit[2]->text(), "m");
 
-        pos[0] = QLocale::system().toDouble(x, &okay);
+        pos[0] = QLocale().toDouble(x, &okay);
         if (!okay) {ret |= 0x1; pos[0] = 0;}
-        pos[1] = QLocale::system().toDouble(y, &okay);
+        pos[1] = QLocale().toDouble(y, &okay);
         if (!okay) {ret |= 0x2; pos[1] = 0;}
-        pos[2] = QLocale::system().toDouble(z, &okay);
+        pos[2] = QLocale().toDouble(z, &okay);
         if (!okay) {ret |= 0x4; pos[2] = 0;}
     } else {   /* lat/lon/hight decimal */
         auto lat = stripped(edit[0]->text(), "°");
         auto lon = stripped(edit[1]->text(), "°");
         auto height = stripped(edit[2]->text(), "m");
         
-        p[0] = QLocale::system().toDouble(lat, &okay) * D2R;
+        p[0] = QLocale().toDouble(lat, &okay) * D2R;
         if (!okay) {ret |= 0x1; p[0] = 0;}
-        p[1] = QLocale::system().toDouble(lon, &okay) * D2R;
+        p[1] = QLocale().toDouble(lon, &okay) * D2R;
         if (!okay) {ret |= 0x2; p[1] = 0;}
-        p[2] = QLocale::system().toDouble(height, &okay);
+        p[2] = QLocale().toDouble(height, &okay);
         if (!okay) {ret |= 0x4; p[2] = 0;}
 
         pos2ecef(p, pos);
@@ -1882,29 +1873,29 @@ void OptDialog::setPosition(int type, QLineEdit **edit, double *pos)
         edit[1]->setValidator(new QRegularExpressionValidator(regExDMSLon, this));
         edit[2]->setValidator(new DoubleUnitValidator(-100, 10000, -1, " m", this));
 
-        edit[0]->setText(QString("%1° %2' %3\"").arg(QLocale::system().toString(s1 * dms1[0], 'f', 0))
-                             .arg(QLocale::system().toString(dms1[1], 'f', 0)).arg(QLocale::system().toString(dms1[2],'f', 6)));
-        edit[1]->setText(QString("%1° %2' %3\"").arg(QLocale::system().toString(s2 * dms2[0], 'f', 0))
-                             .arg(QLocale::system().toString(dms2[1], 'f', 0)).arg(QLocale::system().toString(dms2[2], 'f', 6)));
-        edit[2]->setText(QString("%1 m").arg(QLocale::system().toString(p[2], 'f', 4)));
+        edit[0]->setText(QStringLiteral("%1° %2' %3\"").arg(QLocale().toString(s1 * dms1[0], 'f', 0))
+                             .arg(QLocale().toString(dms1[1], 'f', 0)).arg(QLocale().toString(dms1[2],'f', 6)));
+        edit[1]->setText(QStringLiteral("%1° %2' %3\"").arg(QLocale().toString(s2 * dms2[0], 'f', 0))
+                             .arg(QLocale().toString(dms2[1], 'f', 0)).arg(QLocale().toString(dms2[2], 'f', 6)));
+        edit[2]->setText(QStringLiteral("%1 m").arg(QLocale().toString(p[2], 'f', 4)));
 
     } else if (type == 2) { /* x/y/z-ecef */
         edit[0]->setValidator(new DoubleUnitValidator(-INFINITY, INFINITY, -1, " m", this));
         edit[1]->setValidator(new DoubleUnitValidator(-INFINITY, INFINITY, -1, " m", this));
         edit[2]->setValidator(new DoubleUnitValidator(-INFINITY, INFINITY, -1, " m", this));
 
-        edit[0]->setText(QString("%1 m").arg(QLocale::system().toString(pos[0], 'f', 4)));
-        edit[1]->setText(QString("%1 m").arg(QLocale::system().toString(pos[1], 'f', 4)));
-        edit[2]->setText(QString("%1 m").arg(QLocale::system().toString(pos[2], 'f', 4)));
+        edit[0]->setText(QStringLiteral("%1 m").arg(QLocale().toString(pos[0], 'f', 4)));
+        edit[1]->setText(QStringLiteral("%1 m").arg(QLocale().toString(pos[1], 'f', 4)));
+        edit[2]->setText(QStringLiteral("%1 m").arg(QLocale().toString(pos[2], 'f', 4)));
     } else {   /* lat/lon/hight decimal */
         edit[0]->setValidator(new DoubleUnitValidator(-90, 90, -1, "°", this));
         edit[1]->setValidator(new DoubleUnitValidator(-180, 180, -1, "°", this));
         edit[2]->setValidator(new DoubleUnitValidator(-100, 10000, -1, " m", this));
 
         ecef2pos(pos, p);
-        edit[0]->setText(QString("%1°").arg(QLocale::system().toString(p[0] * R2D, 'f', 9)));
-        edit[1]->setText(QString("%1°").arg(QLocale::system().toString(p[1] * R2D, 'f', 9)));
-        edit[2]->setText(QString("%1 m").arg(QLocale::system().toString(p[2], 'f', 4)));
+        edit[0]->setText(QStringLiteral("%1°").arg(QLocale().toString(p[0] * R2D, 'f', 9)));
+        edit[1]->setText(QStringLiteral("%1°").arg(QLocale().toString(p[1] * R2D, 'f', 9)));
+        edit[2]->setText(QStringLiteral("%1 m").arg(QLocale().toString(p[2], 'f', 4)));
     }
 }
 //---------------------------------------------------------------------------
@@ -1912,14 +1903,14 @@ void OptDialog::readAntennaList()
 {
     pcvs_t pcvs = { 0, 0, 0 };
     char *p;
-    QString currentRoverAntenna, currentTeferenceAntenna;
+    QString currentRoverAntenna, currentReferenceAntenna;
     int i;
 
     if (!readpcv(qPrintable(ui->lEAntennaPcvFile->text()), &pcvs)) return;
 
     /* Save currently defined antennas */
     currentRoverAntenna = ui->cBRoverAntenna->currentText();
-    currentTeferenceAntenna = ui->cBReferenceAntenna->currentText();
+    currentReferenceAntenna = ui->cBReferenceAntenna->currentText();
 
     /* Clear and add antennas from ANTEX file */
     ui->cBRoverAntenna->clear();
@@ -1939,7 +1930,7 @@ void OptDialog::readAntennaList()
     /* Restore previously defined antennas */
     i = ui->cBRoverAntenna->findText(currentRoverAntenna);
     ui->cBRoverAntenna->setCurrentIndex(i == -1 ? 0 : i);
-    i = ui->cBReferenceAntenna->findText(currentTeferenceAntenna);
+    i = ui->cBReferenceAntenna->findText(currentReferenceAntenna);
     ui->cBReferenceAntenna->setCurrentIndex(i == -1 ? 0 : i);
 
     free(pcvs.pcv);
@@ -1975,7 +1966,7 @@ QString OptDialog::excludedSatellitesString(prcopt_t *prcopt)
     for (sat = 1; sat <= MAXSAT; sat++) {
         if (!prcopt->exsats[sat - 1]) continue;
         satno2id(sat, id);
-        buff += QString("%1%2%3").arg(buff.isEmpty() ? "" : " ").arg(prcopt->exsats[sat - 1] == 2 ? "+" : "").arg(id);
+        buff += QStringLiteral("%1%2%3").arg(buff.isEmpty() ? "" : " ").arg(prcopt->exsats[sat - 1] == 2 ? "+" : "").arg(id);
     }
 
     return buff;

@@ -390,9 +390,9 @@ void Plot::generateVisibilityData()
 {
     gtime_t time, ts, te;
     obsd_t data = {};
-    double tint, pos[3], rr[3], rs[6], e[3], azel[2];
+    double tint, pos[3], rr[3], rs[6], e[3], azel[2], time_span;
     unsigned char i, j;
-    int nobs = 0;
+    int nobs = 0, per, per_=-1;
     char name[16];
 
     trace(3, "generateVisibilityData\n");
@@ -411,13 +411,14 @@ void Plot::generateVisibilityData()
     showMessage(tr("Generating satellite visibility..."));
     qApp->processEvents();
 
+    time_span = timediff(ts, te);
     for (time = ts; timediff(time, te) <= 0.0; time = timeadd(time, tint)) {
         for (i = 0; i < MAXSAT; i++) {
             satno2id(i + 1, name);
             if (!tle_pos(time, name, "", "", &tleData, NULL, rs)) continue;
             if ((geodist(rs, rr, e)) <= 0.0) continue;
             if (satazel(pos, e, azel) <= 0.0) continue;
-            if (observation.n >= observation.nmax) {
+            if (observation.n >= observation.nmax) {  // allocate more memory
                 observation.nmax = observation.nmax <= 0 ? 4096 : observation.nmax * 2;
                 observation.data = static_cast<obsd_t *>(realloc(observation.data, sizeof(obsd_t) * observation.nmax));
                 if (!observation.data) {
@@ -434,6 +435,12 @@ void Plot::generateVisibilityData()
             }
             data.code[0] = CODE_L1C;
             observation.data[observation.n++] = data;
+        }
+        per =  timediff(ts, time) / time_span * 100;
+        if (per != per_) {
+            showMessage(tr("Visibility analysis... %1%").arg(per));
+            per_ = per;
+            qApp->processEvents();
         }
         if (++nobs >= MAX_SIMOBS) break;
     }
@@ -477,8 +484,9 @@ void Plot::readMapData(const QString &file)
         showLegend(QStringList());
         return;
     }
-    mapImage = image;
+    mapImageOriginal = image;
     mapImageFile = file;
+    mapOptDialog->setMapSize(mapImageOriginal);
     mapOptDialog->readMapTag(file);
 
     if (norm(originPosition, 3) <= 0.0 && (mapOptDialog->getMapLatitude() != 0.0 || mapOptDialog->getMapLongitude() != 0.0)) {
@@ -798,10 +806,10 @@ void Plot::readPositionFile(const QString &file)
     fp.close();
 }
 // read waypoint ------------------------------------------------------------
-void Plot::readWaypoint(const QString &file)
+void Plot::readWaypoints(const QString &file)
 {
     readWaitStart();
-    showMessage(tr("Reading waypoint... %1").arg(file));
+    showMessage(tr("Reading waypoints... %1").arg(file));
 
     if (file.endsWith(".gpx"))
         readGpxFile(file);
@@ -816,7 +824,7 @@ void Plot::readWaypoint(const QString &file)
     updatePlot();
     updateEnable();
 
-    waypointDialog->setPoints();
+    waypointsDialog->setPoints();
 }
 // save GPX file ------------------------------------------------------------
 void Plot::saveGpxFile(const QString &file)
@@ -866,10 +874,10 @@ void Plot::savePositionFile(const QString &file)
     fp.close();
 }
 // save waypoint ------------------------------------------------------------
-void Plot::saveWaypoint(const QString &file)
+void Plot::saveWaypoints(const QString &file)
 {
     readWaitStart();
-    showMessage(tr("Saving waypoint... %1").arg(file));
+    showMessage(tr("Saving waypoints... %1").arg(file));
 
     if (file.endsWith(".gpx"))
         saveGpxFile(file);
@@ -1092,7 +1100,10 @@ void Plot::connectStream()
         }
         connectState = 1;
     }
-    if (!connectState) return;
+    if (!connectState) {
+        ui->btnConnect->setChecked(false);
+        return;
+    }
 
     if (!title.isEmpty())
         setWindowTitle(title);
@@ -1233,7 +1244,7 @@ void Plot::updateObservation(int nobs)
         }
         per = (i + 1) * 100 / observation.n;
         if (per != per_) {
-            showMessage(tr("Updating azimuth/elevation... (%1%)").arg(per_ = per));
+            showMessage(tr("Updating azimuth/elevation... %1%").arg(per_ = per));
             qApp->processEvents();
         }
     }
@@ -1279,7 +1290,7 @@ void Plot::updateMp()
         }
         per = i * 100 / observation.n;
         if (per != per_) {
-            showMessage(tr("Updating multipath (1/2)... (%1%)").arg(per));
+            showMessage(tr("Updating multipath (1/2)... %1%").arg(per));
             per_ = per;
             qApp->processEvents();
         }
@@ -1305,7 +1316,7 @@ void Plot::updateMp()
         }
         per = sat * 100 / MAXSAT;
         if (per != per_) {
-            showMessage(tr("Updating multipath (2/2)... (%1%)").arg(per));
+            showMessage(tr("Updating multipath (2/2)... %1%").arg(per));
             per_ = per;
             qApp->processEvents();
         }
@@ -1391,9 +1402,9 @@ void Plot::clear()
     clearSolution();
     gis_free(&gis);
 
-    mapImage = QImage();
+    mapImageOriginal = QImage();
     mapImageFile = "";
-    mapOptDialog->setMapSize(mapImage);
+    mapOptDialog->setMapSize(mapImageOriginal);
 
     for (int i = 0; i < 3; i++)
         timeEnabled[i] = 0;

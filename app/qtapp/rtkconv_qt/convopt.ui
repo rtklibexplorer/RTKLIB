@@ -280,6 +280,9 @@
       </item>
       <item row="7" column="3">
        <widget class="QDoubleSpinBox" name="sBApproxPosition1">
+        <property name="toolTip">
+         <string>Y</string>
+        </property>
         <property name="suffix">
          <string> m</string>
         </property>
@@ -293,6 +296,9 @@
       </item>
       <item row="7" column="2">
        <widget class="QDoubleSpinBox" name="sBApproxPosition0">
+        <property name="toolTip">
+         <string>X</string>
+        </property>
         <property name="suffix">
          <string> m</string>
         </property>
@@ -400,6 +406,9 @@
       </item>
       <item row="7" column="4">
        <widget class="QDoubleSpinBox" name="sBApproxPosition2">
+        <property name="toolTip">
+         <string>Z</string>
+        </property>
         <property name="suffix">
          <string> m</string>
         </property>

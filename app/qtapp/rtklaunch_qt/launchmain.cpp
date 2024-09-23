@@ -32,7 +32,7 @@
 
 #define BTN_SIZE        42
 #define BTN_COUNT       8
-#define MAX(x, y)        ((x) > (y) ? (x) : (y))
+#define MAX(x, y)       ((x) > (y) ? (x) : (y))
 
 //---------------------------------------------------------------------------
 MainForm::MainForm(QWidget *parent)
@@ -58,7 +58,7 @@ MainForm::MainForm(QWidget *parent)
     ui->btnRtklib->setStatusTip(tr("RTKLIB Version %1 %2").arg(VER_RTKLIB, PATCH_LEVEL));
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("RTKLIB application launcher Qt");
+    parser.setApplicationDescription(tr("RTKLIB application launcher Qt"));
     parser.addHelpOption();
     parser.addVersionOption();
 
@@ -87,7 +87,7 @@ MainForm::MainForm(QWidget *parent)
 
     if (parser.isSet(miniOption)) minimize = 1;
 
-    ui->btnOption->setVisible(false);
+    ui->btnOption->setVisible(false);  // used options dialog
 
     trayMenu = new QMenu(this);
     trayMenu->addAction(tr("Expand"), this, &MainForm::expandWindow);
@@ -157,10 +157,8 @@ void MainForm::showEvent(QShowEvent *event)
            settings.value("pos/height", 79).toInt());
 }
 //---------------------------------------------------------------------------
-void MainForm::closeEvent(QCloseEvent *event)
+void MainForm::closeEvent(QCloseEvent *)
 {
-    if (event->spontaneous()) return;
-
     QSettings settings(iniFile, QSettings::IniFormat);
 
     settings.setValue("pos/left", pos().x());

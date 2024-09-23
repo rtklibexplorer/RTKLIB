@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>970</width>
-    <height>593</height>
+    <width>972</width>
+    <height>692</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -44,6 +44,9 @@
       </item>
       <item row="15" column="8" colspan="3">
        <widget class="QDoubleSpinBox" name="sBReferencePosition2">
+        <property name="toolTip">
+         <string>Longitude of receiver</string>
+        </property>
         <property name="suffix">
          <string>°</string>
         </property>
@@ -327,6 +330,9 @@
       </item>
       <item row="12" column="7">
        <widget class="QSpinBox" name="sBTimeSyncPort">
+        <property name="toolTip">
+         <string>Port number for time synchronization</string>
+        </property>
         <property name="maximum">
          <number>65535</number>
         </property>
@@ -455,18 +461,12 @@
       </item>
       <item row="18" column="0" rowspan="3" colspan="4">
        <widget class="QGroupBox" name="gBSatSystes">
-        <property name="toolTip">
-         <string/>
-        </property>
         <property name="title">
          <string>Satellite System</string>
         </property>
         <layout class="QGridLayout" name="gridLayout">
          <item row="0" column="0">
           <widget class="QCheckBox" name="cBNavSys1">
-           <property name="toolTip">
-            <string/>
-           </property>
            <property name="text">
             <string>GPS</string>
            </property>
@@ -477,9 +477,6 @@
          </item>
          <item row="0" column="1">
           <widget class="QCheckBox" name="cBNavSys2">
-           <property name="toolTip">
-            <string/>
-           </property>
            <property name="text">
             <string>GLONASS</string>
            </property>
@@ -487,9 +484,6 @@
          </item>
          <item row="0" column="2">
           <widget class="QCheckBox" name="cBNavSys3">
-           <property name="toolTip">
-            <string/>
-           </property>
            <property name="text">
             <string>Galileo</string>
            </property>
@@ -497,9 +491,6 @@
          </item>
          <item row="1" column="0">
           <widget class="QCheckBox" name="cBNavSys4">
-           <property name="toolTip">
-            <string/>
-           </property>
            <property name="text">
             <string>QZSS</string>
            </property>
@@ -507,9 +498,6 @@
          </item>
          <item row="1" column="1">
           <widget class="QCheckBox" name="cBNavSys5">
-           <property name="toolTip">
-            <string/>
-           </property>
            <property name="text">
             <string>SBAS</string>
            </property>
@@ -517,9 +505,6 @@
          </item>
          <item row="1" column="2">
           <widget class="QCheckBox" name="cBNavSys6">
-           <property name="toolTip">
-            <string/>
-           </property>
            <property name="text">
             <string>BDS</string>
            </property>
@@ -581,7 +566,7 @@
       <item row="15" column="15">
        <widget class="QPushButton" name="btnReferencePosition">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set latitude, longitude and height for the origin from station position.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load latitude, longitude and height for the receiver position from station position.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -655,12 +640,12 @@
         </property>
         <item>
          <property name="text">
-          <string>ddd.ddddd</string>
+          <string>ddd.ddddd°</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>ddd mm ss.ss</string>
+          <string>ddd° mm' ss.ss&quot;</string>
          </property>
         </item>
        </widget>
@@ -913,11 +898,8 @@
       </item>
       <item row="15" column="3">
        <widget class="QComboBox" name="cBReceiverPosition">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the receiver position for the satellite visibility plot or skyplot. &lt;/p&gt;&lt;p&gt;ʺSingle Solutionʺ uses single‐point results as receiver positions by using observation and navigation data. For moving receivers, you shall set it. &lt;/p&gt;&lt;p&gt;ʺLat/Lon/Hgtʺ uses latitude, longitude and height for static receivers specified as the following Lat/Lon/Hgt fields. &lt;/p&gt;&lt;p&gt;ʺRINEX Headerʺ uses ʺAPPROX POSITION XYZʺ in RINEX observation data header as the receiver position.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the receiver position for the satellite visibility plot or skyplot. &lt;/p&gt;&lt;p&gt;ʺSingle Solutionʺ uses single‐point results as receiver positions by using observation and navigation data. For moving receivers, you shall set it. &lt;/p&gt;&lt;p&gt;ʺLat/Lon/Hgtʺ uses latitude, longitude and height for static receivers as specified in the Lat/Lon/Hgt fields to the right. &lt;/p&gt;&lt;p&gt;ʺRINEX Headerʺ uses ʺAPPROX POSITION XYZʺ in RINEX observation data header as the receiver position.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <item>
          <property name="text">
@@ -955,15 +937,18 @@
          <string>Grid color</string>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Box</enum>
+         <enum>QFrame::Shape::Box</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
        </widget>
       </item>
       <item row="15" column="11" colspan="4">
        <widget class="QDoubleSpinBox" name="sBReferencePosition3">
+        <property name="toolTip">
+         <string>Height of receiver</string>
+        </property>
         <property name="suffix">
          <string> m</string>
         </property>
@@ -1200,10 +1185,10 @@
          <string>Line color</string>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Box</enum>
+         <enum>QFrame::Shape::Box</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
        </widget>
       </item>
@@ -1308,10 +1293,10 @@
          <string>Text color</string>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Box</enum>
+         <enum>QFrame::Shape::Box</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
        </widget>
       </item>
@@ -1371,10 +1356,10 @@
          <string>Background color</string>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Box</enum>
+         <enum>QFrame::Shape::Box</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
+         <enum>QFrame::Shadow::Sunken</enum>
         </property>
        </widget>
       </item>
@@ -1499,7 +1484,7 @@
             <string/>
            </property>
            <property name="layoutDirection">
-            <enum>Qt::LeftToRight</enum>
+            <enum>Qt::LayoutDirection::LeftToRight</enum>
            </property>
           </widget>
          </item>
@@ -1689,6 +1674,9 @@
       </item>
       <item row="15" column="7">
        <widget class="QDoubleSpinBox" name="sBReferencePosition1">
+        <property name="toolTip">
+         <string>Latitude of receiver</string>
+        </property>
         <property name="suffix">
          <string>°</string>
         </property>
@@ -1759,7 +1747,7 @@
      <item>
       <widget class="QDialogButtonBox" name="buttonBox">
        <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+        <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
        </property>
       </widget>
      </item>

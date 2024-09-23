@@ -4,14 +4,15 @@
 //---------------------------------------------------------------------------
 #include <QDialog>
 
-#include "ui_tspandlg.h"
-
 #include "rtklib.h"
 
 class QShowEvent;
+namespace Ui {
+    class SpanDialog;
+}
 
 //---------------------------------------------------------------------------
-class SpanDialog : public QDialog, public Ui::SpanDialog
+class SpanDialog : public QDialog
 {
     Q_OBJECT
 
@@ -27,6 +28,7 @@ public slots:
 private:
     void updateEnable();
 
+    Ui::SpanDialog *ui;
 public:
 
     gtime_t getStartTime();

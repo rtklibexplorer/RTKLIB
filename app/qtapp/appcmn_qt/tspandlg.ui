@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>405</width>
-    <height>164</height>
+    <width>394</width>
+    <height>174</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -71,7 +71,7 @@
       <string> s</string>
      </property>
      <property name="maximum">
-      <double>360.000000000000000</double>
+      <double>3600.000000000000000</double>
      </property>
     </widget>
    </item>
@@ -79,6 +79,9 @@
     <widget class="QDateTimeEdit" name="dTTimeEnd">
      <property name="toolTip">
       <string>End time</string>
+     </property>
+     <property name="displayFormat">
+      <string>dd.MM.yy HH:mm:ss</string>
      </property>
      <property name="calendarPopup">
       <bool>true</bool>
@@ -92,6 +95,9 @@
     <widget class="QDateTimeEdit" name="dTTimeStart">
      <property name="toolTip">
       <string>Start time</string>
+     </property>
+     <property name="displayFormat">
+      <string>dd.MM.yy HH:mm:ss</string>
      </property>
      <property name="calendarPopup">
       <bool>true</bool>

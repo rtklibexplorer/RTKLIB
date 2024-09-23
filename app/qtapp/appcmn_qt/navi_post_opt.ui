@@ -23,7 +23,7 @@
       <enum>QTabWidget::TabPosition::North</enum>
      </property>
      <property name="currentIndex">
-      <number>4</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabSettings1">
       <attribute name="title">
@@ -2233,11 +2233,6 @@
             </item>
             <item>
              <property name="text">
-              <string>RTCM/Raw Antenna Position</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
               <string>Average of Single Position</string>
              </property>
             </item>
@@ -2249,6 +2244,11 @@
             <item>
              <property name="text">
               <string>RINEX Header Position</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>RTCM/Raw Antenna Position</string>
              </property>
             </item>
            </widget>
@@ -3111,6 +3111,9 @@
        </item>
        <item row="9" column="3">
         <widget class="QPlainTextEdit" name="tEBaseList">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Input the base station ID list to replace keyword %b in input and output file paths. The line starting with &amp;quot;#&amp;quot; is treated as a comment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="plainText">
           <string>base</string>
          </property>
@@ -3175,6 +3178,9 @@
        </item>
        <item row="9" column="2">
         <widget class="QPlainTextEdit" name="tERoverList">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Input the rover ID list to replace keyword %r in input and output file paths. The line starting with &amp;quot;#&amp;quot; is treated as a comment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="plainText">
           <string>rover</string>
          </property>
@@ -3203,16 +3209,26 @@
        <item row="9" column="0">
         <widget class="QFrame" name="frame">
          <property name="frameShape">
-          <enum>QFrame::Shape::Box</enum>
+          <enum>QFrame::Shape::Panel</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Shadow::Sunken</enum>
          </property>
          <layout class="QGridLayout" name="gridLayout_14">
-          <item row="0" column="1">
-           <widget class="QLabel" name="Label47">
+          <item row="1" column="0">
+           <widget class="QLabel" name="Label50">
             <property name="text">
-             <string>:</string>
+             <string>#..</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="Label65">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;For batch processing with multiple input files or multiple sessions, you can set input file paths or output file path containing the following keywords:&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;%Y, %y, %m, %d, %n, %W, %D, %h, %H, %r, %b&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;The keywords are replaced by the proper values or expanded for multiple session analysis.&lt;/p&gt;&lt;p&gt;To enable time keywords, set Time Start, Time End and Unit (optional) in the main window. For keywords %r, %b , input Rover List or Base Station List below.&lt;/p&gt;&lt;p&gt;For online reference, push &amp;quot;?&amp;quot; button.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>Comment in List</string>
             </property>
            </widget>
           </item>
@@ -3240,20 +3256,30 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="Label65">
-            <property name="toolTip">
-             <string/>
-            </property>
+          <item row="0" column="1">
+           <widget class="QLabel" name="Label47">
             <property name="text">
-             <string>Comment in List</string>
+             <string>:</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="Label50">
+          <item row="2" column="2">
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="label_2">
             <property name="text">
-             <string>#..:</string>
+             <string>:</string>
             </property>
            </widget>
           </item>
@@ -3300,7 +3326,7 @@
        <item row="0" column="3">
         <widget class="QComboBox" name="cBIntputReferenceObservation">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select ON to enable time interpolation of base station data (opotion: &lt;span style=&quot; font-style:italic;&quot;&gt;misc-timeinterp&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;&lt;br/&gt;If selecting ON, the base station data are linearly interpolated to the rover epoch and DD (double- difference) is made with them. If not checked, nearest epoch of base station data is used for DD.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select ON to enable time interpolation of base station data (option: &lt;span style=&quot; font-style:italic;&quot;&gt;misc-timeinterp&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;&lt;br/&gt;If selecting ON, the base station data are linearly interpolated to the rover epoch and DD (double- difference) is made with them. If not checked, nearest epoch of base station data is used for DD.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <item>
           <property name="text">
@@ -3323,6 +3349,9 @@
        </item>
        <item row="3" column="2" colspan="2">
         <widget class="QSpinBox" name="sBSbasSat">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If SBAS DGPS correction enabled, input SBAS satellite PRN number to be used (option: &lt;span style=&quot; font-style:italic;&quot;&gt;misc-sbasatsel&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If you input 0, all available SBAS satellites are used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="maximum">
           <number>256</number>
          </property>

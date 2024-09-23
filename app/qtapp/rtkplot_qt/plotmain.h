@@ -19,9 +19,6 @@
 
 #define PRGNAME     "RTKPlot-Qt"           // program name
 
-const QChar degreeChar(0260);           // character code of degree (UTF-8)
-const QChar up2Char(0262);              // character code of ^2     (UTF-8)
-
 #define DEFTSPAN    600.0               // default time span (s)
 #define INTARROW    60.0                // direction arrow interval (s)
 #define MAXTDIFF    60.0                // max differential time (s)
@@ -92,6 +89,8 @@ class QResizeEvent;
 class QShowEvent;
 class QWheelEvent;
 class QPaintEVent;
+class QListWidget;
+class QWidgetAction;
 
 // time-position class ------------------------------------------------------
 class TIMEPOS
@@ -156,7 +155,7 @@ protected slots:
 
     void showStartEndTimeDialog();
     void showMapOptionDialog();
-    void showWaypointDialog();
+    void showWaypointsDialog();
     void showSolutionText();
     void showObservationText();
     void copyPlotToClipboard();
@@ -203,8 +202,8 @@ protected slots:
     void saveElevationMaskFile();
     void showVectorMapDialog();
     void changePointCoordinateType();
-    void openWaypointFile();
-    void saveWaypointFile();
+    void openWaypointsFile();
+    void saveWaypointsFile();
     void updateBrowseBarVisibility();
 
     void fileListClicked(QModelIndex);
@@ -227,7 +226,7 @@ private:
     QElapsedTimer updateTimer;
 
     QPixmap buffer;
-    QImage mapImage;
+    QImage mapImageScaled, mapImageOriginal;
     QImage skyImageOriginal;
 
     Graph *graphTrack;
@@ -382,10 +381,12 @@ private:
     SkyImgDialog *skyImgDialog;
     PlotOptDialog *plotOptDialog;
     AboutDialog *aboutDialog;
-    PntDialog *waypointDialog;
+    PntDialog *waypointsDialog;
     FileSelDialog *fileSelDialog;
     TextViewer *viewer;
     VecMapDialog *vecMapDialog;
+    QListWidget *lWRangeList;
+    QWidgetAction* rangeListPopupAction;
 
     Ui::Plot *ui;
 
@@ -436,14 +437,15 @@ protected:
     void readSkyData(const QString &file);
     void readGpxFile(const QString &file);
     void readPositionFile(const QString &file);
-    void readWaypoint(const QString &file);
+    void readWaypoints(const QString &file);
     void saveGpxFile(const QString &file);
     void savePositionFile(const QString &file);
-    void saveWaypoint(const QString &file);
+    void saveWaypoints(const QString &file);
     void generateObservationSlips(int *LLI);
     void readElevationMaskData(const QString &file);
     void refresh_MapView();
     double getYRange();
+    QString plotDetails(const QPoint &globalPos);
 
 public:
     void updateSky();

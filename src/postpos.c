@@ -267,12 +267,12 @@ static int inputobs(obsd_t *obs, int solq, const prcopt_t *popt)
     if (!reverse) { /* input forward data */
         if ((nu=nextobsf(&obss,&iobsu,1))<=0) return -1;
         if (popt->intpref) {
-            /* interpolate nearest timestamps */
+            /* for interpolation, find first base timestamp after rover timestamp */
             for (;(nr=nextobsf(&obss,&iobsr,2))>0;iobsr+=nr)
                 if (timediff(obss.data[iobsr].time,obss.data[iobsu].time)>-DTTOL) break;
         }
         else {
-            /* find closest timestamp */
+            /* if not interpolating, find closest timestamp */
             dt=timediff(obss.data[iobsr].time,obss.data[iobsu].time);
             for (i=iobsr;(nr=nextobsf(&obss,&i,2))>0;iobsr=i,i+=nr) {
                 dt_next=timediff(obss.data[i].time,obss.data[iobsu].time);
@@ -306,12 +306,12 @@ static int inputobs(obsd_t *obs, int solq, const prcopt_t *popt)
     else { /* input backward data */
         if ((nu=nextobsb(&obss,&iobsu,1))<=0) return -1;
         if (popt->intpref) {
-            /* interpolate nearest timestamps */
+            /* for interpolation, find first base timestamp before rover timestamp */
             for (;(nr=nextobsb(&obss,&iobsr,2))>0;iobsr-=nr)
                 if (timediff(obss.data[iobsr].time,obss.data[iobsu].time)<DTTOL) break;
         }
         else {
-            /* find closest timestamp */
+            /* if not interpolating, find closest timestamp */
             dt=iobsr>=0?timediff(obss.data[iobsr].time,obss.data[iobsu].time):0;
             for (i=iobsr;(nr=nextobsb(&obss,&i,2))>0;iobsr=i,i-=nr) {
                 dt_next=timediff(obss.data[i].time,obss.data[iobsu].time);

@@ -22,6 +22,10 @@ MntpOptDialog::MntpOptDialog(QWidget* parent, int option)
 void MntpOptDialog::setOption(int option)
 {
     ui->lEMountPoint->setReadOnly(option == 0);
+    if (option == 0)
+        ui->buttonBox->setStandardButtons(QDialogButtonBox::Ok);
+    else
+        ui->buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 }
 //---------------------------------------------------------------------------
 QString MntpOptDialog::getMountPointString()

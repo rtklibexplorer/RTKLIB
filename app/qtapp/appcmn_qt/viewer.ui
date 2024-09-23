@@ -47,12 +47,15 @@
         <property name="text">
          <string>&amp;Find</string>
         </property>
+        <property name="shortcut">
+         <string>Ctrl+F</string>
+        </property>
        </widget>
       </item>
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -101,6 +104,9 @@
          <iconset resource="../icon/resources.qrc">
           <normaloff>:/buttons/tool</normaloff>:/buttons/tool</iconset>
         </property>
+        <property name="shortcut">
+         <string>Ctrl+O</string>
+        </property>
        </widget>
       </item>
       <item>
@@ -110,6 +116,9 @@
         </property>
         <property name="text">
          <string>&amp;Close</string>
+        </property>
+        <property name="shortcut">
+         <string>Ctrl+X</string>
         </property>
         <property name="autoDefault">
          <bool>true</bool>

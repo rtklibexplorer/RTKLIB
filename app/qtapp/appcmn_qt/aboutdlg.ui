@@ -6,39 +6,30 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>300</width>
-    <height>179</height>
+    <width>307</width>
+    <height>210</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>About</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="3" column="1">
-    <widget class="QPushButton" name="btnOkay">
-     <property name="toolTip">
-      <string>Close</string>
-     </property>
-     <property name="text">
-      <string>&amp;Okay</string>
-     </property>
-     <property name="autoDefault">
-      <bool>true</bool>
-     </property>
-     <property name="default">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLabel" name="lbAbout">
+   <item row="4" column="0" colspan="2">
+    <widget class="QLabel" name="lbWebsite">
      <property name="text">
       <string>TextLabel</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="1">
-    <widget class="QLabel" name="lbVersion">
+   <item row="5" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::StandardButton::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLabel" name="lbAbout">
      <property name="text">
       <string>TextLabel</string>
      </property>
@@ -51,7 +42,21 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0" rowspan="3">
+   <item row="1" column="1">
+    <widget class="QLabel" name="lbVersion">
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QLabel" name="lbCopyrightQt">
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" rowspan="4">
     <widget class="QLabel" name="lbIcon">
      <property name="text">
       <string/>

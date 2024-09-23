@@ -168,7 +168,7 @@ MainForm::MainForm(QWidget *parent)
 
     setlocale(LC_NUMERIC, "C");
 
-    setWindowTitle(QString("%1 v.%2 %3").arg(PRGNAME, VER_RTKLIB, PATCH_LEVEL));
+    setWindowTitle(QStringLiteral("%1 v.%2 %3").arg(PRGNAME, VER_RTKLIB, PATCH_LEVEL));
 
     viewer = new TextViewer(this);
     timeDialog = new TimeDialog(this);
@@ -227,10 +227,10 @@ void MainForm::showEvent(QShowEvent *event)
     QString appFilename = QApplication::applicationFilePath();
     QFileInfo fi(appFilename);
 
-    iniFilename = fi.absoluteDir().filePath(fi.baseName()) + ".ini";
+    iniFilename = fi.absoluteDir().filePath(fi.baseName() + ".ini");
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("RTK Get Qt");
+    parser.setApplicationDescription(tr("RTK Get Qt"));
     parser.addHelpOption();
     parser.addVersionOption();
 
@@ -515,7 +515,7 @@ void MainForm::selectDeselectAllStations()
     }
 
     ui->btnAll->setText(ui->btnAll->text() == tr("&All") ? tr("&Clear") : tr("&All"));
-    ui->lbStation->setText(QString(tr("Stations (%1)")).arg(station_cnt));
+    ui->lbStation->setText(tr("Stations (%1)").arg(station_cnt));
 }
 //---------------------------------------------------------------------------
 void MainForm::showKeyDialog()
@@ -863,7 +863,7 @@ void MainForm::updateStationListLabel()
         if (ui->stationListWidget->item(i)->isSelected())
             n++;
 
-    ui->lbStation->setText(QString(tr("Stations (%1)")).arg(n));
+    ui->lbStation->setText(tr("Stations (%1)").arg(n));
 }
 //---------------------------------------------------------------------------
 void MainForm::updateEnable()
@@ -901,7 +901,7 @@ void MainForm::readHistory(QSettings &setting, const QString &key, QComboBox *co
     combo->clear();
 
     for (i = 0; i < MAX_HIST; i++) {
-        item = setting.value(QString("history/%1_%2").arg(key).arg(i, 3), "").toString();
+        item = setting.value(QStringLiteral("history/%1_%2").arg(key).arg(i, 3), "").toString();
         if (!item.isEmpty()) combo->addItem(item);
     }
 }
@@ -911,7 +911,7 @@ void MainForm::writeHistory(QSettings &setting, const QString &key, QComboBox *c
     int i;
 
     for (i = 0; i < combo->count(); i++)
-        setting.setValue(QString("history/%1_%2").arg(key).arg(i), combo->itemText(i));
+        setting.setValue(QStringLiteral("history/%1_%2").arg(key).arg(i), combo->itemText(i));
 }
 // --------------------------------------------------------------------------
 void MainForm::addHistory(QComboBox *combo)

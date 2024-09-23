@@ -18,7 +18,6 @@ class SvrOptDialog;
 class SerialOptDialog;
 class TcpOptDialog;
 class FileOptDialog;
-class FtpOptDialog;
 class StrMonDialog;
 
 #define MAXSTR        7    // number of streams
@@ -63,7 +62,6 @@ private:
     TcpOptDialog *tcpOptDialog;
     SerialOptDialog *serialOptDialog;
     FileOptDialog *fileOptDialog;
-    FtpOptDialog * ftpOptDialog;
     StrMonDialog * strMonDialog;
     QTimer serverStatusTimer, streamMonitorTimer;
 

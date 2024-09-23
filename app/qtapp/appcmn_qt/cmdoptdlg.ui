@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>385</width>
-    <height>411</height>
+    <width>388</width>
+    <height>435</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,7 +54,14 @@
       <string>Send commands periodically</string>
      </property>
      <property name="text">
-      <string>&amp;Periodic Commands : &lt;command&gt; # cycle (ms)</string>
+      <string>&amp;Periodic Commands</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Syntax: &lt;span style=&quot; font-style:italic;&quot;&gt;&amp;lt;command&amp;gt; # cycle (ms)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>

@@ -12,10 +12,8 @@ object OptDialog: TOptDialog
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poMainFormCenter
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object Label5: TLabel
     Left = 12
@@ -101,7 +99,7 @@ object OptDialog: TOptDialog
     Top = 1
     Width = 411
     Height = 377
-    ActivePage = TabSheet4
+    ActivePage = TabSheet1
     TabOrder = 4
     object TabSheet1: TTabSheet
       Caption = 'Setting&1'
@@ -182,9 +180,7 @@ object OptDialog: TOptDialog
         Height = 21
         Style = csDropDownList
         DropDownCount = 16
-        ItemIndex = 0
         TabOrder = 7
-        Text = 'OFF'
         OnChange = IonoOptChange
         Items.Strings = (
           'OFF'
@@ -193,9 +189,7 @@ object OptDialog: TOptDialog
           'Iono-Free LC'
           'Estimate TEC'
           'IONEX TEC'
-          'QZSS Broadcast'
-          'QZSS LEX'
-          'Input TEC')
+          'QZSS Broadcast')
       end
       object TropOpt: TComboBox
         Left = 324
@@ -2177,7 +2171,7 @@ object OptDialog: TOptDialog
     end
   end
   object OpenDialog: TOpenDialog
-    Filter =
+    Filter = 
       'All (*.*)|*.*|PCV File (*.pcv,*.atx)|*.pcv;*.atx|Position File (' +
       '*.pos)|*.pos;*.pos|Options File (*.conf)|*.conf|DCB Data File (*' +
       '.dcb)|*.dcb|EOP Data File (*.eop,*erp)|*.eop;*.erp|OTL BLQ File ' +

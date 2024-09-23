@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
-* notvatel.c : NovAtel OEM7/OEM6/OEM5/OEM4/OEM3 receiver functions
+* novatel.c : NovAtel OEM7/OEM6/OEM5/OEM4/OEM3 receiver functions
 *
 *          Copyright (C) 2007-2020 by T.TAKASU, All rights reserved.
 *

@@ -1467,7 +1467,7 @@ void MonitorDialog::showIonUtc()
     ui->tWConsole->item(i++, 1)->setText(QString("%1 ns, %2 ns").arg(utc_glo[0], 0, 'f', 9).arg(utc_glo[1] * 1E9, 0, 'f', 3));
 
     ui->tWConsole->item(i,   0)->setText(tr("GTS-UTC Ref Week, Time, A0, A1"));
-    ui->tWConsole->item(i++, 1)->setText(QString("%1 s, %2 ns %3 ns/s").arg(utc_gal[3], 0, 'f',0).arg(utc_gal[2], 0, 'f', 0).arg(utc_gal[0]*1e9, 0, 'f', 3).arg(utc_gal[1] * 1E9, 0, 'f', 5));
+    ui->tWConsole->item(i++, 1)->setText(QString("%1, %2 s, %3 ns %4 ns/s").arg(utc_gal[3], 0, 'f',0).arg(utc_gal[2], 0, 'f', 0).arg(utc_gal[0]*1e9, 0, 'f', 3).arg(utc_gal[1] * 1E9, 0, 'f', 5));
 
     ui->tWConsole->item(i,   0)->setText(tr("QZSST-UTC Ref Week, Time, A0, A1"));
     ui->tWConsole->item(i++, 1)->setText(tr("%1, %2 s, %3 ns, %4 ns/s").arg(utc_qzs[3],0,'f',0).arg(utc_qzs[2],0,'f',0).arg(utc_qzs[0]*1E9, 0, 'f', 3).arg(utc_qzs[1]*1E9, 0, 'f', 5));

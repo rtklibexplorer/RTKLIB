@@ -1916,9 +1916,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     int stat=rtk->opt.mode<=PMODE_DGPS?SOLQ_DGPS:SOLQ_FLOAT;
     int nf=opt->ionoopt==IONOOPT_IFLC?1:opt->nf;
 
-    /* time diff between base and rover observations */
-    dt=timediff(time,obs[nu].time);
-    trace(3,"relpos  : dt=%.3f nu=%d nr=%d\n",dt,nu,nr);
+    trace(3,"relpos  : nu=%d nr=%d\n",nu,nr);
 
     /* define local matrices, n=total observations, base + rover */
     rs=mat(6,n);            /* range to satellites */
@@ -1948,20 +1946,30 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
                y+nu*nf*2,e+nu*3,azel+nu*2,freq+nu*nf)) {
         errmsg(rtk,"initial base station position error\n");
 
-        free(rs); free(dts); free(var); free(y); free(e); free(azel);
-        free(freq);
+        free(rs); free(dts); free(var); free(y); free(e); free(azel); free(freq);
         return 0;
     }
-    /* time-interpolation of base residuals (for post-processing)  */
+    /* time diff between base and rover observations */
     if (opt->intpref) {
+         /* time-interpolation of base residuals */
         dt=intpres(time,obs+nu,nr,nav,rtk,y+nu*nf*2);
+    } else dt=timediff(time,obs[nu].time);
+    trace(3,"relpos  : dt=%.3f\n",dt);
+
+     if (opt->mode!=PMODE_MOVEB) {
+        /* check if exceeded max age of differential */
+        rtk->sol.age=dt;
+        if (fabs(rtk->sol.age)>opt->maxtdiff) {
+            errmsg(rtk,"age of differential error (age=%.1f)\n",rtk->sol.age);
+            free(rs); free(dts); free(var); free(y); free(e); free(azel); free(freq);
+            return 1;
+        }
     }
     /* select common satellites between rover and base-station */
     if ((ns=selsat(obs,azel,nu,nr,opt,sat,iu,ir))<=0) {
         errmsg(rtk,"no common satellite\n");
 
-        free(rs); free(dts); free(var); free(y); free(e); free(azel);
-        free(freq);
+        free(rs); free(dts); free(var); free(y); free(e); free(azel); free(freq);
         return 0;
     }
     /* update kalman filter states (pos,vel,acc,ionosp, troposp, sat phase biases) */
@@ -2325,7 +2333,7 @@ extern int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         outsolstat(rtk,nav);
         return 1;
     }
-    /* check number of data of base station and age of differential */
+    /* check number of data of base station */
     if (nr==0) {
         errmsg(rtk,"no base station observation data for rtk\n");
         outsolstat(rtk,nav);
@@ -2364,15 +2372,7 @@ extern int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
 
     trace(3,"base pos: "); tracemat(3,rtk->rb,1,3,13,4);
     }
-    else {
-        rtk->sol.age=(float)timediff(obs[0].time,obs[nu].time);
 
-        if (fabs(rtk->sol.age)>opt->maxtdiff) {
-            errmsg(rtk,"age of differential error (age=%.1f)\n",rtk->sol.age);
-            outsolstat(rtk,nav);
-            return 1;
-        }
-    }
     /* relative potitioning */
     relpos(rtk,obs,nu,nr,nav);
     rtk->epoch++;

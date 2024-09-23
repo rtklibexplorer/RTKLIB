@@ -40,7 +40,7 @@ public:
     explicit ProcessingThread(QObject *parent);
     ~ProcessingThread();
 
-    void addInput(const QString &);
+    bool addInput(const QString &);
     static QString toList(const QString & list);
 
 protected:
@@ -108,14 +108,14 @@ private:
     ProcessingThread *processingThread;
 
     void execProcessing();
-    int  getOption(prcopt_t &prcopt, solopt_t &solopt, filopt_t &filopt);
-    int  obsToNav (const QString &obsfile, QString &navfile);
+    bool getOption(prcopt_t &prcopt, solopt_t &solopt, filopt_t &filopt);
+    bool obsToNav (const QString &obsfile, QString &navfile);
 	
     QString filePath(const QString &file);
     void readList(QComboBox *, QSettings *ini,  const QString &key);
     void writeList(QSettings *ini, const QString &key, const QComboBox *combo);
     void addHistory(QComboBox *combo);
-    int execCommand(const QString &cmd, const QStringList &opt, int show);
+    bool execCommand(const QString &cmd, const QStringList &opt);
 	
     gtime_t getTimeStart();
     gtime_t getTimeStop();

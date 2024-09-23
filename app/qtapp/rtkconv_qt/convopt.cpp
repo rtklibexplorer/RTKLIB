@@ -175,7 +175,7 @@ void ConvOptDialog::accept()
 //---------------------------------------------------------------------------
 void ConvOptDialog::showFrequencyDialog()
 {
-    freqDialog->exec();
+    freqDialog->show();
 }
 //---------------------------------------------------------------------------
 void ConvOptDialog::showMaskDialog()
@@ -201,7 +201,7 @@ void ConvOptDialog::showMaskDialog()
 
     codeOptDialog->setFrequencyType(frequencyType);
 
-    codeOptDialog->show();
+    codeOptDialog->exec();
 
 }
 //---------------------------------------------------------------------------

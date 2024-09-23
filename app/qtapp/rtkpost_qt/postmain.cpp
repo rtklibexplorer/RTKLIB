@@ -136,16 +136,14 @@ ProcessingThread::~ProcessingThread()
 {
     for (int i = 0; i < 6; i++) delete[] infile[i];
 }
-void ProcessingThread::addInput(const QString & file) {
-    if (!file.isEmpty()) {
-        if (!QFile::exists(file)) {
-            QMessageBox::information(NULL, QObject::tr("File not found"),
-                                     QObject::tr("The specified input file \"%1\" was not found.").arg(file));
-            return;
-        };
-        if (check_compression(file))
-            strncpy(infile[n++], qPrintable(file), 1023);
+bool ProcessingThread::addInput(const QString & file) {
+    if (file.isEmpty()) return true;  // skip empty files
+
+    if (check_compression(file)) {
+        strncpy(infile[n++], qPrintable(file), 1023);
+        return true;
     }
+    return false;
 }
 void ProcessingThread::run()
 {
@@ -428,7 +426,7 @@ void MainForm::callRtkPlot()
     opts += file;
 
     for (const auto& path: cmds)
-        if (execCommand(appDir.filePath(path), opts, 1)) {
+        if (execCommand(appDir.filePath(path), opts)) {
             return;
         }
 
@@ -681,7 +679,7 @@ void MainForm::plotInputFile1()
     opts << "-r" << files[0] << files[1] << files[2] << files[3] << files[4];
 
     for (const auto& path: cmds)
-        if (execCommand(appDir.filePath(path), opts, 1)) {
+        if (execCommand(appDir.filePath(path), opts)) {
             return;
         }
 
@@ -708,7 +706,7 @@ void MainForm::plotInputFile2()
     opts << "-r" << files[0] << files[1] << files[2] << files[3] << files[4];
 
     for (const auto& path: cmds)
-        if (execCommand(appDir.filePath(path), opts, 1)) {
+        if (execCommand(appDir.filePath(path), opts)) {
             return;
         }
 
@@ -785,31 +783,59 @@ void MainForm::execProcessing()
     }
 
     // set input/output files
-    processingThread->addInput(inputFile1);
+    if (!processingThread->addInput(inputFile1)) {
+        processingFinished(0);
+        delete processingThread;
+        return;
+    };
 
     if (PMODE_DGPS <= processingThread->prcopt.mode && processingThread->prcopt.mode <= PMODE_FIXED) {
-        processingThread->addInput(inputFile2);
+        if (!processingThread->addInput(inputFile2)) {
+            processingFinished(0);
+            delete processingThread;
+            return;
+        };
     }
 
     if (!inputFile3.isEmpty()) {
-        processingThread->addInput(inputFile3);
+        if (!processingThread->addInput(inputFile3)) {
+            processingFinished(0);
+            delete processingThread;
+            return;
+        };
     } else if (!obsToNav(inputFile1, temp)) {
         showMessage(tr("Error: No navigation data"));
         processingFinished(0);
         delete processingThread;
         return;
     } else {
-        processingThread->addInput(temp);
+        if (!processingThread->addInput(temp)) {
+            processingFinished(0);
+            delete processingThread;
+            return;
+        }
     }
 
     if (!inputFile4.isEmpty())
-        processingThread->addInput(inputFile4);
+        if (!processingThread->addInput(inputFile4)) {
+            processingFinished(0);
+            delete processingThread;
+            return;
+        };
 
     if (!inputFile5.isEmpty())
-        processingThread->addInput(inputFile5);
+        if (!processingThread->addInput(inputFile5)) {
+            processingFinished(0);
+            delete processingThread;
+            return;
+        };
 
     if (!inputFile6.isEmpty())
-        processingThread->addInput(inputFile6);
+        if (!processingThread->addInput(inputFile6)) {
+            processingFinished(0);
+            delete processingThread;
+            return;
+        };
 
     strncpy(processingThread->outfile, qPrintable(outputFile), 1023);
 
@@ -840,7 +866,7 @@ void MainForm::execProcessing()
     processingThread->start();
 }
 // get processing and solution options --------------------------------------
-int MainForm::getOption(prcopt_t &prcopt, solopt_t &solopt, filopt_t &filopt)
+bool MainForm::getOption(prcopt_t &prcopt, solopt_t &solopt, filopt_t &filopt)
 {
     prcopt = optDialog->processingOptions;
     solopt = optDialog->solutionOptions;
@@ -850,35 +876,38 @@ int MainForm::getOption(prcopt_t &prcopt, solopt_t &solopt, filopt_t &filopt)
 
     // file options
 
-    return 1;
+    return true;
 }
 // observation file to nav file ---------------------------------------------
-int MainForm::obsToNav(const QString &obsfile, QString &navfile)
+bool MainForm::obsToNav(const QString &obsfile, QString &navfile)
 {
     int p;
     QFileInfo f(obsfile);
-    navfile = f.canonicalPath() + f.completeBaseName();
+    navfile = f.canonicalPath() + QDir::separator() + f.completeBaseName();
     QString suffix = f.suffix();
 
-    if (suffix.isEmpty()) return 0;
+    if (suffix.isEmpty()) return false;
 
     if ((suffix.length() == 3) && (suffix.at(2).toLower() == 'o'))
         suffix[2] = '*';
     else if ((suffix.length() == 3) && (suffix.at(2).toLower() == 'd'))
         suffix[2] = '*';
-    else if (suffix.toLower() == "obs")
+    else if (suffix == "obs")
         suffix = "*nav";
+    else if (suffix == "NAV")
+        suffix = "*NAV";
     else if (((p = suffix.indexOf("gz")) != -1) || (( p = suffix.indexOf('Z')) != -1)) {
-        if (p < 1) return 0;
+        if (p < 1) return false;
 
         if (suffix.at(p - 1).toLower() == 'o')
             suffix[p - 1] = '*';
         else if (suffix.at(p - 1).toLower() == 'd')
             suffix[p - 1] = '*';
-        else return 0;
+        else return false;
     } else
-        return 0;
-    return 1;
+        return false;
+    navfile += "." + suffix;
+    return true;
 }
 // replace file path with keywords ------------------------------------------
 QString MainForm::filePath(const QString &file)
@@ -948,9 +977,8 @@ void MainForm::addHistory(QComboBox *combo)
     combo->setCurrentIndex(0);
 }
 // execute command ----------------------------------------------------------
-int MainForm::execCommand(const QString &cmd, const QStringList &opt, int show)
+bool MainForm::execCommand(const QString &cmd, const QStringList &opt)
 {
-    Q_UNUSED(show);
     return QProcess::startDetached(cmd, opt);  /* FIXME: show option not yet supported */
 }
 // view file ----------------------------------------------------------------

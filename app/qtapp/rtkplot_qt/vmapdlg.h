@@ -7,6 +7,7 @@
 #include <QSettings>
 
 #include "rtklib.h"
+#include "plotmain.h"
 
 namespace Ui {
 class VecMapDialog;
@@ -15,6 +16,7 @@ class VecMapDialog;
 class Plot;
 class QRadioButton;
 class QCheckBox;
+class QAbstractButton;
 
 //---------------------------------------------------------------------------
 class VecMapDialog : public QDialog
@@ -31,7 +33,7 @@ public:
 
 public slots:
     void selectColor();
-    void saveClose();
+    void saveClose(QAbstractButton *button);
     void moveUp();
     void moveDown();
 
@@ -39,8 +41,8 @@ protected:
     void showEvent (QShowEvent *event);
 
 private:
-    QColor mapColor[24]; //0-11: line, 12-23: fill
-    QColor color[24]; //0-11: line, 12-23: fill
+    QColor mapColor[2*MAXMAPLAYER]; //0-11: line, 12-23: fill
+    QColor color[2*MAXMAPLAYER]; //0-11: line, 12-23: fill
     QList<QRadioButton*> rBLayer;
     QList<QCheckBox*> cBVisible;
     QList<QPushButton*> btnColor;
