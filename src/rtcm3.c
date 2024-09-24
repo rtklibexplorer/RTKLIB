@@ -207,13 +207,187 @@ static double adjcp(rtcm_t *rtcm, int sat, int code, double cp)
     rtcm->cp[sat-1][code]=cp;
     return cp;
 }
-/* loss-of-lock indicator ----------------------------------------------------*/
-static int lossoflock(rtcm_t *rtcm, int sat, int code, int lock)
+
+// Convert a RTCM 7 bit lock time indicator into the time in seconds.
+// Optionally return the range scale per index increment which can also give
+// the maximum time for the range as min + k.
+static double locktime(int lti, double *ko)
 {
-    int lli=(!lock&&!rtcm->lock[sat-1][code])||lock<rtcm->lock[sat-1][code];
-    rtcm->lock[sat-1][code]=(uint16_t)lock;
-    return lli;
+  if (lti == 127) {
+    // There is no upper range for index 127, so return k of 1 year which
+    // should be adequate to allow the caller to work with without special
+    // cases.
+    if (ko) *ko = 365 * 24 * 60 * 60;
+    return 937;
+  }
+
+  int k = 1, base = 0;
+  if (lti < 24) { k = 1; base = 0; }
+  else if (lti < 48) { k = 2; base = 24; }
+  else if (lti < 72) { k = 4; base = 120; }
+  else if (lti < 96) { k = 8; base = 408; }
+  else if (lti < 120) { k = 16; base = 1176; }
+  else if (lti < 127) { k = 32; base = 3096; }
+  else
+    trace(2, "Warning: 7 bit lock time out of bounds: i=%d\n", lti);
+
+  if (ko) {
+    // Index 126 maps to a minimum time of 936 seconds, and index 127 maps to
+    // a time >= 937 seconds, a step of just 1 second. Might have been cleaner
+    // to have a step of 32 and then index 127 would have mapped to >= 968
+    // seconds, but it is specified as >= 937 seconds in Table 3.4-2, and
+    // confirmed that Septentrio RTCM3 streams have a one second step here.
+    if (lti == 126) *ko = 1;
+    // At the other boundaries the ranges have the same increment k as the
+    // previous range.
+    else *ko = k;
+  }
+
+  return k * lti - base;
 }
+// Convert a RTCM MSM 4 bit lock time indicator into the minimum range time
+// with 1ms resolution. The maximum time in a range is twice the minimum lock
+// time, as it doubles with each range, except for the last range. Optionally
+// return the range scale per index increment which can also give the maximum
+// time for the range as min + k.
+static double msm_locktime(int lti, double *ko)
+{
+  if (lti > 15) {
+    trace(2, "Unexpected lock time indicator %d\n", lti);
+    lti = 15;
+  }
+
+  if (lti == 0) {
+    if (ko) *ko = 32 * 0.001;
+    return 0;
+  }
+
+  double min = pow(2, 4 + lti) * 0.001;
+
+  // When the indicator is 15 the upper time is unlimited, but use a time of 1
+  // year here which should be adequate to allow the caller to work with
+  // without special cases.
+  if (ko) {
+    if (lti < 15) *ko = pow(2, 5 + lti) * 0.001 - min;
+    else *ko = 365 * 24 * 60 * 60;
+  }
+
+  return min;
+}
+// Convert a RCTM MSM 10 bit lock time indicator into a time with 1ms
+// resolution. Optionally return the range scale per index increment which can
+// also give the maximum time for the range as min + k.
+static double msm_locktime_ex(int lti, double *ko)
+{
+  int c = 1;
+  int base = 0;
+  if (lti < 64) { c = 0; base = 0; }
+  else if (lti < 96) { c = 1; base = 64; }
+  else if (lti < 128) { c = 2; base = 96; }
+  else if (lti < 160) { c = 3; base = 128; }
+  else if (lti < 192) { c = 4; base = 160; }
+  else if (lti < 224) { c = 5; base = 192; }
+  else if (lti < 256) { c = 6; base = 224; }
+  else if (lti < 288) { c = 7; base = 256; }
+  else if (lti < 320) { c = 8; base = 288; }
+  else if (lti < 352) { c = 9; base = 320; }
+  else if (lti < 384) { c = 10; base = 352; }
+  else if (lti < 416) { c = 11; base = 384; }
+  else if (lti < 448) { c = 12; base = 416; }
+  else if (lti < 480) { c = 13; base = 448; }
+  else if (lti < 512) { c = 14; base = 480; }
+  else if (lti < 544) { c = 15; base = 512; }
+  else if (lti < 576) { c = 16; base = 544; }
+  else if (lti < 608) { c = 17; base = 576; }
+  else if (lti < 640) { c = 18; base = 608; }
+  else if (lti < 672) { c = 19; base = 640; }
+  else if (lti < 704) { c = 20; base = 672; }
+  else if (lti == 704) { c = 21; base = 704; }
+  else
+    trace(2, "Warning: High res lock time out of bounds: %d\n", lti);
+
+  double pmax = lti < 64 ? 0 : pow(2, c + 5) * 0.001;
+  double k = pow(2, c) * 0.001;
+  double min = k * (lti - base) + pmax;
+
+  // The scale within a range has a regular value, and the boundaries also
+  // apply the same scale so the maximum of a range is the min + k, even for
+  // index 703 to index 704 (unlike the 7 bit lock scale). Index values above
+  // 704 are reserved, but if not then they might continue ranges of 32 and
+  // doubling the scale, or just keep the same scale to 1023.
+  //
+  // When the indicator is 704 the upper time is unlimited, but use a time of
+  // 1 year here which should be adequate to allow the caller to work with
+  // without special cases.
+  if (ko) {
+    if (lti < 704) *ko = k;
+    else *ko = 365 * 24 * 60 * 60;
+  }
+
+  return min;
+}
+/* Loss-of-lock indicator ----------------------------------------------------
+ * locktype: 7 for non-MSM 7 bit; 4 for MSM 4 bit; or 10 for MSM 10 bit.
+ */
+static int lossoflock(rtcm_t *rtcm, int sat, int code, int idx, int lti, int type, int halfc, double L) {
+  gtime_t tobs = rtcm->tobs[sat - 1][code];
+  if (tobs.time == 0) {
+    // Initialize the lock time to the first epoch, to give the outage
+    // time if this is the first instance of this signal.
+    if (rtcm->stime.time == 0) rtcm->stime = rtcm->time;
+    // Add on an extra 30 seconds to estimate the last lock time, an
+    // estimate of prior epoch. So that a loss is triggered if the
+    // lock time starts after this prior estimated epoch.
+    tobs = timeadd(rtcm->stime, -30.0);
+    rtcm->tobs[sat - 1][code] = tobs;
+  }
+  double dt = timediff(rtcm->time, tobs);
+
+  // Previous epoch lock time indicator
+  int plti = rtcm->lti[sat - 1][code];
+
+  double nmin;
+  if (type == 10) {
+    nmin = msm_locktime_ex(lti,NULL);
+  } else if (type == 4) {
+    nmin = msm_locktime(lti,NULL);
+  } else if (type == 7) {
+    nmin = locktime(lti,NULL);
+  } else {
+    // Internal error
+    return 0;
+  }
+
+  if (lti == 0 && (halfc || L == 0)) {
+    // Septentrio reports a lock time indicator of zero during a half
+    // cycle ambiguity, but the lock might not lose continuity, so
+    // consider it a lock outage. Seems similar to the Septentrio SBF
+    // meas3 lock encoding which can not encode a lock time when there
+    // is a half cycle ambiguity.
+    //
+    // The carrier phase is also reported as invalid, zero here, so omitted,
+    // deferring the continuity report until resolved.
+    //
+    // For the non-MSM paths, the halfc flag is not available, it
+    // just sends lti of zero and the carrier phase as invalid.
+    return 0;
+  }
+
+  // Firstly check the raw lock time indicator. Avoids even calculating times,
+  // and is a fallback if the times are not accurate.
+  //
+  // Detect a possible loss, where there was time since the last reported
+  // lock time for a reset of the lock timer and for it to again reach this
+  // same range.
+  int loc = 0;
+  if (lti < plti || dt > nmin) {
+      loc = 1;
+  }
+  rtcm->lti[sat - 1][code] = lti;
+  rtcm->tobs[sat - 1][code] = rtcm->time;
+  return loc ? LLI_SLIP : 0;
+}
+
 /* S/N ratio -----------------------------------------------------------------*/
 static uint16_t snratio(double snr)
 {
@@ -271,6 +445,8 @@ static int decode_head1001(rtcm_t *rtcm, int *sync)
     char *msg,tstr[64];
     int i=24,staid,nsat,type;
     
+    if (rtcm->obsflag) rtcm->obs.n = rtcm->obsflag = 0;
+
     type=getbitu(rtcm->buff,i,12); i+=12;
     
     if (i+52<=rtcm->len*8) {
@@ -309,16 +485,16 @@ static int decode_type1001(rtcm_t *rtcm)
 static int decode_type1002(rtcm_t *rtcm)
 {
     double pr1,cnr1,tt;
-    int i=24+64,j,index,nsat,sync,prn,code,sat,ppr1,lock1,amb,sys;
+    int i=24+64,j,index,nsat,sync,prn,code,sat,ppr1,lti1,amb,sys;
     
     if ((nsat=decode_head1001(rtcm,&sync))<0) return -1;
     
-    for (j=0;j<nsat&&rtcm->obs.n<MAXOBS&&i+74<=rtcm->len*8;j++) {
+    for (j=0;j<nsat&&i+74<=rtcm->len*8;j++) {
         prn  =getbitu(rtcm->buff,i, 6); i+= 6;
         code =getbitu(rtcm->buff,i, 1); i+= 1;
         pr1  =getbitu(rtcm->buff,i,24); i+=24;
         ppr1 =getbits(rtcm->buff,i,20); i+=20;
-        lock1=getbitu(rtcm->buff,i, 7); i+= 7;
+        lti1=getbitu(rtcm->buff,i, 7); i+= 7;
         amb  =getbitu(rtcm->buff,i, 8); i+= 8;
         cnr1 =getbitu(rtcm->buff,i, 8); i+= 8;
         if (prn<40) {
@@ -332,9 +508,7 @@ static int decode_type1002(rtcm_t *rtcm)
             continue;
         }
         tt=timediff(rtcm->obs.data[0].time,rtcm->time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,rtcm->time,sat))<0) continue;
         pr1=pr1*0.02+amb*PRUNIT_GPS;
         rtcm->obs.data[index].P[0]=pr1;
@@ -345,7 +519,7 @@ static int decode_type1002(rtcm_t *rtcm)
             double cp1=adjcp(rtcm,sat,l1code,ppr1*0.0005*freq/CLIGHT);
             rtcm->obs.data[index].L[0]=pr1*freq/CLIGHT+cp1;
         }
-        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,l1code,lock1);
+        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm, sat, l1code, 0, lti1, 7, 0, rtcm->obs.data[index].L[0]);
         rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
         rtcm->obs.data[index].code[0]=l1code;
     }
@@ -364,22 +538,22 @@ static int decode_type1004(rtcm_t *rtcm)
 {
     double pr1,cnr1,cnr2,tt;
     int i=24+64,j,index,nsat,sync,prn,sat,code1,code2,pr21,ppr1,ppr2;
-    int lock1,lock2,amb,sys;
+    int lti1,lti2,amb,sys;
     
     if ((nsat=decode_head1001(rtcm,&sync))<0) return -1;
     
-    for (j=0;j<nsat&&rtcm->obs.n<MAXOBS&&i+125<=rtcm->len*8;j++) {
+    for (j=0;j<nsat&&i+125<=rtcm->len*8;j++) {
         prn  =getbitu(rtcm->buff,i, 6); i+= 6;
         code1=getbitu(rtcm->buff,i, 1); i+= 1;
         pr1  =getbitu(rtcm->buff,i,24); i+=24;
         ppr1 =getbits(rtcm->buff,i,20); i+=20;
-        lock1=getbitu(rtcm->buff,i, 7); i+= 7;
+        lti1=getbitu(rtcm->buff,i, 7); i+= 7;
         amb  =getbitu(rtcm->buff,i, 8); i+= 8;
         cnr1 =getbitu(rtcm->buff,i, 8); i+= 8;
         code2=getbitu(rtcm->buff,i, 2); i+= 2;
         pr21 =getbits(rtcm->buff,i,14); i+=14;
         ppr2 =getbits(rtcm->buff,i,20); i+=20;
-        lock2=getbitu(rtcm->buff,i, 7); i+= 7;
+        lti2=getbitu(rtcm->buff,i, 7); i+= 7;
         cnr2 =getbitu(rtcm->buff,i, 8); i+= 8;
         if (prn<40) {
             sys=SYS_GPS;
@@ -392,9 +566,7 @@ static int decode_type1004(rtcm_t *rtcm)
             continue;
         }
         tt=timediff(rtcm->obs.data[0].time,rtcm->time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,rtcm->time,sat))<0) continue;
         pr1=pr1*0.02+amb*PRUNIT_GPS;
         rtcm->obs.data[index].P[0]=pr1;
@@ -405,7 +577,7 @@ static int decode_type1004(rtcm_t *rtcm)
             double cp1=adjcp(rtcm,sat,l1code,ppr1*0.0005*freq[0]/CLIGHT);
             rtcm->obs.data[index].L[0]=pr1*freq[0]/CLIGHT+cp1;
         }
-        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,l1code,lock1);
+        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm, sat, l1code, 0, lti1, 7, 0, rtcm->obs.data[index].L[0]);
         rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
         rtcm->obs.data[index].code[0]=l1code;
         
@@ -418,7 +590,7 @@ static int decode_type1004(rtcm_t *rtcm)
             double cp2=adjcp(rtcm,sat,l2code,ppr2*0.0005*freq[1]/CLIGHT);
             rtcm->obs.data[index].L[1]=pr1*freq[1]/CLIGHT+cp2;
         }
-        rtcm->obs.data[index].LLI[1]=lossoflock(rtcm,sat,l2code,lock2);
+        rtcm->obs.data[index].LLI[1]=lossoflock(rtcm, sat, l2code, 1, lti2, 7, 0, rtcm->obs.data[index].L[1]);
         rtcm->obs.data[index].SNR[1]=snratio(cnr2*0.25);
         rtcm->obs.data[index].code[1]=l2code;
     }
@@ -584,6 +756,8 @@ static int decode_head1009(rtcm_t *rtcm, int *sync)
     char *msg,tstr[64];
     int i=24,staid,nsat,type;
     
+    if (rtcm->obsflag) rtcm->obs.n = rtcm->obsflag = 0;
+
     type=getbitu(rtcm->buff,i,12); i+=12;
     
     if (i+49<=rtcm->len*8) {
@@ -622,17 +796,17 @@ static int decode_type1009(rtcm_t *rtcm)
 static int decode_type1010(rtcm_t *rtcm)
 {
     double pr1,cnr1,tt;
-    int i=24+61,j,index,nsat,sync,prn,sat,code,fcn,ppr1,lock1,amb,sys=SYS_GLO;
+    int i=24+61,j,index,nsat,sync,prn,sat,code,fcn,ppr1,lti1,amb,sys=SYS_GLO;
     
     if ((nsat=decode_head1009(rtcm,&sync))<0) return -1;
     
-    for (j=0;j<nsat&&rtcm->obs.n<MAXOBS&&i+79<=rtcm->len*8;j++) {
+    for (j=0;j<nsat&&i+79<=rtcm->len*8;j++) {
         prn  =getbitu(rtcm->buff,i, 6); i+= 6;
         code =getbitu(rtcm->buff,i, 1); i+= 1;
         fcn  =getbitu(rtcm->buff,i, 5); i+= 5; /* fcn+7 */
         pr1  =getbitu(rtcm->buff,i,25); i+=25;
         ppr1 =getbits(rtcm->buff,i,20); i+=20;
-        lock1=getbitu(rtcm->buff,i, 7); i+= 7;
+        lti1=getbitu(rtcm->buff,i, 7); i+= 7;
         amb  =getbitu(rtcm->buff,i, 7); i+= 7;
         cnr1 =getbitu(rtcm->buff,i, 8); i+= 8;
         if (!(sat=satno(sys,prn))) {
@@ -643,9 +817,7 @@ static int decode_type1010(rtcm_t *rtcm)
             rtcm->nav.glo_fcn[prn-1]=fcn-7+8; /* fcn+8 */
         }
         tt=timediff(rtcm->obs.data[0].time,rtcm->time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,rtcm->time,sat))<0) continue;
         pr1=pr1*0.02+amb*PRUNIT_GLO;
         rtcm->obs.data[index].P[0]=pr1;
@@ -656,7 +828,7 @@ static int decode_type1010(rtcm_t *rtcm)
             double cp1=adjcp(rtcm,sat,l1code,ppr1*0.0005*freq1/CLIGHT);
             rtcm->obs.data[index].L[0]=pr1*freq1/CLIGHT+cp1;
         }
-        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,l1code,lock1);
+        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm, sat, l1code, 0, lti1, 7, 0, rtcm->obs.data[index].L[0]);
         rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
         rtcm->obs.data[index].code[0]=l1code;
     }
@@ -675,23 +847,23 @@ static int decode_type1012(rtcm_t *rtcm)
 {
     double pr1,cnr1,cnr2,tt,cp1,cp2,freq1,freq2;
     int i=24+61,j,index,nsat,sync,prn,sat,fcn,code1,code2,pr21,ppr1,ppr2;
-    int lock1,lock2,amb,sys=SYS_GLO;
+    int lti1,lti2,amb,sys=SYS_GLO;
     
     if ((nsat=decode_head1009(rtcm,&sync))<0) return -1;
     
-    for (j=0;j<nsat&&rtcm->obs.n<MAXOBS&&i+130<=rtcm->len*8;j++) {
+    for (j=0;j<nsat&&i+130<=rtcm->len*8;j++) {
         prn  =getbitu(rtcm->buff,i, 6); i+= 6;
         code1=getbitu(rtcm->buff,i, 1); i+= 1;
         fcn  =getbitu(rtcm->buff,i, 5); i+= 5; /* fcn+7 */
         pr1  =getbitu(rtcm->buff,i,25); i+=25;
         ppr1 =getbits(rtcm->buff,i,20); i+=20;
-        lock1=getbitu(rtcm->buff,i, 7); i+= 7;
+        lti1=getbitu(rtcm->buff,i, 7); i+= 7;
         amb  =getbitu(rtcm->buff,i, 7); i+= 7;
         cnr1 =getbitu(rtcm->buff,i, 8); i+= 8;
         code2=getbitu(rtcm->buff,i, 2); i+= 2;
         pr21 =getbits(rtcm->buff,i,14); i+=14;
         ppr2 =getbits(rtcm->buff,i,20); i+=20;
-        lock2=getbitu(rtcm->buff,i, 7); i+= 7;
+        lti2=getbitu(rtcm->buff,i, 7); i+= 7;
         cnr2 =getbitu(rtcm->buff,i, 8); i+= 8;
         if (!(sat=satno(sys,prn))) {
             trace(2,"rtcm3 1012 satellite number error: sys=%d prn=%d\n",sys,prn);
@@ -701,9 +873,7 @@ static int decode_type1012(rtcm_t *rtcm)
             rtcm->nav.glo_fcn[prn-1]=fcn-7+8; /* fcn+8 */
         }
         tt=timediff(rtcm->obs.data[0].time,rtcm->time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,rtcm->time,sat))<0) continue;
         pr1=pr1*0.02+amb*PRUNIT_GLO;
         rtcm->obs.data[index].P[0]=pr1;
@@ -714,7 +884,7 @@ static int decode_type1012(rtcm_t *rtcm)
             cp1=adjcp(rtcm,sat,l1code,ppr1*0.0005*freq1/CLIGHT);
             rtcm->obs.data[index].L[0]=pr1*freq1/CLIGHT+cp1;
         }
-        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,l1code,lock1);
+        rtcm->obs.data[index].LLI[0]=lossoflock(rtcm, sat, l1code, 0, lti1, 7, 0, rtcm->obs.data[index].L[0]);
         rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
         rtcm->obs.data[index].code[0]=l1code;
         
@@ -727,7 +897,7 @@ static int decode_type1012(rtcm_t *rtcm)
             cp2=adjcp(rtcm,sat,l2code,ppr2*0.0005*freq2/CLIGHT);
             rtcm->obs.data[index].L[1]=pr1*freq2/CLIGHT+cp2;
         }
-        rtcm->obs.data[index].LLI[1]=lossoflock(rtcm,sat,l2code,lock2);
+        rtcm->obs.data[index].LLI[1]=lossoflock(rtcm, sat, l2code, 1, lti2, 7, 0, rtcm->obs.data[index].L[1]);
         rtcm->obs.data[index].SNR[1]=snratio(cnr2*0.25);
         rtcm->obs.data[index].code[1]=l2code;
     }
@@ -1996,7 +2166,7 @@ static void sigindex(int sys, const uint8_t *code, int n, const char *opt,
 /* save obs data in MSM message ----------------------------------------------*/
 static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
                          const double *pr, const double *cp, const double *rr,
-                         const double *rrf, const double *cnr, const int *lock,
+                         const double *rrf, const double *cnr, const int *lti, int locktype,
                          const int *ex, const int *half)
 {
     const char *sig[32];
@@ -2054,9 +2224,7 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
         
         if ((sat=satno(sys,prn))) {
             tt=timediff(rtcm->obs.data[0].time,rtcm->time);
-            if (rtcm->obsflag||fabs(tt)>1E-9) {
-                rtcm->obs.n=rtcm->obsflag=0;
-            }
+            if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
             index=obsindex(&rtcm->obs,rtcm->time,sat);
         }
         else {
@@ -2094,10 +2262,10 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
                 }
                 /* doppler (hz) */
                 if (rr&&rrf&&rrf[j]>-1E12) {
-                    rtcm->obs.data[index].D[idx[k]]=
-                        (float)(-(rr[i]+rrf[j])*freq/CLIGHT);
+                    rtcm->obs.data[index].D[idx[k]]=-(rr[i]+rrf[j])*freq/CLIGHT;
                 }
-                int LLI = lossoflock(rtcm,sat,code[k],lock[j])+(half[j]?LLI_HALFC:0);
+                int LLI = lossoflock(rtcm, sat, code[k], idx[k], lti[j], locktype, half[j], rtcm->obs.data[index].L[idx[k]]);
+                if (r[i] != 0.0 && cp[j] > -1E12 && half[j]) LLI |= LLI_HALFC;
                 rtcm->obs.data[index].LLI[idx[k]]=LLI;
                 rtcm->obs.data[index].SNR [idx[k]]=(uint16_t)(cnr[j]/SNR_UNIT+0.5);
                 rtcm->obs.data[index].code[idx[k]]=code[k];
@@ -2115,6 +2283,8 @@ static int decode_msm_head(rtcm_t *rtcm, int sys, int *sync, int *iod,
     char *msg,tstr[64];
     int i=24,j,dow,mask,staid,type,ncell=0;
     
+    if (rtcm->obsflag) rtcm->obs.n = rtcm->obsflag = 0;
+
     type=getbitu(rtcm->buff,i,12); i+=12;
     
     *h=h0;
@@ -2199,7 +2369,7 @@ static int decode_msm4(rtcm_t *rtcm, int sys)
 {
     msm_h_t h={0};
     double r[64],pr[64],cp[64],cnr[64];
-    int i,j,type,sync,iod,ncell,rng,rng_m,prv,cpv,lock[64],half[64];
+    int i,j,type,sync,iod,ncell,rng,rng_m,prv,cpv,lti[64],half[64];
     
     type=getbitu(rtcm->buff,24,12);
     
@@ -2233,8 +2403,8 @@ static int decode_msm4(rtcm_t *rtcm, int sys)
         cpv=getbits(rtcm->buff,i,22); i+=22;
         if (cpv!=-2097152) cp[j]=cpv*P2_29*RANGE_MS;
     }
-    for (j=0;j<ncell;j++) { /* lock time */
-        lock[j]=getbitu(rtcm->buff,i,4); i+=4;
+    for (j=0;j<ncell;j++) { /* lock time indicator */
+        lti[j]=getbitu(rtcm->buff,i,4); i+=4;
     }
     for (j=0;j<ncell;j++) { /* half-cycle ambiguity */
         half[j]=getbitu(rtcm->buff,i,1); i+=1;
@@ -2243,7 +2413,7 @@ static int decode_msm4(rtcm_t *rtcm, int sys)
         cnr[j]=getbitu(rtcm->buff,i,6)*1.0; i+=6;
     }
     /* save obs data in msm message */
-    save_msm_obs(rtcm,sys,&h,r,pr,cp,NULL,NULL,cnr,lock,NULL,half);
+    save_msm_obs(rtcm,sys,&h,r,pr,cp,NULL,NULL,cnr,lti,4,NULL,half);
     
     rtcm->obsflag=!sync;
     return sync?0:1;
@@ -2253,7 +2423,7 @@ static int decode_msm5(rtcm_t *rtcm, int sys)
 {
     msm_h_t h={0};
     double r[64],rr[64],pr[64],cp[64],rrf[64],cnr[64];
-    int i,j,type,sync,iod,ncell,rng,rng_m,rate,prv,cpv,rrv,lock[64];
+    int i,j,type,sync,iod,ncell,rng,rng_m,rate,prv,cpv,rrv,lti[64];
     int ex[64],half[64];
     
     type=getbitu(rtcm->buff,24,12);
@@ -2297,8 +2467,8 @@ static int decode_msm5(rtcm_t *rtcm, int sys)
         cpv=getbits(rtcm->buff,i,22); i+=22;
         if (cpv!=-2097152) cp[j]=cpv*P2_29*RANGE_MS;
     }
-    for (j=0;j<ncell;j++) { /* lock time */
-        lock[j]=getbitu(rtcm->buff,i,4); i+=4;
+    for (j=0;j<ncell;j++) { /* lock time indicator */
+        lti[j]=getbitu(rtcm->buff,i,4); i+=4;
     }
     for (j=0;j<ncell;j++) { /* half-cycle ambiguity */
         half[j]=getbitu(rtcm->buff,i,1); i+=1;
@@ -2311,7 +2481,7 @@ static int decode_msm5(rtcm_t *rtcm, int sys)
         if (rrv!=-16384) rrf[j]=rrv*0.0001;
     }
     /* save obs data in msm message */
-    save_msm_obs(rtcm,sys,&h,r,pr,cp,rr,rrf,cnr,lock,ex,half);
+    save_msm_obs(rtcm,sys,&h,r,pr,cp,rr,rrf,cnr,lti,4,ex,half);
     
     rtcm->obsflag=!sync;
     return sync?0:1;
@@ -2321,7 +2491,7 @@ static int decode_msm6(rtcm_t *rtcm, int sys)
 {
     msm_h_t h={0};
     double r[64],pr[64],cp[64],cnr[64];
-    int i,j,type,sync,iod,ncell,rng,rng_m,prv,cpv,lock[64],half[64];
+    int i,j,type,sync,iod,ncell,rng,rng_m,prv,cpv,lti[64],half[64];
     
     type=getbitu(rtcm->buff,24,12);
     
@@ -2355,8 +2525,8 @@ static int decode_msm6(rtcm_t *rtcm, int sys)
         cpv=getbits(rtcm->buff,i,24); i+=24;
         if (cpv!=-8388608) cp[j]=cpv*P2_31*RANGE_MS;
     }
-    for (j=0;j<ncell;j++) { /* lock time */
-        lock[j]=getbitu(rtcm->buff,i,10); i+=10;
+    for (j=0;j<ncell;j++) { /* lock time indicator */
+        lti[j]=getbitu(rtcm->buff,i,10); i+=10;
     }
     for (j=0;j<ncell;j++) { /* half-cycle ambiguity */
         half[j]=getbitu(rtcm->buff,i,1); i+=1;
@@ -2365,7 +2535,7 @@ static int decode_msm6(rtcm_t *rtcm, int sys)
         cnr[j]=getbitu(rtcm->buff,i,10)*0.0625; i+=10;
     }
     /* save obs data in msm message */
-    save_msm_obs(rtcm,sys,&h,r,pr,cp,NULL,NULL,cnr,lock,NULL,half);
+    save_msm_obs(rtcm,sys,&h,r,pr,cp,NULL,NULL,cnr,lti,10,NULL,half);
     
     rtcm->obsflag=!sync;
     return sync?0:1;
@@ -2375,7 +2545,7 @@ static int decode_msm7(rtcm_t *rtcm, int sys)
 {
     msm_h_t h={0};
     double r[64],rr[64],pr[64],cp[64],rrf[64],cnr[64];
-    int i,j,type,sync,iod,ncell,rng,rng_m,rate,prv,cpv,rrv,lock[64];
+    int i,j,type,sync,iod,ncell,rng,rng_m,rate,prv,cpv,rrv,lti[64];
     int ex[64],half[64];
     
     type=getbitu(rtcm->buff,24,12);
@@ -2422,10 +2592,10 @@ static int decode_msm7(rtcm_t *rtcm, int sys)
         cpv=getbits(rtcm->buff,i,24); i+=24;
         if (cpv!=-8388608) cp[j]=cpv*P2_31*RANGE_MS;
     }
-    for (j=0;j<ncell;j++) { /* lock time */
-        lock[j]=getbitu(rtcm->buff,i,10); i+=10;
+    for (j=0;j<ncell;j++) { /* lock time indicator */
+        lti[j]=getbitu(rtcm->buff,i,10); i+=10;
     }
-    for (j=0;j<ncell;j++) { /* half-cycle amiguity */
+    for (j=0;j<ncell;j++) { /* half-cycle ambiguity */
         half[j]=getbitu(rtcm->buff,i,1); i+=1;
     }
     for (j=0;j<ncell;j++) { /* cnr */
@@ -2439,7 +2609,7 @@ static int decode_msm7(rtcm_t *rtcm, int sys)
         }
     }
     /* save obs data in msm message */
-    save_msm_obs(rtcm,sys,&h,r,pr,cp,rr,rrf,cnr,lock,ex,half);
+    save_msm_obs(rtcm,sys,&h,r,pr,cp,rr,rrf,cnr,lti,10,ex,half);
     
     rtcm->obsflag=!sync;
     return sync?0:1;

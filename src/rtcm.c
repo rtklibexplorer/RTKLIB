@@ -92,10 +92,12 @@ extern int init_rtcm(rtcm_t *rtcm)
     rtcm->msg[0]=rtcm->msgtype[0]=rtcm->opt[0]='\0';
     for (i=0;i<6;i++) rtcm->msmtype[i][0]='\0';
     rtcm->obsflag=rtcm->ephsat=0;
+    rtcm->stime = time0;
     for (i=0;i<MAXSAT;i++)
       for (int code=0;code<MAXCODE;code++) {
         rtcm->cp[i][code]=0.0;
-        rtcm->lock[i][code]=rtcm->loss[i][code]=0;
+        rtcm->lti[i][code]=rtcm->loss[i][code]=0;
+        rtcm->tobs[i][code] = time0;
         rtcm->lltime[i][code]=time0;
     }
     rtcm->nbyte=rtcm->nbit=rtcm->len=0;
