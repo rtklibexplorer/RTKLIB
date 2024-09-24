@@ -953,8 +953,10 @@ typedef struct {        /* RTCM control struct type */
     int ephsat;         /* input ephemeris satellite number */
     int ephset;         /* input ephemeris set (0-1) */
     double cp[MAXSAT][MAXCODE]; /* carrier-phase measurement */
-    uint16_t lock[MAXSAT][MAXCODE]; /* lock time */
+    uint16_t lti[MAXSAT][MAXCODE]; /* lock time indicator */
     uint16_t loss[MAXSAT][MAXCODE]; /* loss of lock count */
+    gtime_t tobs[MAXSAT][MAXCODE];  /* Observation data time */
+    gtime_t stime;      /* Time of first epoch, for slip detection */
     gtime_t lltime[MAXSAT][MAXCODE]; /* last lock time */
     int nbyte;          /* number of bytes in message buffer */
     int nbit;           /* number of bits in word buffer */
