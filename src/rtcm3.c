@@ -2123,55 +2123,15 @@ static int decode_ssr7(rtcm_t *rtcm, int sys, int subtype)
     }
     return 20;
 }
-/* get signal index ----------------------------------------------------------*/
-static void sigindex(int sys, const uint8_t *code, int n, const char *opt,
-                     int *idx)
-{
-    int i,nex,pri,pri_h[8]={0},index[8]={0},ex[32]={0};
-    
-    /* test code priority */
-    for (i=0;i<n;i++) {
-        if (!code[i]) continue;
-        
-        if (idx[i]>=NFREQ) { /* save as extended signal if idx >= NFREQ */
-            ex[i]=1;
-            continue;
-        }
-        /* code priority */
-        pri=getcodepri(sys,code[i],opt);
-        
-        /* select highest priority signal */
-        if (pri>pri_h[idx[i]]) {
-            if (index[idx[i]]) ex[index[idx[i]]-1]=1;
-            pri_h[idx[i]]=pri;
-            index[idx[i]]=i+1;
-        }
-        else ex[i]=1;
-    }
-    /* signal index in obs data */
-    for (i=nex=0;i<n;i++) {
-        if (ex[i]==0) ;
-        else if (nex<NEXOBS) idx[i]=NFREQ+nex++;
-        else { /* no space in obs data */
-            trace(2,"rtcm msm: no space in obs data sys=%d code=%d\n",sys,code[i]);
-            idx[i]=-1;
-        }
-#if 0 /* for debug */
-        trace(2,"sig pos: sys=%d code=%d ex=%d idx=%d\n",sys,code[i],ex[i],idx[i]);
-#endif
-    }
-}
 /* save obs data in MSM message ----------------------------------------------*/
 static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
                          const double *pr, const double *cp, const double *rr,
                          const double *rrf, const double *cnr, const int *lti, int locktype,
                          const int *ex, const int *half)
 {
-    const char *sig[32];
     double tt,freq;
-    uint8_t code[32];
     char *msm_type="",*q=NULL;
-    int i,j,k,type,prn,sat,fcn,index=0,idx[32];
+    int i,j,k,type,prn,sat,fcn,index=0;
     
     type=getbitu(rtcm->buff,24,12);
     
@@ -2185,6 +2145,9 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
         case SYS_IRN: msm_type=q=rtcm->msmtype[6]; break;
     }
     /* id to signal */
+    const char *sig[32];
+    int code[32];
+    int idx[32], pri[32];
     for (i=0;i<h->nsig;i++) {
         switch (sys) {
             case SYS_GPS: sig[i]=msm_sig_gps[h->sigs[i]-1]; break;
@@ -2199,7 +2162,8 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
         /* signal to rinex obs type */
         code[i]=obs2code(sig[i]);
         idx[i]=code2idx(sys,code[i]);
-        
+        pri[i] = getcodepri(sys, code[i], rtcm->opt);
+
         if (code[i]!=CODE_NONE) {
             if (q) q+=sprintf(q,"L%s%s",sig[i],i<h->nsig-1?",":"");
         }
@@ -2210,9 +2174,6 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
         }
     }
     trace(3,"rtcm3 %d: signals=%s\n",type,msm_type);
-    
-    /* get signal index */
-    sigindex(sys,code,h->nsig,rtcm->opt,idx);
     
     for (i=j=0;i<h->nsat;i++) {
         
@@ -2244,29 +2205,41 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
                 fcn=rtcm->nav.glo_fcn[prn-1]-8;
             }
         }
+
+        // Resolve signal frequency index, per satellite as the signal set can change
+        int sigidx[32];
+        for (int k = 0; k < h->nsig; k++) {
+          if (!h->cellmask[k + i * h->nsig])
+            sigidx[k] = -1;
+          else
+            sigidx[k] = idx[k];
+        }
+        sigindex(h->nsig, code, pri, sigidx);
+
         for (k=0;k<h->nsig;k++) {
             if (!h->cellmask[k+i*h->nsig]) continue;
             
-            if (sat&&index>=0&&idx[k]>=0) {
+            int freqidx = sigidx[k];
+            if (sat && index >= 0 && freqidx >= 0) {
                 freq=fcn<-7?0.0:code2freq(sys,code[k],fcn);
                 
                 /* pseudorange (m) */
                 if (r[i]!=0.0&&pr[j]>-1E12) {
-                    rtcm->obs.data[index].P[idx[k]]=r[i]+pr[j];
+                    rtcm->obs.data[index].P[freqidx]=r[i]+pr[j];
                 }
                 /* carrier-phase (cycle) */
                 if (r[i]!=0.0&&cp[j]>-1E12) {
-                    rtcm->obs.data[index].L[idx[k]]=(r[i]+cp[j])*freq/CLIGHT;
+                    rtcm->obs.data[index].L[freqidx]=(r[i]+cp[j])*freq/CLIGHT;
                 }
                 /* doppler (hz) */
                 if (rr&&rrf&&rrf[j]>-1E12) {
-                    rtcm->obs.data[index].D[idx[k]]=-(rr[i]+rrf[j])*freq/CLIGHT;
+                    rtcm->obs.data[index].D[freqidx]=-(rr[i]+rrf[j])*freq/CLIGHT;
                 }
-                int LLI = lossoflock(rtcm, sat, code[k], idx[k], lti[j], locktype, half[j], rtcm->obs.data[index].L[idx[k]]);
+                int LLI = lossoflock(rtcm, sat, code[k], freqidx, lti[j], locktype, half[j], rtcm->obs.data[index].L[freqidx]);
                 if (r[i] != 0.0 && cp[j] > -1E12 && half[j]) LLI |= LLI_HALFC;
-                rtcm->obs.data[index].LLI[idx[k]]=LLI;
-                rtcm->obs.data[index].SNR [idx[k]]=(uint16_t)(cnr[j]/SNR_UNIT+0.5);
-                rtcm->obs.data[index].code[idx[k]]=code[k];
+                rtcm->obs.data[index].LLI[freqidx]=LLI;
+                rtcm->obs.data[index].SNR [freqidx]=(uint16_t)(cnr[j]/SNR_UNIT+0.5);
+                rtcm->obs.data[index].code[freqidx]=code[k];
             }
             j++;
         }
