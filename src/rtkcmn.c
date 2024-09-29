@@ -725,6 +725,66 @@ extern int code2idx(int sys, uint8_t code)
     }
     return -1;
 }
+
+// Get signal index ----------------------------------------------------------
+//
+// Resolve conflicting indices in the set of signal frequency indices of obs
+// data. code2idx() may return the same frequency index for different signals,
+// alternatives for the same frequency index, and this conflict needs to be
+// resolved when placing signals in observation data. Here the code with the
+// highest priority is chosen and the other conflicting signals are placed in
+// empty positions in the NEXOBS region. Signals with an index in the NEXOBS
+// region are also placed at the requested index, fixing their position too.
+// This is typically applied for each observation so as the set of signals
+// varies the signal code at a given index can vary.
+//
+// The priority could be computed here, from the system and code and using
+// getcodepri(), but it is assumed that the caller might usefully cache this
+// mapping.
+//
+// Input entries with a code of CODE_NONE or a negative requested frequency
+// index are ignored so the caller may pass in a rather sparse set.
+//
+// This is a common function, to give a consistent mapping for RINEX, RTCM,
+// and receiver driver observation input.
+//
+extern void sigindex(int n, const int *code, const int *pri, int *idx) {
+  // Test code priority
+  int pri_h[MAXCODE] = {0}, index[MAXCODE] = {0}, ex[MAXCODE] = {0};
+  for (int i = 0; i < n; i++) {
+    if (!code[i]) continue;
+
+    // The freq index
+    int j = idx[i];
+    if (j < 0) continue;
+    // Select highest priority signal, at this freq index
+    if (pri[i] > pri_h[j]) {
+      if (index[j]) ex[index[j] - 1] = 1;
+      pri_h[j] = pri[i];
+      index[j] = i + 1;  // +1 so that 0 is the uninitialized value
+    } else
+      ex[i] = 1;
+  }
+  // Signal index in obs data
+  for (int i = 0, nex = 0; i < n; i++) {
+    if (ex[i] == 0)
+      ;
+    else {
+      // Find the next empty index in the NEXOBS range.
+      for (; nex < NEXOBS && index[NFREQ + nex] != 0; nex++) ;
+      if (nex < NEXOBS)
+        idx[i] = NFREQ + nex++;
+      else { // No space in obs data
+        trace(2, "sigindex: no space in obs data code=%d\n", code[i]);
+        idx[i] = -1;
+      }
+    }
+#ifdef RTK_DISABLED // For debug
+    trace(2, "sigindex: code=%d ex=%d idx=%d\n", code[i], ex[i], idx[i]);
+#endif
+  }
+}
+
 /* system and obs code to frequency --------------------------------------------
 * convert system and obs code to carrier frequency
 * args   : int    sys       I   satellite system (SYS_???)
