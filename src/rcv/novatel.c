@@ -123,18 +123,18 @@
 #define SQR(x)          ((x)*(x))
 
 /* get fields (little-endian) ------------------------------------------------*/
-#define U1(p) (*((uint8_t *)(p)))
-#define I1(p) (*((int8_t  *)(p)))
-static uint16_t U2(uint8_t *p) {uint16_t u; memcpy(&u,p,2); return u;}
-static uint32_t U4(uint8_t *p) {uint32_t u; memcpy(&u,p,4); return u;}
-static int32_t  I4(uint8_t *p) {int32_t  i; memcpy(&i,p,4); return i;}
-static float    R4(uint8_t *p) {float    r; memcpy(&r,p,4); return r;}
-static double   R8(uint8_t *p) {double   r; memcpy(&r,p,8); return r;}
+#define U1(p) (*((const uint8_t *)(p)))
+#define I1(p) (*((const int8_t  *)(p)))
+static uint16_t U2(const uint8_t *p) {uint16_t u; memcpy(&u,p,2); return u;}
+static uint32_t U4(const uint8_t *p) {uint32_t u; memcpy(&u,p,4); return u;}
+static int32_t  I4(const uint8_t *p) {int32_t  i; memcpy(&i,p,4); return i;}
+static float    R4(const uint8_t *p) {float    r; memcpy(&r,p,4); return r;}
+static double   R8(const uint8_t *p) {double   r; memcpy(&r,p,8); return r;}
 
 /* extend sign ---------------------------------------------------------------*/
 static int32_t exsign(uint32_t v, int bits)
 {
-    return (int32_t)(v&(1<<(bits-1))?v|(~0u<<bits):v);
+    return (int32_t)((v&(1<<(bits-1)))?v|(~0u<<bits):v);
 }
 /* checksum ------------------------------------------------------------------*/
 static uint8_t chksum(const uint8_t *buff, int len)
@@ -325,208 +325,168 @@ static int decode_track_stat(uint32_t stat, int *sys, int *code, int *track,
     }
     return idx;
 }
-/* check code priority and return freq-index ---------------------------------*/
-static int checkpri(const char *opt, int sys, int code, int idx)
-{
-    int nex=NEXOBS;
-    
-    if (sys==SYS_GPS) {
-        if (strstr(opt,"-GL1L")&&idx==0) return (code==CODE_L1L)?0:-1;
-        if (strstr(opt,"-GL2S")&&idx==1) return (code==CODE_L2X)?1:-1;
-        if (strstr(opt,"-GL2P")&&idx==1) return (code==CODE_L2P)?1:-1;
-        if (code==CODE_L1L) return (nex<1)?-1:NFREQ;
-        if (code==CODE_L2S) return (nex<2)?-1:NFREQ+1;
-        if (code==CODE_L2P) return (nex<3)?-1:NFREQ+2;
+/* Decode RANGECMPB ----------------------------------------------------------*/
+static int decode_rangecmpb(raw_t *raw) {
+  double glo_bias = 0.0;
+  const char *q = strstr(raw->opt, "-GLOBIAS=");
+  if (q) sscanf(q, "-GLOBIAS=%lf", &glo_bias);
+
+  int pi = OEM4HLEN;
+  int nobs = U4(raw->buff + pi);
+  if (raw->len < OEM4HLEN + 4 + nobs * 24) {
+    trace(2, "oem4 rangecmpb length error: len=%d nobs=%d\n", raw->len, nobs);
+    return -1;
+  }
+  if (raw->outtype) {
+    sprintf(raw->msgtype, " nobs=%d", nobs);
+  }
+
+  if (fabs(timediff(raw->obs.data[0].time, raw->time)) > 1E-9) raw->obs.n = 0;
+
+  pi = OEM4HLEN + 4;
+  for (int i = 0; i < nobs; i++, pi += 24) {
+    int sys, code, track, plock, clock, parity, halfc;
+    int idx =
+        decode_track_stat(U4(raw->buff + pi), &sys, &code, &track, &plock, &clock, &parity, &halfc);
+    if (idx < 0) continue;
+    int prn = U1(raw->buff + pi + 17);
+    if (sys == SYS_GLO) prn -= 37;
+    if (sys == SYS_SBS && prn >= MINPRNQZS_S && prn <= MAXPRNQZS_S && code == CODE_L1C) {
+      sys = SYS_QZS;
+      prn += 10;
+      code = CODE_L1Z; /* QZS L1S */
     }
-    else if (sys==SYS_GLO) {
-        if (strstr(opt,"-RL2C")&&idx==1) return (code==CODE_L2C)?1:-1;
-        if (code==CODE_L2C) return (nex<1)?-1:NFREQ;
+    int sat = satno(sys, prn);
+    if (!sat) {
+      trace(3, "oem4 rangecmpb satellite number error: sys=%d,prn=%d\n", sys, prn);
+      continue;
     }
-    else if (sys==SYS_GAL) {
-        if (strstr(opt,"-EL6B")&&idx==3) return (code==CODE_L6B)?3:-1;
-        if (code==CODE_L6B) return (nex<2)?-1:NFREQ;
+    if (sys == SYS_GLO && !parity) continue; /* Invalid if GLO parity unknown */
+
+    double dop = exsign(U4(raw->buff + pi + 4) & 0xFFFFFFF, 28) / 256.0;
+    double psr = (U4(raw->buff + pi + 7) >> 4) / 128.0 + U1(raw->buff + pi + 11) * 2097152.0;
+
+    double freq = sat2freq(sat, code, &raw->nav), adr;
+    if (freq != 0.0) {
+      adr = I4(raw->buff + pi + 12) / 256.0;
+      double adr_rolls = (psr * freq / CLIGHT + adr) / MAXVAL;
+      adr = -adr + MAXVAL * floor(adr_rolls + (adr_rolls <= 0 ? -0.5 : 0.5));
+      if (sys == SYS_GLO) adr += glo_bias * freq / CLIGHT;
+    } else {
+      adr = 1e-9;
     }
-    else if (sys==SYS_QZS) {
-        if (strstr(opt,"-JL1L")&&idx==0) return (code==CODE_L1L)?0:-1;
-        if (strstr(opt,"-JL1Z")&&idx==0) return (code==CODE_L1Z)?0:-1;
-        if (code==CODE_L1L) return (nex<1)?-1:NFREQ;
-        if (code==CODE_L1Z) return (nex<2)?-1:NFREQ+1;
+    double lockt = (U4(raw->buff + pi + 18) & 0x1FFFFF) / 32.0; /* Lock time */
+
+    int lli;
+    if (raw->tobs[sat - 1][code].time != 0) {
+      double tt = timediff(raw->time, raw->tobs[sat - 1][code]);
+      lli = (lockt < 65535.968 && lockt - raw->lockt[sat - 1][code] + 0.05 <= tt) ? LLI_SLIP : 0;
+    } else {
+      lli = 0;
     }
-    else if (sys==SYS_CMP) {
-        if (strstr(opt,"-CL1P")&&idx==0) return (code==CODE_L1P)?0:-1;
-        if (strstr(opt,"-CL7D")&&idx==0) return (code==CODE_L7D)?0:-1;
-        if (strstr(opt,"-CL6I")&&idx==1) return (code==CODE_L6I)?1:-1;
-        if (code==CODE_L1P) return (nex<1)?-1:NFREQ;
-        if (code==CODE_L7D) return (nex<2)?-1:NFREQ+1;
-        if (code==CODE_L6I) return (nex<3)?-1:NFREQ+2;
+    if (!parity) lli |= LLI_HALFC;
+    if (halfc) lli |= LLI_HALFA;
+    raw->tobs[sat - 1][code] = raw->time;
+    raw->lockt[sat - 1][code] = lockt;
+    raw->halfc[sat - 1][code] = halfc;
+
+    double snr = ((U2(raw->buff + pi + 20) & 0x3FF) >> 5) + 20.0;
+    if (!clock) continue;        /* Code unlock */
+    if (!plock) adr = dop = 0.0; /* Phase unlock */
+
+    int index = obsindex(&raw->obs, raw->time, sat);
+    if (index >= 0) {
+      int idx = sigindex(raw->obs.data + index, sys, code, raw->opt);
+      if (idx < 0) continue;
+      raw->obs.data[index].L[idx] = adr;
+      raw->obs.data[index].P[idx] = psr;
+      raw->obs.data[index].D[idx] = (float)dop;
+      raw->obs.data[index].SNR[idx] = snr;
+      raw->obs.data[index].LLI[idx] = (uint8_t)lli;
     }
-    return idx<NFREQ?idx:-1;
+  }
+  return 1;
 }
-/* decode RANGECMPB ----------------------------------------------------------*/
-static int decode_rangecmpb(raw_t *raw)
-{
-    uint8_t *p=raw->buff+OEM4HLEN;
-    char *q;
-    double psr,adr,adr_rolls,lockt,tt,dop,snr,freq,glo_bias=0.0;
-    int i,index,nobs,prn,sat,sys,code,idx,track,plock,clock,parity,halfc,lli;
-    
-    if ((q=strstr(raw->opt,"-GLOBIAS="))) sscanf(q,"-GLOBIAS=%lf",&glo_bias);
-    
-    nobs=U4(p);
-    if (raw->len<OEM4HLEN+4+nobs*24) {
-        trace(2,"oem4 rangecmpb length error: len=%d nobs=%d\n",raw->len,nobs);
-        return -1;
+/* Decode RANGEB -------------------------------------------------------------*/
+static int decode_rangeb(raw_t *raw) {
+  double glo_bias = 0.0;
+  const char *q = strstr(raw->opt, "-GLOBIAS=");
+  if (q) sscanf(q, "-GLOBIAS=%lf", &glo_bias);
+
+  int pi = OEM4HLEN;
+  int nobs = U4(raw->buff + pi);
+  if (raw->len < OEM4HLEN + 4 + nobs * 44) {
+    trace(2, "oem4 rangeb length error: len=%d nobs=%d\n", raw->len, nobs);
+    return -1;
+  }
+  if (raw->outtype) {
+    sprintf(raw->msgtype, " nobs=%d", nobs);
+  }
+
+  if (fabs(timediff(raw->obs.data[0].time, raw->time)) > 1E-9) raw->obs.n = 0;
+
+  pi = OEM4HLEN + 4;
+  for (int i = 0; i < nobs; i++, pi += 44) {
+    int sys, code, track, plock, clock, parity, halfc;
+    int idx = decode_track_stat(U4(raw->buff + pi + 40), &sys, &code, &track, &plock, &clock,
+                                &parity, &halfc);
+    if (idx < 0) continue;
+    int prn = U2(raw->buff + pi);
+    if (sys == SYS_GLO) prn -= 37;
+    if (sys == SYS_SBS && prn >= MINPRNQZS_S && prn <= MAXPRNQZS_S && code == CODE_L1C) {
+      sys = SYS_QZS;
+      prn += 10;
+      code = CODE_L1Z; /* QZS L1S */
     }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," nobs=%d",nobs);
+    int sat = satno(sys, prn);
+    if (!sat) {
+      trace(3, "oem4 rangeb satellite number error: sys=%d,prn=%d\n", sys, prn);
+      continue;
     }
-    for (i=0,p+=4;i<nobs;i++,p+=24) {
-        if ((idx=decode_track_stat(U4(p),&sys,&code,&track,&plock,&clock,
-                                   &parity,&halfc))<0) {
-            continue;
-        }
-        prn=U1(p+17);
-        if (sys==SYS_GLO) prn-=37;
-        if (sys==SYS_SBS&&prn>=MINPRNQZS_S&&prn<=MAXPRNQZS_S&&code==CODE_L1C) {
-            sys=SYS_QZS;
-            prn+=10;
-            code=CODE_L1Z; /* QZS L1S */
-        }
-        if (!(sat=satno(sys,prn))) {
-            trace(3,"oem4 rangecmpb satellite number error: sys=%d,prn=%d\n",sys,prn);
-            continue;
-        }
-        if (sys==SYS_GLO&&!parity) continue; /* invalid if GLO parity unknown */
-        
-        if ((idx=checkpri(raw->opt,sys,code,idx))<0) continue;
-        
-        dop=exsign(U4(p+4)&0xFFFFFFF,28)/256.0;
-        psr=(U4(p+7)>>4)/128.0+U1(p+11)*2097152.0;
-        
-        if ((freq=sat2freq(sat,(uint8_t)code,&raw->nav))!=0.0) {
-            adr=I4(p+12)/256.0;
-            adr_rolls=(psr*freq/CLIGHT+adr)/MAXVAL;
-            adr=-adr+MAXVAL*floor(adr_rolls+(adr_rolls<=0?-0.5:0.5));
-            if (sys==SYS_GLO) adr+=glo_bias*freq/CLIGHT;
-        }
-        else {
-            adr=1e-9;
-        }
-        lockt=(U4(p+18)&0x1FFFFF)/32.0; /* lock time */
-        
-        if (raw->tobs[sat-1][code].time!=0) {
-            tt=timediff(raw->time,raw->tobs[sat-1][code]);
-            lli=(lockt<65535.968&&lockt-raw->lockt[sat-1][code]+0.05<=tt)?LLI_SLIP:0;
-        }
-        else {
-            lli=0;
-        }
-        if (!parity) lli|=LLI_HALFC;
-        if (halfc  ) lli|=LLI_HALFA;
-        raw->tobs [sat-1][code]=raw->time;
-        raw->lockt[sat-1][code]=lockt;
-        raw->halfc[sat-1][code]=halfc;
-        
-        snr=((U2(p+20)&0x3FF)>>5)+20.0;
-        if (!clock) psr=0.0;     /* code unlock */
-        if (!plock) adr=dop=0.0; /* phase unlock */
-        
-        if (fabs(timediff(raw->obs.data[0].time,raw->time))>1E-9) {
-            raw->obs.n=0;
-        }
-        if ((index=obsindex(&raw->obs,raw->time,sat))>=0) {
-            raw->obs.data[index].L  [idx]=adr;
-            raw->obs.data[index].P  [idx]=psr;
-            raw->obs.data[index].D  [idx]=(float)dop;
-            raw->obs.data[index].SNR[idx]=snr;
-            raw->obs.data[index].LLI[idx]=(uint8_t)lli;
-            raw->obs.data[index].code[idx]=(uint8_t)code;
-        }
+    if (sys == SYS_GLO && !parity) continue;
+
+    int gfrq = U2(raw->buff + pi + 2); /* GLONASS FCN+8 */
+    double psr = R8(raw->buff + pi + 4);
+    double adr = R8(raw->buff + pi + 16);
+    double dop = R4(raw->buff + pi + 28);
+    double snr = R4(raw->buff + pi + 32);
+    double lockt = R4(raw->buff + pi + 36);
+
+    if (sys == SYS_GLO) {
+      double freq = sat2freq(sat, code, &raw->nav);
+      adr -= glo_bias * freq / CLIGHT;
+      if (!raw->nav.glo_fcn[prn - 1]) {
+        raw->nav.glo_fcn[prn - 1] = gfrq; /* fcn+8 */
+      }
     }
-    return 1;
-}
-/* decode RANGEB -------------------------------------------------------------*/
-static int decode_rangeb(raw_t *raw)
-{
-    uint8_t *p=raw->buff+OEM4HLEN;
-    char *q;
-    double psr,adr,dop,snr,lockt,tt,freq,glo_bias=0.0;
-    int i,index,nobs,prn,sat,sys,code,idx,track,plock,clock,parity,halfc,lli;
-    int gfrq;
-    
-    if ((q=strstr(raw->opt,"-GLOBIAS="))) sscanf(q,"-GLOBIAS=%lf",&glo_bias);
-    
-    nobs=U4(p);
-    if (raw->len<OEM4HLEN+4+nobs*44) {
-        trace(2,"oem4 rangeb length error: len=%d nobs=%d\n",raw->len,nobs);
-        return -1;
+    int lli;
+    if (raw->tobs[sat - 1][code].time != 0) {
+      double tt = timediff(raw->time, raw->tobs[sat - 1][code]);
+      lli = lockt - raw->lockt[sat - 1][code] + 0.05 <= tt ? LLI_SLIP : 0;
+    } else {
+      lli = 0;
     }
-    if (raw->outtype) {
-        sprintf(raw->msgtype+strlen(raw->msgtype)," nobs=%d",nobs);
+    if (!parity) lli |= LLI_HALFC;
+    if (halfc) lli |= LLI_HALFA;
+    raw->tobs[sat - 1][code] = raw->time;
+    raw->lockt[sat - 1][code] = lockt;
+    raw->halfc[sat - 1][code] = halfc;
+
+    if (!clock) continue;        /* Code unlock */
+    if (!plock) adr = dop = 0.0; /* Phase unlock */
+
+    int index = obsindex(&raw->obs, raw->time, sat);
+    if (index >= 0) {
+      int idx = sigindex(raw->obs.data + index, sys, code, raw->opt);
+      if (idx < 0) continue;
+      raw->obs.data[index].L[idx] = -adr;
+      raw->obs.data[index].P[idx] = psr;
+      raw->obs.data[index].D[idx] = (float)dop;
+      raw->obs.data[index].SNR[idx] = snr;
+      raw->obs.data[index].LLI[idx] = (uint8_t)lli;
     }
-    for (i=0,p+=4;i<nobs;i++,p+=44) {
-        if ((idx=decode_track_stat(U4(p+40),&sys,&code,&track,&plock,&clock,
-                                   &parity,&halfc))<0) {
-            continue;
-        }
-        prn=U2(p);
-        if (sys==SYS_GLO) prn-=37;
-        if (sys==SYS_SBS&&prn>=MINPRNQZS_S&&prn<=MAXPRNQZS_S&&code==CODE_L1C) {
-            sys=SYS_QZS;
-            prn+=10;
-            code=CODE_L1Z; /* QZS L1S */
-        }
-        if (!(sat=satno(sys,prn))) {
-            trace(3,"oem4 rangeb satellite number error: sys=%d,prn=%d\n",sys,prn);
-            continue;
-        }
-        if (sys==SYS_GLO&&!parity) continue;
-        
-        if ((idx=checkpri(raw->opt,sys,code,idx))<0) continue;
-        
-        gfrq =U2(p+ 2); /* GLONASS FCN+8 */
-        psr  =R8(p+ 4);
-        adr  =R8(p+16);
-        dop  =R4(p+28);
-        snr  =R4(p+32);
-        lockt=R4(p+36);
-        
-        if (sys==SYS_GLO) {
-            freq=sat2freq(sat,(uint8_t)code,&raw->nav);
-            adr-=glo_bias*freq/CLIGHT;
-            if (!raw->nav.glo_fcn[prn-1]) {
-                raw->nav.glo_fcn[prn-1]=gfrq; /* fcn+8 */
-            }
-        }
-        if (raw->tobs[sat-1][code].time!=0) {
-            tt=timediff(raw->time,raw->tobs[sat-1][code]);
-            lli=lockt-raw->lockt[sat-1][code]+0.05<=tt?LLI_SLIP:0;
-        }
-        else {
-            lli=0;
-        }
-        if (!parity) lli|=LLI_HALFC;
-        if (halfc  ) lli|=LLI_HALFA;
-        raw->tobs [sat-1][code]=raw->time;
-        raw->lockt[sat-1][code]=lockt;
-        raw->halfc[sat-1][code]=halfc;
-        
-        if (!clock) psr=0.0;     /* code unlock */
-        if (!plock) adr=dop=0.0; /* phase unlock */
-        
-        if (fabs(timediff(raw->obs.data[0].time,raw->time))>1E-9) {
-            raw->obs.n=0;
-        }
-        if ((index=obsindex(&raw->obs,raw->time,sat))>=0) {
-            raw->obs.data[index].L  [idx]=-adr;
-            raw->obs.data[index].P  [idx]=psr;
-            raw->obs.data[index].D  [idx]=(float)dop;
-            raw->obs.data[index].SNR[idx]=snr;
-            raw->obs.data[index].LLI[idx]=(uint8_t)lli;
-            raw->obs.data[index].code[idx]=(uint8_t)code;
-        }
-    }
-    return 1;
+  }
+  return 1;
 }
 /* decode RAWEPHEMB ----------------------------------------------------------*/
 static int decode_rawephemb(raw_t *raw)
@@ -1369,15 +1329,6 @@ static int sync_oem3(uint8_t *buff, uint8_t data)
 *          option strings separated by spaces.
 *
 *          -EPHALL : input all ephemerides
-*          -GL1L   : select 1L for GPS L1 (default 1C)
-*          -GL2S   : select 2S for GPS L2 (default 2W)
-*          -GL2P   : select 2P for GPS L2 (default 2W)
-*          -RL2C   : select 2C for GLO G2 (default 2P)
-*          -EL6B   : select 6B for GAL E6 (default 6C)
-*          -JL1L   : select 1L for QZS L1 (default 1C)
-*          -JL1Z   : select 1Z for QZS L1 (default 1C)
-*          -CL1P   : select 1P for BDS B1 (default 2I)
-*          -CL7D   : select 7D for BDS B2 (default 7I)
 *          -GALINAV: select I/NAV for Galileo ephemeris (default: all)
 *          -GALFNAV: select F/NAV for Galileo ephemeris (default: all)
 *          -GLOBIAS=bias: GLONASS code-phase bias (m)

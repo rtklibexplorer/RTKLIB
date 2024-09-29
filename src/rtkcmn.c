@@ -734,6 +734,95 @@ extern int code2idx(int sys, uint8_t code)
     }
     return -1;
 }
+
+// sigindex --------------------------------------------
+//
+// Allocate a new signal frequency index for the signal with the given code and
+// taking into account the code priorities. There can be multiple codes for a
+// given frequency index and if there is a conflict then this is resolved
+// using the code priorities. If the new code has a higher priority then the
+// current signal is moved into the extra-obs region and the new allocation is
+// initialized. If there is an existing frequency index allocation with the
+// same code then the data is not modified which allows repeated calls with
+// the same index, vs allocating multiple frequency indices for the same
+// code. It is assumed that the data code at an unused index is set to
+// CODE_NONE. On the first allocation at a data index the data is
+// initialized. The system could be computed form the data->sat, but pass it
+// in anyway as the caller usually has this pre-computed.
+//
+// If the opt argument is NULL then do not allocate a new index, rather just
+// search for a matching allocation for the given code using the same search
+// strategy but without checking consistency of the code priorities.
+extern int sigindex(obsd_t *data, int sys, int code, const char *opt) {
+  int idx = code2idx(sys, code);
+  if (idx < 0) return -1;
+
+  // Check if the index is free
+  int ccode = data->code[idx];
+  if (ccode == code) {
+    // Same code at this index.
+    return idx;
+  }
+  if (ccode == CODE_NONE) {
+    // Empty index.
+    if (opt == NULL) return -1; // No allocation.
+    // Allocate to this index.
+    data->L[idx] = data->P[idx] = 0.0;
+    data->D[idx] = 0.0;
+    data->SNR[idx] = data->LLI[idx] = 0.0;
+    data->code[idx] = code;
+    return idx;
+  }
+
+  // Search the extra obs region, for matching code, or a free index.  The
+  // allocations in the region are in order, so can stop at the first free
+  // index.
+  int idx2;
+  for (idx2 = NFREQ; idx2 < NFREQ + NEXOBS; idx2++) {
+    if (data->code[idx2] == code) {
+      // Same code at this index.
+      return idx2;
+    }
+    if (data->code[idx2] == CODE_NONE) {
+      // Free index.
+      break;
+    }
+  }
+
+  if (opt == NULL) return -1; // No allocation.
+
+  // Resolve the conflict using the code priorities.
+  int cpri = getcodepri(sys, ccode, opt);
+  int pri = getcodepri(sys, code, opt);
+  if (pri <= cpri) {
+    // Allocate to the extra obs region.
+    if (idx2 < NFREQ + NEXOBS) {
+      data->L[idx2] = data->P[idx2] = 0.0;
+      data->D[idx2] = 0.0;
+      data->SNR[idx2] = data->LLI[idx2] = 0.0;
+      data->code[idx2] = code;
+      return idx2;
+    }
+    return -1;
+  }
+  // Move the conflicting observation to a free index in the extra obs region
+  // if room, otherwise drop it.
+  if (idx2 < NFREQ + NEXOBS) {
+    data->P[idx2] = data->P[idx];
+    data->L[idx2] = data->L[idx];
+    data->D[idx2] = data->D[idx];
+    data->SNR[idx2] = data->SNR[idx];
+    data->LLI[idx2] = data->LLI[idx];
+    data->code[idx2] = ccode;
+  }
+
+  data->L[idx] = data->P[idx] = 0.0;
+  data->D[idx] = 0.0;
+  data->SNR[idx] = data->LLI[idx] = 0.0;
+  data->code[idx] = code;
+  return idx;
+}
+
 /* system and obs code to frequency --------------------------------------------
 * convert system and obs code to carrier frequency
 * args   : int    sys       I   satellite system (SYS_???)

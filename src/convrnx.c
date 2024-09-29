@@ -784,14 +784,14 @@ static int scan_file(char **files, int nf, rnxopt_t *opt, strfile_t *str,
                     
                     /* update obs-types */
                     for (j=0;j<NFREQ+NEXOBS;j++) {
-                        int c=str->obs->data[i].code[j];
-                        if (c==CODE_NONE) continue;
+                        int cd=str->obs->data[i].code[j];
+                        if (cd==CODE_NONE) continue;
                         
                         for (k=0;k<n[l];k++) {
-                            if (codes[l][k]==c) break;
+                            if (codes[l][k]==cd) break;
                         }
                         if (k>=n[l]&&n[l]<32) {
-                            codes[l][n[l]++]=c;
+                            codes[l][n[l]++]=cd;
                         }
                         if (k<n[l]) {
                             if (str->obs->data[i].P[j]!=0.0) types[l][k]|=1;
@@ -1001,7 +1001,9 @@ static void save_slips(strfile_t *str, obsd_t *data, int n)
     for (int i=0;i<n;i++)
       for (int j=0;j<NFREQ+NEXOBS;j++) {
           int sat = data[i].sat;
+          if (sat == 0) continue;
           int code = data[i].code[j];
+          if (code == CODE_NONE) continue;
           if (data[i].LLI[j]&LLI_SLIP) str->slips[sat-1][code]=1;
     }
 }
@@ -1011,9 +1013,11 @@ static void rest_slips(strfile_t *str, obsd_t *data, int n)
     for (int i=0;i<n;i++)
       for (int j=0;j<NFREQ+NEXOBS;j++) {
           int sat = data[i].sat;
+          if (sat == 0) continue;
           int code = data[i].code[j];
+          if (code == CODE_NONE) continue;
           if (data[i].L[j]!=0.0&&str->slips[sat-1][code]) {
-              data[i].LLI[code]|=LLI_SLIP;
+              data[i].LLI[j]|=LLI_SLIP;
               str->slips[sat-1][code]=0;
         }
     }
@@ -1054,14 +1058,19 @@ static void convobs(FILE **ofp, rnxopt_t *opt, strfile_t *str, int *n,
     /* save cycle slips */
     save_slips(str,str->obs->data,str->obs->n);
     
-    if (!screent_ttol(time,opt->ts,opt->te,opt->tint,opt->ttol)) return;
+    if (!screent_ttol(time,opt->ts,opt->te,opt->tint,opt->ttol)) {
+      if (str->staid!=*staid) { /* Station ID changed */
+        *staid=str->staid;
+      }
+      str->obs->flag = 0;
+      return;
+    }
     
-    /* restore cycle slips */
+    /* Restore cycle slips */
     rest_slips(str,str->obs->data,str->obs->n);
     
-    if (str->staid!=*staid) { /* station ID changed */
-        
-        if (*staid>=0) { /* output RINEX event */
+    if (str->staid!=*staid) { /* Station ID changed */
+        if (*staid>=0) { /* Output RINEX event */
             outrnxevent(ofp[0],opt,str->time,EVENT_NEWSITE,str->stas,str->staid);
             /* Set cycle slips */
             for (i=0;i<str->obs->n;i++) {
@@ -1073,7 +1082,6 @@ static void convobs(FILE **ofp, rnxopt_t *opt, strfile_t *str, int *n,
             }
         }
         *staid=str->staid;
-
     }
     /* resolve half-cycle ambiguity */
     if (opt->halfcyc) {
@@ -1290,7 +1298,7 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
     FILE *ofp[NOUTFILE]={NULL};
     strfile_t *str;
     gtime_t tend[3]={{0}};
-    int i,j,nf,type,n[NOUTFILE+2]={0},mask[MAXEXFILE]={0},staid=-1,abort=0;
+    int j,nf,type,n[NOUTFILE+2]={0},mask[MAXEXFILE]={0},staid=-1,abort=0;
     char path[1024],*paths[NOUTFILE],s[NOUTFILE][1024];
     char *epath[MAXEXFILE]={0},*staname=*opt->staid?opt->staid:"0000";
     
@@ -1304,9 +1312,9 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
         return 0;
     }
     /* expand wild-cards in input file */
-    for (i=0;i<MAXEXFILE;i++) {
+    for (int i=0;i<MAXEXFILE;i++) {
         if (!(epath[i]=(char *)malloc(1024))) {
-            for (i=0;i<MAXEXFILE;i++) free(epath[i]);
+            for (int k=0;k<MAXEXFILE;k++) free(epath[k]);
             return 0;
         }
     }
@@ -1315,7 +1323,7 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
         return 0;
     }
     if (!(str=gen_strfile(format,opt->rcvopt))) {
-        for (i=0;i<MAXEXFILE;i++) free(epath[i]);
+        for (int i=0;i<MAXEXFILE;i++) free(epath[i]);
         return 0;
     }
     if (format==STRFMT_RTCM2||format==STRFMT_RTCM3||format==STRFMT_RT17) {
@@ -1325,12 +1333,12 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
         str->time=timeadd(opt->ts,-1.0);
     }
     /* set GLONASS FCN in RINEX options */
-    for (i=0;i<MAXPRNGLO;i++) {
+    for (int i=0;i<MAXPRNGLO;i++) {
         str->nav->glo_fcn[i]=opt->glofcn[i]; /* FCN+8 */
     }
     /* scan input files */
     if (!scan_file(epath,nf,opt,str,mask)) {
-        for (i=0;i<MAXEXFILE;i++) free(epath[i]);
+        for (int i=0;i<MAXEXFILE;i++) free(epath[i]);
         free_strfile(str);
         return 0;
     }
@@ -1338,7 +1346,7 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
     setopt_file(format,epath,nf,mask,opt);
     
     /* replace keywords in output file */
-    for (i=0;i<NOUTFILE;i++) {
+    for (int i=0;i<NOUTFILE;i++) {
         paths[i]=s[i];
         if (reppath(ofile[i],paths[i],opt->ts.time?opt->ts:str->tstart,
                     staname,"")<0) {
@@ -1350,7 +1358,7 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
     }
     /* open output files */
     if (!openfile(ofp,paths,path,opt,str->nav)) {
-        for (i=0;i<MAXEXFILE;i++) free(epath[i]);
+        for (int i=0;i<MAXEXFILE;i++) free(epath[i]);
         free_strfile(str);
         return 0;
     }
@@ -1395,7 +1403,7 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
        }
     }
 
-    for (i=0;i<nf&&!abort;i++) {
+    for (int i=0;i<nf&&!abort;i++) {
         if (!mask[i]) continue;
         
         /* open stream file */
@@ -1426,7 +1434,7 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
     closefile(ofp,opt,str->nav);
     
     /* remove empty output files */
-    for (i=0;i<NOUTFILE;i++) {
+    for (int i=0;i<NOUTFILE;i++) {
         if (ofp[i]&&n[i]<=0) remove(ofile[i]);
     }
     showstat(sess,opt->tstart,opt->tend,n);
@@ -1435,7 +1443,7 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
     unsetopt_file(opt);
     
     free_strfile(str);
-    for (i=0;i<MAXEXFILE;i++) free(epath[i]);
+    for (int i=0;i<MAXEXFILE;i++) free(epath[i]);
     
     return abort?-1:1;
 }

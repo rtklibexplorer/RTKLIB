@@ -147,14 +147,11 @@ static const double ura_nominal[]={     /* URA nominal values */
     2048.0,4096.0,8192.0
 };
 /* type definition -----------------------------------------------------------*/
-typedef struct {                        /* signal index type */
-    int n;                              /* number of index */
-    int idx[MAXOBSTYPE];                /* signal freq-index */
-    int pos[MAXOBSTYPE];                /* signal index in obs data (-1:no) */
-    uint8_t pri [MAXOBSTYPE];           /* signal priority (15-0) */
-    uint8_t type[MAXOBSTYPE];           /* type (0:C,1:L,2:D,3:S) */
-    uint8_t code[MAXOBSTYPE];           /* obs-code (CODE_L??) */
-    double shift[MAXOBSTYPE];           /* phase shift (cycle) */
+typedef struct {              /* Signal index type */
+  int n;                      /* Number of observation types */
+  int code[MAXOBSTYPE];       /* Obs-code (CODE_L??) */
+  uint8_t type[MAXOBSTYPE];   /* Type (0:C,1:L,2:D,3:S) */
+  double shift[MAXOBSTYPE];   /* Phase shift (cycle) */
 } sigind_t;
 
 /* adjust time considering week handover -------------------------------------*/
@@ -766,7 +763,7 @@ static int decode_obsepoch(FILE *fp, char *buff, double ver, gtime_t *time,
     return n;
 }
 /* decode observation data ---------------------------------------------------*/
-static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
+static int decode_obsdata(FILE *fp, const char *opt, char *buff, double ver, int mask,
                           sigind_t *index, obsd_t *obs)
 {
     sigind_t *ind;
@@ -774,7 +771,7 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
     uint8_t lli[MAXOBSTYPE]={0};
     double std[MAXOBSTYPE]={0};
     char satid[8]="";
-    int i,j,n,m,q,stat=1,p[MAXOBSTYPE],k[16],l[16],r[16];
+    int i,j,stat=1;
 
     trace(4,"decode_obsdata: ver=%.2f\n",ver);
 
@@ -790,7 +787,8 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         stat=0;
     }
     /* read observation data fields */
-    switch (satsys(obs->sat,NULL)) {
+    int sys = satsys(obs->sat, NULL);
+    switch (sys) {
         case SYS_GLO: ind=index+1; break;
         case SYS_GAL: ind=index+2; break;
         case SYS_QZS: ind=index+3; break;
@@ -799,14 +797,20 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         case SYS_IRN: ind=index+6; break;
         default:      ind=index  ; break;
     }
+    int codesig[MAXCODE] = {-1}, nsigs = 0;
     for (i=0,j=ver<=2.99?0:3;i<ind->n;i++,j+=16) {
 
         if (ver<=2.99&&j>=80) { /* ver.2 */
             if (!fgets(buff,MAXRNXLEN,fp)) break;
             j=0;
         }
-        if (stat) {
+        int code = ind->code[i];
+        if (stat && code != CODE_NONE) {
             val[i]=str2num(buff,j,14)+ind->shift[i];
+            if (ind->type[i] == 0 && val[i] != 0) {
+              codesig[code] = nsigs;
+              nsigs++;
+            }
             lli[i]=(uint8_t)str2num(buff,j+14,1)&3;
             /* measurement std from receiver, encoded */
             std[i]=str2num(buff,j+15,1);
@@ -820,88 +824,29 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         obs->LLI[i]=obs->code[i]=0;
         obs->Lstd[i]=obs->Pstd[i]=0.0;
     }
-    /* assign position in observation data */
-    for (i=n=m=q=0;i<ind->n;i++) {
 
-        p[i]=(ver<=2.11)?ind->idx[i]:ind->pos[i];
-
-        if (ind->type[i]==0&&p[i]==0) k[n++]=i; /* C1? index */
-        if (ind->type[i]==0&&p[i]==1) l[m++]=i; /* C2? index */
-        if (ind->type[i]==0&&p[i]==2) r[q++]=i; /* C3? index */
-    }
-
-    /* if multiple codes (C1/P1,C2/P2), select higher priority */
-    if (ver<=2.11) {
-        if (n>=2) {
-            if (val[k[0]]==0.0&&val[k[1]]==0.0) {
-                p[k[0]]=-1; p[k[1]]=-1;
-            }
-            else if (val[k[0]]!=0.0&&val[k[1]]==0.0) {
-                p[k[0]]=0; p[k[1]]=-1;
-            }
-            else if (val[k[0]]==0.0&&val[k[1]]!=0.0) {
-                p[k[0]]=-1; p[k[1]]=0;
-            }
-            else if (ind->pri[k[1]]>ind->pri[k[0]]) {
-                p[k[1]]=0; p[k[0]]=NEXOBS<1?-1:NFREQ;
-            }
-            else {
-                p[k[0]]=0; p[k[1]]=NEXOBS<1?-1:NFREQ;
-            }
-        }
-        if (m>=2) {
-            if (val[l[0]]==0.0&&val[l[1]]==0.0) {
-                p[l[0]]=-1; p[l[1]]=-1;
-            }
-            else if (val[l[0]]!=0.0&&val[l[1]]==0.0) {
-                p[l[0]]=1; p[l[1]]=-1;
-            }
-            else if (val[l[0]]==0.0&&val[l[1]]!=0.0) {
-                p[l[0]]=-1; p[l[1]]=1; 
-            }
-            else if (ind->pri[l[1]]>ind->pri[l[0]]) {
-                p[l[1]]=1; p[l[0]]=NEXOBS<2?-1:NFREQ+1;
-            }
-            else {
-                p[l[0]]=1; p[l[1]]=NEXOBS<2?-1:NFREQ+1;
-            }
-        }
-        if (q>=2) {
-            if (val[r[0]]==0.0&&val[r[1]]==0.0) {
-                p[r[0]]=-1; p[r[1]]=-1;
-            }
-            else if (val[r[0]]!=0.0&&val[r[1]]==0.0) {
-                p[r[0]]=2; p[r[1]]=-1;
-            }
-            else if (val[r[0]]==0.0&&val[r[1]]!=0.0) {
-                p[r[0]]=-1; p[r[1]]=2;
-            }
-            else if (ind->pri[r[1]]>ind->pri[r[0]]) {
-                p[r[1]]=2; p[r[0]]=NEXOBS<3?-1:NFREQ+2;
-            }
-            else {
-                p[r[0]]=2; p[r[1]]=NEXOBS<3?-1:NFREQ+2;
-            }
-        }
-    }
-    
     /* save observation data */
     for (i=0;i<ind->n;i++) {
-        if (p[i]<0||(val[i]==0.0&&lli[i]==0)) continue;
+        if (val[i] == 0.0 && lli[i] == 0) continue;
+        int code = ind->code[i];
+        if (code == CODE_NONE) continue;
+        int sig = codesig[code];
+        if (sig < 0) continue;
+        int freqidx = sigindex(obs, sys, code, opt);
+        if (freqidx < 0) continue;
         switch (ind->type[i]) {
-            case 0: obs->P[p[i]]=val[i];
-                    obs->code[p[i]]=ind->code[i];
-                    obs->Pstd[p[i]] = std[i] > 0 ? 0.01 * pow(2, std[i] + 5) : 0;
+            case 0: obs->P[freqidx]=val[i];
+                    obs->Pstd[freqidx] = std[i] > 0 ? 0.01 * pow(2, std[i] + 5) : 0;
                     break;
-            case 1: obs->L[p[i]]=val[i];
-                    obs->LLI[p[i]]=lli[i];
-                    obs->Lstd[p[i]] = std[i] > 0 ? std[i] * 0.004 : 0;
+            case 1: obs->L[freqidx]=val[i];
+                    obs->LLI[freqidx]=lli[i];
+                    obs->Lstd[freqidx] = std[i] > 0 ? std[i] * 0.004 : 0;
                     break;
-            case 2: obs->D[p[i]]=(float)val[i]; break;
-            case 3: obs->SNR[p[i]]=val[i]; break;
+            case 2: obs->D[freqidx]=(float)val[i]; break;
+            case 3: obs->SNR[freqidx]=val[i]; break;
         }
-        trace(4, "obs: i=%d f=%d P=%14.3f L=%14.3f LLI=%d code=%d\n",i,p[i],obs->P[p[i]],
-        obs->L[p[i]],obs->LLI[p[i]],obs->code[p[i]]);
+        trace(4, "obs: i=%d f=%d P=%14.3f L=%14.3f LLI=%d code=%d\n",i,freqidx,obs->P[freqidx],
+        obs->L[freqidx],obs->LLI[freqidx],obs->code[freqidx]);
     }
     char tstr[40];
     trace(4,"decode_obsdata: time=%s sat=%2d\n",time2str(obs->time,tstr,0),obs->sat);
@@ -963,20 +908,18 @@ static int set_sysmask(const char *opt)
     return mask;
 }
 /* set signal index ----------------------------------------------------------*/
-static void set_index(double ver, int sys, const char *opt,
-                      char tobs[MAXOBSTYPE][4], sigind_t *ind)
+static void set_sys_index(double ver, int sys, const char *opt, char tobs[MAXOBSTYPE][4],
+                          sigind_t *ind)
 {
     const char *p;
-    char str[8],*optstr="";
-    double shift;
-    int i,j,k,n;
+    char *optstr="";
+    int i,n;
 
     for (i=n=0;*tobs[i];i++,n++) {
-        ind->code[i]=obs2code(tobs[i]+1);
-        ind->type[i]=(p=strchr(obscodes,tobs[i][0]))?(int)(p-obscodes):0;
-        ind->idx[i]=code2idx(sys,ind->code[i]);
-        ind->pri[i]=getcodepri(sys,ind->code[i],opt);
-        ind->pos[i]=-1;
+        int code = obs2code(tobs[i] + 1);
+        ind->code[i] = code;
+        const char *p = strchr(obscodes, tobs[i][0]);
+        ind->type[i]=p?(int)(p-obscodes):0;
     }
     /* parse phase shift options */
     switch (sys) {
@@ -989,6 +932,8 @@ static void set_index(double ver, int sys, const char *opt,
         case SYS_IRN: optstr="-IL%2s=%lf"; break;
     }
     for (p=opt;p&&(p=strchr(p,'-'));p++) {
+        char str[8];
+        double shift;
         if (sscanf(p,optstr,str,&shift)<2) continue;
         for (i=0;i<n;i++) {
             if (strcmp(code2obs(ind->code[i]),str)) continue;
@@ -997,43 +942,39 @@ static void set_index(double ver, int sys, const char *opt,
                   tobs[i],shift);
         }
     }
-    /* assign index for highest priority code */
-    for (i=0;i<NFREQ;i++) {
-        for (j=0,k=-1;j<n;j++) {
-            if (ind->idx[j]==i&&ind->pri[j]&&(k<0||ind->pri[j]>ind->pri[k])) {
-                k=j;
-            }
-        }
-        if (k<0) continue;
-
-        for (j=0;j<n;j++) {
-            if (ind->code[j]==ind->code[k]) ind->pos[j]=i;
-        }
-    }
-    /* assign index of extended observation data */
-    for (i=0;i<NEXOBS;i++) {
-        for (j=0;j<n;j++) {
-            if (ind->code[j]&&ind->pri[j]&&ind->pos[j]<0) break;
-        }
-        if (j>=n) break;
-
-        for (k=0;k<n;k++) {
-            if (ind->code[k]==ind->code[j]) ind->pos[k]=NFREQ+i;
-        }
-    }
-    /* list rejected observation types */
-    for (i=0;i<n;i++) {
-        if (!ind->code[i]||!ind->pri[i]||ind->pos[i]>=0) continue;
-        trace(4,"reject obs type: sys=%2d, obs=%s\n",sys,tobs[i]);
-    }
     ind->n=n;
-
-#if 0 /* for debug */
-    for (i=0;i<n;i++) {
-        trace(2,"set_index: sys=%2d,tobs=%s code=%2d pri=%2d idx=%d pos=%d shift=%5.2f\n",
-              sys,tobs[i],ind->code[i],ind->pri[i],ind->idx[i],ind->pos[i],
-              ind->shift[i]);
+    
+#ifdef RTK_DISABLED /* for debug */
+    for (int i=0;i<n;i++) {
+        int c = ind->code[i];
+        trace(2,"set_index: sys=%2d tobs=%s code=%2d shift=%5.2f\n",
+              sys,tobs[i],c,,ind->shift[i]);
     }
+#endif
+}
+static void set_index(double ver, const char *opt, char tobs[][MAXOBSTYPE][4],
+                      sigind_t index[RNX_NUMSYS])
+{
+#if RNX_NUMSYS >= 1
+  set_sys_index(ver, SYS_GPS, opt, tobs[RNX_SYS_GPS], index);
+#endif
+#if RNX_NUMSYS >= 2
+  set_sys_index(ver, SYS_GLO, opt, tobs[RNX_SYS_GLO], index + 1);
+#endif
+#if RNX_NUMSYS >= 3
+  set_sys_index(ver, SYS_GAL, opt, tobs[RNX_SYS_GAL], index + 2);
+#endif
+#if RNX_NUMSYS >= 4
+  set_sys_index(ver, SYS_QZS, opt, tobs[RNX_SYS_QZS], index + 3);
+#endif
+#if RNX_NUMSYS >= 5
+  set_sys_index(ver, SYS_SBS, opt, tobs[RNX_SYS_SBS], index + 4);
+#endif
+#if RNX_NUMSYS >= 6
+  set_sys_index(ver, SYS_CMP, opt, tobs[RNX_SYS_CMP], index + 5);
+#endif
+#if RNX_NUMSYS >= 7
+  set_sys_index(ver, SYS_IRN, opt, tobs[RNX_SYS_IRN], index + 6);
 #endif
 }
 /* read RINEX observation data body ------------------------------------------*/
@@ -1042,7 +983,6 @@ static int readrnxobsb(FILE *fp, const char *opt, double ver, int *tsys,
                        sta_t *sta)
 {
     gtime_t time={0};
-    sigind_t index[RNX_NUMSYS]={{0}};
     char buff[MAXRNXLEN];
     int i=0,n=0,nsat=0,sats[MAXOBS]={0},mask;
     
@@ -1050,28 +990,10 @@ static int readrnxobsb(FILE *fp, const char *opt, double ver, int *tsys,
     mask=set_sysmask(opt);
 
     /* set signal index */
-#if RNX_NUMSYS>=1
-    set_index(ver,SYS_GPS,opt,tobs[RNX_SYS_GPS],index  );
-#endif
-#if RNX_NUMSYS>=2
-    set_index(ver,SYS_GLO,opt,tobs[RNX_SYS_GLO],index+1);
-#endif
-#if RNX_NUMSYS>=3
-    set_index(ver,SYS_GAL,opt,tobs[RNX_SYS_GAL],index+2);
-#endif
-#if RNX_NUMSYS>=4
-    set_index(ver,SYS_QZS,opt,tobs[RNX_SYS_QZS],index+3);
-#endif
-#if RNX_NUMSYS>=5
-    set_index(ver,SYS_SBS,opt,tobs[RNX_SYS_SBS],index+4);
-#endif
-#if RNX_NUMSYS>=6
-    set_index(ver,SYS_CMP,opt,tobs[RNX_SYS_CMP],index+5);
-#endif
-#if RNX_NUMSYS>=7
-    set_index(ver,SYS_IRN,opt,tobs[RNX_SYS_IRN],index+6);
-#endif
-    
+    // Could hoist set_index into readrnxobs and rnxctr_t if a performance issue.
+    sigind_t index[RNX_NUMSYS]={{0}};
+    set_index(ver, opt, tobs, index);
+
     /* read record */
     while (fgets(buff,MAXRNXLEN,fp)) {
 
@@ -1090,12 +1012,13 @@ static int readrnxobsb(FILE *fp, const char *opt, double ver, int *tsys,
             data[n].sat=(uint8_t)sats[i-1];
 
             /* decode RINEX observation data */
-            if (decode_obsdata(fp,buff,ver,mask,index,data+n)) n++;
+            if (decode_obsdata(fp,opt,buff,ver,mask,index,data+n)) n++;
         }
         else if (*flag==3||*flag==4) { /* new site or header info follows */
 
             /* decode RINEX observation data file header */
             decode_obsh(fp,buff,ver,tsys,tobs,NULL,sta);
+            set_index(ver, opt, tobs, index);
         }
         if (++i>nsat) return n;
     }

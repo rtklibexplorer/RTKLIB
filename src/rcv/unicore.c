@@ -36,13 +36,12 @@
 
 
 /* get fields (little-endian) ------------------------------------------------*/
-#define U1(p) (*((uint8_t *)(p)))
-#define I1(p) (*((int8_t  *)(p)))
-static uint16_t U2(uint8_t* p) { uint16_t u; memcpy(&u, p, 2); return u; }
-static uint32_t U4(uint8_t* p) { uint32_t u; memcpy(&u, p, 4); return u; }
-static int32_t  I4(uint8_t* p) { int32_t  i; memcpy(&i, p, 4); return i; }
-static float    R4(uint8_t* p) { float    r; memcpy(&r, p, 4); return r; }
-static double   R8(uint8_t* p) { double   r; memcpy(&r, p, 8); return r; }
+#define U1(p) (*((const uint8_t *)(p)))
+#define I1(p) (*((const int8_t  *)(p)))
+static uint16_t U2(const uint8_t* p) { uint16_t u; memcpy(&u, p, 2); return u; }
+static uint32_t U4(const uint8_t* p) { uint32_t u; memcpy(&u, p, 4); return u; }
+static float    R4(const uint8_t* p) { float    r; memcpy(&r, p, 4); return r; }
+static double   R8(const uint8_t* p) { double   r; memcpy(&r, p, 8); return r; }
 
 
 /* sync header ---------------------------------------------------------------*/
@@ -95,42 +94,6 @@ static gtime_t adjweek(gtime_t time, double tow)
     if (tow < tow_p - 302400.0) tow += 604800.0;
     else if (tow > tow_p + 302400.0) tow -= 604800.0;
     return gpst2time(week, tow);
-}
-
-/* check code priority and return freq-index ---------------------------------*/
-static int checkpri(const char* opt, int sys, int code, int idx)
-{
-    int nex = NEXOBS;
-
-    if (sys == SYS_GPS) {
-        if (strstr(opt, "-GL1L") && idx == 0) return (code == CODE_L1L) ? 0 : -1;
-        if (strstr(opt, "-GL2S") && idx == 1) return (code == CODE_L2X) ? 1 : -1;
-        if (strstr(opt, "-GL2P") && idx == 1) return (code == CODE_L2P) ? 1 : -1;
-        if (code == CODE_L1L) return (nex < 1) ? -1 : NFREQ;
-        if (code == CODE_L2S) return (nex < 2) ? -1 : NFREQ + 1;
-        if (code == CODE_L2P) return (nex < 3) ? -1 : NFREQ + 2;
-    }
-    else if (sys == SYS_GLO) {
-        if (strstr(opt, "-RL2C") && idx == 1) return (code == CODE_L2C) ? 1 : -1;
-        if (code == CODE_L2C) return (nex < 1) ? -1 : NFREQ;
-    }
-    else if (sys == SYS_GAL) {
-        if (strstr(opt, "-EL6B") && idx == 3) return (code == CODE_L6B) ? 3 : -1;
-        if (code == CODE_L6B) return (nex < 2) ? -1 : NFREQ;
-    }
-    else if (sys == SYS_QZS) {
-        if (strstr(opt, "-JL1L") && idx == 0) return (code == CODE_L1L) ? 0 : -1;
-        if (strstr(opt, "-JL1Z") && idx == 0) return (code == CODE_L1Z) ? 0 : -1;
-        if (code == CODE_L1L) return (nex < 1) ? -1 : NFREQ;
-        if (code == CODE_L1Z) return (nex < 2) ? -1 : NFREQ + 1;
-    }
-    else if (sys == SYS_CMP) {
-        if (strstr(opt, "-CL1P") && idx == 0) return (code == CODE_L1P) ? 0 : -1;
-        if (strstr(opt, "-CL7D") && idx == 0) return (code == CODE_L7D) ? 0 : -1;
-        if (code == CODE_L1P) return (nex < 1) ? -1 : NFREQ;
-        if (code == CODE_L7D) return (nex < 2) ? -1 : NFREQ + 1;
-    }
-    return idx < NFREQ ? idx : -1;
 }
 
 /* signal type to obs code ---------------------------------------------------*/
@@ -217,20 +180,16 @@ static int sig2code(int sys, int sigtype, int l2c)
     return 0;
 }
 
-static int decode_track_stat(uint32_t stat, int* sys, int* code, int* plock, int* clock)
+static int decode_track_stat(uint32_t stat, int *sys, int *code, int *plock, int *clock)
 {
-    int satsys, sigtype, idx = -1;
-    int l2c;
-
     *code = CODE_NONE;
     *plock = (stat >> 10) & 1;
     *clock = (stat >> 12) & 1;
-    satsys = (stat >> 16) & 7;
-    sigtype = (stat >> 21) & 0x1F;
-    l2c = (stat >> 26) & 0x01;
+    int sysno = (stat >> 16) & 7;
+    int sigtype = (stat >> 21) & 0x1F;
+    int l2c = (stat >> 26) & 0x01;
 
-
-    switch (satsys) {
+    switch (sysno) {
     case 0: *sys = SYS_GPS; break;
     case 1: *sys = SYS_GLO; break;
     case 2: *sys = SYS_SBS; break;
@@ -242,6 +201,7 @@ static int decode_track_stat(uint32_t stat, int* sys, int* code, int* plock, int
         trace(2, "unicore unknown system: sys=%d\n", satsys);
         return -1;
     }
+    int idx = -1;
     if (!(*code = sig2code(*sys, sigtype, l2c)) || (idx = code2idx(*sys, *code)) < 0) {
         trace(2, "unicore signal type error: sys=%d sigtype=%d\n", *sys, sigtype);
         return -1;
@@ -724,18 +684,14 @@ static int decode_irnssephb(raw_t* raw) {
 // decode OBSVMB
 static int decode_obsvmb(raw_t* raw)
 {
-    uint8_t* p = raw->buff + HLEN;
-    char* q;
-    double psr, adr, dop, snr, lockt, tt, freq, glo_bias = 0.0;
-    int i, index, prn, sat, sys, code, idx, track, plock, clock, lli;
-    int gfrq;
-
-    if ((q = strstr(raw->opt, "-GLOBIAS="))) sscanf(q, "-GLOBIAS=%lf", &glo_bias);
+    double glo_bias = 0.0;
+    const char *q = strstr(raw->opt, "-GLOBIAS=");
+    if (q) sscanf(q, "-GLOBIAS=%lf", &glo_bias);
 
     int rcvstds = 0;
     if (strstr(raw->opt, "-RCVSTDS")) rcvstds = 1;
 
-    int nobs = U4(p);
+    int nobs = U4(raw->buff + HLEN);
     if (nobs == 0) return 0;
     if (raw->len < HLEN + 4 + nobs * 40) {
         trace(2, "unicore obsvmb length error: len=%d nobs=%d\n", raw->len, nobs);
@@ -745,75 +701,74 @@ static int decode_obsvmb(raw_t* raw)
         sprintf(raw->msgtype + strlen(raw->msgtype), " nobs=%d", nobs);
     }
 
-    p += 4; // Number of observation messages
+    if (fabs(timediff(raw->obs.data[0].time, raw->time)) > 1E-9)
+      raw->obs.n = 0;
 
-    for (i = 0; i < nobs; i++, p += 40) {
-        uint32_t trk_stat = U4(p + 36);
+    int pi = HLEN + 4; // Number of observation messages
+    for (int i = 0; i < nobs; i++, pi += 40) {
+        uint32_t trk_stat = U4(raw->buff + pi + 36);
 
-        if ((idx = decode_track_stat(trk_stat, &sys, &code, &plock, &clock)) < 0) {
-            continue;
-        }
-        prn = U2(p + 2);
-
+        int sys, code, plock, clock;
+        int idx = decode_track_stat(trk_stat, &sys, &code, &plock, &clock);
+        if (idx < 0) continue;
+        int prn = U2(raw->buff + pi + 2);
 
         if (sys == SYS_GLO) prn -= 37;
         if (sys == SYS_SBS && prn >= MINPRNQZS_S && prn <= MAXPRNQZS_S && code == CODE_L1C) {
             sys = SYS_QZS;
             prn += 10;
-            code = CODE_L1Z; /* QZS L1S */
+            code = CODE_L1Z; // QZS L1S
         }
-        if (!(sat = satno(sys, prn))) {
+        int sat = satno(sys, prn);
+        if (!sat) {
             trace(3, "unicore obsvm satellite number error: sys=%d,prn=%d\n", sys, prn);
             continue;
         }
         //if (sys == SYS_GLO && !parity) continue;
 
-        if ((idx = checkpri(raw->opt, sys, code, idx)) < 0) continue;
-
-        gfrq = U2(p) + 1; /* GLONASS FCN+8 */
-        psr = R8(p + 4);
-        adr = R8(p + 12);
-        dop = R4(p + 24);
-        snr = U2(p + 28) / 100.0;
-        lockt = R4(p + 32);
+        int gfrq = U2(raw->buff + pi) + 1; /* GLONASS FCN+8 */
+        double psr = R8(raw->buff + pi + 4);
+        double adr = R8(raw->buff + pi + 12);
+        double dop = R4(raw->buff + pi + 24);
+        double snr = U2(raw->buff + pi + 28) / 100.0;
+        double lockt = R4(raw->buff + pi + 32);
 
         if (sys == SYS_GLO) {
-            freq = sat2freq(sat, (uint8_t)code, &raw->nav);
+            double freq = sat2freq(sat, code, &raw->nav);
             adr -= glo_bias * freq / CLIGHT;
             if (!raw->nav.glo_fcn[prn - 1]) {
                 raw->nav.glo_fcn[prn - 1] = gfrq; /* fcn+8 */
             }
         }
+        int lli;
         if (raw->tobs[sat - 1][code].time != 0) {
-            tt = timediff(raw->time, raw->tobs[sat - 1][code]);
+            double tt = timediff(raw->time, raw->tobs[sat - 1][code]);
             lli = lockt - raw->lockt[sat - 1][code] + 0.05 <= tt ? LLI_SLIP : 0;
         }
         else {
             lli = 0;
         }
-        //      if (!parity) lli |= LLI_HALFC;
-        //      if (halfc) lli |= LLI_HALFA;
         raw->tobs[sat - 1][code] = raw->time;
         raw->lockt[sat - 1][code] = lockt;
         raw->halfc[sat - 1][code] = 0;
 
-        if (!clock) psr = 0.0;     /* code unlock */
-        if (!plock) adr = dop = 0.0; /* phase unlock */
+        if (!clock) continue;
+        if (!plock) adr = dop = 0.0; // phase valid
 
-        if (fabs(timediff(raw->obs.data[0].time, raw->time)) > 1E-9) {
-            raw->obs.n = 0;
-        }
-        if ((index = obsindex(&raw->obs, raw->time, sat)) >= 0) {
+        int index = obsindex(&raw->obs, raw->time, sat);
+        if (index >= 0) {
+            int idx = sigindex(raw->obs.data + index, sys, code, raw->opt);
+            if (idx < 0) continue;
             raw->obs.data[index].L[idx] = -adr;
             raw->obs.data[index].P[idx] = psr;
             raw->obs.data[index].D[idx] = (float)dop;
             raw->obs.data[index].SNR[idx] = snr;
             raw->obs.data[index].LLI[idx] = (uint8_t)lli;
-            raw->obs.data[index].code[idx] = (uint8_t)code;
             if (rcvstds) {
-                double pstd = U2(p + 20) * 0.01;  // Meters
+                double pstd = U2(raw->buff + pi + 20) * 0.01;  // Meters
                 raw->obs.data[index].Pstd[idx] = pstd;
-                double lstd = U2(p + 22) * 0.0001; // Cycles
+
+                double lstd = U2(raw->buff + pi + 22) * 0.0001; // Cycles
                 raw->obs.data[index].Lstd[idx] = lstd;
             }
         }
