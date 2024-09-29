@@ -1384,6 +1384,7 @@ EXPORT int  testsnr(int base, int freq, double el, double snr,
                     const snrmask_t *mask);
 EXPORT void setcodepri(int sys, int idx, const char *pri);
 EXPORT int  getcodepri(int sys, uint8_t code, const char *opt);
+EXPORT int sigindex(obsd_t *data, int sys, int code, const char *opt);
 
 /* matrix and vector functions -----------------------------------------------*/
 EXPORT double *mat  (int n, int m);
