@@ -647,7 +647,6 @@ static void combres(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
 static void readpreceph(const char **infile, int n, const prcopt_t *prcopt,
                         nav_t *nav, sbs_t *sbs)
 {
-    seph_t seph0={0};
     int i;
     const char *ext;
 
@@ -672,14 +671,6 @@ static void readpreceph(const char **infile, int n, const prcopt_t *prcopt,
         if (strstr(infile[i],"%r")||strstr(infile[i],"%b")) continue;
         sbsreadmsg(infile[i],prcopt->sbassatsel,sbs);
     }
-    /* allocate sbas ephemeris */
-    nav->ns=nav->nsmax=NSATSBS*2;
-    if (!(nav->seph=(seph_t *)malloc(sizeof(seph_t)*nav->ns))) {
-         showmsg("error : sbas ephem memory allocation");
-         trace(1,"error : sbas ephem memory allocation");
-         return;
-    }
-    for (i=0;i<nav->ns;i++) nav->seph[i]=seph0;
 
     /* set rtcm file and initialize rtcm struct */
     rtcm_file[0]=rtcm_path[0]='\0'; fp_rtcm=NULL;
@@ -702,7 +693,6 @@ static void freepreceph(nav_t *nav, sbs_t *sbs)
 
     free(nav->peph); nav->peph=NULL; nav->ne=nav->nemax=0;
     free(nav->pclk); nav->pclk=NULL; nav->nc=nav->ncmax=0;
-    free(nav->seph); nav->seph=NULL; nav->ns=nav->nsmax=0;
     free(sbs->msgs); sbs->msgs=NULL; sbs->n =sbs->nmax =0;
     for (i=0;i<nav->nt;i++) {
         free(nav->tec[i].data);
