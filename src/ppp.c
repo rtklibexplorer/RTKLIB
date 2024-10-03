@@ -458,12 +458,12 @@ static void detslp_ll(rtk_t *rtk, const obsd_t *obs, int n)
 
     trace(3,"detslp_ll: n=%d\n",n);
 
-    for (i=0;i<n&&i<MAXOBS;i++) for (j=0;j<rtk->opt.nf;j++) {
+    for (i=0;i<n&&i<MAXOBS;i++) for (j=0;j<nf;j++) {
         if (obs[i].L[j]==0.0||!(obs[i].LLI[j]&3)) continue;
 
         trace(3,"detslp_ll: slip detected sat=%2d f=%d\n",obs[i].sat,j+1);
 
-        rtk->ssat[obs[i].sat-1].slip[j<nf?j:nf]=1;
+        rtk->ssat[obs[i].sat-1].slip[j]=1;
     }
 }
 /* detect cycle slip by geometry free phase jump -----------------------------*/
