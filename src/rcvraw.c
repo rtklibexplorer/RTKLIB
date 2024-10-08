@@ -1320,6 +1320,7 @@ extern int init_raw(raw_t *raw, int format)
             raw->tobs [i][j]=time0;
             raw->lockt[i][j]=0.0;
             raw->halfc[i][j]=0;
+            raw->lockflag[i][j]=0;
         }
         raw->icpp[i]=raw->off[i]=raw->prCA[i]=raw->dpCA[i]=0.0;
     }
