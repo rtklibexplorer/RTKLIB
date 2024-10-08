@@ -322,51 +322,117 @@ static int model_phw(gtime_t time, int sat, const char *type, int opt,
     *phw=ph+floor(*phw-ph+0.5); /* in cycle */
     return 1;
 }
-/* measurement error variance ------------------------------------------------*/
+
+/* Measurement error variance ------------------------------------------------*/
 static double varerr(int sat, int sys, double el, double snr_rover,
                      int f, const prcopt_t *opt, const obsd_t *obs)
 {
-    double a,b,e;
-    double snr_max=opt->err[5];
-    double fact=1.0;
-    double sinel=sin(el),var;
-    int frq,code;
+    int frq=f/2;
+    int code=f%2; /* 0=phase, 1=code */
 
-    frq=f/2;code=f%2; /* 0=phase, 1=code */
-    /* increase variance for pseudoranges */
-    if (code) fact=opt->eratio[frq];
-    if (fact<=0.0) fact=opt->eratio[0];
-    /* adjust variances for constellation */
+    /* Firstly establish some factors that will scale the variance */
+
+    /* System error factor */
+    double sys_fact;
     switch (sys) {
-        case SYS_GPS: fact*=EFACT_GPS;break;
-        case SYS_GLO: fact*=EFACT_GLO;break;
-        case SYS_GAL: fact*=EFACT_GAL;break;
-        case SYS_SBS: fact*=EFACT_SBS;break;
-        case SYS_QZS: fact*=EFACT_QZS;break;
-        case SYS_CMP: fact*=EFACT_CMP;break;
-        case SYS_IRN: fact*=EFACT_IRN;break;
-        default:      fact*=EFACT_GPS;break;
+        case SYS_GPS: sys_fact=EFACT_GPS; break;
+        case SYS_GLO: sys_fact=EFACT_GLO; break;
+        case SYS_GAL: sys_fact=EFACT_GAL; break;
+        case SYS_SBS: sys_fact=EFACT_SBS; break;
+        case SYS_QZS: sys_fact=EFACT_QZS; break;
+        case SYS_CMP: sys_fact=EFACT_CMP; break;
+        case SYS_IRN: sys_fact=EFACT_IRN; break;
+        default:      sys_fact=EFACT_GPS; break;
     }
-    if (sys==SYS_GPS||sys==SYS_QZS) {
-        if (frq==2) fact*=EFACT_GPS_L5; /* GPS/QZS L5 error factor */
-    }
-    /* adjust variance for config parameters */
-    a=fact*opt->err[1];  /* base term */
-    b=fact*opt->err[2];  /* el term */
-    /* calculate variance */
-    var=(a*a+b*b/sinel/sinel);
-    if (opt->err[6]>0) {  /* add SNR term */
-        e=fact*opt->err[6];
-        var+=e*e*(pow(10,0.1*MAX(snr_max-snr_rover,0)));
-    }
-    if (opt->err[7]>0.0) {   /* add rcvr stdevs term */
-        if (code) var+=SQR(opt->err[7]*0.01*(1<<(obs->Pstd[frq]+5))); /* 0.01*2^(n+5) */
-        else var+=SQR(opt->err[7]*obs->Lstd[frq]*0.004*0.2); /* 0.004 cycles -> m) */
-    }
+
     /* FIXME: the scaling factor is not 3 for other signals/constellations than GPS L1/L2 */
-    var*=(opt->ionoopt==IONOOPT_IFLC)?SQR(3.0):1.0;
+
+    /* System/frequency factors */
+    /* The rtkpos varerr function does not use this factor.
+       Define there, or undefine here, to be consistent. */
+#define VAR_GPS_QZS_L5_FACT
+#ifdef VAR_GPS_QZS_L5_FACT
+    /* GPS/QZS L5 error factor */
+    if (sys==SYS_GPS||sys==SYS_QZS) {
+        if (frq==2) sys_fact*=EFACT_GPS_L5;
+    }
+#endif
+
+    /* Code/phase/frequency factor */
+    double code_freq_fact=opt->eratio[frq];
+    /* The rtkpos varerr function does not implement this guard.
+       Define there to be consistent. */
+#define VAR_GUARD_ERATIO
+#ifdef VAR_GUARD_ERATIO
+    /* Guard against a configuration eratio being zero, or less */
+    if (code_freq_fact<=0.0) code_freq_fact=opt->eratio[0];
+#endif
+    /* Increased variance for pseudoranges */
+    if (!code) {
+      /* The rtkpos varerr function use the ratio.
+         #define VAR_PHASE_FREQ_RATIO to be consistent */
+#ifdef VAR_PHASE_FREQ_RATIO
+        /* Phase: adjust variance between freqs */
+        code_freq_fact/=opt->eratio[0];
+#else
+        code_freq_fact=1.0;
+#endif
+    }
+
+    /* IONOOPT IFLC factor */
+    double iflc_fact=(opt->ionoopt==IONOOPT_IFLC)?3.0:1.0;
+
+    /* Variance using an additive model */
+
+    /* Base term */
+    double a=opt->err[1];
+    double var=SQR(a);
+
+    /* Satellite elevation term */
+    /* The pntpos varerr function limits the elevation.
+       #define VAR_MIN_EL in radians to be consistent. */
+#ifdef VAR_MIN_EL
+    if (el<VAR_MIN_EL) el=VAR_MIN_EL;
+#endif
+    double b=opt->err[2];
+    /* The pntpos varerr function scales the elevation variance by 1/sin(el)
+       Undefine VAR_SQR_SINEL to be consistent. */
+#define VAR_SQR_SINEL
+#ifdef VAR_SQR_SINEL
+    var+=SQR(b/sin(el));
+#else
+    var+=SQR(b)/sin(el);
+#endif
+
+    /* Add the SNR term, if not zero */
+    if (opt->err[6]>0.0) {
+        double d=opt->err[6];
+        /* #define VAR_SNR_NO_MAX to not have the SNR curve relative to the maximum SNR */
+#ifndef VAR_SNR_NO_MAX
+        double snr_max=opt->err[5];
+        var+=SQR(d)*pow(10,0.1*MAX(snr_max-snr_rover,0));
+#else
+        var+=SQR(d)*pow(10,-0.1*snr_rover);
+#endif
+    }
+
+    /* Scale the above terms */
+    var*=SQR(sys_fact*code_freq_fact);
+
+    /* Add the receiver std estimate
+       TODO perhaps move after scaling below? */
+    if (opt->err[7]>0.0) {
+        double e=opt->err[7];
+        if (code) var+=SQR(e)*SQR(0.01*(1<<(obs->Pstd[frq]+5))); /* 0.01*2^(n+5) */
+        else var+=SQR(e)*SQR(obs->Lstd[frq]*0.004*0.2); /* 0.004 cycles -> m */
+    }
+
+    /* Scale the above terms */
+    var*=SQR(iflc_fact);
+
     return var;
 }
+
 /* initialize state and covariance -------------------------------------------*/
 static inline void initx(rtk_t *rtk, double xi, double var, int i)
 {

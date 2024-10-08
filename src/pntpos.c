@@ -44,37 +44,98 @@
 #define ERR_BRDCI   0.5         /* broadcast ionosphere model error factor */
 #define ERR_CBIAS   0.3         /* code bias error Std (m) */
 #define REL_HUMI    0.7         /* relative humidity for Saastamoinen model */
-#define MIN_EL      (5.0*D2R)   /* min elevation for measurement error (rad) */
+#define VAR_MIN_EL  (5.0*D2R)   /* min elevation for measurement error (rad) */
 # define MAX_GDOP   30          /* max gdop for valid solution  */
 
-/* pseudorange measurement error variance ------------------------------------*/
-static double varerr(const prcopt_t *opt, const ssat_t *ssat, const obsd_t *obs, double el, int sys)
+/* Pseudorange measurement error variance ------------------------------------*/
+static double varerr(int sat, int sys, double el, double snr_rover,
+                     const prcopt_t *opt, const obsd_t *obs)
 {
-    double fact=1.0,varr,snr_rover;
+    int frq=0; /* TODO */
 
+    /* Firstly establish some factors that will scale the variance */
+
+    /* System error factor */
+    double sys_fact;
     switch (sys) {
-        case SYS_GPS: fact *= EFACT_GPS; break;
-        case SYS_GLO: fact *= EFACT_GLO; break;
-        case SYS_SBS: fact *= EFACT_SBS; break;
-        case SYS_CMP: fact *= EFACT_CMP; break;
-        case SYS_QZS: fact *= EFACT_QZS; break;
-        case SYS_IRN: fact *= EFACT_IRN; break;
-        default:      fact *= EFACT_GPS; break;
+        case SYS_GPS: sys_fact=EFACT_GPS; break;
+        case SYS_GLO: sys_fact=EFACT_GLO; break;
+          /* The rtkpos and ppp varerr functions include EFACT_GAL.
+             #define VAR_USE_EFACT_GAL to be consistent. */
+#ifdef VAR_USE_EFACT_GAL
+        case SYS_GAL: sys_fact=EFACT_GAL;break;
+#endif
+        case SYS_SBS: sys_fact=EFACT_SBS; break;
+        case SYS_QZS: sys_fact=EFACT_QZS; break;
+        case SYS_CMP: sys_fact=EFACT_CMP; break;
+        case SYS_IRN: sys_fact=EFACT_IRN; break;
+        default:      sys_fact=EFACT_GPS; break;
     }
-    if (el<MIN_EL) el=MIN_EL;
-    /* var = R^2*(a^2 + (b^2/sin(el) + c^2*(10^(0.1*(snr_max-snr_rover)))) + (d*rcv_std)^2) */
-    varr=SQR(opt->err[1])+SQR(opt->err[2])/sin(el);
-    if (opt->err[6]>0.0) {  /* if snr term not zero */
-        snr_rover=(ssat)?SNR_UNIT*ssat->snr_rover[0]:opt->err[5];
-        varr+=SQR(opt->err[6])*pow(10,0.1*MAX(opt->err[5]-snr_rover,0));
+
+    /* Frequency factor */
+    double freq_fact=opt->eratio[frq];
+
+    /* IONOOPT IFLC factor */
+    double iflc_fact=(opt->ionoopt==IONOOPT_IFLC)?3.0:1.0;
+
+    /* Variance using an additive model */
+
+    /* Base term */
+    double a=opt->err[1];
+    double var=SQR(a);
+
+    /* Satellite elevation term */
+    /* The rtkpos and ppp varerr functions do not limit the elevation.
+       #define VAR_MIN_EL in rtkpos and ppp, or undefine above, to be consistent. */
+#ifdef VAR_MIN_EL
+    if (el<VAR_MIN_EL) el=VAR_MIN_EL;
+#endif
+    double b=opt->err[2];
+    /* The rtkpos and ppp varerr functions scale the elevation variance by 1/sin(el)^2
+       #define VAR_SQR_SINEL to be consistent. */
+#ifdef VAR_SQR_SINEL
+    var+=SQR(b/sin(el));
+#else
+    var+=SQR(b)/sin(el);
+#endif
+
+    /* Add the SNR term, if not zero */
+    double d=opt->err[6];
+    if (d>0.0) {
+        /* #define VAR_SNR_NO_MAX to not have the SNR curve relative to the maximum SNR */
+#ifndef VAR_SNR_NO_MAX
+        double snr_max=opt->err[5];
+        var+=SQR(d)*pow(10,0.1*MAX(snr_max-snr_rover,0));
+#else
+        var+=SQR(d)*pow(10,-0.1*snr_rover);
+#endif
     }
-    varr*=SQR(opt->eratio[0]);
-    if (opt->err[7]>0.0) {
-        varr+=SQR(opt->err[7]*0.01*(1<<(obs->Pstd[0]+5)));  /* 0.01*2^(n+5) m */
+
+    /* Scale the above terms */
+    /* The rtkpos and ppp varerr functions do not scale the rcv std by the system factor,
+       #define VAR_NOT_SCALE_RCV_STD_SYS_FACT to be consistent. */
+#ifndef VAR_NOT_SCALE_RCV_STD_SYS_FACT
+    var*=SQR(freq_fact);
+#else
+    var*=SQR(sys_fact*freq_fact);
+#endif
+
+    /* Add the receiver std estimate */
+    double e=opt->err[7];
+    if (e>0.0) {
+        var+=SQR(e)*SQR(0.01*(1<<(obs->Pstd[frq]+5))); /* 0.01*2^(n+5) */
     }
-    if (opt->ionoopt==IONOOPT_IFLC) varr*=SQR(3.0); /* iono-free */
-    return SQR(fact)*varr;
+
+    /* Scale the above terms */
+#ifndef VAR_NOT_SCALE_RCV_STD_SYS_FACT
+    var*=SQR(sys_fact*iflc_fact);
+#else
+    var*=SQR(iflc_fact);
+#endif
+
+    return var;
 }
+
 /* get group delay parameter (m) ---------------------------------------------*/
 static double gettgd(int sat, const nav_t *nav, int type)
 {
@@ -288,6 +349,7 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
     gtime_t time;
     double r,freq,dion=0.0,dtrp=0.0,vmeas,vion=0.0,vtrp=0.0,rr[3],pos[3],dtr,e[3],P;
     int i,j,nv=0,sat,sys,mask[NX-3]={0};
+    double snr_max=opt->err[5],snr_rover;
 
     for (i=0;i<3;i++) rr[i]=x[i];
     dtr=x[3];
@@ -358,10 +420,8 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
         
         /* variance of pseudorange error */
         var[nv]=vare[i]+vmeas+vion+vtrp;
-        if (ssat)
-            var[nv++]+=varerr(opt,&ssat[i],&obs[i],azel[1+i*2],sys);
-        else
-            var[nv++]+=varerr(opt,NULL,&obs[i],azel[1+i*2],sys);
+        snr_rover=ssat?SNR_UNIT*ssat[sat-1].snr_rover[0]:snr_max;
+        var[nv++]+=varerr(sat,sys,azel[1+i*2],snr_rover,opt,&obs[i]);
         trace(4,"sat=%2d azel=%5.1f %4.1f res=%7.3f sig=%5.3f\n",obs[i].sat,
               azel[i*2]*R2D,azel[1+i*2]*R2D,resp[i],sqrt(var[nv-1]));
     }
