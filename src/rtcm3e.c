@@ -836,7 +836,7 @@ static int encode_type1019(rtcm_t *rtcm, int sync)
     setbits(rtcm->buff,i, 8,tgd      ); i+= 8;
     setbitu(rtcm->buff,i, 6,eph->svh ); i+= 6;
     setbitu(rtcm->buff,i, 1,eph->flag); i+= 1;
-    setbitu(rtcm->buff,i, 1,eph->fit>0.0?0:1); i+=1;
+    setbitu(rtcm->buff,i, 1,eph->fit>4?1:0); i+=1;
     rtcm->nbit=i;
     return 1;
 }
@@ -1092,7 +1092,7 @@ static int encode_type1044(rtcm_t *rtcm, int sync)
     setbitu(rtcm->buff,i, 6,eph->svh ); i+= 6;
     setbits(rtcm->buff,i, 8,tgd      ); i+= 8;
     setbitu(rtcm->buff,i,10,eph->iodc); i+=10;
-    setbitu(rtcm->buff,i, 1,eph->fit==2.0?0:1); i+=1;
+    setbitu(rtcm->buff,i, 1,eph->fit>2?1:0); i+=1;
     rtcm->nbit=i;
     return 1;
 }

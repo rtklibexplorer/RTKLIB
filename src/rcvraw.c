@@ -1010,14 +1010,14 @@ extern int decode_glostr(const uint8_t *buff, geph_t *geph, double *utc)
     return 1;
 }
 /* decode GPS/QZSS ephemeris -------------------------------------------------*/
-static int decode_frame_eph(const uint8_t *buff, eph_t *eph)
+static int decode_frame_eph(const uint8_t *buff, int sys, eph_t *eph)
 {
+    trace(4, "decode_frame_eph: sys=%d\n", sys);
+
     eph_t eph_sat={0};
     double tow1,tow2,tow3,toc,sqrtA;
     int i=48,id1,id2,id3,week,iodc0,iodc1,iode,tgd;
-    
-    trace(4,"decode_frame_eph:\n");
-    
+
     i=240*0+24; /* subframe 1 */
     tow1        =getbitu(buff,i,17)*6.0;          i+=17+2;
     id1         =getbitu(buff,i, 3);              i+=3+2;
@@ -1046,7 +1046,10 @@ static int decode_frame_eph(const uint8_t *buff, eph_t *eph)
     eph_sat.cus =getbits(buff,i,16)*P2_29;        i+=16;
     sqrtA    =getbitu(buff,i,32)*P2_19;        i+=32;
     eph_sat.toes=getbitu(buff,i,16)*16.0;         i+=16;
-    eph_sat.fit =getbitu(buff,i, 1)?0.0:4.0; /* 0:4hr,1:>4hr */
+    if (sys==SYS_GPS)
+        eph_sat.fit=getbitu(buff,i,1)?6:4; /* 0:4hr,1:>4hr */
+    else if (sys==SYS_QZS)
+        eph_sat.fit=getbitu(buff,i,1)?4:2; /* 0:2hr,1:>2hr */
     
     i=240*2+24; /* subframe 3 */
     tow3        =getbitu(buff,i,17)*6.0;          i+=17+2;
@@ -1262,6 +1265,7 @@ static int decode_frame_utc(const uint8_t *buff, double *utc)
 *                                 buff[ 60- 89]: subframe 3
 *                                 buff[ 90-119]: subframe 4
 *                                 buff[120-149]: subframe 5
+*          int sys          I   SYS_GPS or SYS_QZSS
 *          eph_t *eph       IO  GPS/QZSS ephemeris       (NULL: not output)
 *          alm_t *alm       IO  GPS/QZSS almanac/health  (NULL: not output)
 *                                 alm[sat-1]: almanac/health (sat=sat no)
@@ -1275,12 +1279,12 @@ static int decode_frame_utc(const uint8_t *buff, double *utc)
 * notes  : use CPU time to resolve modulo 1024 ambiguity of the week number
 *          see ref [1]
 *-----------------------------------------------------------------------------*/
-extern int decode_frame(const uint8_t *buff, eph_t *eph, alm_t *alm,
+extern int decode_frame(const uint8_t *buff, int sys, eph_t *eph, alm_t *alm,
                         double *ion, double *utc)
 {
     trace(4,"decode_frame:\n");
     
-    if (eph&&!decode_frame_eph(buff,eph)) return 0;
+    if (eph&&!decode_frame_eph(buff,sys,eph)) return 0;
     if (alm&&!decode_frame_alm(buff,alm)) return 0;
     if (ion&&!decode_frame_ion(buff,ion)) return 0;
     if (utc&&!decode_frame_utc(buff,utc)) return 0;
@@ -1358,7 +1362,8 @@ extern int init_raw(raw_t *raw, int format)
     for (i=0;i<MAXSAT   ;i++) raw->nav.alm  [i]=alm0;
     for (i=0;i<NSATGLO  ;i++) raw->nav.geph [i]=geph0;
     for (i=0;i<NSATSBS*2;i++) raw->nav.seph [i]=seph0;
-    raw->sta.name[0]=raw->sta.marker[0]='\0';
+    raw->sta.name[0]=raw->sta.markerno[0]=raw->sta.markertype[0]='\0';
+    raw->sta.observer[0]=raw->sta.agency[0]='\0';
     raw->sta.antdes[0]=raw->sta.antsno[0]='\0';
     raw->sta.rectype[0]=raw->sta.recver[0]=raw->sta.recsno[0]='\0';
     raw->sta.antsetup=raw->sta.itrf=raw->sta.deltype=0;

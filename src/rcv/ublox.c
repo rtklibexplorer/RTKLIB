@@ -831,8 +831,8 @@ static void adj_utcweek(gtime_t time, double *utc)
 static int decode_eph(raw_t *raw, int sat)
 {
     eph_t eph={0};
-    
-    if (!decode_frame(raw->subfrm[sat-1],&eph,NULL,NULL,NULL)) return 0;
+    int sys = satsys(sat, NULL);
+    if (!decode_frame(raw->subfrm[sat-1],sys,&eph,NULL,NULL,NULL)) return 0;
     
     if (!strstr(raw->opt,"-EPHALL")) {
         if (eph.iode==raw->nav.eph[sat-1].iode&&
@@ -851,8 +851,7 @@ static int decode_ionutc(raw_t *raw, int sat)
 {
     double ion[8],utc[8];
     int sys=satsys(sat,NULL);
-    
-    if (!decode_frame(raw->subfrm[sat-1],NULL,NULL,ion,utc)) return 0;
+    if (!decode_frame(raw->subfrm[sat-1],sys,NULL,NULL,ion,utc)) return 0;
     
     adj_utcweek(raw->time,utc);
     if (sys==SYS_QZS) {

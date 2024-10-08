@@ -38,11 +38,15 @@ MapView::MapView(QWidget *parent)
     selectedMap = 0;
     center_latitude = center_longitude = 0.0;
     highlightedMark = -1;
-    for (int i = 0; i < 256; i++) {
-        markState[0] = markState[1] = 0;
+
+    for (int i = 0; i < NUM_MARK; i++) {
+        markState[i] = 0;
         markPosition[i][0] = markPosition[i][1] = NAN;
     }
+
     mapViewOptDialog = new MapViewOptDialog(this);
+    timerLL.setInterval(100);
+    timerGM.setInterval(100);
 
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &MapView::reject);
     connect(ui->btnOptions, &QPushButton::clicked, this, &MapView::showOptionsDialog);
@@ -54,21 +58,22 @@ MapView::MapView(QWidget *parent)
     connect(&timerLL, &QTimer::timeout, this, &MapView::timerLLTimer);
     connect(&timerGM, &QTimer::timeout, this, &MapView::timerGMTimer);
 
-    mapStrings[0][0] = "OpenStreetMap";                                     //todo: save map strings in settins
+    mapStrings[0][0] = "OpenStreetMap";
     mapStrings[0][1] = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
     mapStrings[0][2] = "https://osm.org/copyright";
 
     QHBoxLayout *layout = new QHBoxLayout();
     ui->wgMap->setContentsMargins(0, 0, 0, 0);
     ui->wgMap->setLayout(layout);
+
 #ifdef QWEBENGINE
     webBrowser = new QWebEngineView(ui->wgMap);
+    connect(webBrowser, &QWebEngineView::loadFinished, this, &MapView::pageLoaded);
     layout->addWidget(webBrowser);
     pageState = new MapViewPageState(this);
     webChannel = new QWebChannel(this);
     webChannel->registerObject(QStringLiteral("state"), pageState);
 
-    connect(webBrowser, &QWebEngineView::loadFinished, this, &MapView::pageLoaded);
 #else
     QLabel *label = new QLabel();
     label->setText(tr("QWebEngine is not available to show a map."));
@@ -78,7 +83,6 @@ MapView::MapView(QWidget *parent)
     ui->rBMapSelect1->setChecked(!selectedMap);
     ui->rBMapSelect2->setChecked(selectedMap);
     selectMap(selectedMap);
-    showMap(selectedMap);
 }
 //---------------------------------------------------------------------------
 void MapView::setApiKey(const QString & key)
@@ -107,11 +111,15 @@ void MapView::showOptionsDialog()
                            y() + height() / 2 - mapViewOptDialog->height() / 2);
 
     mapViewOptDialog->setApiKey(apiKey);
+
     for (int i = 0; i < 6; i++)
         mapViewOptDialog->setMapStrings(i, mapStrings[i][0], mapStrings[i][1], mapStrings[i][2]);
-    if (mapViewOptDialog->exec() != QDialog::Accepted) return;
+
+    if (mapViewOptDialog->exec() != QDialog::Accepted)
+        return;
 
     apiKey = mapViewOptDialog->getApiKey();
+
     for (int i = 0; i < 6; i++)
         mapViewOptDialog->getMapStrings(i, mapStrings[i][0], mapStrings[i][1], mapStrings[i][2]);
 
@@ -144,21 +152,21 @@ void MapView::zoomIn()
 //---------------------------------------------------------------------------
 void MapView::center()
 {
-    setCenter(center_latitude,center_longitude);
+    setCenter(center_latitude, center_longitude);
 }
 //---------------------------------------------------------------------------
 void MapView::showMap(int map)
 {
     if (map == 0) {
         showMapLL();
-    }
-    else if (map == 1) {
+    } else if (map == 1) {
         showMapGM();
     }
 }
 //---------------------------------------------------------------------------
 void MapView::showMapLL()
 {
+#ifdef QWEBENGINE
     QString pageSource;
     int i, j;
 
@@ -182,7 +190,7 @@ void MapView::showMapLL()
 
             out << QStringLiteral("var tile%1 = L.tileLayer('%2', {\n").arg(j).arg(url);
             out << QStringLiteral("  attribution: \"<a href='%1' target='_blank'>%2</a>\",\n").arg(attr, title);
-            out << QStringLiteral("  opacity: %1});\n").arg(MAP_OPACITY,0,'f',1);
+            out << QStringLiteral("  opacity: %1});\n").arg(MAP_OPACITY, 0, 'f', 1);
             j++;
         }
         out << "var basemaps = {";
@@ -196,14 +204,13 @@ void MapView::showMapLL()
     }
     ifp.close();
 
-#ifdef QWEBENGINE
     webBrowser->setHtml(pageSource);
     webBrowser->page()->setWebChannel(webChannel);
     webBrowser->show();
     loaded = false;
-#endif
 
     timerLL.start();
+#endif
 }
 //---------------------------------------------------------------------------
 void MapView::timerLLTimer()
@@ -218,6 +225,7 @@ void MapView::timerLLTimer()
 //---------------------------------------------------------------------------
 void MapView::showMapGM()
 {
+#ifdef QWEBENGINE
     QString pageSource;
 
     QFile ifp(RTKLIB_GM_TEMP);
@@ -238,14 +246,13 @@ void MapView::showMapGM()
     }
     ifp.close();
 
-#ifdef QWEBENGINE
     webBrowser->setHtml(pageSource);
     webBrowser->page()->setWebChannel(webChannel);
     webBrowser->show();
     loaded = false;
-#endif
-    timerGM.start();
 
+    timerGM.start();
+#endif
 }
 //---------------------------------------------------------------------------
 void MapView::timerGMTimer()
@@ -267,52 +274,61 @@ void MapView::setView(int map, double lat, double lon, int zoom)
 void MapView::updateMap()
 {
     setCenter(center_latitude, center_longitude);
-    for (int i = 0; i < 255; i++) {
+
+    for (int i = 0; i < NUM_MARK; i++) {
         if (std::isnan(markPosition[i][0]) || std::isnan(markPosition[i][0])) continue;
+
         addMark(selectedMap, i, markPosition[i][0], markPosition[i][1], markTitle[i], markMessage[i]);
-        if (markState[i]) showMark(i);
-        else hideMark(i);
+
+        if (markState[i])
+            showMark(i);
+        else
+            hideMark(i);
     }
 }
 //---------------------------------------------------------------------------
 void MapView::selectMap(int map)
 {
     selectedMap = map;
-    setView(map, center_latitude, center_longitude, INIT_ZOOM);
-    showMap(map);
+
+    setView(selectedMap, center_latitude, center_longitude, INIT_ZOOM);
+
+    showMap(selectedMap);
 }
 
 //---------------------------------------------------------------------------
 void MapView::setCenter(double lat, double lon)
 {
     QString func = QStringLiteral("SetCent(%1,%2)").arg(lat, 0, 'f', 9).arg(lon, 0, 'f', 9);
-    center_latitude = lat;
-    center_longitude = lon;
 
     execFunction(selectedMap, func);
+
+    center_latitude = lat;
+    center_longitude = lon;
 }
 //---------------------------------------------------------------------------
 void MapView::setViewBounds(double min_lat, double min_lon, double max_lat, double max_lon)
 { //TODO: to be implemented for Google Maps
     execFunction(selectedMap, QStringLiteral("SetVuewBounds(%1,%2,%3,%4)").arg(min_lat, 0, 'f', 9).arg(min_lon, 0, 'f', 9).
-                      arg(max_lat, 0, 'f', 9).arg(max_lon, 0, 'f', 9));
+                 arg(max_lat, 0, 'f', 9).arg(max_lon, 0, 'f', 9));
 };
 //---------------------------------------------------------------------------
 void MapView::addMark(int map, int index, double lat, double lon, const QString &title, const QString &msg)
 {
-    QString func = QStringLiteral("AddMark(%1,%2,'%3','%4')").arg(lat, 0, 'f', 9).arg(lon, 0, 'f', 9).arg(title, msg);
-
     if (index >= NUM_MARK) return;
+
+    QString func = QStringLiteral("AddMark(%1,%2,'%3','%4')").arg(lat, 0, 'f', 9).arg(lon, 0, 'f', 9).arg(title, msg);
+    execFunction(map, func);
 
     markTitle[index] = title;
     markMessage[index] = msg;
     markPosition[index][0] = lat;
     markPosition[index][1] = lon;
-    markState[index] = 1;
 
-    execFunction(map, func);
     func = QStringLiteral("ShowMark('%1')").arg(title);
     execFunction(map, func);
+
+    markState[index] = 1;
 }
 //---------------------------------------------------------------------------
 void MapView::setMark(int index, const QString &title, double lat, double lon)
@@ -322,60 +338,63 @@ void MapView::setMark(int index, const QString &title, double lat, double lon)
     markTitle[index] = title;
     QString func = QStringLiteral("PosMark(%1,%2,'%3')").arg(lat, 0, 'f', 9).arg(lon, 0, 'f', 9).arg(title);
 
+    execFunction(selectedMap, func);
+
     markPosition[index][0] = lat;
     markPosition[index][1] = lon;
-
-    execFunction(selectedMap, func);
 }
 //---------------------------------------------------------------------------
 void MapView::showMark(int index)
 {
     if (index >= NUM_MARK) return;
 
-    QString title = markTitle[index];
-    QString func = QStringLiteral("ShowMark('%1')").arg(title);
+    QString func = QStringLiteral("ShowMark('%1')").arg(markTitle[index]);
+
+    execFunction(selectedMap,func);
 
     markState[index] = 1;
-    execFunction(selectedMap,func);
 }
 //---------------------------------------------------------------------------
 void MapView::hideMark(int index)
 {
     if (index >= NUM_MARK) return;
 
-    QString title = markTitle[index];
-    QString func = QStringLiteral("HideMark('%1')").arg(title);
+    QString func = QStringLiteral("HideMark('%1')").arg(markTitle[index]);
+
+    execFunction(selectedMap,func);
 
     markState[index] = 0;
-    execFunction(selectedMap,func);
 }
 //---------------------------------------------------------------------------
 void MapView::highlightMark(int index)
 {
     if (index >= NUM_MARK) return;
 
-    QString title = markTitle[index];
-    QString func = QStringLiteral("HighlightMark('%1')").arg(title);
+    QString func = QStringLiteral("HighlightMark('%1')").arg(markTitle[index]);
+
+    execFunction(selectedMap, func);
 
     highlightedMark = index;
-    execFunction(selectedMap, func);
 }
 //---------------------------------------------------------------------------
 void MapView::clearMark()
 {
     QString func = QStringLiteral("ClearMark()");
 
+    execFunction(selectedMap,func);
+
     highlightedMark = -1;
     for (int i = 0; i < NUM_MARK; i++) {
-        markState[0] = markState[1] = 0;
+        markState[i] = 0;
         markPosition[i][0] = markPosition[i][1] = NAN;
     }
-    execFunction(selectedMap,func);
 }
 //---------------------------------------------------------------------------
 int MapView::setState(int map)
 {
     Q_UNUSED(map)
+    QApplication::processEvents();
+
     if (!loaded) return 0;
     return pageState->getText().toInt();
 }
@@ -383,6 +402,7 @@ int MapView::setState(int map)
 void MapView::execFunction(int map, const QString &func)
 {
     Q_UNUSED(map)
+
     if (!loaded) return;
 
 #ifdef QWEBENGINE
@@ -405,18 +425,14 @@ void MapView::loadOptions(QSettings &settings)
     QStringList strs;
     for (int i = 0; i < 6; i++)
     {
-        if (i==0)
-            strs = settings.value("mapview/mapstrs_0", "OpenStreetMap,"
-                                                       "https://tile.openstreetmap.org/{z}/{x}/{y}.png,"
-                                                       "https://osm.org/copyright").toString().split(",");
-        else
-            strs = settings.value(QStringLiteral("set/mapstring%1").arg(i), "").toString().split(",");
+        strs = settings.value(QStringLiteral("set/mapstring%1").arg(i), "").toString().split(",");
         if (strs.length() == 3)
         {
             for (int j = 0; j < 3; j++)
                 mapStrings[i][j] = strs[j];
         }
     }
+
     apiKey = settings.value("mapview/apikey" ,"").toString();
 }
 //---------------------------------------------------------------------------

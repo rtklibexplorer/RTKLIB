@@ -178,7 +178,6 @@ void Plot::readObservation(const QStringList &files)
     simulatedObservation = 0;
 
     updateObservation(nobs);
-    updateMp();
 
     if (observationFiles != files)
         observationFiles = files;
@@ -612,8 +611,8 @@ void Plot::updateSky()
                 k = static_cast<int>(radius * 9.0);
                 dr = radius * 9.0 - k;
                 dist = k > 8 ? skyImgDialog->getSkyDistortion(9) : (1.0 - dr) * skyImgDialog->getSkyDistortion(k) + dr * skyImgDialog->getSkyDistortion(k + 1);
-                xp *= dist / radius;
-                yp *= dist / radius;
+                xp *= dist / radius + skyImgDialog->getSkyScale();
+                yp *= dist / radius + skyImgDialog->getSkyScale();
             } else {
                 xp *= skyImgDialog->getSkyScale();
                 yp *= skyImgDialog->getSkyScale();
@@ -653,7 +652,7 @@ void Plot::updateSky()
 void Plot::readSkyData(const QString &file)
 {
     QImage image;
-    int w, h, wr;
+    int w, wr;
 
     trace(3, "readSkyData\n");
 
@@ -669,11 +668,10 @@ void Plot::readSkyData(const QString &file)
     skyImageOriginal = image;
 
     w = qMax(skyImageOriginal.width(), skyImageOriginal.height());
-    h = qMin(skyImageOriginal.width(), skyImageOriginal.height());
     wr = qMin(w, MAX_SKYIMG_R);
     skyImageResampled = QImage(wr, wr, QImage::Format_ARGB32);
 
-    skyImgDialog->setImage(skyImageResampled, w, h);
+    skyImgDialog->setImage(skyImageResampled, skyImageOriginal.width(), skyImageOriginal.height());
 
     skyImgDialog->readSkyTag(file + ".tag");
 
@@ -681,6 +679,7 @@ void Plot::readSkyData(const QString &file)
     ui->btnShowImage->setChecked(true);
 
     updateSky();
+    updateEnable();
 }
 
 // read shapefile -----------------------------------------------------------
@@ -998,6 +997,9 @@ void Plot::saveSnrMp(const QString &file)
     trace(3, "saveSnrMp: file=%s\n", qPrintable(file));
 
     if (!(fp.open(QIODevice::WriteOnly))) return;
+
+    if (!multipath[0])
+        updateMp();
 
     // write header
     time_label = plotOptDialog->getTimeFormat() <= 1 ? tr("TIME (GPST)") : (plotOptDialog->getTimeFormat() <= 2 ? tr("TIME (UTC)") : tr("TIME (JST)"));
@@ -1490,7 +1492,7 @@ void Plot::generateElevationMaskFromSkyImage()
         for (el = 90.0, n = 0, el0 = 0.0; el >= 0.0; el -= 0.1) {
             r = (1.0 - el / 90.0) * skyImgDialog->getSkyScaleR();
             x = (int)floor(w / 2.0 + sa * r + 0.5);
-            y = (int)floor(h / 2.0 + ca * r + 0.5);
+            y = (int)floor(h / 2.0 - ca * r + 0.5);
             if (x < 0 || x >= w || y < 0 || y >= h) continue;
             QRgb pix = bm.pixel(x, y);
             if (qRed(pix) < 255 && qGreen(pix) < 255 && qBlue(pix) < 255) {

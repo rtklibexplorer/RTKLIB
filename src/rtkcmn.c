@@ -263,7 +263,8 @@ static char *obscodes[]={       /* observation code strings */
     "6A","6B","6C","6X","6Z", "6S","6L","8I","8Q","8X", /* 30-39 */
     "2I","2Q","6I","6Q","3I", "3Q","3X","1I","1Q","5A", /* 40-49 */
     "5B","5C","9A","9B","9C", "9X","1D","5D","5P","5Z", /* 50-59 */
-    "6E","7D","7P","7Z","8D", "8P","4A","4B","4X",""    /* 60-69 */
+    "6E","7D","7P","7Z","8D", "8P","4A","4B","4X","6D", /* 60-69 */
+    "6P"
 };
 static char codepris[7][MAXFREQ][16]={  /* code priority for each freq-index */
     /* L1/E1/B1 L2/E5b/B2b L5/E5a/B2a E6/LEX/B3 E5(a+b)         */
@@ -272,8 +273,8 @@ static char codepris[7][MAXFREQ][16]={  /* code priority for each freq-index */
     {"CABXZ"   ,"XIQ"       ,"XIQ"     ,"ABCXZ"  ,"IQX"    ,""}, /* GAL */
     {"CLSXZ"   ,"LSX"       ,"IQXDPZ"  ,"LSXEZ"  ,""       ,""}, /* QZS */
     {"C"       ,"IQX"       ,""        ,""       ,""       ,""}, /* SBS */
-    {"IQXDPAN" ,"IQXDPZ"    ,"DPX"    ,"IQXA"    ,"DPX"    ,""}, /* BDS */
-    {"ABCX"    ,"ABCX"      ,""        ,""       ,""       ,""}  /* IRN */
+    {"IQXDPAN" ,"IQXDPZ"    ,"DPX"    ,"IQXDPZA" ,"DPX"    ,""}, /* BDS */
+    {"ABCX"    ,"ABCX"      ,"DPX"     ,""       ,""       ,""}  /* IRN */
 };
 static fatalfunc_t *fatalfunc=NULL; /* fatal callback function */
 
@@ -690,6 +691,7 @@ static int code2freq_IRN(uint8_t code, double *freq)
     switch (obs[0]) {
         case '5': *freq=FREQL5; return 0; /* L5 */
         case '9': *freq=FREQs; return 1; /* S */
+        case '1': *freq=FREQL1; return 2; /* L1 */
     }
     return -1;
 }
@@ -706,7 +708,7 @@ static int code2freq_IRN(uint8_t code, double *freq)
 *            QZSS      L1    L2    L5    L6     -
 *            SBAS      L1     -    L5     -     -
 *            BDS       B1    B2b   B2a   B3   B2ab
-*            NavIC     L5     S     -     -     -
+*            NavIC     L5     S    L1     -     -
 *-----------------------------------------------------------------------------*/
 extern int code2idx(int sys, uint8_t code)
 {

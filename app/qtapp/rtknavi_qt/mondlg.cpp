@@ -996,7 +996,7 @@ void MonitorDialog::setObservations()
         header << label[i];
 	}
     for (i = 0; i < NFREQ + nex; i++) {
-        ui->tWConsole->setColumnWidth(j++, 22 * fontScale / 96);
+        ui->tWConsole->setColumnWidth(j++, 40 * fontScale / 96);
         header << (i < NFREQ ? tr("C%1").arg(i+1) : tr("CX%1").arg(i - NFREQ + 1));
     }
     for (i = 0; i < NFREQ + nex; i++) {

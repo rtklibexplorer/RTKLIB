@@ -23,11 +23,14 @@ class MapViewPageState : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString text MEMBER text NOTIFY textChanged)
+
 public:
     explicit MapViewPageState(QObject *parent = NULL): QObject(parent){}
     QString getText() {return text;}
+
 signals:
     void textChanged(const QString &text);
+
 private:
     QString text;
 };

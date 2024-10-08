@@ -896,12 +896,12 @@ extern int input_unicore(raw_t* raw, uint8_t data)
     }
     raw->buff[raw->nbyte++] = data;
 
-    if (raw->nbyte == 10 && (raw->len = U2(raw->buff + 8) + HLEN) > MAXRAWLEN - 4) {
+	if (raw->nbyte == 8 && (raw->len = U2(raw->buff + 6) + HLEN) > MAXRAWLEN - 4) {
         trace(2, "unicore length error: len=%d\n", raw->len);
         raw->nbyte = 0;
         return -1;
     }
-    if (raw->nbyte < 10 || raw->nbyte < raw->len + 4) return 0;
+	if (raw->nbyte < 8 || raw->nbyte < raw->len + 4) return 0;
     raw->nbyte = 0;
 
     return decode_unicore(raw);

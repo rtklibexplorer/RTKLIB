@@ -22,12 +22,30 @@ SkyImgDialog::SkyImgDialog(Plot *_plot, QWidget *parent)
     connect(ui->btnGenMask, &QPushButton::clicked, this, &SkyImgDialog::generateMask);
     connect(ui->btnLoad, &QPushButton::clicked, this, &SkyImgDialog::loadSkyImageTag);
     connect(ui->btnSave, &QPushButton::clicked, this, &SkyImgDialog::saveSkyImageTag);
-    connect(ui->btnUpdate, &QPushButton::clicked, this, &SkyImgDialog::updateSky);
     connect(ui->cBSkyResample, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SkyImgDialog::updateSky);
     connect(ui->cBSkyElevationMask, &QCheckBox::clicked, this, &SkyImgDialog::updateSky);
     connect(ui->gBSkyDestCorrection, &QGroupBox::clicked, this, &SkyImgDialog::updateSkyEnabled);
     connect(ui->cBSkyFlip, &QCheckBox::clicked, this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyCenter1, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyCenter2, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyScale, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkySize1, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkySize2, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyFOV1, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyFOV2, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyFOV3, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyBinThres1, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyBinThres2, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
     connect(ui->gBSkyBinarize, &QGroupBox::clicked, this, &SkyImgDialog::updateSkyEnabled);
+    connect(ui->sBSkyDest1, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyDest2, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyDest3, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyDest4, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyDest5, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyDest6, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyDest7, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyDest8, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
+    connect(ui->sBSkyDest9, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, &SkyImgDialog::updateSky);
 
     updateEnable();
 }
@@ -58,14 +76,14 @@ void SkyImgDialog::saveSkyImageTag()
     data += QString("destcorr= %1\n").arg(getSkyDistortionCorrection());
     data += QString("resample= %1\n").arg(getSkyResample());
     data += QString("flip    = %1\n").arg(getSkyFlip());
-    data += QString("dest    = %1 %2 %3 %4 %5 %6 %7 %8 %9s\n")
+    data += QString("dest    = %1 %2 %3 %4 %5 %6 %7 %8 %9\n")
                 .arg(getSkyDistortion(1), 0, 'g', 6).arg(getSkyDistortion(2), 0, 'g', 6).arg(getSkyDistortion(3), 0, 'g', 6).arg(getSkyDistortion(4), 0, 'g', 6)
                 .arg(getSkyDistortion(5), 0, 'g', 6).arg(getSkyDistortion(6), 0, 'g', 6).arg(getSkyDistortion(7), 0, 'g', 6).arg(getSkyDistortion(8), 0, 'g', 6)
                 .arg(getSkyDistortion(9), 0, 'g', 6);
     data += QString("elmask  = %1\n").arg(getSkyElevationMask());
     data += QString("binarize= %1\n").arg(getSkyBinarize());
     data += QString("binthr1 = %1\n").arg(getSkyBinThres1(), 0, 'f', 2);
-    data += QString("binthr2 = %1f\n").arg(getSkyBinThres2(), 0, 'f', 2);
+    data += QString("binthr2 = %1\n").arg(getSkyBinThres2(), 0, 'f', 2);
     fp.write(data.toLatin1());
 }
 //---------------------------------------------------------------------------
@@ -114,8 +132,14 @@ void SkyImgDialog::setImage(QImage &image, double w, double h)
 
     skySize[0] = image.width();
     skySize[1] = image.height();
-    ui->sBSkyCenter1->setValue(skySize[0] / 2.0);
-    ui->sBSkyCenter1->setValue(skySize[1] / 2.0);
+    ui->sBSkySize1->setValue(w);
+    ui->sBSkySize2->setValue(h);
+    ui->sBSkyCenter1->setMinimum(0);
+    ui->sBSkyCenter1->setMaximum(w);
+    ui->sBSkyCenter1->setValue(w / 2.0);
+    ui->sBSkyCenter2->setMinimum(0);
+    ui->sBSkyCenter2->setMaximum(h);
+    ui->sBSkyCenter2->setValue(h / 2.0);
     ui->sBSkyFOV1->setValue(0);
     ui->sBSkyFOV2->setValue(0);
     ui->sBSkyFOV3->setValue(0);
@@ -125,7 +149,7 @@ void SkyImgDialog::setImage(QImage &image, double w, double h)
     ui->cBSkyResample->setCurrentIndex(0);
     ui->cBSkyFlip->setChecked(false);
     ui->cBSkyElevationMask->setChecked(true);;
-    for (int i = 0; i < 10; i++) skyDistortion[i]->setValue(0.0);
+    for (int i = 0; i < 9; i++) skyDistortion[i]->setValue(0.0);
 }
 // read sky tag data --------------------------------------------------------
 void SkyImgDialog::readSkyTag(const QString &file)
@@ -144,38 +168,39 @@ void SkyImgDialog::readSkyTag(const QString &file)
         QList<QByteArray> tokens = buff.split('=');
         if (tokens.size() < 2) continue;
 
-        if (tokens.at(0) == "centx") {
-            ui->sBSkyCenter1->setValue(tokens.at(1).toDouble());
-        } else if (tokens.at(0) == "centy") {
-            ui->sBSkyCenter2->setValue(tokens.at(1).toDouble());
-        } else if (tokens.at(0) == "scale") {
-            ui->sBSkyScale->setValue(tokens.at(1).toDouble());
-        } else if (tokens.at(0) == "roll") {
-            ui->sBSkyFOV1->setValue(tokens.at(1).toDouble());
-        } else if (tokens.at(0) == "pitch") {
-            ui->sBSkyFOV2->setValue(tokens.at(1).toDouble());
-        } else if (tokens.at(0) == "yaw") {
-            ui->sBSkyFOV3->setValue(tokens.at(1).toDouble());
-        } else if (tokens.at(0) == "destcorr") {
-            ui->gBSkyDestCorrection->setChecked(tokens.at(1).toInt());
-        } else if (tokens.at(0) == "elmask") {
-            ui->cBSkyElevationMask->setChecked(tokens.at(1).toInt());
-        } else if (tokens.at(0) == "resample") {
-            ui->cBSkyResample->setCurrentIndex(tokens.at(1).toInt());
-        } else if (tokens.at(0) == "flip") {
-            ui->cBSkyFlip->setChecked(tokens.at(1).toInt());
-        } else if (tokens.at(0) == "dest") {
-            QList<QByteArray> t = tokens.at(1).split(' ');
+        if (tokens.at(0).simplified() == "centx") {
+            ui->sBSkyCenter1->setValue(tokens.at(1).simplified().toDouble());
+        } else if (tokens.at(0).simplified() == "centy") {
+            ui->sBSkyCenter2->setValue(tokens.at(1).simplified().toDouble());
+        } else if (tokens.at(0).simplified() == "scale") {
+            ui->sBSkyScale->setValue(tokens.at(1).simplified().toDouble());
+        } else if (tokens.at(0).simplified() == "roll") {
+            ui->sBSkyFOV1->setValue(tokens.at(1).simplified().toDouble());
+        } else if (tokens.at(0).simplified() == "pitch") {
+            ui->sBSkyFOV2->setValue(tokens.at(1).simplified().toDouble());
+        } else if (tokens.at(0).simplified() == "yaw") {
+            ui->sBSkyFOV3->setValue(tokens.at(1).simplified().toDouble());
+        } else if (tokens.at(0).simplified() == "destcorr") {
+            ui->gBSkyDestCorrection->setChecked(tokens.at(1).simplified().toInt());
+        } else if (tokens.at(0).simplified() == "elmask") {
+            ui->cBSkyElevationMask->setChecked(tokens.at(1).simplified().toInt());
+        } else if (tokens.at(0).simplified() == "resample") {
+            ui->cBSkyResample->setCurrentIndex(tokens.at(1).simplified().toInt());
+        } else if (tokens.at(0).simplified() == "flip") {
+            ui->cBSkyFlip->setChecked(tokens.at(1).simplified().toInt());
+        } else if (tokens.at(0).simplified() == "dest") {
+            QList<QByteArray> t = tokens.at(1).simplified().split(' ');
             for (int i = 0; i < 9 && i < t.size(); i++)
-                skyDistortion[i]->setValue(t.at(i).toDouble());
-        } else if (tokens.at(0) == "binarize") {
-            ui->gBSkyBinarize->setChecked(tokens.at(1).toInt());
-        } else if (tokens.at(0) == "binthr1") {
-            ui->sBSkyBinThres1->setValue(tokens.at(1).toInt());
-        } else if (tokens.at(0) == "binthr2") {
-            ui->sBSkyBinThres2->setValue(tokens.at(1).toInt());
+                skyDistortion[i]->setValue(t.at(i).simplified().toDouble());
+        } else if (tokens.at(0).simplified() == "binarize") {
+            ui->gBSkyBinarize->setChecked(tokens.at(1).simplified().toInt());
+        } else if (tokens.at(0).simplified() == "binthr1") {
+            ui->sBSkyBinThres1->setValue(tokens.at(1).simplified().toDouble());
+        } else if (tokens.at(0).simplified() == "binthr2") {
+            ui->sBSkyBinThres2->setValue(tokens.at(1).simplified().toDouble());
         }
     }
+    updateSkyEnabled();
 }
 //---------------------------------------------------------------------------
 int* SkyImgDialog::getSkySize()
@@ -241,6 +266,7 @@ double *SkyImgDialog::getSkyFOV()
 double SkyImgDialog::getSkyDistortion(int i)
 {
     switch (i) {
+    case 0: return 0;
     case 1: return ui->sBSkyDest1->value();
     case 2: return ui->sBSkyDest2->value();
     case 3: return ui->sBSkyDest3->value();

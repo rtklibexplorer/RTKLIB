@@ -494,7 +494,8 @@ static int decode_ephem(int sat, raw_t *raw)
     
     trace(4,"decode_ephem: sat=%2d\n",sat);
     
-    if (!decode_frame(raw->subfrm[sat-1],&eph,NULL,NULL,NULL)) return 0;
+    int sys = satsys(sat, NULL);
+    if (!decode_frame(raw->subfrm[sat-1],sys,&eph,NULL,NULL,NULL)) return 0;
     
     if (!strstr(raw->opt,"-EPHALL")) {
         if (eph.iode==raw->nav.eph[sat-1].iode&&
@@ -514,12 +515,12 @@ static int decode_alm1(int sat, raw_t *raw)
     trace(4,"decode_alm1 : sat=%2d\n",sat);
     
     if (sys==SYS_GPS) {
-        decode_frame(raw->subfrm[sat-1],NULL,raw->nav.alm,raw->nav.ion_gps,
+        decode_frame(raw->subfrm[sat-1],sys,NULL,raw->nav.alm,raw->nav.ion_gps,
                      raw->nav.utc_gps);
         adj_utcweek(raw->time,raw->nav.utc_gps);
     }
     else if (sys==SYS_QZS) {
-        decode_frame(raw->subfrm[sat-1],NULL,raw->nav.alm,raw->nav.ion_qzs,
+        decode_frame(raw->subfrm[sat-1],sys,NULL,raw->nav.alm,raw->nav.ion_qzs,
                      raw->nav.utc_qzs);
         adj_utcweek(raw->time,raw->nav.utc_qzs);
     }
@@ -533,10 +534,10 @@ static int decode_alm2(int sat, raw_t *raw)
     trace(4,"decode_alm2 : sat=%2d\n",sat);
     
     if (sys==SYS_GPS) {
-        decode_frame(raw->subfrm[sat-1],NULL,raw->nav.alm,NULL,NULL);
+        decode_frame(raw->subfrm[sat-1],sys,NULL,raw->nav.alm,NULL,NULL);
     }
     else if (sys==SYS_QZS) {
-        decode_frame(raw->subfrm[sat-1],NULL,raw->nav.alm,raw->nav.ion_qzs,
+        decode_frame(raw->subfrm[sat-1],sys,NULL,raw->nav.alm,raw->nav.ion_qzs,
                      raw->nav.utc_qzs);
         adj_utcweek(raw->time,raw->nav.utc_qzs);
     }

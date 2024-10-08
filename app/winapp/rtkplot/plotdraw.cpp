@@ -1308,7 +1308,7 @@ void __fastcall TPlot::DrawSky(int level)
     
     if (ShowStats&&!SimObs) {
         UTF8String ustr;
-        ustr.sprintf("MARKER: %s %s",Sta.name,Sta.marker);
+        ustr.sprintf("MARKER: %s %s %s",Sta.name,Sta.markerno,Sta.markertype);
         DrawLabel(GraphS,p1,ustr,1,2); p1.y+=hh;
         ustr.sprintf("REC: %s %s %s",Sta.rectype,Sta.recver,Sta.recsno);
         DrawLabel(GraphS,p1,ustr,1,2); p1.y+=hh;
@@ -1874,7 +1874,7 @@ void __fastcall TPlot::DrawSnrE(int level)
             
             GraphE[i]->GetPos(p1,p2);
             p1.x+=8; p1.y+=6;
-            s.sprintf("MARKER: %s %s",Sta.name,Sta.marker);
+            s.sprintf("MARKER: %s %s %s",Sta.name,Sta.markerno,Sta.markertype);
             DrawLabel(GraphE[i],p1,s,1,2); p1.y+=hh;
             s.sprintf("REC: %s %s %s",Sta.rectype,Sta.recver,Sta.recsno);
             DrawLabel(GraphE[i],p1,s,1,2); p1.y+=hh;

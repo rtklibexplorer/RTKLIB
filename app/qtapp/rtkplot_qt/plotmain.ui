@@ -1188,12 +1188,6 @@
      </item>
      <item>
       <widget class="QToolButton" name="btnPointCoordinateType">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
        <property name="toolTip">
         <string>Change coordinate type of cursor</string>
        </property>

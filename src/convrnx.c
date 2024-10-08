@@ -521,12 +521,18 @@ static void setopt_sta(const strfile_t *str, rnxopt_t *opt)
     else {
         sta=str->sta;
     }
-    /* marker name and number */
-    if (!*opt->marker&&!*opt->markerno) {
-        strcpy(opt->marker  ,sta->name  );
-        strcpy(opt->markerno,sta->marker);
+    /* Marker name, number and type */
+    if (!*opt->marker && !*opt->markerno && !*opt->markertype) {
+        strcpy(opt->marker, sta->name);
+        strcpy(opt->markerno, sta->markerno);
+        strcpy(opt->markertype, sta->markertype);
     }
-    /* receiver and antenna info */
+    /* Observer / agency */
+    if (!*opt->name[0] && !*opt->name[1]) {
+        strcpy(opt->name[0], sta->observer);
+        strcpy(opt->name[1], sta->agency);
+    }
+    /* Receiver and antenna info */
     if (!*opt->rec[0]&&!*opt->rec[1]&&!*opt->rec[2]) {
         strcpy(opt->rec[0],sta->recsno);
         strcpy(opt->rec[1],sta->rectype);
@@ -990,6 +996,12 @@ static int screent_ttol(gtime_t time, gtime_t ts, gtime_t te, double tint,
            (ts.time==0||timediff(time,ts)>=-ttol)&&
            (te.time==0||timediff(time,te)<  ttol);
 }
+/* Order observation data by the RTKLib satellite index */
+static int cmpobs(const void *p1, const void *p2)
+{
+    obsd_t *obs1 = (obsd_t *)p1, *obs2 = (obsd_t *)p2;
+    return obs1->sat > obs2->sat;
+}
 /* convert observation data --------------------------------------------------*/
 static void convobs(FILE **ofp, rnxopt_t *opt, strfile_t *str, int *n,
                     gtime_t *tend, int *staid)
@@ -1032,6 +1044,10 @@ static void convobs(FILE **ofp, rnxopt_t *opt, strfile_t *str, int *n,
     /* resolve half-cycle ambiguity */
     if (opt->halfcyc) {
         resolve_halfc(str,str->obs->data,str->obs->n);
+    }
+    /* Sort observation data by the RTKLib satellite index */
+    if (opt->sortsats) {
+        qsort(str->obs->data, str->obs->n, sizeof(obsd_t), cmpobs);
     }
     /* output RINEX observation data */
     outrnxobsb(ofp[0],opt,str->obs->data,str->obs->n,str->obs->flag);

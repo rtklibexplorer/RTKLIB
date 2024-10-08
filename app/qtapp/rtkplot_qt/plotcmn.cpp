@@ -24,8 +24,8 @@ extern "C" {
 }
 //---------------------------------------------------------------------------
 const QString PTypes[] = {
-    QT_TR_NOOP("Gnd Trk"), QT_TR_NOOP("Position"), QT_TR_NOOP("Velocity"), QT_TR_NOOP("Accel"),	QT_TR_NOOP("NSat"),	 QT_TR_NOOP("Residuals"), QT_TR_NOOP("Resid-EL"),
-    QT_TR_NOOP("Sat Vis"), QT_TR_NOOP("Skyplot"),  QT_TR_NOOP("DOP/NSat"), QT_TR_NOOP("SNR/MP/EL"), QT_TR_NOOP("SNR/MP-EL"), QT_TR_NOOP("MP-Skyplot"), ""
+    QT_TR_NOOP("Ground Track"), QT_TR_NOOP("Position"), QT_TR_NOOP("Velocity"), QT_TR_NOOP("Acceleration"), QT_TR_NOOP("NSat"), QT_TR_NOOP("Residuals"), QT_TR_NOOP("Residuals-El"),
+    QT_TR_NOOP("Sat Visibility"), QT_TR_NOOP("Skyplot"),  QT_TR_NOOP("DOP/NSat"), QT_TR_NOOP("SNR/MP/El"), QT_TR_NOOP("SNR/MP-El"), QT_TR_NOOP("MP-Skyplot"), ""
 };
 // show message in status-bar -----------------------------------------------
 void Plot::showMessage(const QString &msg)

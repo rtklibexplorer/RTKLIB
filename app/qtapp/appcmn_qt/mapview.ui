@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>492</width>
+    <width>518</width>
     <height>490</height>
    </rect>
   </property>
@@ -47,7 +47,7 @@
       <item>
        <widget class="QPushButton" name="btnCenter">
         <property name="toolTip">
-         <string>Go to Center</string>
+         <string>Center Map</string>
         </property>
         <property name="icon">
          <iconset resource="../icon/resources.qrc">
@@ -80,7 +80,7 @@
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -106,6 +106,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="btnOptions">
+        <property name="toolTip">
+         <string>Show Map Options...</string>
+        </property>
         <property name="text">
          <string>Options...</string>
         </property>
@@ -117,8 +120,11 @@
       </item>
       <item>
        <widget class="QDialogButtonBox" name="buttonBox">
+        <property name="toolTip">
+         <string>Close Window</string>
+        </property>
         <property name="standardButtons">
-         <set>QDialogButtonBox::Close</set>
+         <set>QDialogButtonBox::StandardButton::Close</set>
         </property>
        </widget>
       </item>

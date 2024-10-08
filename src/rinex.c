@@ -253,7 +253,10 @@ static void init_sta(sta_t *sta)
 {
     int i;
     *sta->name   ='\0';
-    *sta->marker ='\0';
+    *sta->markerno ='\0';
+    *sta->markertype ='\0';
+    *sta->observer = '\0';
+    *sta->agency = '\0';
     *sta->antdes ='\0';
     *sta->antsno ='\0';
     *sta->rectype='\0';
@@ -380,10 +383,17 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
         if (sta) setstr(sta->name,buff,60);
     }
     else if (strstr(label,"MARKER NUMBER"       )) { /* opt */
-        if (sta) setstr(sta->marker,buff,20);
+        if (sta) setstr(sta->markerno,buff,20);
     }
-    else if (strstr(label,"MARKER TYPE"         )) ; /* ver.3 */
-    else if (strstr(label,"OBSERVER / AGENCY"   )) ;
+    else if (strstr(label,"MARKER TYPE"         )) { /* ver.3 */
+        if (sta) setstr(sta->markertype,buff,20);
+    }
+    else if (strstr(label,"OBSERVER / AGENCY"   )) {
+        if (sta) {
+            setstr(sta->observer, buff, 20);
+            setstr(sta->agency, buff+20, 40);
+        }
+    }
     else if (strstr(label,"REC # / TYPE / VERS" )) {
         if (sta) {
             setstr(sta->recsno, buff,   20);
@@ -1209,8 +1219,8 @@ static int decode_eph(double ver, int sat, gtime_t toc, const double *data,
         if (sys==SYS_GPS) {
             eph->fit=data[28];        /* fit interval (h) */
         }
-        else {
-            eph->fit=data[28]==0.0?1.0:2.0; /* fit interval (0:1h,1:>2h) */
+        else if (sys==SYS_QZS) {
+            eph->fit=data[28]==0.0?2:4; /* fit interval (0:2h,1:>2h) */
         }
     }
     else if (sys==SYS_GAL) { /* GAL ver.3 */
@@ -2000,7 +2010,7 @@ extern int input_rnxctr(rnxctr_t *rnx, FILE *fp)
     }
     else { /* other ephemeris */
         sys=satsys(eph.sat,&prn);
-        set=(sys==SYS_GAL&&(eph.code&(1<<9)))?1:0; /* GAL 0:I/NAV,1:F/NAV */
+        set=(sys==SYS_GAL&&(eph.code&((1<<8)|(1<<1))))?1:0; /* GAL 0:I/NAV,1:F/NAV */
         rnx->nav.eph[eph.sat-1+MAXSAT*set]=eph;
         rnx->time=eph.ttr;
         rnx->ephsat=eph.sat;
@@ -2743,7 +2753,7 @@ extern int outrnxnavb(FILE *fp, const rnxopt_t *opt, const eph_t *eph)
         outnavf(fp,eph->fit);
     }
     else if (sys==SYS_QZS) {
-        outnavf(fp,eph->fit>2.0?1.0:0.0);
+        outnavf(fp,eph->fit>2?1.0:0.0);
     }
     else if (sys==SYS_CMP) {
         outnavf(fp,eph->iodc); /* AODC */

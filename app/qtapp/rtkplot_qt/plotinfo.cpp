@@ -333,6 +333,7 @@ void Plot::updateSatelliteList()
     }
 
     // update combobox
+    ui->cBSatelliteList->blockSignals(true);
     ui->cBSatelliteList->clear();
     ui->cBSatelliteList->addItem("ALL");
 
@@ -358,6 +359,7 @@ void Plot::updateSatelliteList()
         satno2id(sat, s);
         ui->cBSatelliteList->addItem(s);
     }
+    ui->cBSatelliteList->blockSignals(false);
     ui->cBSatelliteList->setCurrentIndex(0);
 
     updateSatelliteSelection();
@@ -389,6 +391,9 @@ void Plot::updateObservationType()
     qsort(codes, n, sizeof(char *), _strcmp);
 
     // update combo boxes
+    ui->cBObservationType->blockSignals(true);
+    ui->cBObservationTypeSNR->blockSignals(true);
+
     ui->cBObservationType->clear();
     ui->cBObservationTypeSNR->clear();
     ui->cBObservationType->addItem(tr("ALL"));
@@ -401,6 +406,9 @@ void Plot::updateObservationType()
         ui->cBObservationType->addItem(QStringLiteral("L%1").arg(codes[i]), QString(codes[i]));
         ui->cBObservationTypeSNR->addItem(QStringLiteral("L%1").arg(codes[i]), QString(codes[i]));
     }
+    ui->cBObservationType->blockSignals(false);
+    ui->cBObservationTypeSNR->blockSignals(false);
+
     ui->cBObservationType->setCurrentIndex(0);
     ui->cBObservationTypeSNR->setCurrentIndex(0);
 }

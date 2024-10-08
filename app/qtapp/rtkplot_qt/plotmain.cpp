@@ -414,7 +414,7 @@ bool Plot::eventFilter(QObject *obj, QEvent *event)
     {
         if (obj == ui->lblDisplay) {
             updatePlotSizes();
-            //refresh();
+            refresh();
             return true;
         }
     }
@@ -615,9 +615,6 @@ void Plot::resizeEvent(QResizeEvent *)
 
     // suppress repeated resize callback
     if (formWidth == width() && formHeight == height()) return;
-
-    updatePlotSizes();
-    //refresh();
 
     formWidth = width();
     formHeight = height();
@@ -933,6 +930,8 @@ void Plot::showVectorMapDialog()
     trace(3, "showVectorMapDialog\n");
 
     vecMapDialog->exec();
+
+    refresh();
 }
 // callback on menu-solution-source -----------------------------------------
 void Plot::showSolutionText()
@@ -1250,7 +1249,7 @@ void Plot::activateSolution1()
 {
     trace(3, "activateSolution1\n");
 
-    if (solutionData[0].n <= 0) {
+    if (solutionData[0].n <= 0 && observation.n < 0) {
         ui->btnSolution1->setChecked(false);
         return;
     }
@@ -1378,11 +1377,11 @@ void Plot::updateCurrentObsSol()
 void Plot::mousePressEvent(QMouseEvent *event)
 {
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-    dragStartX = mapFromGlobal(event->globalPosition()).x();
-    dragStartY = mapFromGlobal(event->globalPosition()).y();
+    dragStartX = ui->lblDisplay->mapFromGlobal(event->globalPosition()).x();
+    dragStartY = ui->lblDisplay->mapFromGlobal(event->globalPosition()).y();
 #else
-    dragStartX = mapFromGlobal(event->globalPos()).x();
-    dragStartY = mapFromGlobal(event->globalPos()).y();
+    dragStartX = ui->lblDisplay->mapFromGlobal(event->globalPos()).x();
+    dragStartY = ui->lblDisplay->mapFromGlobal(event->globalPos()).y();
 #endif
     dragCentX = centX;
 
@@ -1405,17 +1404,17 @@ void Plot::mouseMove(QMouseEvent *event)
     double dx, dy, dxs, dys;
 
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-    if ((abs(mapFromGlobal(event->globalPosition()).x() - dragCurrentX) < 1) &&
-        (abs(mapFromGlobal(event->globalPosition()).y() - dragCurrentY) < 1)) return;
+    if ((abs(ui->lblDisplay->mapFromGlobal(event->globalPosition()).x() - dragCurrentX) < 1) &&
+        (abs(ui->lblDisplay->mapFromGlobal(event->globalPosition()).y() - dragCurrentY) < 1)) return;
 
-    dragCurrentX = mapFromGlobal(event->globalPosition()).x();
-    dragCurrentY = mapFromGlobal(event->globalPosition()).y();
+    dragCurrentX = ui->lblDisplay->mapFromGlobal(event->globalPosition()).x();
+    dragCurrentY = ui->lblDisplay->mapFromGlobal(event->globalPosition()).y();
 #else
-    if ((abs(mapFromGlobal(event->globalPos()).x() - dragCurrentX) < 1) &&
-        (abs(mapFromGlobal(event->globalPos()).y() - dragCurrentY) < 1)) return;
+    if ((abs(ui->lblDisplay->mapFromGlobal(event->globalPos()).x() - dragCurrentX) < 1) &&
+        (abs(ui->lblDisplay->mapFromGlobal(event->globalPos()).y() - dragCurrentY) < 1)) return;
 
-    dragCurrentX = mapFromGlobal(event->globalPos()).x();
-    dragCurrentY = mapFromGlobal(event->globalPos()).y();
+    dragCurrentX = ui->lblDisplay->mapFromGlobal(event->globalPos()).x();
+    dragCurrentY = ui->lblDisplay->mapFromGlobal(event->globalPos()).y();
 #endif
     trace(4, "mouseMove: X=%d Y=%d\n", dragCurrentX, dragCurrentY);
 
@@ -1440,9 +1439,11 @@ void Plot::mouseMove(QMouseEvent *event)
 void Plot::mouseReleaseEvent(QMouseEvent *event)
 {
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-    trace(3, "mouseReleaseEvent: X=%d Y=%d\n", mapFromGlobal(event->globalPosition()).x(), mapFromGlobal(event->globalPosition()).y());
+    trace(3, "mouseReleaseEvent: X=%d Y=%d\n", ui->lblDisplay->mapFromGlobal(event->globalPosition()).x(),
+          ui->lblDisplay->mapFromGlobal(event->globalPosition()).y());
 #else
-    trace(3, "mouseReleaseEvent: X=%d Y=%d\n", mapFromGlobal(event->globalPos()).x(), mapFromGlobal(event->globalPos()).y());
+    trace(3, "mouseReleaseEvent: X=%d Y=%d\n", ui->lblDisplay->mapFromGlobal(event->globalPos()).x(),
+          ui->lblDisplay->mapFromGlobal(event->globalPos()).y());
 #endif
     if (dragState == 0) return;
     dragState = 0;
@@ -1551,7 +1552,7 @@ void Plot::mouseDownSolution(int x, int y)
 
         graphTriple[i]->getCenter(dragCenterX, dragCenterY);
         graphTriple[i]->getScale(dragScaleX, dragScaleY);
-        area = graphTriple[i]->onAxis(mapFromGlobal(p));
+        area = graphTriple[i]->onAxis(p);
 
         if (dragState == 1 && area == 0) { // within plot
             setCursor(Qt::SizeAllCursor);
@@ -1596,7 +1597,7 @@ void Plot::mouseDownObservation(int x, int y)
     }
     graphSingle->getCenter(dragCenterX, dragCenterY);
     graphSingle->getScale(dragScaleX, dragScaleY);
-    area = graphSingle->onAxis(mapFromGlobal(p));
+    area = graphSingle->onAxis(p);
 
     if (area == 0 || area == 8) {  // within or below plot
         setCursor(dragState == 1 ? Qt::SizeHorCursor : Qt::SplitHCursor);
@@ -1630,7 +1631,7 @@ void Plot::mouseMoveTrack(int x, int y, double dx, double dy,
 void Plot::mouseMoveSolution(int x, int y, double dx, double dy,
                             double dxs, double dys)
 {
-    QPoint p1, p2, p = mapFromGlobal(QPoint(x, y));
+    QPoint p1, p2, p = QPoint(x, y);
     double cx, cy, xs, ys;
     int i, sel = !ui->btnSolution1->isChecked() && ui->btnSolution2->isChecked() ? 1 : 0;
 
@@ -1690,7 +1691,7 @@ void Plot::mouseMoveSolution(int x, int y, double dx, double dy,
 void Plot::mouseMoveObservation(int x, int y, double dx, double dy,
             double dxs, double dys)
 {
-    QPoint p1, p2, p = mapFromGlobal(QPoint(x, y));
+    QPoint p1, p2, p = QPoint(x, y);
     double cx, cy, xs, ys;
     int i;
 
@@ -1756,12 +1757,12 @@ void Plot::wheelEvent(QWheelEvent *event)
             if (plotType == PLOT_SNR && panel != 1) continue;
 
             area = graphTriple[panel]->onAxis(p);
-            if (area == 0 || area == 1 || area == 2) {
+            if (area == 0 || area == 1 || area == 2) {  // center, left or right of point p
                 graphTriple[panel]->getScale(xs, ys);
                 graphTriple[panel]->setScale(xs, ys * ds);
             }
         }
-        if (area == 8) {
+        if (area == 8) {  // below point p
             for (panel = 0; panel < 3; panel++) {
                 graphTriple[panel]->getScale(xs, ys);
                 graphTriple[panel]->setScale(xs * ds, ys);
@@ -1770,7 +1771,7 @@ void Plot::wheelEvent(QWheelEvent *event)
         }
     } else if (plotType == PLOT_OBS || plotType == PLOT_DOP) {
         area = graphSingle->onAxis(p);
-        if (area == 0 || area == 8) {
+        if (area == 0 || area == 8) {  // center or below
             graphSingle->getScale(xs, ys);
             graphSingle->setScale(xs * ds, ys);
             setScaleX(xs * ds);
@@ -2357,7 +2358,7 @@ void Plot::updateEnable()
                                     plotType == PLOT_SOLV || plotType == PLOT_SOLA ||
                                     plotType == PLOT_NSAT);
     ui->btnCenterOrigin->setEnabled(plotType != PLOT_NSAT);
-    ui->menuCenterOrigin->setEnabled(ui->btnCenterOrigin->isEnabled());
+    ui->menuCenterOrigin->setEnabled(ui->btnCenterOrigin->isVisible() && ui->btnCenterOrigin->isEnabled());
 
     // fit actions
     ui->btnFitHorizontal->setVisible(plotType == PLOT_SOLP || plotType == PLOT_SOLV ||
@@ -2381,11 +2382,11 @@ void Plot::updateEnable()
     ui->btnFixVertical->setVisible(plotType == PLOT_SOLP || plotType == PLOT_SOLV ||
                                    plotType == PLOT_SOLA);
     ui->btnFixCenter->setEnabled(data);
-    ui->menuFixCenter->setEnabled(ui->btnFixCenter->isEnabled());
+    ui->menuFixCenter->setEnabled(ui->btnFixCenter->isVisible() && ui->btnFixCenter->isEnabled());
     ui->btnFixHorizontal->setEnabled(data);
-    ui->menuFixHoriz->setEnabled(ui->btnFixHorizontal->isEnabled());
+    ui->menuFixHoriz->setEnabled(ui->btnFixHorizontal->isVisible() && ui->btnFixHorizontal->isEnabled());
     ui->btnFixVertical->setEnabled(data);
-    ui->menuFixVert->setEnabled(ui->btnFixVertical->isEnabled());
+    ui->menuFixVert->setEnabled(ui->btnFixVertical->isVisible() && ui->btnFixVertical->isEnabled());
 
     if (!ui->menuShowTrack->isChecked()) {
         ui->menuFixHoriz->setEnabled(false);
@@ -2408,7 +2409,8 @@ void Plot::updateEnable()
     ui->btnShowSkyplot->setVisible(plotType == PLOT_SKY || plotType == PLOT_MPS);
     ui->menuShowSkyplot->setEnabled(ui->btnShowSkyplot->isVisible());
     ui->btnShowMap->setVisible(plotType == PLOT_TRK);
-    ui->menuShowMap->setEnabled(!ui->btnSolution12->isChecked());
+    ui->btnShowMap->setEnabled(!ui->btnSolution12->isChecked());
+    ui->menuShowMap->setEnabled(ui->btnShowMap->isVisible() && ui->btnShowMap->isEnabled());
     ui->menuMapView->setEnabled(plotType == PLOT_TRK || plotType == PLOT_SOLP);
     ui->btnMapView->setVisible(ui->menuMapView->isEnabled());
     ui->menuMapImage->setEnabled(mapImageOriginal.height() > 0);

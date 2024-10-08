@@ -129,6 +129,7 @@ static const char *help[]={
 "     -ot          include time correction in rinex nav header [off]",
 "     -ol          include leap seconds in rinex nav header [off]",
 "     -halfc       half-cycle ambiguity correction [off]",
+"     -sortsats    sort observations by the RTKLib satellite index [off]",
 "     -mask   [sig[,...]] signal mask(s) (sig={G|R|E|J|S|C|I}L{1C|1P|1W|...})",
 "     -nomask [sig[,...]] signal no mask (same as above)",
 "     -x sat       exclude satellite",
@@ -500,6 +501,9 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         }
         else if (!strcmp(argv[i],"-halfc")) {
             opt->halfcyc=1;
+        }
+        else if (!strcmp(argv[i],"-sortsats")) {
+            opt->sortsats=1;
         }
         else if (!strcmp(argv[i],"-mask")&&i+1<argc) {
             for (j=0;j<RNX_NUMSYS;j++) {

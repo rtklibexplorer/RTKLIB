@@ -305,7 +305,7 @@ extern "C" {
 #define CODE_L1N    6                   /* obs code: L1codeless,B1codeless (GPS,BDS) */
 #define CODE_L1S    7                   /* obs code: L1C(D)     (GPS,QZS) */
 #define CODE_L1L    8                   /* obs code: L1C(P)     (GPS,QZS) */
-#define CODE_L1E    9                   /* (not used) */
+#define CODE_L1E    9                   /* obs code: L1C/B      (QZS) */
 #define CODE_L1A    10                  /* obs code: E1A,B1A    (GAL,BDS) */
 #define CODE_L1B    11                  /* obs code: E1B        (GAL) */
 #define CODE_L1X    12                  /* obs code: E1B+C,L1C(D+P),B1D+P (GAL,QZS,BDS) */
@@ -365,7 +365,9 @@ extern "C" {
 #define CODE_L4A    66                  /* obs code: G1aL1OCd   (GLO) */
 #define CODE_L4B    67                  /* obs code: G1aL1OCd   (GLO) */
 #define CODE_L4X    68                  /* obs code: G1al1OCd+p (GLO) */
-#define MAXCODE     68                  /* max number of obs code */
+#define CODE_L6D    69                  /* obs code: B3A(D)     (BDS) */
+#define CODE_L6P    70                  /* obs code: B3A(P)     (BDS) */
+#define MAXCODE     70                  /* max number of obs code */
 
 #define PMODE_SINGLE 0                  /* positioning mode: single */
 #define PMODE_DGPS   1                  /* positioning mode: DGPS/DGNSS */
@@ -863,7 +865,10 @@ typedef struct {        /* navigation data type */
 
 typedef struct {        /* station parameter type */
     char name   [MAXANT]; /* marker name */
-    char marker [MAXANT]; /* marker number */
+    char markerno[MAXANT]; /* marker number */
+    char markertype[MAXANT]; /* marker type */
+    char observer[MAXANT]; /* Observer */
+    char agency[MAXANT];  /* Agency */
     char antdes [MAXANT]; /* antenna descriptor */
     char antsno [MAXANT]; /* antenna serial number */
     char rectype[MAXANT]; /* receiver type descriptor */
@@ -1135,6 +1140,7 @@ typedef struct {        /* RINEX options type */
     int autopos;        /* auto approx position */
     int phshift;        /* phase shift correction */
     int halfcyc;        /* half cycle correction */
+    int sortsats;       /* Sort by satellite index */
     int sep_nav;        /* separated nav files */
     gtime_t tstart;     /* first obs time */
     gtime_t tend;       /* last obs time */
@@ -1643,7 +1649,7 @@ EXPORT uint32_t rtk_crc32 (const uint8_t *buff, int len);
 EXPORT uint32_t rtk_crc24q(const uint8_t *buff, int len);
 EXPORT uint16_t rtk_crc16 (const uint8_t *buff, int len);
 EXPORT int decode_word (uint32_t word, uint8_t *data);
-EXPORT int decode_frame(const uint8_t *buff, eph_t *eph, alm_t *alm,
+EXPORT int decode_frame(const uint8_t *buff, int sys, eph_t *eph, alm_t *alm,
                         double *ion, double *utc);
 EXPORT int test_glostr(const uint8_t *buff);
 EXPORT int decode_glostr(const uint8_t *buff, geph_t *geph, double *utc);

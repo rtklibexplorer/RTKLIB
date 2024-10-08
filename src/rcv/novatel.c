@@ -543,7 +543,7 @@ static int decode_rawephemb(raw_t *raw)
     }
     memcpy(subframe,p+12,30*3); /* subframe 1-3 */
     
-    if (!decode_frame(subframe,&eph,NULL,NULL,NULL)) {
+    if (!decode_frame(subframe,SYS_GPS,&eph,NULL,NULL,NULL)) {
         trace(2,"oem4 rawephemb subframe error: prn=%d\n",prn);
         return -1;
     }
@@ -684,7 +684,7 @@ static int decode_qzssrawephemb(raw_t *raw)
     }
     memcpy(subfrm,p+12,90);
     
-    if (!decode_frame(subfrm,&eph,NULL,NULL,NULL)) {
+    if (!decode_frame(subfrm,SYS_QZS,&eph,NULL,NULL,NULL)) {
         trace(3,"oem4 qzssrawephemb ephemeris error: prn=%d\n",prn);
         return 0;
     }
@@ -726,7 +726,7 @@ static int decode_qzssrawsubframeb(raw_t *raw)
     memcpy(raw->subfrm[sat-1]+30*(id-1),p+8,30);
     
     if (id==3) {
-        if (!decode_frame(raw->subfrm[sat-1],&eph,NULL,NULL,NULL)) return 0;
+        if (!decode_frame(raw->subfrm[sat-1],SYS_QZS,&eph,NULL,NULL,NULL)) return 0;
         if (!strstr(raw->opt,"-EPHALL")) {
             if (eph.iodc==raw->nav.eph[sat-1].iodc&&
                 eph.iode==raw->nav.eph[sat-1].iode) return 0; /* unchanged */
@@ -738,7 +738,7 @@ static int decode_qzssrawsubframeb(raw_t *raw)
         return 2;
     }
     else if (id==4||id==5) {
-        if (!decode_frame(raw->subfrm[sat-1],NULL,NULL,ion,utc)) return 0;
+        if (!decode_frame(raw->subfrm[sat-1],SYS_QZS,NULL,NULL,ion,utc)) return 0;
         adj_utcweek(raw->time,utc);
         matcpy(raw->nav.ion_qzs,ion,8,1);
         matcpy(raw->nav.utc_qzs,utc,8,1);
@@ -1196,7 +1196,7 @@ static int decode_repb(raw_t *raw)
         trace(2,"oem3 repb satellite number error: prn=%d\n",prn);
         return -1;
     }
-    if (!decode_frame(p+4,&eph,NULL,NULL,NULL)) {
+    if (!decode_frame(p+4,SYS_GPS,&eph,NULL,NULL,NULL)) {
         trace(2,"oem3 repb subframe error: prn=%d\n",prn);
         return -1;
     }
