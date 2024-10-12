@@ -63,6 +63,8 @@
 #define ROUND_U(x)  ((uint32_t)floor((x)+0.5))
 #define MIN(x,y)    ((x)<(y)?(x):(y))
 
+#define RTCMSATS 31 // Max sats in 1001-1004 and 1009-1012 headers
+
 /* MSM signal ID table -------------------------------------------------------*/
 extern const char *msm_sig_gps[32];
 extern const char *msm_sig_glo[32];
@@ -363,22 +365,24 @@ static int encode_head(int type, rtcm_t *rtcm, int sys, int sync, int nsat)
 /* encode type 1001: basic L1-only GPS RTK observables -----------------------*/
 static int encode_type1001(rtcm_t *rtcm, int sync)
 {
-    int i,j,nsat=0,sys,prn;
     int code1,pr1,ppr1,lock1,amb;
     
     trace(3,"encode_type1001: sync=%d\n",sync);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sys=satsys(rtcm->obs.data[j].sat,&prn);
+    int nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sys = satsys(rtcm->obs.data[j].sat,NULL);
         if (!(sys&(SYS_GPS|SYS_SBS))) continue;
         nsat++;
     }
     /* encode header */
-    i=encode_head(1001,rtcm,SYS_GPS,sync,nsat);
+    int i = encode_head(1001,rtcm,SYS_GPS,sync,nsat);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sys=satsys(rtcm->obs.data[j].sat,&prn);
+    nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int prn, sys = satsys(rtcm->obs.data[j].sat,&prn);
         if (!(sys&(SYS_GPS|SYS_SBS))) continue;
+        nsat++;
         
         if (sys==SYS_SBS) prn-=80; /* 40-58: sbas 120-138 */
         
@@ -398,22 +402,24 @@ static int encode_type1001(rtcm_t *rtcm, int sync)
 /* encode type 1002: extended L1-only GPS RTK observables --------------------*/
 static int encode_type1002(rtcm_t *rtcm, int sync)
 {
-    int i,j,nsat=0,sys,prn;
     int code1,pr1,ppr1,lock1,amb,cnr1;
     
     trace(3,"encode_type1002: sync=%d\n",sync);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sys=satsys(rtcm->obs.data[j].sat,&prn);
+    int nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sys = satsys(rtcm->obs.data[j].sat,NULL);
         if (!(sys&(SYS_GPS|SYS_SBS))) continue;
         nsat++;
     }
     /* encode header */
-    i=encode_head(1002,rtcm,SYS_GPS,sync,nsat);
+    int i = encode_head(1002,rtcm,SYS_GPS,sync,nsat);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sys=satsys(rtcm->obs.data[j].sat,&prn);
+    nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int prn, sys = satsys(rtcm->obs.data[j].sat,&prn);
         if (!(sys&(SYS_GPS|SYS_SBS))) continue;
+        nsat++;
         
         if (sys==SYS_SBS) prn-=80; /* 40-58: sbas 120-138 */
         
@@ -435,22 +441,24 @@ static int encode_type1002(rtcm_t *rtcm, int sync)
 /* encode type 1003: basic L1&L2 GPS RTK observables -------------------------*/
 static int encode_type1003(rtcm_t *rtcm, int sync)
 {
-    int i,j,nsat=0,sys,prn;
     int code1,pr1,ppr1,lock1,amb,code2,pr21,ppr2,lock2;
     
     trace(3,"encode_type1003: sync=%d\n",sync);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sys=satsys(rtcm->obs.data[j].sat,&prn);
+    int nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sys = satsys(rtcm->obs.data[j].sat,NULL);
         if (!(sys&(SYS_GPS|SYS_SBS))) continue;
         nsat++;
     }
     /* encode header */
-    i=encode_head(1003,rtcm,SYS_GPS,sync,nsat);
+    int i = encode_head(1003,rtcm,SYS_GPS,sync,nsat);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sys=satsys(rtcm->obs.data[j].sat,&prn);
+    nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int prn, sys = satsys(rtcm->obs.data[j].sat,&prn);
         if (!(sys&(SYS_GPS|SYS_SBS))) continue;
+        nsat++;
         
         if (sys==SYS_SBS) prn-=80; /* 40-58: sbas 120-138 */
         
@@ -474,22 +482,24 @@ static int encode_type1003(rtcm_t *rtcm, int sync)
 /* encode type 1004: extended L1&L2 GPS RTK observables ----------------------*/
 static int encode_type1004(rtcm_t *rtcm, int sync)
 {
-    int i,j,nsat=0,sys,prn;
     int code1,pr1,ppr1,lock1,amb,cnr1,code2,pr21,ppr2,lock2,cnr2;
     
     trace(3,"encode_type1004: sync=%d\n",sync);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sys=satsys(rtcm->obs.data[j].sat,&prn);
+    int nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sys = satsys(rtcm->obs.data[j].sat,NULL);
         if (!(sys&(SYS_GPS|SYS_SBS))) continue;
         nsat++;
     }
     /* encode header */
-    i=encode_head(1004,rtcm,SYS_GPS,sync,nsat);
+    int i = encode_head(1004,rtcm,SYS_GPS,sync,nsat);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sys=satsys(rtcm->obs.data[j].sat,&prn);
+    nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int prn, sys = satsys(rtcm->obs.data[j].sat,&prn);
         if (!(sys&(SYS_GPS|SYS_SBS))) continue;
+        nsat++;
         
         if (sys==SYS_SBS) prn-=80; /* 40-58: sbas 120-138 */
         
@@ -618,24 +628,26 @@ static int encode_type1008(rtcm_t *rtcm, int sync)
 /* encode type 1009: basic L1-only GLONASS RTK observables -------------------*/
 static int encode_type1009(rtcm_t *rtcm, int sync)
 {
-    int i,j,nsat=0,sat,prn,fcn;
-    int code1,pr1,ppr1,lock1,amb;
-    
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sat=rtcm->obs.data[j].sat;
-        if (satsys(sat,&prn)!=SYS_GLO) continue;
-        if ((fcn=fcn_glo(sat,rtcm))<0) continue; /* fcn+7 */
+    int nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sat = rtcm->obs.data[j].sat;
+        if (satsys(sat,NULL)!=SYS_GLO) continue;
+        if (fcn_glo(sat,rtcm) < 0) continue; /* fcn+7 */
         nsat++;
     }
     /* encode header */
-    i=encode_head(1009,rtcm,SYS_GLO,sync,nsat);
+    int i = encode_head(1009,rtcm,SYS_GLO,sync,nsat);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sat=rtcm->obs.data[j].sat;
+    nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sat = rtcm->obs.data[j].sat, prn;
         if (satsys(sat,&prn)!=SYS_GLO) continue;
-        if ((fcn=fcn_glo(sat,rtcm))<0) continue; /* fcn+7 */
+        int fcn = fcn_glo(sat,rtcm);
+        if (fcn < 0) continue; /* fcn+7 */
+        nsat++;
         
         /* generate obs field data glonass */
+        int code1,pr1,ppr1,lock1,amb;
         gen_obs_glo(rtcm,rtcm->obs.data+j,fcn,&code1,&pr1,&ppr1,&lock1,&amb,
                     NULL,NULL,NULL,NULL,NULL,NULL);
         
@@ -652,26 +664,28 @@ static int encode_type1009(rtcm_t *rtcm, int sync)
 /* encode type 1010: extended L1-only GLONASS RTK observables ----------------*/
 static int encode_type1010(rtcm_t *rtcm, int sync)
 {
-    int i,j,nsat=0,sat,prn,fcn;
-    int code1,pr1,ppr1,lock1,amb,cnr1;
-    
     trace(3,"encode_type1010: sync=%d\n",sync);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sat=rtcm->obs.data[j].sat;
-        if (satsys(sat,&prn)!=SYS_GLO) continue;
-        if ((fcn=fcn_glo(sat,rtcm))<0) continue; /* fcn+7 */
+    int nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sat = rtcm->obs.data[j].sat;
+        if (satsys(sat,NULL)!=SYS_GLO) continue;
+        if (fcn_glo(sat,rtcm) < 0) continue; /* fcn+7 */
         nsat++;
     }
     /* encode header */
-    i=encode_head(1010,rtcm,SYS_GLO,sync,nsat);
+    int i = encode_head(1010,rtcm,SYS_GLO,sync,nsat);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sat=rtcm->obs.data[j].sat;
+    nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sat = rtcm->obs.data[j].sat, prn;
         if (satsys(sat,&prn)!=SYS_GLO) continue;
-        if ((fcn=fcn_glo(sat,rtcm))<0) continue; /* fcn+7 */
+        int fcn = fcn_glo(sat,rtcm);
+        if (fcn < 0) continue; /* fcn+7 */
+        nsat++;
         
         /* generate obs field data glonass */
+        int code1,pr1,ppr1,lock1,amb,cnr1;
         gen_obs_glo(rtcm,rtcm->obs.data+j,fcn,&code1,&pr1,&ppr1,&lock1,&amb,
                     &cnr1,NULL,NULL,NULL,NULL,NULL);
         
@@ -690,26 +704,28 @@ static int encode_type1010(rtcm_t *rtcm, int sync)
 /* encode type 1011: basic  L1&L2 GLONASS RTK observables --------------------*/
 static int encode_type1011(rtcm_t *rtcm, int sync)
 {
-    int i,j,nsat=0,sat,prn,fcn;
-    int code1,pr1,ppr1,lock1,amb,code2,pr21,ppr2,lock2;
-    
     trace(3,"encode_type1011: sync=%d\n",sync);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sat=rtcm->obs.data[j].sat;
-        if (satsys(sat,&prn)!=SYS_GLO) continue;
-        if ((fcn=fcn_glo(sat,rtcm))<0) continue; /* fcn+7 */
+    int nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sat = rtcm->obs.data[j].sat;
+        if (satsys(sat,NULL)!=SYS_GLO) continue;
+        if (fcn_glo(sat,rtcm)<0) continue; /* fcn+7 */
         nsat++;
     }
     /* encode header */
-    i=encode_head(1011,rtcm,SYS_GLO,sync,nsat);
-    
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sat=rtcm->obs.data[j].sat;
+    int i = encode_head(1011,rtcm,SYS_GLO,sync,nsat);
+
+    nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sat = rtcm->obs.data[j].sat, prn;
         if (satsys(sat,&prn)!=SYS_GLO) continue;
-        if ((fcn=fcn_glo(sat,rtcm))<0) continue; /* fcn+7 */
+        int fcn = fcn_glo(sat,rtcm);
+        if (fcn < 0) continue; /* fcn+7 */
+        nsat++;
         
         /* generate obs field data glonass */
+        int code1,pr1,ppr1,lock1,amb,code2,pr21,ppr2,lock2;
         gen_obs_glo(rtcm,rtcm->obs.data+j,fcn,&code1,&pr1,&ppr1,&lock1,&amb,
                     NULL,&code2,&pr21,&ppr2,&lock2,NULL);
         
@@ -730,26 +746,28 @@ static int encode_type1011(rtcm_t *rtcm, int sync)
 /* encode type 1012: extended L1&L2 GLONASS RTK observables ------------------*/
 static int encode_type1012(rtcm_t *rtcm, int sync)
 {
-    int i,j,nsat=0,sat,prn,fcn;
-    int code1,pr1,ppr1,lock1,amb,cnr1,code2,pr21,ppr2,lock2,cnr2;
-    
     trace(3,"encode_type1012: sync=%d\n",sync);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sat=rtcm->obs.data[j].sat;
-        if (satsys(sat,&prn)!=SYS_GLO) continue;
+    int nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sat = rtcm->obs.data[j].sat;
+        if (satsys(sat,NULL)!=SYS_GLO) continue;
         if (fcn_glo(sat,rtcm)<0) continue;  /* fcn+7 */
         nsat++;
     }
     /* encode header */
-    i=encode_head(1012,rtcm,SYS_GLO,sync,nsat);
+    int i = encode_head(1012,rtcm,SYS_GLO,sync,nsat);
     
-    for (j=0;j<rtcm->obs.n&&nsat<MAXOBS;j++) {
-        sat=rtcm->obs.data[j].sat;
+    nsat = 0;
+    for (int j=0;j<rtcm->obs.n&&nsat<RTCMSATS;j++) {
+        int sat = rtcm->obs.data[j].sat, prn;
         if (satsys(sat,&prn)!=SYS_GLO) continue;
-        if ((fcn=fcn_glo(sat,rtcm))<0) continue; /* fcn+7 */
+        int fcn = fcn_glo(sat,rtcm);
+        if (fcn < 0) continue; /* fcn+7 */
+        nsat++;
         
         /* generate obs field data glonass */
+        int code1,pr1,ppr1,lock1,amb,cnr1,code2,pr21,ppr2,lock2,cnr2;
         gen_obs_glo(rtcm,rtcm->obs.data+j,fcn,&code1,&pr1,&ppr1,&lock1,&amb,
                     &cnr1,&code2,&pr21,&ppr2,&lock2,&cnr2);
         
