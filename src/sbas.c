@@ -196,7 +196,7 @@ static int decode_sbstype6(const sbsmsg_t *msg, sbssat_t *sbssat)
     for (i=0;i<4;i++) {
         iodf[i]=getbitu(msg->msg,14+i*2,2);
     }
-    /* As most 51 entries in the message */
+    /* At most 51 entries in the message */
     for (i=0;i<sbssat->nsat&&i<=51;i++) {
         if (sbssat->sat[i].fcorr.iodf!=iodf[i/13]) continue;
         udre=getbitu(msg->msg,22+i*4,4);
@@ -216,7 +216,7 @@ static int decode_sbstype7(const sbsmsg_t *msg, sbssat_t *sbssat)
     
     sbssat->tlat=getbitu(msg->msg,14,4);
     
-    /* As most 51 entries in the message */
+    /* At most 51 entries in the message */
     for (i=0;i<sbssat->nsat&&i<=51;i++) {
         sbssat->sat[i].fcorr.ai=getbitu(msg->msg,22+i*4,4);
     }
