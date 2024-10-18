@@ -2338,11 +2338,11 @@ static void outrinexevent(FILE *fp, const rnxopt_t *opt, const obsd_t *obs,
 
     if (opt->rnxver<=299) { /* ver.2 */
         if (epdiff < 0) fprintf(fp,"\n");
-        fprintf(fp," %02d %2.0f %2.0f %2.0f %2.0f%11.7f  %d%3d",
+        fprintf(fp," %02d %02.0f %02.0f %02.0f %02.0f%11.7f  %d%3d",
                 (int)epe[0]%100,epe[1],epe[2],epe[3],epe[4],epe[5],5,n);
         if (epdiff >= 0) fprintf(fp,"\n");
     } else { /* ver.3 */
-        fprintf(fp,"> %04.0f %2.0f %2.0f %2.0f %2.0f%11.7f  %d%3d\n",
+        fprintf(fp,"> %04.0f %02.0f %02.0f %02.0f %02.0f%11.7f  %d%3d\n",
                 epe[0],epe[1],epe[2],epe[3],epe[4],epe[5],5,n);
     }
     if (n) fprintf(fp,"%-60.60s%-20s\n"," Time mark is not valid","COMMENT");
@@ -2917,13 +2917,13 @@ extern int outrnxhnavb(FILE *fp, const rnxopt_t *opt, const seph_t *seph)
     time2epoch(seph->t0,ep);
 
     if (opt->rnxver<=299) { /* ver.2 */
-        fprintf(fp,"%2d %02d %2.0f %2.0f %2.0f %2.0f %4.1f",prn-100,
+        fprintf(fp,"%2d %02d %02.0f %02.0f %02.0f %02.0f %04.1f",prn-100,
                 (int)ep[0]%100,ep[1],ep[2],ep[3],ep[4],ep[5]);
         sep="   ";
     }
     else { /* ver.3 */
         if (!sat2code(seph->sat,code)) return 0;
-        fprintf(fp,"%-3s %04.0f %2.0f %2.0f %2.0f %2.0f %2.0f",code,ep[0],ep[1],
+        fprintf(fp,"%-3s %04.0f %02.0f %02.0f %02.0f %02.0f %02.0f",code,ep[0],ep[1],
                 ep[2],ep[3],ep[4],ep[5]);
         sep="    ";
     }
