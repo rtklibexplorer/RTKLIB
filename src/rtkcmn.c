@@ -255,7 +255,7 @@ const char *formatstrs[32]={    /* stream format strings */
     NULL
 };
 
-static char *obscodes[]={       /* observation code strings */
+static char *obscodes[MAXCODE + 1]={       /* observation code strings */
 
     ""  ,"1C","1P","1W","1Y", "1M","1N","1S","1L","1E", /*  0- 9 */
     "1A","1B","1X","1Z","2C", "2D","2S","2L","2X","2P", /* 10-19 */
@@ -585,7 +585,7 @@ extern uint8_t obs2code(const char *obs)
 {
     int i;
 
-    for (i=1;*obscodes[i];i++) {
+    for (i=1;i <= MAXCODE;i++) {
         if (strcmp(obscodes[i],obs)) continue;
         return (uint8_t)i;
     }
