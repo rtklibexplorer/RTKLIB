@@ -69,49 +69,107 @@
 
 #define SQR(x)      ((x)*(x))
 
-/* get two component bits ----------------------------------------------------*/
-static uint32_t getbitu2(const uint8_t *buff, int p1, int l1, int p2, int l2)
+/* Get two component bits ----------------------------------------------------*/
+static uint32_t getbitu2(const uint8_t *buff, unsigned p1, unsigned l1,
+                         unsigned p2, unsigned l2)
 {
-    return (getbitu(buff,p1,l1)<<l2)+getbitu(buff,p2,l2);
+  if (l2>=32) return getbitu(buff,p2,l2);
+  if (l1+l2>32) trace(2,"getbitu2: l1=%u + l2=%u out of range\n",l1,l2);
+  return (getbitu(buff,p1,l1)<<l2) | getbitu(buff,p2,l2);
 }
-static int32_t getbits2(const uint8_t *buff, int p1, int l1, int p2, int l2)
+static int32_t getbits2(const uint8_t *buff, unsigned p1, unsigned l1,
+                        unsigned p2, unsigned l2)
 {
-    if (getbitu(buff,p1,1))
-        return (int32_t)((getbits(buff,p1,l1)<<l2)+getbitu(buff,p2,l2));
-    else
-        return (int32_t)getbitu2(buff,p1,l1,p2,l2);
+  uint32_t bits=getbitu2(buff,p1,l1,p2,l2);
+  unsigned len=l1+l2;
+  if (len==0) {
+      /* Would need at least one bit for a sign, so emit a warning. */
+      trace(2,"getbits2: l1=%u + l2=%u out of range\n",l1,l2);
+      return 0;
+  }
+  if (len>=32) {
+      if (len>32) trace(2,"getbits2: len=%u out of range\n",len);
+      return (int32_t)bits;
+  }
+  /* Check the sign bit */
+  if (!(bits&(1u<<(len-1)))) return (int32_t)bits;
+  return (int32_t)(bits | (~0u<<len)); /* Extend sign */
 }
-/* get three component bits --------------------------------------------------*/
-static uint32_t getbitu3(const uint8_t *buff, int p1, int l1, int p2, int l2,
-                         int p3, int l3)
+
+/* Get three component bits --------------------------------------------------*/
+static uint32_t getbitu3(const uint8_t *buff, int p1, unsigned l1,
+                         int p2, unsigned l2, int p3, unsigned l3)
 {
-    return (getbitu(buff,p1,l1)<<(l2+l3))+(getbitu(buff,p2,l2)<<l3)+
-            getbitu(buff,p3,l3);
+  if (l3>=32) return getbitu(buff,p3,l3);
+
+  if (l2+l3>=32) {
+      if (l2+l3>32) trace(2,"getbitu3: l2=%u + l3=%u out of range\n",l2,l3);
+      return (getbitu(buff,p2,l2)<<l3) | getbitu(buff,p3,l3);
+  }
+
+  if (l1+l2+l3>32) trace(2,"getbitu3: l1=%u + l2=%u + l3=%u out of range\n",l1,l2,l3);
+
+  return (getbitu(buff,p1,l1)<<(l2+l3)) | (getbitu(buff,p2,l2)<<l3) |
+         getbitu(buff,p3,l3);
 }
-static int32_t getbits3(const uint8_t *buff, int p1, int l1, int p2, int l2,
-                    int p3, int l3)
+
+static int32_t getbits3(const uint8_t *buff, unsigned p1, unsigned l1,
+                        unsigned p2, unsigned l2, unsigned p3, unsigned l3)
 {
-    if (getbitu(buff,p1,1))
-        return (int32_t)((getbits(buff,p1,l1)<<(l2+l3))+
-                   (getbitu(buff,p2,l2)<<l3)+getbitu(buff,p3,l3));
-    else
-        return (int32_t)getbitu3(buff,p1,l1,p2,l2,p3,l3);
+  uint32_t bits=getbitu3(buff,p1,l1,p2,l2,p3,l3);
+  unsigned len=l1+l2+l3;
+  if (len==0) {
+      /* Would need at least one bit for a sign, so emit a warning. */
+      trace(2,"getbits3: l1=%u + l2=%u + l3=%u out of range\n",l1,l2,l3);
+      return 0;
+  }
+  if (len>=32) {
+      if (len>32) trace(2,"getbits3: len=%u out of range\n",len);
+      return (int32_t)bits;
+  }
+  /* Check the sign bit */
+  if (!(bits&(1u<<(len-1)))) return (int32_t)bits;
+  return (int32_t)(bits|(~0u<<len)); /* Extend sign */
 }
-/* merge two components ------------------------------------------------------*/
-static uint32_t merge_two_u(uint32_t a, uint32_t b, int n)
+
+/* Merge two components ------------------------------------------------------*/
+static uint32_t merge_two_u(uint32_t a, uint32_t b, unsigned n)
 {
-    return (a<<n)+b;
+  if (n>=32) {
+      if (n>32) trace(2,"merge_two_u: n=%u out of range\n",n);
+      return b;
+  }
+  if (((a<<n)>>n)!=a) {
+      trace(2,"merge_two_u: a=%x n=%u overflow\n",a,n);
+  }
+  if (((b>>n)<<n)!=0) {
+      trace(2, "merge_two_u: b=%x n=%u overflow\n",b,n);
+  }
+  return (a<<n)|b;
 }
-static int32_t merge_two_s(int32_t a, uint32_t b, int n)
+static int32_t merge_two_s(int32_t a, uint32_t b, unsigned n)
 {
-    return (int32_t)((a<<n)+b);
+  if (n>=32) {
+      if (n>32) trace(2,"merge_two_s: n=%u out of range\n",n);
+      return b;
+  }
+  if (((int32_t)((uint32_t)a<<n)>>n)!=a) {
+      trace(2,"merge_two_s: a=%x n=%u overflow\n",a,n);
+  }
+  if ((((uint32_t)b>>n)<<n)!=0) {
+      trace(2, "merge_two_s: b=%x n=%u overflow\n",b,n);
+  }
+  return (int32_t)((uint32_t)a<<n)|b;
 }
-/* get sign-magnitude bits ---------------------------------------------------*/
-static double getbitg(const uint8_t *buff, int pos, int len)
+
+/* Get sign-magnitude bits ---------------------------------------------------*/
+static double getbitg(const uint8_t *buff, unsigned pos, unsigned len)
 {
-    double value=getbitu(buff,pos+1,len-1);
-    return getbitu(buff,pos,1)?-value:value;
+  if (len==0) return 0.0;
+  double value=getbitu(buff,pos+1,len-1);
+  return getbitu(buff,pos,1)?-value:value;
 }
+
 /* decode NavIC/IRNSS ephemeris ----------------------------------------------*/
 static int decode_irn_eph(const uint8_t *buff, eph_t *eph)
 {
