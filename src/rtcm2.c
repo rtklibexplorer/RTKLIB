@@ -236,10 +236,10 @@ static int decode_type18(rtcm_t *rtcm)
         }
         if ((index=obsindex(&rtcm->obs,time,sat))>=0) {
             rtcm->obs.data[index].L[freq]=-cp/256.0;
-            rtcm->obs.data[index].LLI[freq]=rtcm->loss[sat-1][freq]!=loss;
-            rtcm->obs.data[index].code[freq]=
-                !freq?(code?CODE_L1P:CODE_L1C):(code?CODE_L2P:CODE_L2C);
-            rtcm->loss[sat-1][freq]=loss;
+            int lcode=!freq?(code?CODE_L1P:CODE_L1C):(code?CODE_L2P:CODE_L2C);
+            rtcm->obs.data[index].LLI[freq]=rtcm->loss[sat-1][lcode]!=loss;
+            rtcm->obs.data[index].code[freq]=lcode;
+            rtcm->loss[sat-1][lcode]=loss;
         }
     }
     rtcm->obsflag=!sync;
@@ -288,8 +288,8 @@ static int decode_type19(rtcm_t *rtcm)
         }
         if ((index=obsindex(&rtcm->obs,time,sat))>=0) {
             rtcm->obs.data[index].P[freq]=pr*0.02;
-            rtcm->obs.data[index].code[freq]=
-                !freq?(code?CODE_L1P:CODE_L1C):(code?CODE_L2P:CODE_L2C);
+            int pcode=!freq?(code?CODE_L1P:CODE_L1C):(code?CODE_L2P:CODE_L2C);
+            rtcm->obs.data[index].code[freq]=pcode;
         }
     }
     rtcm->obsflag=!sync;
