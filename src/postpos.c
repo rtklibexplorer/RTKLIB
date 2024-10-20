@@ -188,28 +188,30 @@ static void outheader(FILE *fp, const char **file, int n, const prcopt_t *popt,
 
     outsolhead(fp,sopt);
 }
-/* search next observation data index ----------------------------------------*/
+/* search next observation data index ----------------------------------------
+   Note *i will be advanced outside the index range of the obs data if none
+   are found. */
 static int nextobsf(const obs_t *obs, int *i, int rcv)
 {
-    double tt;
+    for (;*i<obs->n;(*i)++)
+        if (obs->data[*i].rcv==rcv) break;
     int n;
-
-    for (;*i<obs->n;(*i)++) if (obs->data[*i].rcv==rcv) break;
     for (n=0;*i+n<obs->n;n++) {
-        tt=timediff(obs->data[*i+n].time,obs->data[*i].time);
-        if (obs->data[*i+n].rcv!=rcv||tt>DTTOL) break;
+        if (obs->data[*i+n].rcv!=rcv) break;
+        double tt=timediff(obs->data[*i+n].time,obs->data[*i].time);
+        if (tt>DTTOL) break;
     }
     return n;
 }
 static int nextobsb(const obs_t *obs, int *i, int rcv)
 {
-    double tt;
+    for (;*i>=0;(*i)--)
+        if (obs->data[*i].rcv==rcv) break;
     int n;
-
-    for (;*i>=0;(*i)--) if (obs->data[*i].rcv==rcv) break;
     for (n=0;*i-n>=0;n++) {
-        tt=timediff(obs->data[*i-n].time,obs->data[*i].time);
-        if (obs->data[*i-n].rcv!=rcv||tt<-DTTOL) break;
+        if (obs->data[*i-n].rcv!=rcv) break;
+        double tt=timediff(obs->data[*i-n].time,obs->data[*i].time);
+        if (tt<-DTTOL) break;
     }
     return n;
 }
@@ -249,86 +251,105 @@ static void update_rtcm_ssr(gtime_t time)
         }
     }
 }
-/* input obs data, navigation messages and sbas correction -------------------*/
+/* Input obs data, navigation messages and sbas correction -------------------*/
 static int inputobs(obsd_t *obs, int solq, const prcopt_t *popt)
 {
-    gtime_t time={0};
-    int i,nu,nr,n=0;
-    double dt,dt_next;
-
     trace(3,"\ninfunc  : dir=%d iobsu=%d iobsr=%d isbs=%d\n",reverse,iobsu,iobsr,isbs);
 
     if (0<=iobsu&&iobsu<obss.n) {
-        settime((time=obss.data[iobsu].time));
+        gtime_t time = obss.data[iobsu].time;
+        settime(time);
         if (checkbrk("processing : %s Q=%d",time_str(time,0),solq)) {
-            aborts=1; showmsg("aborted"); return -1;
+            aborts=1;
+            showmsg("aborted");
+            return -1;
         }
     }
-    if (!reverse) { /* input forward data */
-        if ((nu=nextobsf(&obss,&iobsu,1))<=0) return -1;
-        if (popt->intpref) {
-            /* for interpolation, find first base timestamp after rover timestamp */
-            for (;(nr=nextobsf(&obss,&iobsr,2))>0;iobsr+=nr)
-                if (timediff(obss.data[iobsr].time,obss.data[iobsu].time)>-DTTOL) break;
-        }
-        else {
-            /* if not interpolating, find closest timestamp */
-            dt=timediff(obss.data[iobsr].time,obss.data[iobsu].time);
-            for (i=iobsr;(nr=nextobsf(&obss,&i,2))>0;iobsr=i,i+=nr) {
-                dt_next=timediff(obss.data[i].time,obss.data[iobsu].time);
-                if (fabs(dt_next)>fabs(dt)) break;
-                dt=dt_next;
+    int n=0;
+    if (!reverse) {
+        /* Input forward data */
+        int nu=nextobsf(&obss,&iobsu,1);
+        if (nu<=0) return -1;
+        for (int i=0;i<nu&&n<MAXOBS*2;i++) obs[n++]=obss.data[iobsu+i];
+        if (iobsr<obss.n) {
+            if (popt->intpref) {
+                /* For interpolation, find first base timestamp after rover timestamp */
+                int nr=nextobsf(&obss,&iobsr,2);
+                while (nr>0) {
+                    if (timediff(obss.data[iobsr].time,obss.data[iobsu].time)>-DTTOL) break;
+                    iobsr+=nr;
+                    nr=nextobsf(&obss,&iobsr,2);
+                }
+            } else {
+                /* If not interpolating, find the closest iobsr timestamp before or after iobsu. */
+                double dt=fabs(timediff(obss.data[iobsr].time,obss.data[iobsu].time));
+                int i=iobsr,nr=nextobsf(&obss,&i,2);
+                while (nr>0) {
+                    double dt_next=fabs(timediff(obss.data[i].time,obss.data[iobsu].time));
+                    if (dt_next>dt) break;
+                    dt=dt_next;
+                    iobsr=i;
+                    i+=nr;
+                    nr=nextobsf(&obss,&i,2);
+                }
             }
+            /* Recalculate nr for the determined iobsr. This does not change iobsr. */
+            int nr=nextobsf(&obss,&iobsr,2);
+            for (int i=0;i<nr&&n<MAXOBS*2;i++) obs[n++]=obss.data[iobsr+i];
         }
-        nr=nextobsf(&obss,&iobsr,2);
-        if (nr<=0) {
-            nr=nextobsf(&obss,&iobsr,2);
-        }
-        for (i=0;i<nu&&n<MAXOBS*2;i++) obs[n++]=obss.data[iobsu+i];
-        for (i=0;i<nr&&n<MAXOBS*2;i++) obs[n++]=obss.data[iobsr+i];
         iobsu+=nu;
 
-        /* update sbas corrections */
+        /* Update sbas corrections */
         while (isbs<sbss.n) {
-            time=gpst2time(sbss.msgs[isbs].week,sbss.msgs[isbs].tow);
+            gtime_t time=gpst2time(sbss.msgs[isbs].week,sbss.msgs[isbs].tow);
 
-            if (getbitu(sbss.msgs[isbs].msg,8,6)!=9) { /* except for geo nav */
+            if (getbitu(sbss.msgs[isbs].msg,8,6)!=9) { /* Except for geo nav */
                 sbsupdatecorr(sbss.msgs+isbs,&navs);
             }
             if (timediff(time,obs[0].time)>-1.0-DTTOL) break;
             isbs++;
         }
-        /* update rtcm ssr corrections */
+        /* Update rtcm ssr corrections */
         if (*rtcm_file) {
             update_rtcm_ssr(obs[0].time);
         }
-    }
-    else { /* input backward data */
-        if ((nu=nextobsb(&obss,&iobsu,1))<=0) return -1;
-        if (popt->intpref) {
-            /* for interpolation, find first base timestamp before rover timestamp */
-            for (;(nr=nextobsb(&obss,&iobsr,2))>0;iobsr-=nr)
-                if (timediff(obss.data[iobsr].time,obss.data[iobsu].time)<DTTOL) break;
-        }
-        else {
-            /* if not interpolating, find closest timestamp */
-            dt=iobsr>=0?timediff(obss.data[iobsr].time,obss.data[iobsu].time):0;
-            for (i=iobsr;(nr=nextobsb(&obss,&i,2))>0;iobsr=i,i-=nr) {
-                dt_next=timediff(obss.data[i].time,obss.data[iobsu].time);
-                if (fabs(dt_next)>fabs(dt)) break;
-                dt=dt_next;
+    } else {
+        /* Input backward data */
+        int nu=nextobsb(&obss,&iobsu,1);
+        if (nu<=0) return -1;
+        for (int i=0;i<nu&&n<MAXOBS*2;i++) obs[n++]=obss.data[iobsu-nu+1+i];
+        if (iobsr>=0) {
+            if (popt->intpref) {
+                /* For interpolation, find first base timestamp before rover timestamp */
+                int nr=nextobsb(&obss,&iobsr,2);
+                while (nr>0) {
+                  if (timediff(obss.data[iobsr].time,obss.data[iobsu].time)<DTTOL) break;
+                  iobsr-=nr;
+                  nr=nextobsb(&obss,&iobsr,2);
+                }
+            } else {
+                /* If not interpolating, fnd the closest iobsr timestamp before or after iobsu. */
+                double dt=fabs(timediff(obss.data[iobsr].time,obss.data[iobsu].time));
+                int i=iobsr,nr=nextobsb(&obss,&i,2);
+                while (nr>0) {
+                    double dt_next=fabs(timediff(obss.data[i].time,obss.data[iobsu].time));
+                    if (dt_next>dt) break;
+                    dt=dt_next;
+                    iobsr=i;
+                    i-=nr;
+                    nr=nextobsb(&obss,&i,2);
+                }
             }
+            int nr=nextobsb(&obss,&iobsr,2);
+            for (int i=0;i<nr&&n<MAXOBS*2;i++) obs[n++]=obss.data[iobsr-nr+1+i];
         }
-        nr=nextobsb(&obss,&iobsr,2);
-        for (i=0;i<nu&&n<MAXOBS*2;i++) obs[n++]=obss.data[iobsu-nu+1+i];
-        for (i=0;i<nr&&n<MAXOBS*2;i++) obs[n++]=obss.data[iobsr-nr+1+i];
         iobsu-=nu;
 
-        /* update sbas corrections */
+        /* Update sbas corrections */
         while (isbs>=0) {
-            time=gpst2time(sbss.msgs[isbs].week,sbss.msgs[isbs].tow);
+            gtime_t time=gpst2time(sbss.msgs[isbs].week,sbss.msgs[isbs].tow);
 
-            if (getbitu(sbss.msgs[isbs].msg,8,6)!=9) { /* except for geo nav */
+            if (getbitu(sbss.msgs[isbs].msg,8,6)!=9) { /* Except for geo nav */
                 sbsupdatecorr(sbss.msgs+isbs,&navs);
             }
             if (timediff(time,obs[0].time)<1.0+DTTOL) break;
