@@ -159,8 +159,6 @@ extern "C" {
 #define NEXOBS      0                   /* number of extended obs codes */
 #endif
 
-#define SNR_UNIT    0.001               /* SNR unit (dBHz) */
-
 #define MINPRNGPS   1                   /* min satellite PRN number of GPS */
 #define MAXPRNGPS   32                  /* max satellite PRN number of GPS */
 #define NSATGPS     (MAXPRNGPS-MINPRNGPS+1) /* number of GPS satellites */
@@ -582,19 +580,18 @@ typedef struct {        /* time struct */
 typedef struct {        /* observation data record */
     gtime_t time;       /* receiver sampling time (GPST) */
     uint8_t sat,rcv;    /* satellite/receiver number */
-    uint16_t SNR[NFREQ+NEXOBS]; /* signal strength (0.001 dBHz) */
-    uint8_t  LLI[NFREQ+NEXOBS]; /* loss of lock indicator */
+    uint8_t freq;       /* GLONASS frequency channel (0-13) */
+    uint8_t LLI[NFREQ+NEXOBS]; /* loss of lock indicator */
     uint8_t code[NFREQ+NEXOBS]; /* code indicator (CODE_???) */
     double L[NFREQ+NEXOBS]; /* observation data carrier-phase (cycle) */
     double P[NFREQ+NEXOBS]; /* observation data pseudorange (m) */
-    float  D[NFREQ+NEXOBS]; /* observation data doppler frequency (Hz) */
+    float D[NFREQ+NEXOBS]; /* observation data doppler frequency (Hz) */
+    float SNR[NFREQ+NEXOBS]; /* signal strength (dBHz) */
+    float Lstd[NFREQ+NEXOBS]; /* stdev of carrier phase (cycles)  */
+    float Pstd[NFREQ+NEXOBS]; /* stdev of pseudorange (meters) */
 
     int timevalid;      /* time is valid (Valid GNSS fix) for time mark */
     gtime_t eventime;   /* time of event (GPST) */
-    uint8_t Lstd[NFREQ+NEXOBS]; /* stdev of carrier phase (0.004 cycles)  */
-    uint8_t Pstd[NFREQ+NEXOBS]; /* stdev of pseudorange (0.01*2^(n+5) meters) */
-    uint8_t freq; /* GLONASS frequency channel (0-13) */
-
 } obsd_t;
 
 typedef struct {        /* observation data */
@@ -942,7 +939,7 @@ typedef struct {        /* solution status type */
     float resp;         /* pseudorange residual (m) */
     float resc;         /* carrier-phase residual (m) */
     uint8_t flag;       /* flags: (vsat<<5)+(slip<<3)+fix */
-    uint16_t snr;       /* signal strength (*SNR_UNIT dBHz) */
+    float snr;          /* signal strength (dBHz) */
     uint16_t lock;      /* lock counter */
     uint16_t outc;      /* outage counter */
     uint16_t slipc;     /* slip counter */
@@ -1177,8 +1174,8 @@ typedef struct {        /* satellite status type */
     double resc[NFREQ]; /* residuals of carrier-phase (m) */
     double icbias[NFREQ];  /* glonass IC bias (cycles) */
     uint8_t vsat[NFREQ]; /* valid satellite flag */
-    uint16_t snr_rover [NFREQ]; /* rover signal strength (0.25 dBHz) */
-    uint16_t snr_base  [NFREQ]; /* base signal strength (0.25 dBHz) */
+    float snr_rover [NFREQ]; /* rover signal strength (dBHz) */
+    float snr_base  [NFREQ]; /* base signal strength (dBHz) */
     uint8_t fix [NFREQ]; /* ambiguity fix flag (1:float,2:fix,3:hold) */
     int code[NFREQ][2];  // Current code per frequency index for the base and rover.
     uint8_t slip[NFREQ]; /* cycle-slip flag */

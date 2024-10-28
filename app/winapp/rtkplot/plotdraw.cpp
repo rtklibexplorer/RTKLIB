@@ -1349,7 +1349,7 @@ void __fastcall TPlot::DrawSky(int level)
                 ustr+=" ";
                 for (j=0;j<NFREQ;j++) {
                     if (obs->P[j]==0.0&&obs->L[j]==0.0) ustr+="-- ";
-                    else ustr+=ss.sprintf("%02.0f ",obs->SNR[j]*SNR_UNIT);
+                    else ustr+=ss.sprintf("%02.0f ",obs->SNR[j]);
                 }
                 for (j=0;j<NFREQ;j++) {
                     if (obs->L[j]==0.0) ustr+="-";
@@ -1363,7 +1363,7 @@ void __fastcall TPlot::DrawSky(int level)
                               obs->P[freq-1]==0.0?"-":"C",obs->L[freq-1]==0.0?"-":"L",
                               obs->D[freq-1]==0.0?"-":"D");
                 if (obs->P[freq-1]==0.0&&obs->L[freq-1]==0.0) ustr+="---- ";
-                else ustr+=ss.sprintf("%4.1f ",obs->SNR[freq-1]*SNR_UNIT);
+                else ustr+=ss.sprintf("%4.1f ",obs->SNR[freq-1]);
                 if (obs->L[freq-1]==0.0) ustr+=" -";
                 else ustr+=ss.sprintf("%2d",obs->LLI[freq-1]);
             }
@@ -1376,7 +1376,7 @@ void __fastcall TPlot::DrawSky(int level)
                                  obs->P[j]==0.0?"-":"C",obs->L[j]==0.0?"-":"L",
                                  obs->D[j]==0.0?"-":"D");
                 if (obs->P[j]==0.0&&obs->L[j]==0.0) ustr+="---- ";
-                else ustr+=ss.sprintf("%4.1f ",obs->SNR[j]*SNR_UNIT);
+                else ustr+=ss.sprintf("%4.1f ",obs->SNR[j]);
                 if (obs->L[j]==0.0) ustr+=" -";
                 else ustr+=ss.sprintf("%2d",obs->LLI[j]);
             }
@@ -1647,11 +1647,11 @@ void __fastcall TPlot::DrawSnr(int level)
                         }
                         if (k>=NFREQ+NEXOBS) continue;
                     }
-                    if (obs->SNR[k]*SNR_UNIT<=0.0) continue;
+                    if (obs->SNR[k]<=0.0) continue;
                     
                     x[n]=TimePos(obs->time);
                     if (i==0) {
-                        y[n]=obs->SNR[k]*SNR_UNIT;
+                        y[n]=obs->SNR[k];
                         col[n]=MColor[0][4];
                     }
                     else if (i==1) {
@@ -1662,7 +1662,7 @@ void __fastcall TPlot::DrawSnr(int level)
                     else {
                         y[n]=El[j]*R2D;
                         if (SimObs) col[n]=SysColor(obs->sat);
-                        else col[n]=SnrColor(obs->SNR[k]*SNR_UNIT);
+                        else col[n]=SnrColor(obs->SNR[k]);
                         if (El[j]>0.0&&El[j]<ElMask*D2R) col[n]=MColor[0][0];
                     }
                     if (timediff(time,obs->time)==0.0&&np<MAXSAT) {
@@ -1804,10 +1804,10 @@ void __fastcall TPlot::DrawSnrE(int level)
                     }
                     if (k>=NFREQ+NEXOBS) continue;
                 }
-                if (obs->SNR[k]*SNR_UNIT<=0.0) continue;
+                if (obs->SNR[k]<=0.0) continue;
 
                 x[0][n[0]]=x[1][n[1]]=El[j]*R2D;
-                y[0][n[0]]=obs->SNR[k]*SNR_UNIT;
+                y[0][n[0]]=obs->SNR[k];
                 y[1][n[1]]=!Mp[k]?0.0:Mp[k][j];
                 
                 col[0][n[0]]=col[1][n[1]]=
@@ -2045,7 +2045,7 @@ void __fastcall TPlot::DrawRes(int level)
                 y[0][m[0]]=p->resp;
                 y[1][m[1]]=p->resc;
                 y[2][m[2]]=p->el*R2D;
-                y[3][m[3]]=p->snr*SNR_UNIT;
+                y[3][m[3]]=p->snr;
                 if      (!(p->flag>>5))  q=0; // invalid
                 else if ((p->flag&7)<=1) q=2; // float
                 else if ((p->flag&7)<=3) q=1; // fixed

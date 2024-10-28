@@ -868,7 +868,7 @@ static void probserv(vt_t *vt, int nf)
         for (j=0;j<nf;j++) vt_printf(vt,"%13.3f",obs[i].P[j]);
         for (j=0;j<nf;j++) vt_printf(vt,"%14.3f",obs[i].L[j]);
         for (j=0;j<nf;j++) vt_printf(vt,"%8.1f" ,obs[i].D[j]);
-        for (j=0;j<nf;j++) vt_printf(vt,"%3.0f" ,obs[i].SNR[j]*SNR_UNIT);
+        for (j=0;j<nf;j++) vt_printf(vt,"%3.0f" ,obs[i].SNR[j]);
         for (j=0;j<nf;j++) vt_printf(vt,"%2d"   ,obs[i].LLI[j]);
         vt_printf(vt,"\n");
     }

@@ -342,7 +342,7 @@ TColor __fastcall TPlot::ObsColor(const obsd_t *obs, double az, double el)
         if (obs->L[freq-1]==0.0&&obs->P[freq-1]==0.0) {
             return clBlack;
         }
-        color=SnrColor(obs->SNR[freq-1]*SNR_UNIT);
+        color=SnrColor(obs->SNR[freq-1]);
     }
     else {
         for (i=0;i<NFREQ+NEXOBS;i++) {
@@ -354,7 +354,7 @@ TColor __fastcall TPlot::ObsColor(const obsd_t *obs, double az, double el)
         if (obs->L[i]==0.0&&obs->P[i]==0.0) {
             return clBlack;
         }
-        color=SnrColor(obs->SNR[i]*SNR_UNIT);
+        color=SnrColor(obs->SNR[i]);
     }
     if (el<ElMask*D2R||(ElMaskP&&el<ElMaskData[(int)(az*R2D+0.5)])) {
         return HideLowSat?clBlack:MColor[0][0];

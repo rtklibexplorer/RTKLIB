@@ -344,7 +344,7 @@ QColor Plot::observationColor(const obsd_t *obs, double az, double el, QVariant 
         if (obs->L[freq-1] == 0.0 && obs->P[freq-1] == 0.0) {
             return Qt::black;
         }
-        color = snrColor(obs->SNR[freq-1] * SNR_UNIT);
+        color = snrColor(obs->SNR[freq-1]);
     } else {  // code
         for (i = 0; i < NFREQ + NEXOBS; i++) {
             if (!strcmp(code2obs(obs->code[i]), qPrintable(obstype.toString()))) break;
@@ -355,7 +355,7 @@ QColor Plot::observationColor(const obsd_t *obs, double az, double el, QVariant 
         if (obs->L[i] == 0.0 && obs->P[i] == 0.0) {
             return Qt::black;
         }
-        color = snrColor(obs->SNR[i] * SNR_UNIT);
+        color = snrColor(obs->SNR[i]);
     }
 
     // check against elevation mask

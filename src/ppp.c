@@ -361,8 +361,8 @@ static double varerr(int sat, int sys, double el, double snr_rover,
         var+=e*e*(pow(10,0.1*MAX(snr_max-snr_rover,0)));
     }
     if (opt->err[7]>0.0) {   /* add rcvr stdevs term */
-        if (code) var+=SQR(opt->err[7]*0.01*(1<<(obs->Pstd[frq]+5))); /* 0.01*2^(n+5) */
-        else var+=SQR(opt->err[7]*obs->Lstd[frq]*0.004*0.2); /* 0.004 cycles -> m) */
+        if (code) var+=SQR(opt->err[7]*obs->Pstd[frq]);
+        else var+=SQR(opt->err[7]*obs->Lstd[frq]*0.2);
     }
     /* FIXME: the scaling factor is not 3 for other signals/constellations than GPS L1/L2 */
     var*=(opt->ionoopt==IONOOPT_IFLC)?SQR(3.0):1.0;
@@ -415,7 +415,7 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
         /* skip if low SNR or missing observations */
         freq[i]=sat2freq(obs->sat,obs->code[i],nav);
         if (freq[i]==0.0||obs->L[i]==0.0||obs->P[i]==0.0) continue;
-        if (testsnr(0,0,azel[1],obs->SNR[i]*SNR_UNIT,&opt->snrmask)) continue;
+        if (testsnr(0,0,azel[1],obs->SNR[i],&opt->snrmask)) continue;
 
         /* antenna phase center and phase windup correction */
         L[i]=obs->L[i]*CLIGHT/freq[i]-dants[i]-dantr[i]-phw*CLIGHT/freq[i];
@@ -1047,7 +1047,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
 
             /* variance */
             var[nv]=varerr(sat,sys,azel[1+i*2],
-                    SNR_UNIT*rtk->ssat[sat-1].snr_rover[frq],
+                    rtk->ssat[sat-1].snr_rover[frq],
                     j,opt,obs+i);
             var[nv] +=vart+SQR(C)*vari+var_rs[i];
             if (sys==SYS_GLO&&code==1) var[nv]+=VAR_GLO_IFB;

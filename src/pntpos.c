@@ -65,12 +65,12 @@ static double varerr(const prcopt_t *opt, const ssat_t *ssat, const obsd_t *obs,
     /* var = R^2*(a^2 + (b^2/sin(el) + c^2*(10^(0.1*(snr_max-snr_rover)))) + (d*rcv_std)^2) */
     varr=SQR(opt->err[1])+SQR(opt->err[2])/sin(el);
     if (opt->err[6]>0.0) {  /* if snr term not zero */
-        snr_rover=(ssat)?SNR_UNIT*ssat->snr_rover[0]:opt->err[5];
+        snr_rover=(ssat)?ssat->snr_rover[0]:opt->err[5];
         varr+=SQR(opt->err[6])*pow(10,0.1*MAX(opt->err[5]-snr_rover,0));
     }
     varr*=SQR(opt->eratio[0]);
     if (opt->err[7]>0.0) {
-        varr+=SQR(opt->err[7]*0.01*(1<<(obs->Pstd[0]+5)));  /* 0.01*2^(n+5) m */
+        varr+=SQR(opt->err[7]*obs->Pstd[0]);
     }
     if (opt->ionoopt==IONOOPT_IFLC) varr*=SQR(3.0); /* iono-free */
     return SQR(fact)*varr;
@@ -98,12 +98,12 @@ static int snrmask(const obsd_t *obs, const double *azel, const prcopt_t *opt)
 {
     int f2;
 
-    if (testsnr(0,0,azel[1],obs->SNR[0]*SNR_UNIT,&opt->snrmask)) {
+    if (testsnr(0,0,azel[1],obs->SNR[0],&opt->snrmask)) {
         return 0;
     }
     if (opt->ionoopt==IONOOPT_IFLC) {
         f2=seliflc(opt->nf,satsys(obs->sat,NULL));
-        if (testsnr(0,f2,azel[1],obs->SNR[f2]*SNR_UNIT,&opt->snrmask)) return 0;
+        if (testsnr(0,f2,azel[1],obs->SNR[f2],&opt->snrmask)) return 0;
     }
     return 1;
 }

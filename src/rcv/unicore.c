@@ -77,8 +77,9 @@ static int obsindex(obs_t* obs, gtime_t time, int sat)
     obs->data[i].sat = sat;
     for (j = 0; j < NFREQ + NEXOBS; j++) {
         obs->data[i].L[j] = obs->data[i].P[j] = 0.0;
-        obs->data[i].D[j] = 0.0;
-        obs->data[i].SNR[j] = obs->data[i].LLI[j] = 0;
+        obs->data[i].D[j] = obs->data[i].SNR[j] = 0.0;
+        obs->data[i].Lstd[j] = obs->data[i].Pstd[j] = 0.0;
+        obs->data[i].LLI[j] = 0;
         obs->data[i].code[j] = CODE_NONE;
     }
     obs->n++;
@@ -806,25 +807,14 @@ static int decode_obsvmb(raw_t* raw)
             raw->obs.data[index].L[idx] = -adr;
             raw->obs.data[index].P[idx] = psr;
             raw->obs.data[index].D[idx] = (float)dop;
-            raw->obs.data[index].SNR[idx] = (uint16_t)(snr / SNR_UNIT + 0.5);
+            raw->obs.data[index].SNR[idx] = snr;
             raw->obs.data[index].LLI[idx] = (uint8_t)lli;
             raw->obs.data[index].code[idx] = (uint8_t)code;
             if (rcvstds) {
                 double pstd = U2(p + 20) * 0.01;  // Meters
-                // To RTKlib encoding
-                pstd = log2(pstd / 0.01) - 5;
-                pstd = pstd > 0 ? pstd : 0;
-                // Further limited to 9 in RINEX output
-                pstd = pstd <= 254 ? pstd : 254;
-                raw->obs.data[index].Pstd[idx] = pstd + 0.5;
-
+                raw->obs.data[index].Pstd[idx] = pstd;
                 double lstd = U2(p + 22) * 0.0001; // Cycles
-                // To RTKlib encoding
-                lstd = lstd / 0.004;
-                lstd = lstd > 0 ? lstd : 0;
-                // Further limited to 9 in RINEX output
-                lstd = lstd <= 254 ? lstd : 254;
-                raw->obs.data[index].Lstd[idx] = lstd + 0.5;
+                raw->obs.data[index].Lstd[idx] = lstd;
             }
         }
     }

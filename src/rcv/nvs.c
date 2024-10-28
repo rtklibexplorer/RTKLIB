@@ -145,7 +145,7 @@ static int decode_xf5raw(raw_t *raw)
                   sat,L1,P1,D1);
             continue;
         }
-        raw->obs.data[n].SNR[0]=(uint16_t)(I1(p+3)/SNR_UNIT+0.5);
+        raw->obs.data[n].SNR[0]=I1(p+3);
         if (sys==SYS_GLO) {
             raw->obs.data[n].L[0]  =  L1 - toff*(FREQ1_GLO+DFRQ1_GLO*carrNo);
         } else {
@@ -164,8 +164,8 @@ static int decode_xf5raw(raw_t *raw)
         
         for (j=1;j<NFREQ+NEXOBS;j++) {
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
-            raw->obs.data[n].D[j]=0.0;
-            raw->obs.data[n].SNR[j]=raw->obs.data[n].LLI[j]=0;
+            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0;
+            raw->obs.data[n].LLI[j]=0;
             raw->obs.data[n].code[j]=CODE_NONE;
         }
         n++;

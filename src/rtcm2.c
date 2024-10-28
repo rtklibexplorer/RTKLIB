@@ -42,8 +42,8 @@ static int obsindex(obs_t *obs, gtime_t time, int sat)
     obs->data[i].sat=sat;
     for (j=0;j<NFREQ;j++) {
         obs->data[i].L[j]=obs->data[i].P[j]=0.0;
-        obs->data[i].D[j]=0.0;
-        obs->data[i].SNR[j]=obs->data[i].LLI[j]=obs->data[i].code[j]=0;
+        obs->data[i].D[j]=obs->data[i].SNR[j]=0.0;
+        obs->data[i].LLI[j]=obs->data[i].code[j]=0;
     }
     obs->n++;
     return i;

@@ -1032,7 +1032,7 @@ void Plot::saveSnrMp(const QString &file)
                 time2str(timeadd(gpst2utc(time), 9 * 3600.0), tstr, 1);
             }
             data = QString("%1 %2 %3 %4 %5 %6f\n").arg(tstr).arg(sat, 6).arg(azimuth[j] * R2D, 8, 'f', 1)
-                       .arg(elevation[j] * R2D, 8, 'f', 1).arg(observation.data[j].SNR[k] * SNR_UNIT, 9, 'f', 2).arg(!multipath[k] ? 0.0 : multipath[k][j], 10, 'f', 4);
+                       .arg(elevation[j] * R2D, 8, 'f', 1).arg(observation.data[j].SNR[k], 9, 'f', 2).arg(!multipath[k] ? 0.0 : multipath[k][j], 10, 'f', 4);
             fp.write(data.toLatin1());
         }
     }

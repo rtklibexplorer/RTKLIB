@@ -232,8 +232,8 @@ static int flushobuf(raw_t *raw)
         raw->obuf.data[i].time=time0;
         for (j=0;j<NFREQ+NEXOBS;j++) {
             raw->obuf.data[i].L[j]=raw->obuf.data[i].P[j]=0.0;
-            raw->obuf.data[i].D[j]=0.0;
-            raw->obuf.data[i].SNR[j]=raw->obuf.data[i].LLI[j]=0;
+            raw->obuf.data[i].D[j]=raw->obuf.data[i].SNR[j]=0.0;
+            raw->obuf.data[i].LLI[j]=0;
             raw->obuf.data[i].code[j]=CODE_NONE;
         }
     }
@@ -1562,7 +1562,7 @@ static int decode_Ex(raw_t *raw, char sig)
         
         if ((idx=checkpri(sys,code,raw->opt,idx))>=0) {
             if (!settag(raw->obuf.data+i,raw->time)) continue;
-            raw->obuf.data[i].SNR[idx]=(uint16_t)(cnr/SNR_UNIT+0.5);
+            raw->obuf.data[i].SNR[idx]=cnr;
         }
     }
     return 0;
@@ -1593,7 +1593,7 @@ static int decode_xE(raw_t *raw, char sig)
         
         if ((idx=checkpri(sys,code,raw->opt,idx))>=0) {
             if (!settag(raw->obuf.data+i,raw->time)) continue;
-            raw->obuf.data[i].SNR[idx]=(uint16_t)(cnr*0.25/SNR_UNIT+0.5);
+            raw->obuf.data[i].SNR[idx]=cnr*0.25;
         }
     }
     return 0;
