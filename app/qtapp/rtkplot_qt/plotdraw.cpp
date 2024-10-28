@@ -1509,7 +1509,7 @@ void Plot::drawSky(QPainter &c, int level)
                     if (obs->P[j] == 0.0 && obs->L[j] == 0.0)
                         s += "-- ";
                     else
-                        s += QStringLiteral("%1 ").arg(obs->SNR[j] * SNR_UNIT, 2, 'f', 0, QChar('0'));
+                        s += QStringLiteral("%1 ").arg(obs->SNR[j], 2, 'f', 0, QChar('0'));
                 }
 
                 // LLI
@@ -1532,7 +1532,7 @@ void Plot::drawSky(QPainter &c, int level)
                 if (obs->P[freq - 1] == 0.0 && obs->L[freq - 1] == 0.0)
                     s += "---- ";
                 else
-                    s += QStringLiteral("%1 ").arg(obs->SNR[freq - 1] * SNR_UNIT, 4, 'f', 1);
+                    s += QStringLiteral("%1 ").arg(obs->SNR[freq - 1], 4, 'f', 1);
 
                 // LLI
                 if (obs->L[freq-1] == 0.0)
@@ -1554,7 +1554,7 @@ void Plot::drawSky(QPainter &c, int level)
                 if (obs->P[j] == 0.0 && obs->L[j] == 0.0)
                     s += "---- ";
                 else
-                    s += QStringLiteral("%1 ").arg(obs->SNR[j] * SNR_UNIT, 4, 'f', 1);
+                    s += QStringLiteral("%1 ").arg(obs->SNR[j], 4, 'f', 1);
 
                 // LLI
                 if (obs->L[j] == 0.0)
@@ -1861,12 +1861,12 @@ void Plot::drawSnr(QPainter &c, int level)
                         }
                         if (idx >= NFREQ + NEXOBS) continue;
                     }
-                    if (obs->SNR[idx] * SNR_UNIT <= 0.0) continue;  // skip negative SNR
+                    if (obs->SNR[idx] <= 0.0) continue;  // skip negative SNR
 
                     // calculate position
                     x[n] = timePosition(obs->time);
                     if (panel == 0) {  // SNR
-                        y[n] = obs->SNR[idx] * SNR_UNIT;
+                        y[n] = obs->SNR[idx];
                         col[n] = plotOptDialog->getMarkerColor(0, 4);
                     } else if (panel == 1) {  // multipath
                         if (!multipath[idx] || multipath[idx][j] == 0.0) continue;
@@ -1878,7 +1878,7 @@ void Plot::drawSnr(QPainter &c, int level)
                         if (simulatedObservation)
                             col[n] = sysColor(obs->sat);
                         else
-                            col[n] = snrColor(obs->SNR[idx] * SNR_UNIT);
+                            col[n] = snrColor(obs->SNR[idx]);
 
                         if (elevation[j] > 0.0 && elevation[j] < plotOptDialog->getElevationMask() * D2R) col[n] = plotOptDialog->getMarkerColor(0, 0);
                     }
@@ -2059,10 +2059,10 @@ void Plot::drawSnrE(QPainter &c, int level)
                     }
                     if (idx >= NFREQ + NEXOBS) continue;
                 }
-                if (obs->SNR[idx] * SNR_UNIT <= 0.0) continue;
+                if (obs->SNR[idx] <= 0.0) continue;
 
                 x[0][n[0]] = x[1][n[1]] = elevation[j] * R2D;
-                y[0][n[0]] = obs->SNR[idx] * SNR_UNIT;
+                y[0][n[0]] = obs->SNR[idx];
                 y[1][n[1]] = !multipath[idx] ? 0.0 : multipath[idx][j];
 
                 col[0][n[0]] = col[1][n[1]] = (elevation[j] > 0.0 && elevation[j] < plotOptDialog->getElevationMask() * D2R) ?\
@@ -2340,7 +2340,7 @@ void Plot::drawResidual(QPainter &c, int level)
                 y[0][m[0]] = solstat->resp;
                 y[1][m[1]] = solstat->resc;
                 y[2][m[2]] = solstat->el * R2D;
-                y[3][m[3]] = solstat->snr * SNR_UNIT;
+                y[3][m[3]] = solstat->snr;
 
                 if (!(solstat->flag >> 5)) q = 0;          // invalid
                 else if ((solstat->flag & 7) <= 1) q = 2;  // float

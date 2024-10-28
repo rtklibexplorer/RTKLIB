@@ -780,7 +780,7 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
     sigind_t *ind;
     double val[MAXOBSTYPE]={0};
     uint8_t lli[MAXOBSTYPE]={0};
-    uint8_t std[MAXOBSTYPE]={0};
+    double std[MAXOBSTYPE]={0};
     char satid[8]="";
     int i,j,n,m,q,stat=1,p[MAXOBSTYPE],k[16],l[16],r[16];
 
@@ -816,15 +816,17 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         if (stat) {
             val[i]=str2num(buff,j,14)+ind->shift[i];
             lli[i]=(uint8_t)str2num(buff,j+14,1)&3;
-            /* measurement std from receiver */
-            std[i]=(uint8_t)str2num(buff,j+15,1);
+            /* measurement std from receiver, encoded */
+            std[i]=str2num(buff,j+15,1);
         }
     }
     if (!stat) return 0;
 
     for (i=0;i<NFREQ+NEXOBS;i++) {
-        obs->P[i]=obs->L[i]=0.0; obs->D[i]=0.0f;
-        obs->SNR[i]=obs->LLI[i]=obs->Lstd[i]=obs->Pstd[i]=obs->code[i]=0;
+        obs->P[i]=obs->L[i]=0.0;
+        obs->D[i]=obs->SNR[i]=0.0;
+        obs->Lstd[i]=obs->Pstd[i]=0.0;
+        obs->LLI[i]=obs->code[i]=0;
     }
     /* assign position in observation data */
     for (i=n=m=q=0;i<ind->n;i++) {
@@ -897,14 +899,14 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         switch (ind->type[i]) {
             case 0: obs->P[p[i]]=val[i];
                     obs->code[p[i]]=ind->code[i];
-                    obs->Pstd[p[i]]=std[i]>0?std[i]:0;
+                    obs->Pstd[p[i]] = std[i] > 0 ? 0.01 * pow(2, std[i] + 5) : 0;
                     break;
             case 1: obs->L[p[i]]=val[i];
                     obs->LLI[p[i]]=lli[i];
-                    obs->Lstd[p[i]]=std[i]>0?std[i]:0;
+                    obs->Lstd[p[i]] = std[i] > 0 ? std[i] * 0.004 : 0;
                     break;
-            case 2: obs->D[p[i]]=(float)val[i];                     break;
-            case 3: obs->SNR[p[i]]=(uint16_t)(val[i]/SNR_UNIT+0.5); break;
+            case 2: obs->D[p[i]]=(float)val[i]; break;
+            case 3: obs->SNR[p[i]]=val[i]; break;
         }
         trace(4, "obs: i=%d f=%d P=%14.3f L=%14.3f LLI=%d code=%d\n",i,p[i],obs->P[p[i]],
         obs->L[p[i]],obs->LLI[p[i]],obs->code[p[i]]);
@@ -2433,22 +2435,32 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
             /* output field */
             switch (opt->tobs[m][j][0]) {
                 case 'C':
-                case 'P': outrnxobsf(fp,obs[ind[i]].P[k],-1,obs[ind[i]].Pstd[k]); break;
-                case 'L': outrnxobsf(fp,obs[ind[i]].L[k]+dL,obs[ind[i]].LLI[k],obs[ind[i]].Lstd[k]); break;
+                case 'P': {
+                  // To RTKLib RINEX encoding
+                  int pstdi = log2(obs[ind[i]].Pstd[k] * 100) - 5 + 0.5;
+                  outrnxobsf(fp,obs[ind[i]].P[k],-1,pstdi);
+                  break;
+                }
+                case 'L': {
+                  // To RTKLib RINEX encoding
+                  int lstdi = obs[ind[i]].Lstd[k] / 0.004 + 0.5;
+                  outrnxobsf(fp,obs[ind[i]].L[k]+dL,obs[ind[i]].LLI[k],lstdi);
+                  break;
+                }
                 case 'D': outrnxobsf(fp,obs[ind[i]].D[k],-1,-1); break;
-                case 'S': outrnxobsf(fp,obs[ind[i]].SNR[k]*SNR_UNIT,-1,-1); break;
+                case 'S': outrnxobsf(fp,obs[ind[i]].SNR[k],-1,-1); break;
             }
         }
 
         /* set trace level to 1 generate CSV file of raw observations   */
 #ifdef TRACE
         if (gettracelevel()==1) {
-            trace(1,",%16.2f,%3d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%1d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%1d\n",
+            trace(1,",%16.2f,%3d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%3.4f,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%3.4f\n",
                 obs[0].time.time + obs[0].time.sec, obs[ind[i]].sat,
                 obs[ind[i]].P[0], obs[ind[i]].L[0], obs[ind[i]].D[0],
-                obs[ind[i]].SNR[0]*SNR_UNIT, obs[ind[i]].LLI[0], obs[ind[i]].Lstd[0],
+                obs[ind[i]].SNR[0], obs[ind[i]].LLI[0], obs[ind[i]].Lstd[0],
                 obs[ind[i]].P[1], obs[ind[i]].L[1], obs[ind[i]].D[1],
-                obs[ind[i]].SNR[1]*SNR_UNIT, obs[ind[i]].LLI[1], obs[ind[i]].Lstd[1]);
+                obs[ind[i]].SNR[1], obs[ind[i]].LLI[1], obs[ind[i]].Lstd[1]);
         }
 #endif
 

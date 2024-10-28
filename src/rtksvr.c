@@ -1081,7 +1081,7 @@ extern int rtksvrostat(rtksvr_t *svr, int rcv, gtime_t *time, int *sat,
         az  [i]=svr->rtk.ssat[sat[i]-1].azel[0];
         el  [i]=svr->rtk.ssat[sat[i]-1].azel[1];
         for (j=0;j<NFREQ;j++) {
-            snr[i][j]=(int)(svr->obs[rcv][0].data[i].SNR[j]*SNR_UNIT+0.5);
+            snr[i][j]=(int)(svr->obs[rcv][0].data[i].SNR[j]+0.5);
         }
         if (svr->rtk.sol.stat==SOLQ_NONE||svr->rtk.sol.stat==SOLQ_SINGLE) {
             vsat[i]=svr->rtk.ssat[sat[i]-1].vs;

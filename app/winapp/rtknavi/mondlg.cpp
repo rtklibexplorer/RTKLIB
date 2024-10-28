@@ -1004,7 +1004,7 @@ void __fastcall TMonitorDialog::ShowObs(void)
 			else       Tbl->Cells[j++][i+1]="-";
 		}
 		for (k=0;k<NFREQ+nex;k++) {
-			if (obs[i].SNR[k]) Tbl->Cells[j++][i+1]=s.sprintf("%.1f",obs[i].SNR[k]*SNR_UNIT);
+			if (obs[i].SNR[k]) Tbl->Cells[j++][i+1]=s.sprintf("%.1f",obs[i].SNR[k]);
 			else               Tbl->Cells[j++][i+1]=s.sprintf("-");
 		}
 		for (k=0;k<NFREQ+nex;k++) {

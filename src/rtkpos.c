@@ -313,7 +313,7 @@ extern int rtkoutstat(rtk_t *rtk, int level, char *buff)
             int k=IB(i+1,j,&rtk->opt);
             p+=sprintf(p,"$SAT,%d,%.3f,%s,%d,%.1f,%.1f,%.4f,%.4f,%d,%.0f,%d,%d,%d,%u,%u,%u,%.2f,%.6f,%.5f\n",
                        week,tow,id,j+1,ssat->azel[0]*R2D,ssat->azel[1]*R2D,
-                       ssat->resp[j],ssat->resc[j],ssat->vsat[j],ssat->snr_rover[j]*SNR_UNIT,
+                       ssat->resp[j],ssat->resc[j],ssat->vsat[j],ssat->snr_rover[j],
                        ssat->fix[j],ssat->slip[j]&(LLI_SLIP|LLI_HALFC),ssat->lock[j],ssat->outc[j],
                        ssat->slipc[j],ssat->rejc[j],k<rtk->nx?rtk->x[k]:0,
                        k<rtk->nx?rtk->P[k+k*rtk->nx]:0,ssat->icbias[j]);
@@ -437,8 +437,8 @@ static double varerr(int sat, int sys, double el, double snr_rover, double snr_b
                   pow(10,0.1*MAX(snr_max-snr_base, 0)));
     }
     if (opt->err[7]>0.0) {   /* add rcvr stdevs term */
-        if (code) var+=SQR(opt->err[7]*0.01*(1<<(obs->Pstd[frq]+5))); /* 0.01*2^(n+5) */
-        else var+=SQR(opt->err[7]*obs->Lstd[frq]*0.004*0.2); /* 0.004 cycles -> m) */
+        if (code) var+=SQR(opt->err[7]*obs->Pstd[frq]);
+        else var+=SQR(opt->err[7]*obs->Lstd[frq]*0.2);
     }
 
     var*=(opt->ionoopt==IONOOPT_IFLC)?SQR(3.0):1.0;
@@ -967,8 +967,8 @@ static void zdres_sat(int base, double r, const obsd_t *obs, const nav_t *nav,
 
         if (freq1==0.0||freq2==0.0) return;
 
-        if (testsnr(base,0,azel[1],obs->SNR[0]*SNR_UNIT,&opt->snrmask)||
-            testsnr(base,f2,azel[1],obs->SNR[f2]*SNR_UNIT,&opt->snrmask)) return;
+        if (testsnr(base,0,azel[1],obs->SNR[0],&opt->snrmask)||
+            testsnr(base,f2,azel[1],obs->SNR[f2],&opt->snrmask)) return;
 
         C1= SQR(freq1)/(SQR(freq1)-SQR(freq2));
         C2=-SQR(freq2)/(SQR(freq1)-SQR(freq2));
@@ -987,7 +987,7 @@ static void zdres_sat(int base, double r, const obsd_t *obs, const nav_t *nav,
             if ((freq[i]=sat2freq(obs->sat,obs->code[i],nav))==0.0) continue;
 
             /* check SNR mask */
-            if (testsnr(base,i,azel[1],obs->SNR[i]*SNR_UNIT,&opt->snrmask)) {
+            if (testsnr(base,i,azel[1],obs->SNR[i],&opt->snrmask)) {
                 continue;
             }
             /* residuals = observable - estimated range */
@@ -1370,12 +1370,12 @@ static int ddres(rtk_t *rtk, const obsd_t *obs, double dt, const double *x,
 
                 /* single-differenced measurement error variances (m) */
                 Ri[nv] = varerr(sat[i], sysi, azel[1+iu[i]*2],
-                                SNR_UNIT*rtk->ssat[sat[i]-1].snr_rover[frq],
-                                SNR_UNIT*rtk->ssat[sat[i]-1].snr_base[frq],
+                                rtk->ssat[sat[i]-1].snr_rover[frq],
+                                rtk->ssat[sat[i]-1].snr_base[frq],
                                 bl,dt,f,opt,&obs[iu[i]]);
                 Rj[nv] = varerr(sat[j], sysj, azel[1+iu[j]*2],
-                                SNR_UNIT*rtk->ssat[sat[j]-1].snr_rover[frq],
-                                SNR_UNIT*rtk->ssat[sat[j]-1].snr_base[frq],
+                                rtk->ssat[sat[j]-1].snr_rover[frq],
+                                rtk->ssat[sat[j]-1].snr_base[frq],
                                 bl,dt,f,opt,&obs[iu[j]]);
                 /* increase variance if half cycle flags set */
                 if (!code&&(obs[iu[i]].LLI[frq]&LLI_HALFC)) Ri[nv]+=0.01;

@@ -1077,7 +1077,7 @@ void MonitorDialog::showObservations()
             else ui->tWConsole->item(i, j++)->setText("-");
         }
         for (k = 0; k < NFREQ + nex; k++) {
-            if (obs[i].SNR[k]) ui->tWConsole->item(i, j++)->setText(QString::number(obs[i].SNR[k] * SNR_UNIT, 'f', 1));
+            if (obs[i].SNR[k]) ui->tWConsole->item(i, j++)->setText(QString::number(obs[i].SNR[k], 'f', 1));
             else ui->tWConsole->item(i, j++)->setText("-");
         }
         for (k = 0; k < NFREQ + nex; k++)

@@ -976,8 +976,8 @@ static uint8_t *decode_bnx_7f_05_obs(raw_t *raw, uint8_t *buff, int sat,
         }
         if (k<0) {
             data->P[i]=data->L[i]=0.0;
-            data->D[i]=0.0f;
-            data->SNR[i]=data->LLI[i]=0;
+            data->D[i]=data->SNR[i]=0.0;
+            data->LLI[i]=0;
             data->code[i]=CODE_NONE;
         }
         else {
@@ -985,7 +985,7 @@ static uint8_t *decode_bnx_7f_05_obs(raw_t *raw, uint8_t *buff, int sat,
             data->P[i]=range[k];
             data->L[i]=phase[k]*freq/CLIGHT;
             data->D[i]=dopp[k];
-            data->SNR[i]=(uint16_t)(cnr[k]/SNR_UNIT+0.5);
+            data->SNR[i]=cnr[k];
             data->code[i]=codes[code[k]];
             data->LLI[i]=slip[k]?1:0;
             mask[k]=1;
@@ -997,8 +997,8 @@ static uint8_t *decode_bnx_7f_05_obs(raw_t *raw, uint8_t *buff, int sat,
         }
         if (k>=nobs) {
             data->P[i]=data->L[i]=0.0;
-            data->D[i]=0.0f;
-            data->SNR[i]=data->LLI[i]=0;
+            data->D[i]=data->SNR[i]=0.0;
+            data->LLI[i]=0;
             data->code[i]=CODE_NONE;
         }
         else {
@@ -1006,7 +1006,7 @@ static uint8_t *decode_bnx_7f_05_obs(raw_t *raw, uint8_t *buff, int sat,
             data->P[i]=range[k];
             data->L[i]=phase[k]*freq/CLIGHT;
             data->D[i]=dopp[k];
-            data->SNR[i]=(uint16_t)(cnr[k]/SNR_UNIT+0.5);
+            data->SNR[i]=cnr[k];
             data->code[i]=codes[code[k]];
             data->LLI[i]=slip[k]?1:0;
             mask[k]=1;

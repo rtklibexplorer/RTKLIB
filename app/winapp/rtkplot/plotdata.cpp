@@ -1047,7 +1047,7 @@ void __fastcall TPlot::SaveSnrMp(AnsiString file)
                 time2str(timeadd(gpst2utc(time),9*3600.0),tstr,1);
             }
             fprintf(fp,"%s %6s %8.1f %8.1f %9.2f %10.4f\n",tstr,sat,Az[j]*R2D,
-                    El[j]*R2D,Obs.data[j].SNR[k]*SNR_UNIT,!Mp[k]?0.0:Mp[k][j]);
+                    El[j]*R2D,Obs.data[j].SNR[k],!Mp[k]?0.0:Mp[k][j]);
         }
     }
     fclose(fp);

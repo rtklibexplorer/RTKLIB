@@ -1079,7 +1079,7 @@ static int decode_solstat(char *buff, solstat_t *stat)
     stat->resp =(float)resp;
     stat->resc =(float)resc;
     stat->flag =(uint8_t)((vsat<<5)+(slip<<3)+fix);
-    stat->snr  =(uint16_t)(snr/SNR_UNIT+0.5);
+    stat->snr  =(float)snr;
     stat->lock =(uint16_t)lock;
     stat->outc =(uint16_t)outc;
     stat->slipc=(uint16_t)slipc;
@@ -1424,7 +1424,7 @@ extern int outnmea_gsv(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
                     else if (sys==SYS_QZS) prn-=192; /* QZS: 01-10 */
                     az =ssat[sats[n]-1].azel[0]*R2D; if (az<0.0) az+=360.0;
                     el =ssat[sats[n]-1].azel[1]*R2D;
-                    snr=ssat[sats[n]-1].snr_rover[0]*SNR_UNIT;
+                    snr=ssat[sats[n]-1].snr_rover[0];
                 p+=sprintf(p,",%02d,%02.0f,%03.0f,%02.0f",prn,el,az,snr);
             }
             else p+=sprintf(p,",,,,");
