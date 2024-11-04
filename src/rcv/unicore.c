@@ -814,7 +814,7 @@ static int decode_obsvmb(raw_t* raw)
                 pstd = pstd > 0 ? pstd : 0;
                 // Further limited to 9 in RINEX output
                 pstd = pstd <= 254 ? pstd : 254;
-                raw->obuf.data[index].Pstd[idx] = pstd + 0.5;
+                raw->obs.data[index].Pstd[idx] = pstd + 0.5;
 
                 double lstd = U2(p + 22) * 0.0001; // Cycles
                 // To RTKlib encoding
@@ -822,7 +822,7 @@ static int decode_obsvmb(raw_t* raw)
                 lstd = lstd > 0 ? lstd : 0;
                 // Further limited to 9 in RINEX output
                 lstd = lstd <= 254 ? lstd : 254;
-                raw->obuf.data[index].Lstd[idx] = lstd + 0.5;
+                raw->obs.data[index].Lstd[idx] = lstd + 0.5;
             }
         }
     }

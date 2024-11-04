@@ -2,7 +2,8 @@
 
 BINDIR = /usr/local/bin
 SRC    = ../../src
-CFLAGS = -std=c99 -Wall -O3 -pedantic -I$(SRC) -DTRACE -DENAGLO -DENAGAL -DENAQZS -DNFREQ=3 -DNEXOBS=3
+OPTIONS= -DTRACE -DENAGLO -DENAQZS -DENAGAL -DENACMP -DENAIRN -DNFREQ=3 -DNEXOBS=3
+CFLAGS = -std=c99 -Wall -O3 -pedantic -I$(SRC) $(OPTIONS)
 LDLIBS  = -lm
 
 rnx2rtcm   : rnx2rtcm.o trace.o rtkcmn.o rinex.o rtcm.o rtcm2.o rtcm3.o rtcm3e.o

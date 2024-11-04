@@ -40,6 +40,7 @@ public slots:
     void consoleFormatChanged();
     void inputStreamChanged();
     void solutionStreamChanged();
+    void ephemerisSetChanged();
 
 private:
     int consoleFormat, inputStream, solutionStream, fontScale;

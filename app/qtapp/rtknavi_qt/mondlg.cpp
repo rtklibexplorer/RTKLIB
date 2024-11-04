@@ -50,6 +50,7 @@ MonitorDialog::MonitorDialog(QWidget *parent, rtksvr_t *server, stream_t* stream
     connect(ui->cBSelectObservation, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MonitorDialog::observationModeChanged);
     connect(ui->cBSelectInputStream, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MonitorDialog::inputStreamChanged);
     connect(ui->cBSelectSolutionStream, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MonitorDialog::solutionStreamChanged);
+    connect(ui->cBSelectEphemeris, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MonitorDialog::ephemerisSetChanged);
     connect(&updateTimer, &QTimer::timeout, this, &MonitorDialog::updateDisplays);
 }
 //---------------------------------------------------------------------------
@@ -125,6 +126,16 @@ void MonitorDialog::solutionStreamChanged()
     solutionStream = ui->cBSelectSolutionStream->currentIndex();
     consoleBuffer.clear();
     ui->tWConsole->clear();
+}
+//---------------------------------------------------------------------------
+void MonitorDialog::ephemerisSetChanged()
+{
+    int sys = sys_tbl[ui->cBSelectSingleNavigationSystem->currentIndex() + 1];
+    if (sys == SYS_GAL) {
+        ui->lblInformation->setText((ui->cBSelectEphemeris->currentIndex() % 2) ? tr("F/NAV") : tr("I/NAV"));
+    } else {
+        ui->lblInformation->setText("");
+    }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::updateDisplays()
@@ -1597,7 +1608,7 @@ void MonitorDialog::setSbsMessages()
 {
     header.clear();
     header << tr("Trcv") << tr("PRN") << tr("STR") << tr("Type") << tr("Message") << tr("Contents");
-    int i, width[] = {200, 25, 25, 25, 420, 400};
+    int i, width[] = {200, 45, 45, 45, 420, 400};
 
     ui->tWConsole->setColumnCount(6);
     ui->tWConsole->setRowCount(0);
@@ -1671,7 +1682,7 @@ void MonitorDialog::setSbsLong()
     header	<< tr("SAT") << tr("Status") << tr("IODE") << tr("dX (m)") << tr("dY (m)") << tr("dZ (m)") << tr("dVX (m/s)")
         << tr("dVY (m/s)") << tr("dVZ (m/s)") << tr("daf0 (ns)") << tr("daf1 (ns/s)") << tr("T0");
 
-    int i, width[] = {25, 30, 30, 55, 55, 55, 100, 100, 100, 85, 100, 200};
+    int i, width[] = {46, 60, 50, 70, 70, 70, 100, 100, 100, 100, 100, 200};
 
     ui->tWConsole->setColumnCount(12);
     ui->tWConsole->setRowCount(0);
@@ -1732,7 +1743,7 @@ void MonitorDialog::setSbsIono()
     header.clear();
     header << tr("IODI") << tr("Lat (deg)") << tr("Lon (deg)") << tr("GIVEI") << tr("Delay (m)") << tr("T0");
 
-    int i, width[] = {30, 130, 130, 30, 100, 200};
+    int i, width[] = {50, 130, 130, 50, 100, 200};
 
     ui->tWConsole->setColumnCount(6);
     ui->tWConsole->setRowCount(0);
@@ -1791,7 +1802,7 @@ void MonitorDialog::setSbsFast()
     header.clear();
     header << tr("SAT") << tr("Status") << tr("PRC (m)") << tr("RRC (m)") << tr("IODF") << tr("UDREI") << tr("AI") << tr("Tof");
 
-    int i, width[] = {25, 30, 80, 80, 30, 30, 30, 200};
+    int i, width[] = {46, 60, 80, 80, 55, 60, 30, 200};
 
     ui->tWConsole->setColumnCount(8);
     ui->tWConsole->setRowCount(0);
@@ -1951,7 +1962,7 @@ void MonitorDialog::setRtcmDgps()
     header.clear();
     header << tr("SAT") << tr("Status") << tr("PRC (m)") << tr("RRC (m)") << tr("IOD") << tr("UDRE") << tr("T0");
 
-    int i, width[] = {25, 30, 80, 80, 30, 30, 115};
+    int i, width[] = {46, 60, 80, 80, 30, 30, 115};
 
     ui->tWConsole->setColumnCount(7);
     ui->tWConsole->setRowCount(MAXSAT);
@@ -2000,7 +2011,7 @@ void MonitorDialog::setRtcmSsr()
     header	<< tr("SAT") << tr("Status") << tr("UDI (s)") << tr("UDHR (s)") << tr("IOD") << tr("URA") << tr("Datum") << tr("T0")
             << tr("D0-A (m)") << tr("D0-C (m)") << tr("D0-R (m)") << tr("D1-A (mm/s)") << tr("D1-C (mm/s)") << tr("D1-R (mm/s)")
             << tr("C0 (m)") << tr("C1 (mm/s)") << tr("C2 (mm/s²)") << tr("C-HR (m)") << tr("Code Bias (m)") << tr("Phase Bias (m)");
-    int i, width[] = { 25, 40, 70, 90, 30, 25, 70, 115, 90, 90, 90, 120, 120, 120, 90, 120, 120, 120, 200, 200 };
+    int i, width[] = { 46, 60, 70, 90, 30, 25, 70, 115, 90, 90, 90, 120, 120, 120, 90, 120, 120, 120, 200, 200 };
 
     ui->tWConsole->setColumnCount(20);
     ui->tWConsole->setRowCount(0);

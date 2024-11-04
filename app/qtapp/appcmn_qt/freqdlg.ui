@@ -290,7 +290,7 @@
      </item>
      <item row="4" column="2">
       <property name="text">
-       <string>-</string>
+       <string>L1</string>
       </property>
       <property name="textAlignment">
        <set>AlignCenter</set>

@@ -255,7 +255,7 @@ const char *formatstrs[32]={    /* stream format strings */
     NULL
 };
 
-static char *obscodes[]={       /* observation code strings */
+static char *obscodes[MAXCODE + 1]={       /* observation code strings */
 
     ""  ,"1C","1P","1W","1Y", "1M","1N","1S","1L","1E", /*  0- 9 */
     "1A","1B","1X","1Z","2C", "2D","2S","2L","2X","2P", /* 10-19 */
@@ -268,12 +268,12 @@ static char *obscodes[]={       /* observation code strings */
 };
 static char codepris[7][MAXFREQ][16]={  /* code priority for each freq-index */
     /* L1/E1/B1 L2/E5b/B2b L5/E5a/B2a E6/LEX/B3 E5(a+b)         */
-    {"CPYWMNSLX","CPYWMNDLSX","IQX"     ,""       ,""       ,""}, /* GPS */
+    {"CPYWMNSLX","CPYWMNDLSX","IQX"    ,""       ,""       ,""}, /* GPS */
     {"CPABX"   ,"CPABX"     ,"IQX"     ,""       ,""       ,""}, /* GLO */
     {"CABXZ"   ,"XIQ"       ,"XIQ"     ,"ABCXZ"  ,"IQX"    ,""}, /* GAL */
-    {"CLSXZ"   ,"LSX"       ,"IQXDPZ"  ,"LSXEZ"  ,""       ,""}, /* QZS */
+    {"CLSXZBE" ,"LSX"       ,"IQXDPZ"  ,"LSXEZ"  ,""       ,""}, /* QZS */
     {"C"       ,"IQX"       ,""        ,""       ,""       ,""}, /* SBS */
-    {"IQXDPAN" ,"IQXDPZ"    ,"DPX"    ,"IQXDPZA" ,"DPX"    ,""}, /* BDS */
+    {"IQXDPSLZAN","IQXDPZ"  ,"DPX"     ,"IQXDPZA" ,"DPX"    ,""}, /* BDS */
     {"ABCX"    ,"ABCX"      ,"DPX"     ,""       ,""       ,""}  /* IRN */
 };
 static fatalfunc_t *fatalfunc=NULL; /* fatal callback function */
@@ -585,7 +585,7 @@ extern uint8_t obs2code(const char *obs)
 {
     int i;
 
-    for (i=1;*obscodes[i];i++) {
+    for (i=1;i <= MAXCODE;i++) {
         if (strcmp(obscodes[i],obs)) continue;
         return (uint8_t)i;
     }
@@ -2868,31 +2868,43 @@ extern int geterp(const erp_t *erp, gtime_t time, double *erpv)
 /* compare ephemeris ---------------------------------------------------------*/
 static int cmpeph(const void *p1, const void *p2)
 {
-    eph_t *q1=(eph_t *)p1,*q2=(eph_t *)p2;
-    return q1->ttr.time!=q2->ttr.time?(int)(q1->ttr.time-q2->ttr.time):
-           (q1->toe.time!=q2->toe.time?(int)(q1->toe.time-q2->toe.time):
-            q1->sat-q2->sat);
+  eph_t *q1 = (eph_t *)p1, *q2 = (eph_t *)p2;
+  if (q1->ttr.time != q2->ttr.time) return (int)(q1->ttr.time - q2->ttr.time);
+  if (q1->toe.time != q2->toe.time) return (int)(q1->toe.time - q2->toe.time);
+  if (q1->sat != q2->sat) return q1->sat - q2->sat;
+  if (satsys(q1->sat, NULL) == SYS_GAL) {
+    int set1 = (q1->code & ((1 << 8) | (1 << 1))) ? 1 : 0;
+    int set2 = (q2->code & ((1 << 8) | (1 << 1))) ? 1 : 0;
+    return set1 - set2;
+  }
+  return 0;
 }
 /* sort and unique ephemeris -------------------------------------------------*/
 static void uniqeph(nav_t *nav)
 {
-    eph_t *nav_eph;
-    int i,j;
-
     trace(3,"uniqeph: n=%d\n",nav->n);
 
     if (nav->n<=0) return;
 
     qsort(nav->eph,nav->n,sizeof(eph_t),cmpeph);
 
-    for (i=1,j=0;i<nav->n;i++) {
+    int j = 0;
+    for (int i=1;i<nav->n;i++) {
         if (nav->eph[i].sat!=nav->eph[j].sat||
+            nav->eph[i].toe.time != nav->eph[j].toe.time ||
             nav->eph[i].iode!=nav->eph[j].iode) {
             nav->eph[++j]=nav->eph[i];
+            continue;
+        }
+        if (satsys(nav->eph[i].sat, NULL) == SYS_GAL) {
+          int setj = (nav->eph[j].code & ((1 << 8) | (1 << 1))) ? 1 : 0;
+          int seti = (nav->eph[i].code & ((1 << 8) | (1 << 1))) ? 1 : 0;
+          if (seti != setj) nav->eph[++j] = nav->eph[i];
         }
     }
     nav->n=j+1;
 
+    eph_t *nav_eph;
     if (!(nav_eph=(eph_t *)realloc(nav->eph,sizeof(eph_t)*nav->n))) {
         trace(1,"uniqeph malloc error n=%d\n",nav->n);
         free(nav->eph); nav->eph=NULL; nav->n=nav->nmax=0;
@@ -2904,12 +2916,11 @@ static void uniqeph(nav_t *nav)
     trace(4,"uniqeph: n=%d\n",nav->n);
 }
 /* compare glonass ephemeris -------------------------------------------------*/
-static int cmpgeph(const void *p1, const void *p2)
-{
-    geph_t *q1=(geph_t *)p1,*q2=(geph_t *)p2;
-    return q1->tof.time!=q2->tof.time?(int)(q1->tof.time-q2->tof.time):
-           (q1->toe.time!=q2->toe.time?(int)(q1->toe.time-q2->toe.time):
-            q1->sat-q2->sat);
+static int cmpgeph(const void *p1, const void *p2) {
+  geph_t *q1 = (geph_t *)p1, *q2 = (geph_t *)p2;
+  if (q1->tof.time != q2->tof.time) return (int)(q1->tof.time - q2->tof.time);
+  if (q1->toe.time != q2->toe.time) return (int)(q1->toe.time - q2->toe.time);
+  return q1->sat - q2->sat;
 }
 /* sort and unique glonass ephemeris -----------------------------------------*/
 static void uniqgeph(nav_t *nav)
@@ -2943,12 +2954,11 @@ static void uniqgeph(nav_t *nav)
     trace(4,"uniqgeph: ng=%d\n",nav->ng);
 }
 /* compare sbas ephemeris ----------------------------------------------------*/
-static int cmpseph(const void *p1, const void *p2)
-{
-    seph_t *q1=(seph_t *)p1,*q2=(seph_t *)p2;
-    return q1->tof.time!=q2->tof.time?(int)(q1->tof.time-q2->tof.time):
-           (q1->t0.time!=q2->t0.time?(int)(q1->t0.time-q2->t0.time):
-            q1->sat-q2->sat);
+static int cmpseph(const void *p1, const void *p2) {
+  seph_t *q1 = (seph_t *)p1, *q2 = (seph_t *)p2;
+  if (q1->tof.time != q2->tof.time) return (int)(q1->tof.time - q2->tof.time);
+  if (q1->t0.time != q2->t0.time) return (int)(q1->t0.time - q2->t0.time);
+  return q1->sat - q2->sat;
 }
 /* sort and unique sbas ephemeris --------------------------------------------*/
 static void uniqseph(nav_t *nav)

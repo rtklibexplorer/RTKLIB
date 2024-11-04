@@ -110,9 +110,10 @@ static const char *help[]={
 "                  binex= BINEX",
 "                  rt17 = Trimble RT17",
 "                  sbf  = Septentrio SBF",
+"                  unicore = Unicore binary data output",
 "                  rinex= RINEX",
 "     -ro opt      receiver options",
-"     -f freq      number of frequencies [5]",
+"     -f freq      number of frequencies [all]",
 "     -hc comment  rinex header: comment line",
 "     -hm marker   rinex header: marker name",
 "     -hn markno   rinex header: marker number",
@@ -134,6 +135,7 @@ static const char *help[]={
 "     -nomask [sig[,...]] signal no mask (same as above)",
 "     -x sat       exclude satellite",
 "     -y sys       exclude systems (G:GPS,R:GLO,E:GAL,J:QZS,S:SBS,C:BDS,I:IRN)",
+"     --glofcn [-7 to 6][,...]] GLONASS fcn for R01 to R32",
 "     -d dir       output directory [same as input file]",
 "     -c staid     use RINEX file name convention with staid [off]",
 "     -o ofile     output RINEX OBS file",
@@ -167,6 +169,7 @@ static const char *help[]={
 "     *.bnx,*binex  BINEX",
 "     *.rt17        Trimble RT17",
 "     *.sbf         Septentrio SBF",
+"     *.unc         Unicore binary data output",
 "     *.obs,*.*o    RINEX OBS",
 "     *.rnx         RINEX OBS"
 "     *.nav,*.*n    RINEX NAV",
@@ -338,6 +341,40 @@ static void setmask(const char *argv, rnxopt_t *opt, int mask)
         }
     }
 }
+// Set GLONASS fcn -----------------------------------------------------------
+static void setglofcn(const char *argv, rnxopt_t *opt) {
+  char buff[1024];
+  strncpy(buff, argv, sizeof(buff));
+  buff[1023] = '\0';
+  char *p = buff;
+  for (int i = 0; i < 32; i++) {
+    if (p == NULL) break;
+    char *fcnstr = p;
+    for (;;) {
+      int c = *p++;
+      if (c == ',') {
+        p[-1] = '\0';
+        break;
+      }
+      if (c == '\0') {
+        p = NULL;
+        break;
+      }
+    }
+    if (strlen(fcnstr) < 1) continue;
+    int fcn;
+    int r = sscanf(fcnstr, "%d", &fcn);
+    if (r != 1) {
+      fprintf(stderr, "GLONASS R%02d fcn invalid '%s'\n", i + 1, fcnstr);
+      continue;
+    }
+    if (fcn < -7 || fcn > 6) {
+      fprintf(stderr, "GLONASS R%02d fcn %d out of range [-7 to 6]\n", i + 1, fcn);
+      continue;
+    }
+    opt->glofcn[i] = fcn + 8;
+  }
+}
 /* get start time of input file -----------------------------------------------*/
 static int get_filetime(const char *file, gtime_t *time)
 {
@@ -384,7 +421,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
 {
     double eps[]={1980,1,1,0,0,0},epe[]={2037,12,31,0,0,0};
     double epr[]={2010,1,1,0,0,0},span=0.0;
-    int i,j,k,sat,nf=5,format=-1;
+    int i,j,k,sat,nf=6,format=-1;
     char *p,*sys,*fmt="",*paths[1],path[1024],buff[256];
     
     opt->rnxver=304;
@@ -528,6 +565,9 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
             else if (!strcmp(sys,"C")) opt->navsys&=~SYS_CMP;
             else if (!strcmp(sys,"I")) opt->navsys&=~SYS_IRN;
         }
+        else if (!strcmp(argv[i], "--glofcn") && i + 1 < argc) {
+            setglofcn(argv[++i], opt);
+        }
         else if (!strcmp(argv[i],"-d" )&&i+1<argc) {
             *dir=argv[++i];
         }
@@ -562,6 +602,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
     if (nf>=3) opt->freqtype|=FREQTYPE_L3;
     if (nf>=4) opt->freqtype|=FREQTYPE_L4;
     if (nf>=5) opt->freqtype|=FREQTYPE_L5;
+    if (nf>=6) opt->freqtype|=FREQTYPE_ALL;
     
     if (!opt->trtcm.time) {
         get_filetime(*ifile,&opt->trtcm);

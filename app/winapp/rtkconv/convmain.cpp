@@ -954,8 +954,7 @@ void __fastcall TMainWindow::ConvertFile(void)
 	rnxopt.obstype=ObsType;
 	rnxopt.freqtype=FreqType;
 	for (i=0;i<2;i++) rnxcomment(&rnxopt, "%s", Comment[i].c_str());
-	for (i=0;i<7;i++) strcpy(rnxopt.mask[i],CodeMask[i].c_str());
-        for (i=0;i<7;i++) {
+        for (i=0;i<RNX_NUMSYS;i++) {
             /* strncpy is appropriate here, the elements are accessed randomly */
             strncpy(rnxopt.mask[i],CodeMask[i].c_str(),sizeof(rnxopt.mask[i]));
             rnxopt.mask[i][MAXCODE]='\0';

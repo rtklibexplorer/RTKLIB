@@ -901,7 +901,11 @@ void MainWindow::convertFile()
     conversionThread->rnxopt.freqtype = convOptDialog->frequencyType;
     for (i = 0; i < 2; i++)
         rnxcomment(&conversionThread->rnxopt, "%s", qPrintable(convOptDialog->comment[i]));
-    for (i = 0; i < 7; i++) strncpy(conversionThread->rnxopt.mask[i], qPrintable(convOptDialog->codeMask[i]), 63);
+    for (i = 0; i < RNX_NUMSYS; i++) {
+        /* strncpy is appropriate here, the elements are accessed randomly */
+        strncpy(conversionThread->rnxopt.mask[i], qPrintable(convOptDialog->codeMask[i]), sizeof(conversionThread->rnxopt.mask[i]));
+        conversionThread->rnxopt.mask[i][MAXCODE] = '\0';
+    }
     conversionThread->rnxopt.autopos = convOptDialog->autoPosition;
     conversionThread->rnxopt.phshift = convOptDialog->phaseShift;
     conversionThread->rnxopt.halfcyc = convOptDialog->halfCycle;
