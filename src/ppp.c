@@ -459,11 +459,11 @@ static void detslp_ll(rtk_t *rtk, const obsd_t *obs, int n)
     trace(3,"detslp_ll: n=%d\n",n);
 
     for (i=0;i<n&&i<MAXOBS;i++) for (j=0;j<rtk->opt.nf;j++) {
-        if (obs[i].L[j]==0.0||!(obs[i].LLI[j]&3)) continue;
+        if (obs[i].L[j]==0.0||!(obs[i].LLI[j]&(LLI_SLIP|LLI_HALFC))) continue;
 
         trace(3,"detslp_ll: slip detected sat=%2d f=%d\n",obs[i].sat,j+1);
 
-        rtk->ssat[obs[i].sat-1].slip[j<nf?j:nf]=1;
+        rtk->ssat[obs[i].sat-1].slip[j<nf?j:nf]=LLI_SLIP;
     }
 }
 /* detect cycle slip by geometry free phase jump -----------------------------*/
@@ -487,7 +487,7 @@ static void detslp_gf(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
             trace(3,"detslip_gf: slip detected sat=%2d gf=%8.3f->%8.3f\n",
                   obs[i].sat,g0,g1);
 
-            for (j=0;j<rtk->opt.nf;j++) rtk->ssat[obs[i].sat-1].slip[j]|=1;
+            for (j=0;j<rtk->opt.nf;j++) rtk->ssat[obs[i].sat-1].slip[j]|=LLI_SLIP;
         }
     }
 }
@@ -511,7 +511,7 @@ static void detslp_mw(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
             trace(3,"detslip_mw: slip detected sat=%2d mw=%8.3f->%8.3f\n",
                   obs[i].sat,w0,w1);
 
-            for (j=0;j<rtk->opt.nf;j++) rtk->ssat[obs[i].sat-1].slip[j]|=1;
+            for (j=0;j<rtk->opt.nf;j++) rtk->ssat[obs[i].sat-1].slip[j]|=LLI_SLIP;
         }
     }
 }
@@ -1148,7 +1148,7 @@ static void update_stat(rtk_t *rtk, const obsd_t *obs, int n, int stat)
         rtk->ssat[obs[i].sat-1].snr_base[j] =0;
     }
     for (i=0;i<MAXSAT;i++) for (j=0;j<opt->nf;j++) {
-        if (rtk->ssat[i].slip[j]&3) rtk->ssat[i].slipc[j]++;
+        if (rtk->ssat[i].slip[j]&(LLI_SLIP|LLI_HALFC)) rtk->ssat[i].slipc[j]++;
         if (rtk->ssat[i].fix[j]==2&&stat!=SOLQ_FIX) rtk->ssat[i].fix[j]=1;
     }
 }

@@ -314,7 +314,7 @@ extern int rtkoutstat(rtk_t *rtk, int level, char *buff)
             p+=sprintf(p,"$SAT,%d,%.3f,%s,%d,%.1f,%.1f,%.4f,%.4f,%d,%.0f,%d,%d,%d,%u,%u,%u,%.2f,%.6f,%.5f\n",
                        week,tow,id,j+1,ssat->azel[0]*R2D,ssat->azel[1]*R2D,
                        ssat->resp[j],ssat->resc[j],ssat->vsat[j],ssat->snr_rover[j]*SNR_UNIT,
-                       ssat->fix[j],ssat->slip[j]&3,ssat->lock[j],ssat->outc[j],
+                       ssat->fix[j],ssat->slip[j]&(LLI_SLIP|LLI_HALFC),ssat->lock[j],ssat->outc[j],
                        ssat->slipc[j],ssat->rejc[j],k<rtk->nx?rtk->x[k]:0,
                        k<rtk->nx?rtk->P[k+k*rtk->nx]:0,ssat->icbias[j]);
         }
@@ -667,24 +667,25 @@ static void detslp_ll(rtk_t *rtk, const obsd_t *obs, int i, int rcv)
 
         /* detect slip by cycle slip flag in LLI */
         if (rtk->tt>=0.0) { /* forward */
-            if (obs[i].LLI[f]&1) {
+            if (obs[i].LLI[f]&LLI_SLIP) {
                 errmsg(rtk,"slip detected forward (sat=%2d rcv=%d F=%d LLI=%x)\n",
                        sat,rcv,f+1,obs[i].LLI[f]);
             }
             slip=obs[i].LLI[f];
         }
         else { /* backward */
-            if (LLI&1) {
+            if (LLI&LLI_SLIP) {
                 errmsg(rtk,"slip detected backward (sat=%2d rcv=%d F=%d LLI=%x)\n",
                        sat,rcv,f+1,LLI);
             }
             slip=LLI;
         }
         /* detect slip by parity unknown flag transition in LLI */
-        if (((LLI&2)&&!(obs[i].LLI[f]&2))||(!(LLI&2)&&(obs[i].LLI[f]&2))) {
+        if (((LLI&LLI_HALFC)&&!(obs[i].LLI[f]&LLI_HALFC))||
+            (!(LLI&LLI_HALFC)&&(obs[i].LLI[f]&LLI_HALFC))) {
             errmsg(rtk,"slip detected half-cyc (sat=%2d rcv=%d F=%d LLI=%x->%x)\n",
                    sat,rcv,f+1,LLI,obs[i].LLI[f]);
-            slip|=1;
+            slip|=LLI_SLIP;
         }
         /* save current LLI */
         if (rcv==1) setbitu(&rtk->ssat[sat-1].slip[f],0,2,obs[i].LLI[f]);
@@ -692,7 +693,7 @@ static void detslp_ll(rtk_t *rtk, const obsd_t *obs, int i, int rcv)
 
         /* save slip and half-cycle valid flag */
         rtk->ssat[sat-1].slip[f]|=(uint8_t)slip;
-        rtk->ssat[sat-1].half[f]=(obs[i].LLI[f]&2)?0:1;
+        rtk->ssat[sat-1].half[f]=(obs[i].LLI[f]&LLI_HALFC)?0:1;
     }
 }
 /* detect cycle slip by geometry free phase jump -----------------------------*/
@@ -707,7 +708,7 @@ static void detslp_gf(rtk_t *rtk, const obsd_t *obs, int i, int j,
     /* skip check if slip already detected or check disabled*/
     if (rtk->opt.thresslip==0) return;
     for (k=0;k<rtk->opt.nf;k++)
-        if (rtk->ssat[sat-1].slip[k]&1) return;
+        if (rtk->ssat[sat-1].slip[k]&LLI_SLIP) return;
 
     for (k=1;k<rtk->opt.nf;k++) {
         /* calc SD geomotry free LC of phase between freq0 and freqk */
@@ -717,8 +718,8 @@ static void detslp_gf(rtk_t *rtk, const obsd_t *obs, int i, int j,
         rtk->ssat[sat-1].gf[k-1]=gf1;    /* save current gf for next epoch */
 
         if (gf0!=0.0&&fabs(gf1-gf0)>rtk->opt.thresslip) {
-            rtk->ssat[sat-1].slip[0]|=1;
-            rtk->ssat[sat-1].slip[k]|=1;
+            rtk->ssat[sat-1].slip[0]|=LLI_SLIP;
+            rtk->ssat[sat-1].slip[k]|=LLI_SLIP;
             errmsg(rtk,"slip detected GF jump (sat=%2d L1-L%d dGF=%.3f)\n",
                 sat,k+1,gf0-gf1);
         }
@@ -768,7 +769,7 @@ static void detslp_dop(rtk_t *rtk, const obsd_t *obs, const int *ix, int ns,
         for (f=0;f<nf;f++) {
             if (dopdif[i][f]==0.00) continue;
             if (fabs(dopdif[i][f]-mean_dop)>rtk->opt.thresdop) {
-                rtk->ssat[sat-1].slip[f]|=1;
+                rtk->ssat[sat-1].slip[f]|=LLI_SLIP;
                 errmsg(rtk,"slip detected doppler (sat=%2d rcv=%d dL%d=%.3f off=%.3f tt=%.2f)\n",
                    sat,rcv,f+1,dopdif[i][f]-mean_dop,mean_dop,tt[i][f]);
             }
@@ -804,7 +805,7 @@ static void udbias(rtk_t *rtk, double tt, const obsd_t *obs, const int *sat,
         /* update half-cycle valid flag */
         for (k=0;k<nf;k++) {
             rtk->ssat[sat[i]-1].half[k]=
-                !((obs[iu[i]].LLI[k]&2)||(obs[ir[i]].LLI[k]&2));
+                !((obs[iu[i]].LLI[k]&LLI_HALFC)||(obs[ir[i]].LLI[k]&LLI_HALFC));
         }
     }
     for (k=0;k<nf;k++) {
@@ -836,7 +837,7 @@ static void udbias(rtk_t *rtk, double tt, const obsd_t *obs, const int *sat,
                 f2=seliflc(rtk->opt.nf,rtk->ssat[sat[i]-1].sys);
                 slip|=rtk->ssat[sat[i]-1].slip[f2];
             }
-            if (rtk->opt.modear==ARMODE_INST||(!(slip&1)&&rejc<2)) continue;
+            if (rtk->opt.modear==ARMODE_INST||(!(slip&LLI_SLIP)&&rejc<2)) continue;
             /* reset phase-bias state if detecting cycle slip or outlier */
             rtk->x[j]=0.0;
             rtk->ssat[sat[i]-1].rejc[k]=0;
@@ -1481,7 +1482,7 @@ static int ddidx(rtk_t *rtk, int *ix, int gps, int glo, int sbs)
                     continue;
                 }
                 /* set sat to use for fixing ambiguity if meets criteria */
-                if (rtk->ssat[i-k].lock[f]>=0&&!(rtk->ssat[i-k].slip[f]&2)&&
+                if (rtk->ssat[i-k].lock[f]>=0&&!(rtk->ssat[i-k].slip[f]&LLI_HALFC)&&
                     rtk->ssat[i-k].azel[1]>=rtk->opt.elmaskar&&!nofix) {
                     rtk->ssat[i-k].fix[f]=2; /* fix */
                     break;/* break out of loop if find good sat */
@@ -1497,7 +1498,7 @@ static int ddidx(rtk_t *rtk, int *ix, int gps, int glo, int sbs)
                     continue;
                 }
                 if (sbs==0 && satsys(j-k+1,NULL)==SYS_SBS) continue;
-                if (rtk->ssat[j-k].lock[f]>=0&&!(rtk->ssat[j-k].slip[f]&2)&&
+                if (rtk->ssat[j-k].lock[f]>=0&&!(rtk->ssat[j-k].slip[f]&LLI_HALFC)&&
                     rtk->ssat[j-k].vsat[f]&&
                     rtk->ssat[j-k].azel[1]>=rtk->opt.elmaskar&&!nofix) {
                     /* set D coeffs to subtract sat j from sat i */
@@ -2147,8 +2148,8 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     for (i=0;i<MAXSAT;i++) for (j=0;j<nf;j++) {
         /* Don't lose track of which sats were used to try and resolve the ambiguities */
         /* if (rtk->ssat[i].fix[j]==2&&stat!=SOLQ_FIX) rtk->ssat[i].fix[j]=1; */
-        if (rtk->ssat[i].slip[j]&1) rtk->ssat[i].slipc[j]++;
-        /* inc lock count if this sat used for good fix */
+        if (rtk->ssat[i].slip[j]&LLI_SLIP) rtk->ssat[i].slipc[j]++;
+        /* Inc lock count if this sat used for good fix */
         if (!rtk->ssat[i].vsat[j]) continue;
         if (rtk->ssat[i].lock[j]<0||(rtk->nfix>0&&rtk->ssat[i].fix[j]>=2))
             rtk->ssat[i].lock[j]++;
