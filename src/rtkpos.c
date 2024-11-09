@@ -1454,102 +1454,93 @@ static double intpres(gtime_t time, const obsd_t *obs, int n, const nav_t *nav,
     }
     return fabs(ttb)<fabs(tt)?ttb:tt;
 }
-/* index for single to double-difference transformation matrix (D') --------------------*/
-static int ddidx(rtk_t *rtk, int *ix, int gps, int glo, int sbs)
-{
-    int i,j,k,m,f,n,nb=0,na=rtk->na,nf=NF(&rtk->opt),nofix;
-    double fix[MAXSAT],ref[MAXSAT];
+/* Index for single to double-difference transformation matrix (D') ----------*/
+static int ddidx(rtk_t *rtk, int *ix, int gps, int glo, int sbs) {
+  trace(3, "ddidx: gps=%d/%d glo=%d/%d sbs=%d\n", gps, rtk->opt.gpsmodear, glo, rtk->opt.glomodear,
+        sbs);
 
-    trace(3,"ddidx: gps=%d/%d glo=%d/%d sbs=%d\n",gps,rtk->opt.gpsmodear,glo,rtk->opt.glomodear,sbs);
+  /* Clear fix flag for all sats (1=float, 2=fix) */
+  for (int i = 0; i < MAXSAT; i++) {
+    for (int j = 0; j < NFREQ; j++) rtk->ssat[i].fix[j] = 0;
+  }
 
-    /* clear fix flag for all sats (1=float, 2=fix) */
-    for (i=0;i<MAXSAT;i++) for (j=0;j<NFREQ;j++) {
-        rtk->ssat[i].fix[j]=0;
-    }
-    for (m=0;m<6;m++) { /* m=0:GPS/SBS,1:GLO,2:GAL,3:BDS,4:QZS,5:IRN */
+  int nb = 0, nf = NF(&rtk->opt);
+  double fix[MAXSAT], ref[MAXSAT];
+  /* m=0:GPS/SBS,1:GLO,2:GAL,3:BDS,4:QZS,5:IRN */
+  for (int m = 0; m < 6; m++) {
+    /* Skip if ambiguity resolution turned off for this sys */
+    int nofix = (m == 0 && gps == 0) || (m == 1 && glo == 0) || (m == 3 && rtk->opt.bdsmodear == 0);
 
-        /* skip if ambiguity resolution turned off for this sys */
-        nofix=(m==0&&gps==0)||(m==1&&glo==0)||(m==3&&rtk->opt.bdsmodear==0);
-
-        /* step through freqs */
-        for (f=0,k=na;f<nf;f++,k+=MAXSAT) {
-
-            /* look for first valid sat (i=state index, i-k=sat index) */
-            for (i=k;i<k+MAXSAT;i++) {
-                /* skip if sat not active */
-                if (rtk->x[i]==0.0||!test_sys(rtk->ssat[i-k].sys,m)||
-                    !rtk->ssat[i-k].vsat[f]) {
-                    continue;
-                }
-                /* set sat to use for fixing ambiguity if meets criteria */
-                if (rtk->ssat[i-k].lock[f]>=0&&!(rtk->ssat[i-k].slip[f]&LLI_HALFC)&&
-                    rtk->ssat[i-k].azel[1]>=rtk->opt.elmaskar&&!nofix) {
-                    rtk->ssat[i-k].fix[f]=2; /* fix */
-                    break;/* break out of loop if find good sat */
-                }
-                /* else don't use this sat for fixing ambiguity */
-                else rtk->ssat[i-k].fix[f]=1;
-            }
-            if (i>=k+MAXSAT||rtk->ssat[i-k].fix[f]!=2) continue;  /* no good sat found */
-            /* step through all sats (j=state index, j-k=sat index, i-k=first good sat) */
-            for (n=0,j=k;j<k+MAXSAT;j++) {
-                if (i==j||rtk->x[j]==0.0||!test_sys(rtk->ssat[j-k].sys,m)||
-                    !rtk->ssat[j-k].vsat[f]) {
-                    continue;
-                }
-                if (sbs==0 && satsys(j-k+1,NULL)==SYS_SBS) continue;
-                if (rtk->ssat[j-k].lock[f]>=0&&!(rtk->ssat[j-k].slip[f]&LLI_HALFC)&&
-                    rtk->ssat[j-k].vsat[f]&&
-                    rtk->ssat[j-k].azel[1]>=rtk->opt.elmaskar&&!nofix) {
-                    /* set D coeffs to subtract sat j from sat i */
-                    ix[nb*2  ]=i; /* state index of ref bias */
-                    ix[nb*2+1]=j; /* state index of target bias */
-                    /* inc # of sats used for fix */
-                    ref[nb]=i-k+1;
-                    fix[nb++]=j-k+1;
-                    rtk->ssat[j-k].fix[f]=2; /* fix */
-                    n++; /* count # of sat pairs for this freq/constellation */
-                }
-                /* else don't use this sat for fixing ambiguity */
-                else rtk->ssat[j-k].fix[f]=1;
-            }
-            /* don't use ref sat if no sat pairs */
-            if (n==0) rtk->ssat[i-k].fix[f]=1;
+    /* Step through freqs */
+    for (int f = 0; f < nf; f++) {
+      /* Look for first valid sat */
+      int sat1;
+      for (sat1 = 0; sat1 < MAXSAT; sat1++) {
+        /* Skip if sat not active */
+        if (rtk->x[IB(sat1 + 1, f, &rtk->opt)] == 0.0 || !test_sys(rtk->ssat[sat1].sys, m) ||
+            !rtk->ssat[sat1].vsat[f]) {
+          continue;
         }
+        /* Set sat to use for fixing ambiguity if meets criteria */
+        if (rtk->ssat[sat1].lock[f] >= 0 && !(rtk->ssat[sat1].slip[f] & LLI_HALFC) &&
+            rtk->ssat[sat1].azel[1] >= rtk->opt.elmaskar && !nofix) {
+          rtk->ssat[sat1].fix[f] = 2; /* Fix */
+          /* Break out of loop if find good sat */
+          break;
+        }
+        /* Else don't use this sat for fixing ambiguity */
+        rtk->ssat[sat1].fix[f] = 1;
+      }
+      if (sat1 >= MAXSAT || rtk->ssat[sat1].fix[f] != 2) continue; /* No good sat found */
+      int n = 0;
+      for (int sat2 = sat1 + 1; sat2 < MAXSAT; sat2++) {
+        if (sat1 == sat2 || rtk->x[IB(sat2 + 1, f, &rtk->opt)] == 0.0 ||
+            !test_sys(rtk->ssat[sat2].sys, m) || !rtk->ssat[sat2].vsat[f]) {
+          continue;
+        }
+        if (sbs == 0 && satsys(sat2 + 1, NULL) == SYS_SBS) continue;
+        if (rtk->ssat[sat2].lock[f] >= 0 && !(rtk->ssat[sat2].slip[f] & LLI_HALFC) &&
+            rtk->ssat[sat2].vsat[f] && rtk->ssat[sat2].azel[1] >= rtk->opt.elmaskar && !nofix) {
+          /* Set D coeffs to subtract sat2 from sat1 */
+          ix[nb * 2] = IB(sat1 + 1, f, &rtk->opt);     /* State index of ref bias */
+          ix[nb * 2 + 1] = IB(sat2 + 1, f, &rtk->opt); /* State index of target bias */
+          ref[nb] = sat1 + 1;
+          fix[nb++] = sat2 + 1;
+          rtk->ssat[sat2].fix[f] = 2; /* Fix */
+          n++;                        /* Count # of sat pairs for this freq/constellation */
+          continue;
+        }
+        /* Else don't use this sat for fixing ambiguity */
+        rtk->ssat[sat2].fix[f] = 1;
+      }
+      /* Don't use ref sat if no sat pairs */
+      if (n == 0) rtk->ssat[sat1].fix[f] = 1;
     }
+  }
 
-    if (nb>0) {
-        trace(3,"refSats=");tracemat(3,ref,1,nb,7,0);
-        trace(3,"fixSats=");tracemat(3,fix,1,nb,7,0);
-    }
-    return nb;
+  if (nb > 0) {
+    trace(3, "refSats=");
+    tracemat(3, ref, 1, nb, 7, 0);
+    trace(3, "fixSats=");
+    tracemat(3, fix, 1, nb, 7, 0);
+  }
+  return nb;
 }
-/* translate double diff fixed phase-bias values to single diff fix phase-bias values */
-static void restamb(rtk_t *rtk, const double *bias, int nb, double *xa)
-{
-    int i,n,m,f,index[MAXSAT]={0},nv=0,nf=NF(&rtk->opt);
+/* Translate double diff fixed phase-bias values to single diff fix phase-bias values */
+static void restamb(rtk_t *rtk, const int *ix, int nb, const double *bias, double *xa) {
+  trace(3, "restamb :\n");
 
-    trace(3,"restamb :\n");
+  // Init all fixed states to float state values
+  for (int i = 0; i < rtk->nx; i++) xa[i] = rtk->x[i];
+  //  Overwrite non phase-bias states with fixed values
+  for (int i = 0; i < rtk->na; i++) xa[i] = rtk->xa[i];
 
-    for (i=0;i<rtk->nx;i++) xa[i]=rtk->x [i];  /* init all fixed states to float state values */
-    for (i=0;i<rtk->na;i++) xa[i]=rtk->xa[i];  /* overwrite non phase-bias states with fixed values */
-
-    for (m=0;m<6;m++) for (f=0;f<nf;f++) {
-
-        for (n=i=0;i<MAXSAT;i++) {
-            if (!test_sys(rtk->ssat[i].sys,m)||rtk->ssat[i].fix[f]!=2) {
-                continue;
-            }
-            index[n++]=IB(i+1,f,&rtk->opt);
-        }
-        if (n<2) continue;
-
-        xa[index[0]]=rtk->x[index[0]];
-
-        for (i=1;i<n;i++) {
-            xa[index[i]]=xa[index[0]]-bias[nv++];
-        }
-    }
+  for (int i = 0; i < nb; i++) {
+    int ref = ix[i * 2];
+    int fix = ix[i * 2 + 1];
+    xa[ref] = rtk->x[ref];
+    xa[fix] = xa[ref] - bias[i];
+  }
 }
 /* hold integer ambiguity ----------------------------------------------------*/
 static void holdamb(rtk_t *rtk, const double *xa)
@@ -1562,6 +1553,8 @@ static void holdamb(rtk_t *rtk, const double *xa)
 
     v=mat(nb,1); H=zeros(nb,rtk->nx);
 
+    // Note this might depend on the particular ordering of fix pairs
+    // selected by ddidx() - that the first valid sat is the reference.
     for (m=0;m<6;m++) for (f=0;f<nf;f++) {
 
         for (n=i=0;i<MAXSAT;i++) {
@@ -1685,6 +1678,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     for (j=0;j<nb;j++) for (i=0;i<nb;i++) {
         Qb[i+j*nb]=DP[i+(ix[j*2]-na)*nb]-DP[i+(ix[j*2+1]-na)*nb];
     }
+    free(DP);
     for (j=0;j<nb;j++) for (i=0;i<na;i++) {
         Qab[i+j*na]=rtk->P[i+ix[j*2]*nx]-rtk->P[i+ix[j*2+1]*nx];
     }
@@ -1754,7 +1748,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
 
                 /* translate double diff fixed phase-bias values to single diff
                 fix phase-bias values, result in xa */
-                restamb(rtk,bias,nb,xa);
+                restamb(rtk,ix,nb,bias,xa);
             }
             else nb=0;
         }
@@ -1769,7 +1763,7 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
         nb=0;
     }
     free(ix);
-    free(y); free(DP); free(b); free(db); free(Qb); free(Qab); free(QQ);
+    free(y); free(b); free(db); free(Qb); free(Qab); free(QQ);
 
     return nb; /* number of ambiguities */
 }
