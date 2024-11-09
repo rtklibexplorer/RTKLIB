@@ -796,47 +796,60 @@ static void detslp_dop(rtk_t *rtk, const obsd_t *obs, const int *ix, int ns,
         }
     }
 }
+/* test satellite system (m=0:GPS/SBS,1:GLO,2:GAL,3:BDS,4:QZS,5:IRN) ---------*/
+static inline int test_sys(int sys, int m)
+{
+    const int im[]={-1, /* Undefined */
+                     0, /* GPS */
+                     0, /* SBS */
+                     1, /* GLO */
+                     2, /* GAL */
+                     4, /* QZS */
+                     3, /* CMP */
+                     5, /* IRN */
+                    -1};  /* LEO */
+    return m==im[sys2no(sys)];
+}
 /* temporal update of phase biases -------------------------------------------*/
 static void udbias(rtk_t *rtk, double tt, const obsd_t *obs, const int *sat,
                    const int *iu, const int *ir, int ns, const nav_t *nav)
 {
-    double cp,pr,cp1,cp2,pr1,pr2,*bias,offset,freqi,freq1,freq2,C1,C2;
-    int i,j,k,slip,rejc,reset,nf=NF(&rtk->opt),f2;
 
     trace(3,"udbias  : tt=%.3f ns=%d\n",tt,ns);
 
-    /* clear cycle slips */
-    for (i=0;i<ns;i++) {
-        for (k=0;k<rtk->opt.nf;k++) rtk->ssat[sat[i]-1].slip[k]&=0xFC;
+    /* Clear cycle slips */
+    for (int i=0;i<ns;i++) {
+        for (int k=0;k<rtk->opt.nf;k++) rtk->ssat[sat[i]-1].slip[k]&=0xFC;
     }
 
-    /* detect cycle slip by doppler and phase difference */
+    /* Detect cycle slip by doppler and phase difference */
     detslp_dop(rtk,obs,iu,ns,1,nav);
     detslp_dop(rtk,obs,ir,ns,2,nav);
 
-    for (i=0;i<ns;i++) {
+    int nf=NF(&rtk->opt);
+    for (int i=0;i<ns;i++) {
         // Detect cycle slip by code change.
         detslp_code(rtk, obs, iu[i], 1);
         detslp_code(rtk, obs, ir[i], 2);
 
-        /* detect cycle slip by LLI */
+        /* Detect cycle slip by LLI */
         detslp_ll(rtk,obs,iu[i],1);
         detslp_ll(rtk,obs,ir[i],2);
 
-        /* detect cycle slip by geometry-free phase jump */
+        /* Detect cycle slip by geometry-free phase jump */
         detslp_gf(rtk,obs,iu[i],ir[i],nav);
 
-        /* update half-cycle valid flag */
-        for (k=0;k<nf;k++) {
+        /* Update half-cycle valid flag */
+        for (int k=0;k<nf;k++) {
             rtk->ssat[sat[i]-1].half[k]=
                 !((obs[iu[i]].LLI[k]&LLI_HALFC)||(obs[ir[i]].LLI[k]&LLI_HALFC));
         }
     }
-    for (k=0;k<nf;k++) {
-        /* reset phase-bias if instantaneous AR or expire obs outage counter */
-        for (i=1;i<=MAXSAT;i++) {
+    for (int k=0;k<nf;k++) {
+        /* Reset phase-bias if instantaneous AR or expire obs outage counter */
+        for (int i=1;i<=MAXSAT;i++) {
 
-            reset=++rtk->ssat[i-1].outc[k]>(uint32_t)rtk->opt.maxout;
+            int reset=++rtk->ssat[i-1].outc[k]>(uint32_t)rtk->opt.maxout;
 
             if (rtk->opt.modear==ARMODE_INST&&rtk->x[IB(i,k,&rtk->opt)]!=0.0) {
                 initx(rtk,0.0,0.0,IB(i,k,&rtk->opt));
@@ -851,51 +864,61 @@ static void udbias(rtk_t *rtk, double tt, const obsd_t *obs, const int *sat,
                 rtk->ssat[i-1].lock[k]=-rtk->opt.minlock;
             }
         }
-        /* update phase bias noise and check for cycle slips */
-        for (i=0;i<ns;i++) {
-            j=IB(sat[i],k,&rtk->opt);
+        /* Update phase bias noise and check for cycle slips */
+        for (int i=0;i<ns;i++) {
+            int j=IB(sat[i],k,&rtk->opt);
+            // Don't update if not used.
+            if (rtk->x[j] == 0.0) continue;
             rtk->P[j+j*rtk->nx]+=rtk->opt.prn[0]*rtk->opt.prn[0]*fabs(tt);
-            slip=rtk->ssat[sat[i]-1].slip[k];
-            rejc=rtk->ssat[sat[i]-1].rejc[k];
+            int slip=rtk->ssat[sat[i]-1].slip[k];
+            int rejc=rtk->ssat[sat[i]-1].rejc[k];
             if (rtk->opt.ionoopt==IONOOPT_IFLC) {
-                f2=seliflc(rtk->opt.nf,rtk->ssat[sat[i]-1].sys);
+                int f2=seliflc(rtk->opt.nf,rtk->ssat[sat[i]-1].sys);
                 slip|=rtk->ssat[sat[i]-1].slip[f2];
             }
             if (rtk->opt.modear==ARMODE_INST||(!(slip&LLI_SLIP)&&rejc<2)) continue;
-            /* reset phase-bias state if detecting cycle slip or outlier */
+            /* Reset phase-bias state if detecting cycle slip or outlier */
             rtk->x[j]=0.0;
             rtk->ssat[sat[i]-1].rejc[k]=0;
             rtk->ssat[sat[i]-1].lock[k]=-rtk->opt.minlock;
-            /* retain icbiases for GLONASS sats */
+            /* Retain icbiases for GLONASS sats */
             if (rtk->ssat[sat[i]-1].sys!=SYS_GLO) rtk->ssat[sat[i]-1].icbias[k]=0;
         }
-        bias=zeros(ns,1);
+    }
 
-        /* estimate approximate phase-bias by delta phase - delta code */
-        for (i=j=0,offset=0.0;i<ns;i++) {
+    /* Step through sat systems: m=0:gps/SBS,1:glo,2:gal,3:bds 4:qzs 5:irn */
+    for (int m = 0; m < 6; m++) {
+      for (int k = 0; k < nf; k++) {
+        /* Estimate approximate phase-bias by delta phase - delta code */
+        double *bias = zeros(ns,1);
+        double offset = 0.0;
+        int j = 0;
+        for (int i=0;i<ns;i++) {
+            int sys = rtk->ssat[sat[i] - 1].sys;
+            if (!test_sys(sys, m)) continue;
             if (rtk->opt.ionoopt!=IONOOPT_IFLC) {
-                /* phase diff between rover and base in cycles */
-                cp=sdobs(obs,iu[i],ir[i],k); /* cycle */
-                /* pseudorange diff between rover and base in meters */
-                pr=sdobs(obs,iu[i],ir[i],k+NFREQ);
-                freqi=sat2freq(sat[i],obs[iu[i]].code[k],nav);
+                /* Phase diff between rover and base in cycles */
+                double cp=sdobs(obs,iu[i],ir[i],k); /* cycle */
+                /* Pseudorange diff between rover and base in meters */
+                double pr=sdobs(obs,iu[i],ir[i],k+NFREQ);
+                double freqi=sat2freq(sat[i],obs[iu[i]].code[k],nav);
                 if (cp==0.0||pr==0.0||freqi==0.0) continue;
-                /* estimate bias in cycles */
+                /* Estimate bias in cycles */
                 bias[i]=cp-pr*freqi/CLIGHT;
             }
-            else {  /* use ionosphere free calc with 2 freqs */
-                f2=seliflc(rtk->opt.nf,rtk->ssat[sat[i]-1].sys);
-                cp1=sdobs(obs,iu[i],ir[i],0);
-                cp2=sdobs(obs,iu[i],ir[i],f2);
-                pr1=sdobs(obs,iu[i],ir[i],NFREQ);
-                pr2=sdobs(obs,iu[i],ir[i],NFREQ+f2);
-                freq1=sat2freq(sat[i],obs[iu[i]].code[0],nav);
-                freq2=sat2freq(sat[i],obs[iu[i]].code[f2],nav);
+            else {  /* Use ionosphere free calc with 2 freqs */
+                int f2=seliflc(rtk->opt.nf,sys);
+                double cp1=sdobs(obs,iu[i],ir[i],0);
+                double cp2=sdobs(obs,iu[i],ir[i],f2);
+                double pr1=sdobs(obs,iu[i],ir[i],NFREQ);
+                double pr2=sdobs(obs,iu[i],ir[i],NFREQ+f2);
+                double freq1=sat2freq(sat[i],obs[iu[i]].code[0],nav);
+                double freq2=sat2freq(sat[i],obs[iu[i]].code[f2],nav);
                 if (cp1==0.0||cp2==0.0||pr1==0.0||pr2==0.0||freq1<=0.0||freq2<=0.0) continue;
 
-                C1= SQR(freq1)/(SQR(freq1)-SQR(freq2));
-                C2=-SQR(freq2)/(SQR(freq1)-SQR(freq2));
-                /* estimate bias in meters */
+                double C1= SQR(freq1)/(SQR(freq1)-SQR(freq2));
+                double C2=-SQR(freq2)/(SQR(freq1)-SQR(freq2));
+                /* Estimate bias in meters */
                 bias[i]=(C1*cp1*CLIGHT/freq1+C2*cp2*CLIGHT/freq2)-(C1*pr1+C2*pr2);
             }
             if (rtk->x[IB(sat[i],k,&rtk->opt)]!=0.0) {
@@ -903,22 +926,28 @@ static void udbias(rtk_t *rtk, double tt, const obsd_t *obs, const int *sat,
                 j++;
             }
         }
-        /* correct phase-bias offset to ensure phase-code coherency */
+        /* Correct phase-bias offset to ensure phase-code coherency */
         if (j>0) {
-            for (i=1;i<=MAXSAT;i++) {
+            for (int i=1;i<=MAXSAT;i++) {
+                int sys = rtk->ssat[i - 1].sys;
+                if (!test_sys(sys, m)) continue;
                 if (rtk->x[IB(i,k,&rtk->opt)]!=0.0) rtk->x[IB(i,k,&rtk->opt)]+=offset/j;
             }
         }
-        /* set initial states of phase-bias */
-        for (i=0;i<ns;i++) {
+
+        /* Set initial states of phase-bias */
+        for (int i=0;i<ns;i++) {
+            int sys = rtk->ssat[sat[i] - 1].sys;
+            if (!test_sys(sys, m)) continue;
             if (bias[i]==0.0||rtk->x[IB(sat[i],k,&rtk->opt)]!=0.0) continue;
             initx(rtk,bias[i],SQR(rtk->opt.std[0]),IB(sat[i],k,&rtk->opt));
-            trace(3,"     sat=%3d, F=%d: init phase=%.3f\n",sat[i],k+1,bias[i]);
+            trace(3,"     m=%d sys=%d sat=%3d, F=%d: init phase=%.3f\n",m,sys,sat[i],k+1,bias[i]);
             if (rtk->opt.modear!=ARMODE_INST) {
                 rtk->ssat[sat[i]-1].lock[k]=-rtk->opt.minlock;
             }
         }
         free(bias);
+      }
     }
 }
 /* Temporal update of states --------------------------------------------------*/
@@ -1174,21 +1203,7 @@ static double prectrop(gtime_t time, const double *pos, int r,
     dtdx[0]=m_w;
     return m_w*x[i];
 }
-/* test satellite system (m=0:GPS/SBS,1:GLO,2:GAL,3:BDS,4:QZS,5:IRN) ---------*/
-static int test_sys(int sys, int m)
-{
-    switch (sys) {
-        case SYS_GPS: return m==0;
-        case SYS_SBS: return m==0;
-        case SYS_GLO: return m==1;
-        case SYS_GAL: return m==2;
-        case SYS_CMP: return m==3;
-        case SYS_QZS: return m==4;
-        case SYS_IRN: return m==5;
-    }
-    return 0;
-}
-/* double-differenced residuals and partial derivatives  -----------------------------------
+/* Double-differenced residuals and partial derivatives  -----------------------------------
         O rtk->ssat[i].resp[j] = residual pseudorange error
         O rtk->ssat[i].resc[j] = residual carrier phase error
         I rtk->rb= base location
