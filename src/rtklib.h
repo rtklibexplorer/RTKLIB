@@ -999,7 +999,7 @@ typedef struct {        /* option type */
 
 typedef struct {        /* SNR mask type */
     int ena[2];         /* enable flag {rover,base} */
-    double mask[NFREQ][9]; /* mask (dBHz) at 5,10,...85 deg */
+    double mask[MAXFREQ][9]; /* mask (dBHz) at 5,10,...85 deg */
 } snrmask_t;
 
 typedef struct {        /* processing options type */
@@ -1035,7 +1035,7 @@ typedef struct {        /* processing options type */
     int refpos;         /* base position for relative mode */
                         /* (0:pos in prcopt,  1:average of single pos, */
                         /*  2:read from file, 3:rinex header, 4:rtcm pos) */
-    double eratio[NFREQ]; /* code/phase error ratio */
+    double eratio[MAXFREQ]; /* code/phase error ratio */
     double err[8];      /* observation error terms */
                         /* [reserved,constant,elevation,baseline,doppler,snr-max,snr, rcv_std] */
     double std[3];      /* initial-state std [0]bias,[1]iono [2]trop */
