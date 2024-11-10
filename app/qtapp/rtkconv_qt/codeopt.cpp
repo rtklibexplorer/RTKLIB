@@ -107,8 +107,8 @@ void CodeOptDialog::setCodeMask(int i, const QString &mask)
         ui->S26->setChecked(mask[25] == '1');
     } else if (i == 5) { //BDS
         ui->C02->setChecked(mask[1] == '1');
+        ui->C07->setChecked(mask[6] == '1');
         ui->C08->setChecked(mask[7] == '1');
-        ui->C09->setChecked(mask[8] == '1');
         ui->C12->setChecked(mask[11] == '1');
         ui->C13->setChecked(mask[12] == '1');
         ui->C18->setChecked(mask[17] == '1');
@@ -240,8 +240,8 @@ QString CodeOptDialog::getCodeMask(int i)
         if (ui->S26->isChecked()) mask[25] = '1';
     } else if (i == 5) { // BDS
         if (ui->C02->isChecked()) mask[1] = '1';
+        if (ui->C07->isChecked()) mask[6] = '1';
         if (ui->C08->isChecked()) mask[7] = '1';
-        if (ui->C09->isChecked()) mask[8] = '1';
         if (ui->C12->isChecked()) mask[11] = '1';
         if (ui->C13->isChecked()) mask[12] = '1';
         if (ui->C18->isChecked()) mask[17] = '1';
@@ -372,8 +372,8 @@ void CodeOptDialog::setUnsetAll()
     ui->S26->setChecked(set);
 
     ui->C02->setChecked(set);
+    ui->C07->setChecked(set);
     ui->C08->setChecked(set);
-    ui->C09->setChecked(set);
     ui->C12->setChecked(set);
     ui->C13->setChecked(set);
     ui->C18->setChecked(set);
@@ -515,8 +515,8 @@ void CodeOptDialog::updateEnable()
     ui->S26->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L3));
 
     ui->C02->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
+    ui->C07->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C08->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
-    ui->C09->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C12->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C13->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C18->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
