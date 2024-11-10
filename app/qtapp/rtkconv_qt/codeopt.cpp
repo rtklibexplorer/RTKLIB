@@ -514,30 +514,30 @@ void CodeOptDialog::updateEnable()
     ui->S25->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L3));
     ui->S26->setEnabled((navSystem & SYS_SBS) && (frequencyType & FREQTYPE_L3));
 
-    ui->C02->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
-    ui->C07->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
-    ui->C08->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
-    ui->C12->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
-    ui->C13->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
+    ui->C02->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
+    ui->C07->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
+    ui->C08->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
+    ui->C12->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
+    ui->C13->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
     ui->C18->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C26->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L3));
     ui->C27->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
     ui->C28->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
     ui->C29->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
     ui->C33->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
-    ui->C39->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
+    ui->C39->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L6));
     ui->C40->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C41->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
     ui->C42->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
     ui->C43->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
-    ui->C56->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L1));
+    ui->C56->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
     ui->C57->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L3));
     ui->C58->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L3));
     ui->C61->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
     ui->C62->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
     ui->C63->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L2));
-    ui->C64->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
-    ui->C65->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L5));
+    ui->C64->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L6));
+    ui->C65->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L6));
     ui->C69->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
     ui->C70->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
     ui->C35->setEnabled((navSystem & SYS_CMP) && (frequencyType & FREQTYPE_L4));
@@ -555,7 +555,7 @@ void CodeOptDialog::updateEnable()
     ui->I12->setEnabled((navSystem & SYS_IRN) && (frequencyType & FREQTYPE_L3));
 
     if ((navSystem == (SYS_GPS | SYS_GAL | SYS_GLO | SYS_SBS | SYS_CMP | SYS_IRN | SYS_QZS)) &&
-        (frequencyType == (FREQTYPE_L1 | FREQTYPE_L2 | FREQTYPE_L3 | FREQTYPE_L4 | FREQTYPE_L5)))
+        (frequencyType == (FREQTYPE_L1 | FREQTYPE_L2 | FREQTYPE_L3 | FREQTYPE_L4 | FREQTYPE_L5 | FREQTYPE_L6)))
         ui->btnSetAll->setText(tr("Un&set All"));
 }
 //---------------------------------------------------------------------------

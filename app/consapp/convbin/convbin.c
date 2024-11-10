@@ -602,7 +602,8 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
     if (nf>=3) opt->freqtype|=FREQTYPE_L3;
     if (nf>=4) opt->freqtype|=FREQTYPE_L4;
     if (nf>=5) opt->freqtype|=FREQTYPE_L5;
-    if (nf>=6) opt->freqtype|=FREQTYPE_ALL;
+    if (nf>=6) opt->freqtype|=FREQTYPE_L6;
+    if (nf>=7) opt->freqtype|=FREQTYPE_ALL;
     
     if (!opt->trtcm.time) {
         get_filetime(*ifile,&opt->trtcm);
