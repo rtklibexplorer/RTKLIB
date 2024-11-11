@@ -386,7 +386,7 @@ void MonitorDialog::setRtk()
     int width[] = {500, 500};
 
     ui->tWConsole->setColumnCount(2);
-    ui->tWConsole->setRowCount(52 + NFREQ*2);
+    ui->tWConsole->setRowCount(49 + NFREQ * 3);
     ui->tWConsole->setHorizontalHeaderLabels(header);
 
     for (int i = 0; (i < ui->tWConsole->columnCount()) && (i < 2); i++)
@@ -407,7 +407,7 @@ void MonitorDialog::showRtk()
     const QString sol[] = {tr("-"), tr("Fix"), tr("Float"), tr("SBAS"), tr("DGPS"), tr("Single"), tr("PPP"), tr("Dead Reckoning")};
     const QString mode[] = {tr("Single"), tr("DGPS"), tr("Kinematic"), tr("Static"), tr("Static-Start"), tr("Moving-Base"),
                             tr("Fixed"), tr("PPP-Kinematic"), tr("PPP-Static"), tr("PPP-Fixed")};
-    const QString freq[] = {tr("-"), tr("L1"), tr("L1+L2"), tr("L1+L2+L5"), tr("L1+L2+L5+L6"), tr("L1+L2+L5+L6+L7")};
+    const QString freq[] = {tr("-"), tr("L1"), tr("L1+L2"), tr("L1+L2+L5"), tr("L1+L2+L5+L6"), tr("L1+L2+L5+L6+L7"), tr("L1+L2+L5+L6+L7+L8"), tr("L1+L2+L5+L6+L7+L9")};
     double *del, *off, rt[3] = {0}, dop[4] = {0};
     double azel[MAXSAT * 2], pos[3], vel[3], rr[3] = {0}, enu[3] = {0};
     int row, j, k, cycle, state, rtkstat, nsat0, nsat1, prcout, nave;
@@ -471,7 +471,7 @@ void MonitorDialog::showRtk()
     if (rtk.opt.navsys & SYS_IRN) navsys = navsys + tr("NavIC ");
     if (rtk.opt.navsys & SYS_SBS) navsys = navsys + tr("SBAS ");
 
-    if (ui->tWConsole->rowCount() < 55) return;
+    if (ui->tWConsole->rowCount() < 49 + NFREQ * 3) return;
 
     row = 0;
 
@@ -488,31 +488,26 @@ void MonitorDialog::showRtk()
     ui->tWConsole->item(row++, 1)->setText(mode[rtk.opt.mode < 0 || rtk.opt.mode > 9 ? 0 : rtk.opt.mode ]);
 
     ui->tWConsole->item(row,   0)->setText(tr("Frequencies"));
-    ui->tWConsole->item(row++, 1)->setText(freq[rtk.opt.nf > 5 ? 0 : rtk.opt.nf]);
+    ui->tWConsole->item(row++, 1)->setText(freq[rtk.opt.nf > 7 ? 0 : rtk.opt.nf]);
 
     ui->tWConsole->item(row,   0)->setText(tr("Elevation Mask"));
     ui->tWConsole->item(row++, 1)->setText(QString::number(rtk.opt.elmin * R2D, 'f', 0) + " deg");
 
-    ui->tWConsole->item(row,   0)->setText(tr("SNR Mask L1 (dBHz)"));
-    ui->tWConsole->item(row++, 1)->setText(!rtk.opt.snrmask.ena[0] ? "" :
-                              QStringLiteral("%1, %2, %3, %4, %5, %6, %7, %8, %9")
-                              .arg(rtk.opt.snrmask.mask[0][0], 0).arg(rtk.opt.snrmask.mask[0][1], 0).arg(rtk.opt.snrmask.mask[0][2], 0)
-                              .arg(rtk.opt.snrmask.mask[0][3], 0).arg(rtk.opt.snrmask.mask[0][4], 0).arg(rtk.opt.snrmask.mask[0][5], 0)
-                              .arg(rtk.opt.snrmask.mask[0][6], 0).arg(rtk.opt.snrmask.mask[0][7], 0).arg(rtk.opt.snrmask.mask[0][8], 0));
-
-    ui->tWConsole->item(row,   0)->setText(tr("SNR Mask L2 (dBHz)"));
-    ui->tWConsole->item(row++, 1)->setText(!rtk.opt.snrmask.ena[0] ? "" :
-                              QStringLiteral("%1, %2, %3, %4, %5, %6, %7, %8, %9")
-                              .arg(rtk.opt.snrmask.mask[1][0], 0).arg(rtk.opt.snrmask.mask[1][1], 0).arg(rtk.opt.snrmask.mask[1][2], 0)
-                              .arg(rtk.opt.snrmask.mask[1][3], 0).arg(rtk.opt.snrmask.mask[1][4], 0).arg(rtk.opt.snrmask.mask[1][5], 0)
-                              .arg(rtk.opt.snrmask.mask[1][6], 0).arg(rtk.opt.snrmask.mask[1][7], 0).arg(rtk.opt.snrmask.mask[1][8], 0));
-
-    ui->tWConsole->item(row,   0)->setText(tr("SNR Mask L5 (dBHz)"));
-    ui->tWConsole->item(row++, 1)->setText(!rtk.opt.snrmask.ena[0] ? "" :
-                              QStringLiteral("%1, %2, %3, %4, %5, %6, %7, %8, %9")
-                              .arg(rtk.opt.snrmask.mask[2][0], 0).arg(rtk.opt.snrmask.mask[2][1], 0).arg(rtk.opt.snrmask.mask[2][2], 0)
-                              .arg(rtk.opt.snrmask.mask[2][3], 0).arg(rtk.opt.snrmask.mask[2][4], 0).arg(rtk.opt.snrmask.mask[2][5], 0)
-                              .arg(rtk.opt.snrmask.mask[2][6], 0).arg(rtk.opt.snrmask.mask[2][7], 0).arg(rtk.opt.snrmask.mask[2][8], 0));
+    for (int i = 0; i < NFREQ; i++) {
+      ui->tWConsole->item(row, 0)->setText(tr("SNR Mask F") + QString::number(i + 1) + tr(" (dBHz)"));
+      ui->tWConsole->item(row++, 1)->setText(!rtk.opt.snrmask.ena[0]
+                                               ? ""
+                                               : QStringLiteral("%1, %2, %3, %4, %5, %6, %7, %8, %9")
+                                                   .arg(rtk.opt.snrmask.mask[i][0], 0)
+                                                   .arg(rtk.opt.snrmask.mask[i][1], 0)
+                                                   .arg(rtk.opt.snrmask.mask[i][2], 0)
+                                                   .arg(rtk.opt.snrmask.mask[i][3], 0)
+                                                   .arg(rtk.opt.snrmask.mask[i][4], 0)
+                                                   .arg(rtk.opt.snrmask.mask[i][5], 0)
+                                                   .arg(rtk.opt.snrmask.mask[i][6], 0)
+                                                   .arg(rtk.opt.snrmask.mask[i][7], 0)
+                                                   .arg(rtk.opt.snrmask.mask[i][8], 0));
+    }
 
     ui->tWConsole->item(row,   0)->setText(tr("Rec Dynamic/Earth Tides Correction"));
     ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1, %2").arg(rtk.opt.dynamics ? tr("ON") : tr("OFF"), rtk.opt.tidecorr ? tr("ON") : tr("OFF")));
