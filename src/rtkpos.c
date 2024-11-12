@@ -54,6 +54,7 @@
 #define STD_PREC_VAR_THRESH 0  /* pos variance threshold to skip standard precision */
                               /* solution: 0   = run every epoch, */
                               /*           0.5 = skip except for first*/
+#define REL_HUMI 0.7           /* Relative humidity for Saastamoinen model */
 
 /* constants/macros ----------------------------------------------------------*/
 
@@ -1064,13 +1065,19 @@ static int zdres(int base, const obsd_t *obs, int n, const double *rs, const dou
     /* Adjust range for satellite clock-bias */
     r += -CLIGHT * dts[i * 2];
 
-    /* Adjust range for troposphere delay model (hydrostatic) */
-    double zazel[] = {0.0, 90.0 * D2R};
-    double zhd = tropmodel(obs[0].time, pos, zazel, 0.0);
-    double mapfh = tropmapf(obs[i].time,pos, azel + i * 2, NULL);
-    r += mapfh * zhd;
-    trace(4, "sat=%d r=%.6f c*dts=%.6f zhd=%.6f map=%.6f\n", obs[i].sat, r,
-          CLIGHT * dts[i * 2], zhd, mapfh);
+    /* Adjust range for troposphere delay model */
+    double dtrp = 0.0;
+    if (opt->tropopt <= TROPOPT_SAAS) {
+      dtrp = tropmodel(obs[0].time, pos, azel + i * 2, REL_HUMI);
+    } else if (opt->tropopt == TROPOPT_SBAS) {
+      double vart;
+      dtrp = sbstropcorr(obs[0].time, pos, azel + i * 2, &vart);
+    } else if (opt->tropopt >= TROPOPT_EST) {
+      // Hydrostatic only
+      dtrp = tropmodel(obs[0].time, pos, azel + i * 2, 0.0);
+    }
+    r += dtrp;
+    trace(4, "sat=%d r=%.6f c*dts=%.6f dtrp=%.6f\n", obs[i].sat, r, CLIGHT * dts[i * 2], dtrp);
 
     /* Calc undifferenced phase/code residual for satellite */
     zdres_sat(base, r, obs + i, nav, azel + i * 2, opt, y + i * nf * 2, freq + i * nf);
