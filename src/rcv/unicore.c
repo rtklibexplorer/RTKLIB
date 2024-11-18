@@ -733,7 +733,7 @@ static int decode_obsvmb(raw_t* raw)
     if (strstr(raw->opt, "-RCVSTDS")) rcvstds = 1;
 
     nobs = U4(p);
-    if (nobs == 0)return 1;
+    if (nobs == 0)return -1;
     if (raw->len < HLEN + 4 + nobs * 40) {
         trace(2, "unicore obsvmb length error: len=%d nobs=%d\n", raw->len, nobs);
         return -1;
