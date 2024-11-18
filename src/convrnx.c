@@ -1322,6 +1322,12 @@ static int convrnx_s(int sess, int format, rnxopt_t *opt, const char *file,
     }
     str->time=str->tstart;
     
+    /*Reset the stream*/
+    if (!(str=gen_strfile(format,opt->rcvopt))) {
+        for (i=0;i<MAXEXFILE;i++) free(epath[i]);
+        return 0;
+    }
+
     for (i=0;i<nf&&!abort;i++) {
         if (!mask[i]) continue;
         
