@@ -79,6 +79,8 @@ protected slots:
     void selectPanelFont();
     void selectSolutionFont();
     void selectGeoidDataFile();
+    void viewSatelliteMetaFile();
+    void selectSatelliteMetaFile();
     void viewSatellitePcvFile();
     void selectSatellitePcvFile();
     void selectLocalDirectory();

@@ -1118,7 +1118,6 @@ void MainWindow::serverStart()
     char errmsg[20148];
     gtime_t time = timeget();
     pcvs_t pcvs;
-    pcv_t *pcv;
 
     trace(3, "serverStart\n");
 
@@ -1131,16 +1130,24 @@ void MainWindow::serverStart()
         tracelevel(optDialog->solutionOptions.trace);
     }
 
-    if (optDialog->processingOptions.sateph == EPHOPT_PREC || optDialog->processingOptions.sateph == EPHOPT_SSRCOM) {
-        if (!readpcv(optDialog->fileOptions.satantp, &pcvs)) {
+    if (optDialog->processingOptions.sateph == EPHOPT_PREC ||
+        optDialog->processingOptions.sateph == EPHOPT_SSRCOM ||
+        optDialog->processingOptions.mode >= PMODE_PPP_KINEMA) {
+        satsvns_t satsvns = {0};
+        if (!readsinex(optDialog->fileOptions.satmeta, &satsvns))
+            ui->lblMessage->setText(tr("Satellite meta data sinex file read error: %1").arg(optDialog->fileOptions.satmeta));
+
+        if (!readpcv(optDialog->fileOptions.satantp, 1, &pcvs)) {
             ui->lblMessage->setText(tr("Satellite antenna file read error: %1").arg(optDialog->fileOptions.satantp));
             return;
         }
         for (i = 0; i < MAXSAT; i++) {
-            if (!(pcv = searchpcv(i + 1, "", time, &pcvs))) continue;
-            rtksvr->nav.pcvs[i] = *pcv;
+            pcv_t *pcv = searchpcv(i + 1, "", time, &satsvns, &pcvs);
+            if (!pcv) continue;
+            copy_pcv(&rtksvr->nav.pcvs[i], pcv);
         }
-        free(pcvs.pcv);
+        free_pcvs(&pcvs);
+        free(satsvns.satsvn);
     }
 
     for (i = 0; i < 3; i++) streamTypes[i] = streamEnabled[i] ? itype[streamType[i]] : STR_NONE;  // input stream

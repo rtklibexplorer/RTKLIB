@@ -353,23 +353,24 @@ extern void readsp3(const char *file, nav_t *nav, int opt)
 * return : status (1:ok,0:error)
 * notes  : only support antex format for the antenna parameter file
 *-----------------------------------------------------------------------------*/
-extern int readsap(const char *file, gtime_t time, nav_t *nav)
-{
-    pcvs_t pcvs={0};
-    pcv_t pcv0={0},*pcv;
-    int i;
+extern int readsap(const char *file, const gtime_t time, const satsvns_t *satsvns, nav_t *nav) {
+  char tstr[40];
+  trace(3, "readsap : file=%s time=%s\n", file, time2str(time, tstr, 0));
 
-    char tstr[40];
-    trace(3,"readsap : file=%s time=%s\n",file,time2str(time,tstr,0));
+  pcvs_t pcvs = {0};
+  if (!readpcv(file, 1, &pcvs)) return 0;
 
-    if (!readpcv(file,&pcvs)) return 0;
-
-    for (i=0;i<MAXSAT;i++) {
-        pcv=searchpcv(i+1,"",time,&pcvs);
-        nav->pcvs[i]=pcv?*pcv:pcv0;
+  for (int i = 0; i < MAXSAT; i++) {
+    pcv_t *pcv = searchpcv(i + 1, "", time, satsvns, &pcvs);
+    if (pcv)
+      copy_pcv(&nav->pcvs[i], pcv);
+    else {
+      pcv_t pcv0 = {0};
+      nav->pcvs[i] = pcv0;
     }
-    free(pcvs.pcv);
-    return 1;
+  }
+  free_pcvs(&pcvs);
+  return 1;
 }
 /* read DCB parameters from DCB file -------------------------------------------
 *    - supports satellite and receiver biases
@@ -686,81 +687,85 @@ static int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
     if (varc) *varc=SQR(std);
     return 1;
 }
-/* satellite antenna phase center offset ---------------------------------------
-* compute satellite antenna phase center offset in ecef
-* args   : gtime_t time       I   time (gpst)
-*          double *rs         I   satellite position and velocity (ecef)
-*                                 {x,y,z,vx,vy,vz} (m|m/s)
-*          int    sat         I   satellite number
-*          nav_t  *nav        I   navigation data
-*          double *dant       O   satellite antenna phase center offset (ecef)
-*                                 {dx,dy,dz} (m) (iono-free LC value)
-* return : none
-* notes  : iono-free LC frequencies defined as follows:
-*            GPS/QZSS : L1-L2
-*            GLONASS  : G1-G2
-*            Galileo  : E1-E5b
-*            BDS      : B1I-B2I
-*            NavIC    : L5-S
-*-----------------------------------------------------------------------------*/
-extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
-                      double *dant)
-{
-    const pcv_t *pcv=nav->pcvs+sat-1;
-    double ex[3],ey[3],ez[3],es[3],r[3],rsun[3],gmst,erpv[5]={0},freq[2];
-    double C1,C2,dant1,dant2;
-    int i,sys;
+/* Satellite antenna phase center offset ---------------------------------------
+ * Compute satellite antenna phase center offset in ECEF
+ * Args   : gtime_t time       I   time (GPST)
+ *          double *rs         I   satellite position and velocity (ECEF)
+ *                                 {x,y,z,vx,vy,vz} (m|m/s)
+ *          int    sat         I   satellite number
+ *          nav_t  *nav        I   navigation data
+ *          double *dant       O   satellite antenna phase center offset (ECEF)
+ *                                 {dx,dy,dz} (m) (iono-free LC value)
+ * Return : none
+ * Notes  : iono-free LC frequencies defined as follows:
+ *            GPS/QZSS : L1-L2
+ *            GLONASS  : G1-G2
+ *            Galileo  : E1-E5b
+ *            BDS      : B1I-B2I
+ *            NavIC    : L5-S
+ *----------------------------------------------------------------------------*/
+extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav, double *dant) {
+  char tstr[40];
+  trace(4, "satantoff: time=%s sat=%2d\n", time2str(time, tstr, 3), sat);
 
-    char tstr[40];
-    trace(4,"satantoff: time=%s sat=%2d\n",time2str(time,tstr,3),sat);
+  dant[0] = dant[1] = dant[2] = 0.0;
 
-    dant[0]=dant[1]=dant[2]=0.0;
+  /* Sun position in ECEF */
+  double rsun[3], gmst;
+  const double erpv[5] = {0};
+  sunmoonpos(gpst2utc(time), erpv, rsun, NULL, &gmst);
 
-    /* sun position in ecef */
-    sunmoonpos(gpst2utc(time),erpv,rsun,NULL,&gmst);
+  /* Unit vectors of satellite fixed coordinates */
+  double r[3];
+  for (int i = 0; i < 3; i++) r[i] = -rs[i];
+  double ez[3];
+  if (!normv3(r, ez)) return;
+  for (int i = 0; i < 3; i++) r[i] = rsun[i] - rs[i];
+  double es[3];
+  if (!normv3(r, es)) return;
+  cross3(ez, es, r);
+  double ey[3];
+  if (!normv3(r, ey)) return;
+  double ex[3];
+  cross3(ey, ez, ex);
 
-    /* unit vectors of satellite fixed coordinates */
-    for (i=0;i<3;i++) r[i]=-rs[i];
-    if (!normv3(r,ez)) return;
-    for (i=0;i<3;i++) r[i]=rsun[i]-rs[i];
-    if (!normv3(r,es)) return;
-    cross3(ez,es,r);
-    if (!normv3(r,ey)) return;
-    cross3(ey,ez,ex);
+  /* Iono-free LC coefficients */
+  int sys = satsys(sat, NULL);
+  int code1, code2;
+  if (sys == SYS_GPS || sys == SYS_QZS) { /* L1-L2 */
+    code1 = CODE_L1C;
+    code2 = CODE_L2W;
+  } else if (sys == SYS_GLO) { /* G1-G2 */
+    code1 = CODE_L1C;
+    code2 = CODE_L2C;
+  } else if (sys == SYS_GAL) { /* E1-E5b */
+    code1 = CODE_L1C;
+    code2 = CODE_L7I;
+  } else if (sys == SYS_CMP) { /* B1I-B2I */
+    code1 = CODE_L2I;
+    code2 = CODE_L7I;
+  } else if (sys == SYS_IRN) { /* L5-S */
+    code1 = CODE_L5A;
+    code2 = CODE_L9A;
+  } else
+    return;
 
-    /* iono-free LC coefficients */
-    sys=satsys(sat,NULL);
-    if (sys==SYS_GPS||sys==SYS_QZS) { /* L1-L2 */
-        freq[0]=FREQL1;
-        freq[1]=FREQL2;
-    }
-    else if (sys==SYS_GLO) { /* G1-G2 */
-        freq[0]=sat2freq(sat,CODE_L1C,nav);
-        freq[1]=sat2freq(sat,CODE_L2C,nav);
-    }
-    else if (sys==SYS_GAL) { /* E1-E5b */
-        freq[0]=FREQL1;
-        freq[1]=FREQE5b;
-    }
-    else if (sys==SYS_CMP) { /* B1I-B2I */
-        freq[0]=FREQ1_CMP;
-        freq[1]=FREQ2_CMP;
-    }
-    else if (sys==SYS_IRN) { /* L5-S */
-        freq[0]=FREQL5;
-        freq[1]=FREQs;
-    }
-    else return;
+  double freq1 = sat2freq(sat, code1, nav);
+  double freq2 = sat2freq(sat, code2, nav);
+  double C1 = SQR(freq1) / (SQR(freq1) - SQR(freq2));
+  double C2 = -SQR(freq2) / (SQR(freq1) - SQR(freq2));
 
-    C1= SQR(freq[0])/(SQR(freq[0])-SQR(freq[1]));
-    C2=-SQR(freq[1])/(SQR(freq[0])-SQR(freq[1]));
+  /* Iono-free LC */
+  double pco1[3], pco2[3];
+  const pcv_t *pcv = nav->pcvs + sat - 1;
+  antpco(pcv, freq1, pco1);
+  antpco(pcv, freq2, pco2);
 
-    /* iono-free LC */
-    for (i=0;i<3;i++) {
-        dant1=pcv->off[0][0]*ex[i]+pcv->off[0][1]*ey[i]+pcv->off[0][2]*ez[i];
-        dant2=pcv->off[1][0]*ex[i]+pcv->off[1][1]*ey[i]+pcv->off[1][2]*ez[i];
-        dant[i]=C1*dant1+C2*dant2;
-    }
+  for (int i = 0; i < 3; i++) {
+    double dant1 = pco1[0] * ex[i] + pco1[1] * ey[i] + pco1[2] * ez[i];
+    double dant2 = pco2[0] * ex[i] + pco2[1] * ey[i] + pco2[2] * ez[i];
+    dant[i] = C1 * dant1 + C2 * dant2;
+  }
 }
 /* satellite position/clock by precise ephemeris/clock -------------------------
 * compute satellite position/clock with precise ephemeris/clock

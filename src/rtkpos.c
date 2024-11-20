@@ -953,55 +953,66 @@ static void udstate(rtk_t *rtk, const obsd_t *obs, const int *sat,
     }
 }
 /* UD (undifferenced) phase/code residual for satellite ----------------------*/
-static void zdres_sat(int base, double r, const obsd_t *obs, const nav_t *nav,
-                      const double *azel, const double *dant,
-                      const prcopt_t *opt, double *y, double *freq)
-{
-    double freq1,freq2,C1,C2,dant_if;
-    int i,nf=NF(opt),f2;
+static void zdres_sat(int base, double r, const obsd_t *obs, const nav_t *nav, const double *azel,
+                      const prcopt_t *opt, double *y, double *freq) {
+  int nf = NF(opt);
+  if (opt->ionoopt == IONOOPT_IFLC) { /* Iono-free linear combination */
+    int sat = obs->sat;
+    int sys = satsys(sat, NULL);
+    int code1 = obs->code[0];
+    double freq1 = sat2freq(sat, code1, nav);
+    int f2 = seliflc(opt->nf, sys);
+    int code2 = obs->code[f2];
+    double freq2 = sat2freq(sat, code2, nav);
 
-    if (opt->ionoopt==IONOOPT_IFLC) { /* iono-free linear combination */
-        freq1=sat2freq(obs->sat,obs->code[0],nav);
-        f2=seliflc(opt->nf,satsys(obs->sat,NULL));
-        freq2=sat2freq(obs->sat,obs->code[f2],nav);
+    if (freq1 == 0.0 || freq2 == 0.0) return;
 
-        if (freq1==0.0||freq2==0.0) return;
+    if (testsnr(base, 0, azel[1], obs->SNR[0] * SNR_UNIT, &opt->snrmask) ||
+        testsnr(base, f2, azel[1], obs->SNR[f2] * SNR_UNIT, &opt->snrmask))
+      return;
 
-        if (testsnr(base,0,azel[1],obs->SNR[0]*SNR_UNIT,&opt->snrmask)||
-            testsnr(base,f2,azel[1],obs->SNR[f2]*SNR_UNIT,&opt->snrmask)) return;
+    double C1 = SQR(freq1) / (SQR(freq1) - SQR(freq2));
+    double C2 = -SQR(freq2) / (SQR(freq1) - SQR(freq2));
 
-        C1= SQR(freq1)/(SQR(freq1)-SQR(freq2));
-        C2=-SQR(freq2)/(SQR(freq1)-SQR(freq2));
-        dant_if=C1*dant[0]+C2*dant[f2];
+    /* Calc receiver antenna phase center correction */
+    double dant1 = antmodel(opt->pcvr + base, opt->antdel[base], azel, opt->posopt[1], freq1);
+    double dant2 = antmodel(opt->pcvr + base, opt->antdel[base], azel, opt->posopt[1], freq2);
+    double dant_if = C1 * dant1 + C2 * dant2;
 
-        if (obs->L[0]!=0.0&&obs->L[f2]!=0.0) {
-            y[0]=C1*obs->L[0]*CLIGHT/freq1+C2*obs->L[f2]*CLIGHT/freq2-r-dant_if;
-        }
-        if (obs->P[0]!=0.0&&obs->P[f2]!=0.0) {
-            y[nf]=C1*obs->P[0]+C2*obs->P[f2]-r-dant_if;
-        }
-        freq[0]=1.0;
+    if (obs->L[0] != 0.0 && obs->L[f2] != 0.0) {
+      y[0] = C1 * obs->L[0] * CLIGHT / freq1 + C2 * obs->L[f2] * CLIGHT / freq2 - r - dant_if;
     }
-    else {
-        for (i=0;i<nf;i++) {
-            if ((freq[i]=sat2freq(obs->sat,obs->code[i],nav))==0.0) continue;
-
-            /* check SNR mask */
-            if (testsnr(base,i,azel[1],obs->SNR[i]*SNR_UNIT,&opt->snrmask)) {
-                continue;
-            }
-            /* residuals = observable - estimated range */
-            if (obs->L[i]!=0.0) y[i   ]=obs->L[i]*CLIGHT/freq[i]-r-dant[i];
-            if (obs->P[i]!=0.0) y[i+nf]=obs->P[i]               -r-dant[i];
-            trace(4,"zdres_sat: %d: L=%.6f P=%.6f r=%.6f f=%.0f\n",obs->sat,obs->L[i],
-                obs->P[i],r,freq[i]);
-        }
+    if (obs->P[0] != 0.0 && obs->P[f2] != 0.0) {
+      y[nf] = C1 * obs->P[0] + C2 * obs->P[f2] - r - dant_if;
     }
+    freq[0] = 1.0;
+    return;
+  }
+
+  int sat = obs->sat;
+  for (int i = 0; i < nf; i++) {
+    int code = obs->code[i];
+    freq[i] = sat2freq(sat, code, nav);
+    if (freq[i] == 0.0) continue;
+
+    /* Check SNR mask */
+    if (testsnr(base, i, azel[1], obs->SNR[i] * SNR_UNIT, &opt->snrmask)) {
+      continue;
+    }
+    /* Calc receiver antenna phase center correction */
+    double dant = antmodel(opt->pcvr + base, opt->antdel[base], azel, opt->posopt[1], freq[i]);
+
+    /* Residuals = observable - estimated range */
+    if (obs->L[i] != 0.0) y[i] = obs->L[i] * CLIGHT / freq[i] - r - dant;
+    if (obs->P[i] != 0.0) y[i + nf] = obs->P[i] - r - dant;
+    trace(4, "zdres_sat: %d: L=%.6f P=%.6f r=%.6f f=%.0f\n", obs->sat, obs->L[i], obs->P[i], r,
+          freq[i]);
+  }
 }
-/* undifferenced phase/code residuals ----------------------------------------
-    calculate zero diff residuals [observed pseudorange - range]
+/* Undifferenced phase/code residuals ----------------------------------------
+    Calculate zero diff residuals [observed pseudorange - range]
         output is in y[0:nu-1], only shared input with base is nav
- args:  I   base:  1=base,0=rover
+ Args:  I   base:  1=base,0=rover
         I   obs  = sat observations
         I   n    = # of sats
         I   rs [(0:2)+i*6]= sat position {x,y,z} (m)
@@ -1014,70 +1025,68 @@ static void zdres_sat(int base, double r, const obsd_t *obs, const nav_t *nav,
         O   y[(0:1)+i*2] = zero diff residuals {phase,code} (m)
         O   e    = line of sight unit vectors to sats
         O   azel = [az, el] to sats                                           */
-static int zdres(int base, const obsd_t *obs, int n, const double *rs,
-                 const double *dts, const double *var, const int *svh,
-                 const nav_t *nav, const double *rr, const prcopt_t *opt,
-                 double *y, double *e, double *azel, double *freq)
-{
-    double r,rr_[3],pos[3],dant[NFREQ]={0},disp[3];
-    double mapfh,zhd,zazel[]={0.0,90.0*D2R};
-    int i,nf=NF(opt);
+static int zdres(int base, const obsd_t *obs, int n, const double *rs, const double *dts,
+                 const double *var, const int *svh, const nav_t *nav, const double *rr,
+                 const prcopt_t *opt, double *y, double *e, double *azel, double *freq) {
+  trace(3, "zdres   : n=%d rr=%.2f %.2f %.2f\n", n, rr[0], rr[1], rr[2]);
 
-    trace(3,"zdres   : n=%d rr=%.2f %.2f %.2f\n",n,rr[0], rr[1], rr[2]);
+  int nf = NF(opt);
 
-    /* init residuals to zero */
-    for (i=0;i<n*nf*2;i++) y[i]=0.0;
+  /* Init residuals to zero */
+  for (int i = 0; i < n * nf * 2; i++) y[i] = 0.0;
 
-    if (norm(rr,3)<=0.0) return 0; /* no receiver position */
+  if (norm(rr, 3) <= 0.0) return 0; /* No receiver position */
 
-    /* rr_ = local copy of rcvr pos */
-    for (i=0;i<3;i++) rr_[i]=rr[i];
+  /* rr_ = local copy of rcvr pos */
+  double rr_[3];
+  for (int i = 0; i < 3; i++) rr_[i] = rr[i];
 
-    /* adjust rcvr pos for earth tide correction */
-    if (opt->tidecorr) {
-        tidedisp(gpst2utc(obs[0].time),rr_,opt->tidecorr,&nav->erp,
-                 opt->odisp[base],disp);
-        for (i=0;i<3;i++) rr_[i]+=disp[i];
-    }
-    /* translate rcvr pos from ecef to geodetic */
-    ecef2pos(rr_,pos);
+  /* Adjust rcvr pos for earth tide correction */
+  if (opt->tidecorr) {
+    double disp[3];
+    tidedisp(gpst2utc(obs[0].time), rr_, opt->tidecorr, &nav->erp, opt->odisp[base], disp);
+    for (int i = 0; i < 3; i++) rr_[i] += disp[i];
+  }
+  /* Translate rcvr pos from ECEF to geodetic */
+  double pos[3];
+  ecef2pos(rr_, pos);
 
-    /* loop through satellites */
-    for (i=0;i<n;i++) {
-        /* compute geometric-range and azimuth/elevation angle */
-        if ((r=geodist(rs+i*6,rr_,e+i*3))<=0.0) continue;
-        if (satazel(pos,e+i*3,azel+i*2)<opt->elmin) continue;
+  /* Loop through satellites */
+  for (int i = 0; i < n; i++) {
+    /* Compute geometric-range and azimuth/elevation angle */
+    double r = geodist(rs + i * 6, rr_, e + i * 3);
+    if (r <= 0.0) continue;
+    if (satazel(pos, e + i * 3, azel + i * 2) < opt->elmin) continue;
 
-        /* excluded satellite? */
-        if (satexclude(obs[i].sat,var[i],svh[i],opt)) continue;
+    /* Excluded satellite? */
+    if (satexclude(obs[i].sat, var[i], svh[i], opt)) continue;
 
-        /* adjust range for satellite clock-bias */
-        r+=-CLIGHT*dts[i*2];
+    /* Adjust range for satellite clock-bias */
+    r += -CLIGHT * dts[i * 2];
 
-        /* adjust range for troposphere delay model (hydrostatic) */
-        zhd=tropmodel(obs[0].time,pos,zazel,0.0);
-        mapfh=tropmapf(obs[i].time,pos,azel+i*2,NULL);
-        r+=mapfh*zhd;
+    /* Adjust range for troposphere delay model (hydrostatic) */
+    double zazel[] = {0.0, 90.0 * D2R};
+    double zhd = tropmodel(obs[0].time, pos, zazel, 0.0);
+    double mapfh = tropmapf(obs[i].time,pos, azel + i * 2, NULL);
+    r += mapfh * zhd;
+    trace(4, "sat=%d r=%.6f c*dts=%.6f zhd=%.6f map=%.6f\n", obs[i].sat, r,
+          CLIGHT * dts[i * 2], zhd, mapfh);
 
-        /* calc receiver antenna phase center correction */
-        antmodel(opt->pcvr+base,opt->antdel[base],azel+i*2,opt->posopt[1],
-                 dant);
+    /* Calc undifferenced phase/code residual for satellite */
+    zdres_sat(base, r, obs + i, nav, azel + i * 2, opt, y + i * nf * 2, freq + i * nf);
+  }
+  trace(4, "rr_=%.3f %.3f %.3f\n", rr_[0], rr_[1], rr_[2]);
+  trace(4, "pos=%.9f %.9f %.3f\n", pos[0] * R2D, pos[1] * R2D, pos[2]);
+  for (int i = 0; i < n; i++) {
+    if ((obs[i].L[0] == 0 && obs[i].L[1] == 0 && obs[i].L[2] == 0) || base == 0) continue;
+    trace(3, "sat=%2d rs=%13.3f %13.3f %13.3f dts=%13.10f az=%6.1f el=%5.1f\n", obs[i].sat,
+          rs[i * 6], rs[1 + i * 6], rs[2 + i * 6], dts[i * 2], azel[i * 2] * R2D,
+          azel[1 + i * 2] * R2D);
+  }
+  trace(3, "y=\n");
+  tracemat(3, y, nf * 2, n, 13, 3);
 
-        /* calc undifferenced phase/code residual for satellite */
-        trace(4,"sat=%d r=%.6f c*dts=%.6f zhd=%.6f map=%.6f\n",obs[i].sat,r,CLIGHT*dts[i*2],zhd,mapfh);
-        zdres_sat(base,r,obs+i,nav,azel+i*2,dant,opt,y+i*nf*2,freq+i*nf);
-    }
-    trace(4,"rr_=%.3f %.3f %.3f\n",rr_[0],rr_[1],rr_[2]);
-    trace(4,"pos=%.9f %.9f %.3f\n",pos[0]*R2D,pos[1]*R2D,pos[2]);
-    for (i=0;i<n;i++) {
-        if ((obs[i].L[0]==0&&obs[i].L[1]==0&&obs[i].L[2]==0)||base==0) continue;
-        trace(3,"sat=%2d rs=%13.3f %13.3f %13.3f dts=%13.10f az=%6.1f el=%5.1f\n",
-              obs[i].sat,rs[i*6],rs[1+i*6],rs[2+i*6],dts[i*2],azel[i*2]*R2D,
-              azel[1+i*2]*R2D);
-    }
-    trace(3,"y=\n"); tracemat(3,y,nf*2,n,13,3);
-
-    return 1;
+  return 1;
 }
 /* test valid observation data -----------------------------------------------*/
 static int validobs(int i, int j, int f, int nf, double *y)

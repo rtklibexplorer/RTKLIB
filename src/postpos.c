@@ -55,6 +55,7 @@
 
 /* constants/global variables ------------------------------------------------*/
 
+static satsvns_t satsvns = {0}; // Satellite SINEX meta data SVN to PRN mapping
 static pcvs_t pcvss={0};        /* satellite antenna parameters */
 static pcvs_t pcvsr={0};        /* receiver antenna parameters */
 static obs_t obss={0};          /* observation data */
@@ -910,22 +911,30 @@ static int antpos(prcopt_t *opt, int rcvno, const obs_t *obs, const nav_t *nav,
 }
 /* open processing session ----------------------------------------------------*/
 static int openses(const prcopt_t *popt, const solopt_t *sopt,
-                   const filopt_t *fopt, nav_t *nav, pcvs_t *pcvs, pcvs_t *pcvr)
+                   const filopt_t *fopt, nav_t *nav, satsvns_t *satsvns, pcvs_t *pcvs, pcvs_t *pcvr)
 {
     trace(3,"openses :\n");
 
-    /* read satellite antenna parameters */
-    if (*fopt->satantp&&!(readpcv(fopt->satantp,pcvs))) {
-        showmsg("error : no sat ant pcv in %s",fopt->satantp);
-        trace(1,"sat antenna pcv read error: %s\n",fopt->satantp);
-        return 0;
+    // Read satellite meta data, svn to prn mapping.
+    if (*fopt->satmeta && !readsinex(fopt->satmeta, satsvns)) {
+      showmsg("error : reading sat meta sinex %s", fopt->satmeta);
+      trace(1,"sat meta sinex read error: %s\n", fopt->satmeta);
     }
+
+    /* read satellite antenna parameters */
+    if (*fopt->satantp && !readpcv(fopt->satantp,1,pcvs)) {
+      showmsg("error : no sat ant pcv in %s",fopt->satantp);
+      trace(1,"sat antenna pcv read error: %s\n",fopt->satantp);
+      return 0;
+    }
+
     /* read receiver antenna parameters */
-    if (*fopt->rcvantp&&!(readpcv(fopt->rcvantp,pcvr))) {
+    if (*fopt->rcvantp&&!(readpcv(fopt->rcvantp,2,pcvr))) {
         showmsg("error : no rec ant pcv in %s",fopt->rcvantp);
         trace(1,"rec antenna pcv read error: %s\n",fopt->rcvantp);
         return 0;
     }
+
     /* open geoid data */
     if (sopt->geoid>0&&*fopt->geoid) {
         if (!opengeoid(sopt->geoid,fopt->geoid)) {
@@ -935,14 +944,19 @@ static int openses(const prcopt_t *popt, const solopt_t *sopt,
     }
     return 1;
 }
-/* close processing session ---------------------------------------------------*/
-static void closeses(nav_t *nav, pcvs_t *pcvs, pcvs_t *pcvr)
+/* Close processing session ---------------------------------------------------*/
+static void closeses(nav_t *nav, satsvns_t *satsvns, pcvs_t *pcvs, pcvs_t *pcvr)
 {
     trace(3,"closeses:\n");
 
-    /* free antenna parameters */
-    free(pcvs->pcv); pcvs->pcv=NULL; pcvs->n=pcvs->nmax=0;
-    free(pcvr->pcv); pcvr->pcv=NULL; pcvr->n=pcvr->nmax=0;
+    // Free SINEX SVN to PRN mappings.
+    free(satsvns->satsvn);
+
+    // Free antenna parameters.
+    // Clear copies in nav.
+    for (int i = 0; i < MAXSAT; i++) free_pcv(&nav->pcvs[i]);
+    free_pcvs(pcvs);
+    free_pcvs(pcvr);
 
     /* close geoid data */
     closegeoid();
@@ -954,26 +968,28 @@ static void closeses(nav_t *nav, pcvs_t *pcvs, pcvs_t *pcvr)
     rtkclosestat();
     traceclose();
 }
-/* set antenna parameters ----------------------------------------------------*/
-static void setpcv(gtime_t time, prcopt_t *popt, nav_t *nav, const pcvs_t *pcvs,
-                   const pcvs_t *pcvr, const sta_t *sta)
+/* Set antenna parameters ----------------------------------------------------*/
+static void setpcv(gtime_t time, prcopt_t *popt, nav_t *nav, const satsvns_t *satsvns,
+                   const pcvs_t *pcvs, const pcvs_t *pcvr, const sta_t *sta)
 {
-    pcv_t *pcv,pcv0={0};
+    pcv_t pcv0={0};
     double pos[3],del[3];
     int i,j,mode=PMODE_DGPS<=popt->mode&&popt->mode<=PMODE_FIXED;
     char id[8];
 
-    /* set satellite antenna parameters */
+    /* Set satellite antenna parameters */
     for (i=0;i<MAXSAT;i++) {
         nav->pcvs[i]=pcv0;
         if (!(satsys(i+1,NULL)&popt->navsys)) continue;
-        if (!(pcv=searchpcv(i+1,"",time,pcvs))) {
+        const pcv_t *pcv = searchpcv(i + 1, "", time, satsvns, pcvs);
+        if (!pcv) {
             satno2id(i+1,id);
             trace(4,"no satellite antenna pcv: %s\n",id);
             continue;
         }
-        nav->pcvs[i]=*pcv;
+        copy_pcv(&nav->pcvs[i], pcv);
     }
+
     for (i=0;i<(mode?2:1);i++) {
         popt->pcvr[i]=pcv0;
         if (!strcmp(popt->anttype[i],"*")) { /* set by station parameters */
@@ -989,13 +1005,14 @@ static void setpcv(gtime_t time, prcopt_t *popt, nav_t *nav, const pcvs_t *pcvs,
                 for (j=0;j<3;j++) popt->antdel[i][j]=stas[i].del[j];
             }
         }
-        if (!(pcv=searchpcv(0,popt->anttype[i],time,pcvr))) {
+        const pcv_t *pcv = searchpcv(0, popt->anttype[i], time, NULL, pcvr);
+        if (!pcv) {
             trace(2,"no receiver antenna pcv: %s\n",popt->anttype[i]);
             *popt->anttype[i]='\0';
             continue;
         }
         strcpy(popt->anttype[i],pcv->type);
-        popt->pcvr[i]=*pcv;
+        copy_pcv(&popt->pcvr[i], pcv);
     }
 }
 /* read ocean tide loading parameters ----------------------------------------*/
@@ -1097,12 +1114,13 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
             trace(2,"no erp data %s\n",path);
         }
     }
-    /* read obs and nav data */
+
+    int err = 0;
+
+    /* Read obs and nav data */
     if (!readobsnav(ts,te,ti,infile,index,n,&popt_,&obss,&navs,stas)) {
-        /* free obs and nav data */
-        freeobsnav(&obss, &navs);
-        free(rtk_ptr);
-        return 0;
+      err = 1;
+      goto done;
     }
 
     /* read dcb parameters from DCB, BIA, BSX files */
@@ -1124,7 +1142,7 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
     }
     /* set antenna parameters */
     if (popt_.mode!=PMODE_SINGLE) {
-        setpcv(obss.n>0?obss.data[0].time:timeget(),&popt_,&navs,&pcvss,&pcvsr,
+        setpcv(obss.n>0?obss.data[0].time:timeget(),&popt_,&navs,&satsvns,&pcvss,&pcvsr,
                stas);
     }
     /* read ocean tide loading parameters */
@@ -1134,21 +1152,18 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
     /* rover/reference fixed position */
     if (popt_.mode==PMODE_FIXED) {
         if (!antpos(&popt_,1,&obss,&navs,stas,fopt->stapos)) {
-            freeobsnav(&obss,&navs);
-            free(rtk_ptr);
-            return 0;
+          err = 1;
+          goto done;
         }
         if (!antpos(&popt_,2,&obss,&navs,stas,fopt->stapos)) {
-            freeobsnav(&obss,&navs);
-            free(rtk_ptr);
-            return 0;
+          err = 1;
+          goto done;
         }
     }
     else if (PMODE_DGPS<=popt_.mode&&popt_.mode<=PMODE_STATIC_START) {
         if (!antpos(&popt_,2,&obss,&navs,stas,fopt->stapos)) {
-            freeobsnav(&obss,&navs);
-            free(rtk_ptr);
-            return 0;
+          err = 1;
+          goto done;
         }
     }
     /* open solution statistics */
@@ -1160,9 +1175,8 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
     }
     /* write header to output file */
     if (flag&&!outhead(outfile,infile,n,&popt_,sopt)) {
-        freeobsnav(&obss,&navs);
-        free(rtk_ptr);
-        return 0;
+      err = 1;
+      goto done;
     }
     /* name time events file */
     namefiletm(outfiletm,outfile);
@@ -1237,10 +1251,12 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
         free(rbb);
     }
     /* free rtk, obs and nav data */
+done:
+    for (int i = 0; i < 2; i++) free_pcv(&popt_.pcvr[i]);
     free(rtk_ptr);
     freeobsnav(&obss,&navs);
 
-    return aborts?1:0;
+    return (!err && aborts)?1:0;
 }
 /* execute processing session for each rover ---------------------------------*/
 static int execses_r(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
@@ -1409,18 +1425,18 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
     trace(3,"postpos : ti=%.0f tu=%.0f n=%d outfile=%s\n",ti,tu,n,outfile);
 
     /* open processing session */
-    if (!openses(popt,sopt,fopt,&navs,&pcvss,&pcvsr)) return -1;
+    if (!openses(popt,sopt,fopt,&navs,&satsvns,&pcvss,&pcvsr)) return -1;
 
     if (ts.time!=0&&te.time!=0&&tu>=0.0) {
         if (timediff(te,ts)<0.0) {
             showmsg("error : no period");
-            closeses(&navs,&pcvss,&pcvsr);
+            closeses(&navs,&satsvns,&pcvss,&pcvsr);
             return 0;
         }
         for (i=0;i<n&&i<MAXINFILE;i++) {
             if (!(ifile[i]=(char *)malloc(1024))) {
                 for (;i>=0;i--) free(ifile[i]);
-                closeses(&navs,&pcvss,&pcvsr);
+                closeses(&navs,&satsvns,&pcvss,&pcvsr);
                 return -1;
             }
         }
@@ -1504,7 +1520,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
                        base);
     }
     /* close processing session */
-    closeses(&navs,&pcvss,&pcvsr);
+    closeses(&navs,&satsvns,&pcvss,&pcvsr);
 
     return stat;
 }

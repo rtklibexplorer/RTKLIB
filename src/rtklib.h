@@ -602,14 +602,51 @@ typedef struct {        /* earth rotation parameter type */
     erpd_t *data;       /* earth rotation parameter data */
 } erp_t;
 
-typedef struct {        /* antenna parameter type */
-    int sat;            /* satellite number (0:receiver) */
-    char type[MAXANT];  /* antenna type */
-    char code[MAXANT];  /* serial number or satellite code */
-    gtime_t ts,te;      /* valid time start and end */
-    double off[NFREQ][ 3]; /* phase center offset e/n/u or x/y/z (m) */
-    double var[NFREQ][19]; /* phase center variation (m) */
-                        /* el=90,85,...,0 or nadir=0,1,2,3,... (deg) */
+#define ANTFREQL1 0  // FREQL1     1.57542E9
+#define ANTFREQL2 1  // FREQL2     1.22760E9
+#define ANTFREQL5 2  // FREQL5     1.17645E9
+#define ANTFREQL6 3  // FREQL6     1.27875E9
+#define ANTFREQL7 4  // FREQE5b    1.20714E9
+#define ANTFREQL8 5  // FREQE5ab   1.191795E9
+#define ANTFREQG1 6  // FREQ1_GLO  1.60200E9
+#define ANTFREQG2 7  // FREQ2_GLO  1.24600E9
+#define ANTFREQG3 8  // FREQ3_GLO  1.202025E9
+#define ANTFREQG4 9  // FREQ1a_GLO 1.600995E9
+#define ANTFREQG6 10 // FREQ2a_GLO 1.248060E9
+#define ANTFREQB1 11 // FREQ1_CMP  1.561098E9
+#define ANTFREQB3 12 // FREQ3_CMP  1.26852E9
+#define ANTFREQI9 13 // FREQs      2.492028E9
+#define ANTNFREQ 14
+
+typedef struct {            // Satellite meta data, svn to sat mapping
+  gtime_t ts, te;           // Valid time start and end
+  int sat;                  // Satellite number; system and PRN.
+  int svn;                  // Satellite SVN number, for the sat system.
+} satsvn_t;
+
+typedef struct {            // Satellite meta data, svn to sat mapping
+  int n,nmax;               // Number of data/allocated
+  satsvn_t *satsvn;         // Data
+} satsvns_t;
+
+typedef struct {           // Antenna parameter type
+  int sat;                 // Satellite number (0:receiver)
+  int satsys;              // Satellite system
+  int svn;                 // Satellite SVN number (0:receiver)
+  char type[MAXANT];       // Antenna type
+  char code[MAXANT];       // Serial number or satellite code
+  gtime_t ts, te;          // Valid time start and end
+  double zen1[ANTNFREQ];   // Zenith range, start.
+  double zen2[ANTNFREQ];   // Zenith range, end.
+  double dzen[ANTNFREQ];   // Zenith range, delta.
+  int zen_len[ANTNFREQ];   // Number of zenith elements in var[] below.
+  double dazi[ANTNFREQ];   // Azimuth range delta
+  int azi_len[ANTNFREQ];   // Number of azimuth elements in var[] below, including the NOAZI entry.
+  int init[ANTNFREQ];      // Frequency initialization state: bit 0 for the offset; bit 1 for the noazi entry; bit 2 for the azi entries.
+  double off[ANTNFREQ][3]; // Phase center offset e/n/u or x/y/z (m)
+  // The azimuth / zenith values. The first azimuth entry is for the NOAZI / zenith.
+  // el=90,85,...,0 or nadir=0,1,2,3,... (deg)
+  double *var[ANTNFREQ];   // Phase center variation (m)
 } pcv_t;
 
 typedef struct {        /* antenna parameters type */
@@ -1091,6 +1128,7 @@ typedef struct {        /* solution options type */
 } solopt_t;
 
 typedef struct {        /* file options type */
+    char satmeta[MAXSTRPATH]; /* Satellite meta data sinex file */
     char satantp[MAXSTRPATH]; /* satellite antenna parameters file */
     char rcvantp[MAXSTRPATH]; /* receiver antenna parameters file */
     char stapos [MAXSTRPATH]; /* station positions file */
@@ -1556,12 +1594,20 @@ EXPORT int tropcorr(gtime_t time, const nav_t *nav, const double *pos,
 EXPORT int seliflc(int optnf, int sys);
 
 /* antenna models ------------------------------------------------------------*/
-EXPORT int  readpcv(const char *file, pcvs_t *pcvs);
-EXPORT pcv_t *searchpcv(int sat, const char *type, gtime_t time,
-                        const pcvs_t *pcvs);
-EXPORT void antmodel(const pcv_t *pcv, const double *del, const double *azel,
-                     int opt, double *dant);
-EXPORT void antmodel_s(const pcv_t *pcv, double nadir, double *dant);
+EXPORT int readsinex(const char *file, satsvns_t *satsvns);
+EXPORT int searchsvnsat(int sys, int svn, const gtime_t time, const satsvns_t *satsvns);
+EXPORT int searchsatsvn(int sat, const gtime_t time, const satsvns_t *satsvns);
+EXPORT int readpcv(const char *file, int filter, pcvs_t *pcvs);
+EXPORT pcv_t *searchpcv(int sat, const char *type, gtime_t time, const satsvns_t *satsvns, const pcvs_t *pcvs);
+EXPORT void copy_pcv(pcv_t *dst, const pcv_t *src);
+EXPORT void free_pcv(pcv_t *pcv);
+EXPORT void free_pcvs(pcvs_t *pcvs);
+EXPORT double antmodel(const pcv_t *pcv, const double *del, const double *azel, int opt, double freq);
+EXPORT double antmodel_s(const pcv_t *pcv, double nadir, double freq);
+EXPORT void antpco(const pcv_t *pcv, double freq, double pco[3]);
+EXPORT double antpcv(const pcv_t *pcv, const double *azel, double freq);
+EXPORT double antcode2freq(int code);
+EXPORT const char *antcode2id(int code);
 
 /* earth tide models ---------------------------------------------------------*/
 EXPORT void sunmoonpos(gtime_t tutc, const double *erpv, double *rsun,
@@ -1629,7 +1675,7 @@ EXPORT void satposs(gtime_t time, const obsd_t *obs, int n, const nav_t *nav,
 EXPORT void setseleph(int sys, int sel);
 EXPORT int  getseleph(int sys);
 EXPORT void readsp3(const char *file, nav_t *nav, int opt);
-EXPORT int  readsap(const char *file, gtime_t time, nav_t *nav);
+EXPORT int  readsap(const char *file, const gtime_t time, const satsvns_t *satsvns, nav_t *nav);
 EXPORT int  readdcb(const char *file, nav_t *nav, const sta_t *sta);
 EXPORT int code2bias_ix(const int sys,const int code);
 /*EXPORT int  readfcb(const char *file, nav_t *nav);*/

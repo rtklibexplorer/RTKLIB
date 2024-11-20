@@ -1128,7 +1128,7 @@ void __fastcall TMainForm::SvrStart(void)
     FILE *fp;
     gtime_t time=timeget();
     pcvs_t pcvr={0},pcvs={0};
-    pcv_t *pcv,pcv0={0};
+    pcv_t pcv0={0};
     
     trace(3,"SvrStart\n");
     
@@ -1182,8 +1182,9 @@ void __fastcall TMainForm::SvrStart(void)
 
     if (RovAntPcvF) {
         type=RovAntF.c_str();
-        if ((pcv=searchpcv(0,type,time,&pcvr))) {
-            PrcOpt.pcvr[0]=*pcv;
+        pcv_t *pcv=searchpcv(0,type,time,NULL,&pcvr);
+        if (pcv) {
+            copy_pcv(&PrcOpt.pcvr[0],pcv);
         }
         else {
             Message->Caption=s.sprintf("no antenna pcv %s",type);
@@ -1193,8 +1194,9 @@ void __fastcall TMainForm::SvrStart(void)
     }
     if (RefAntPcvF) {
         type=RefAntF.c_str();
-        if ((pcv=searchpcv(0,type,time,&pcvr))) {
-            PrcOpt.pcvr[1]=*pcv;
+        pcv_t *pcv=searchpcv(0,type,time,NULL,&pcvr);
+        if (pcv) {
+            copy_pcv(&PrcOpt.pcvr[1],pcv);
         }
         else {
             Message->Caption=s.sprintf("no antenna pcv %s",type);
@@ -1203,19 +1205,28 @@ void __fastcall TMainForm::SvrStart(void)
         for (i=0;i<3;i++) PrcOpt.antdel[1][i]=RefAntDel[i];
     }
     if (RovAntPcvF||RefAntPcvF) {
-        free(pcvr.pcv);
+        free_pcvs(&pcvr);
     }
-    if (PrcOpt.sateph==EPHOPT_PREC||PrcOpt.sateph==EPHOPT_SSRCOM) {
-        if (!readpcv(SatPcvFileF.c_str(),&pcvs)) {
+    if (PrcOpt.sateph==EPHOPT_PREC||PrcOpt.sateph==EPHOPT_SSRCOM||PrcOpt.mode>=PMODE_PPP_KINEMA) {
+        satsvns_t satsvns = {0};
+#if 0 // TODO add the sat meta data file option, for Antex 2 sat support
+        if (!readsinex(SatMetaFileF.c_str(),&satsvns)) {
+            Message->Caption=s.sprintf("sat meta data file read error %s",SatMetaFileF.c_str());
+            Message->Hint=Message->Caption;
+        }
+#endif
+        if (!readpcv(SatPcvFileF.c_str(),1,&pcvs)) {
             Message->Caption=s.sprintf("sat ant file read error %s",SatPcvFileF.c_str());
             Message->Hint=Message->Caption;
             return;
         }
         for (i=0;i<MAXSAT;i++) {
-            if (!(pcv=searchpcv(i+1,"",time,&pcvs))) continue;
-            rtksvr.nav.pcvs[i]=*pcv;
+            pcv_t *pcv=searchpcv(i+1,"",time,&satsvns,&pcvs);
+            if (!pcv) continue;
+            copy_pcv(&rtksvr.nav.pcvs[i],pcv);
         }
-        free(pcvs.pcv);
+        free_pcvs(&pcvs);
+        free(satsvns.satsvn);
     }
     if (BaselineC) {
         PrcOpt.baseline[0]=Baseline[0];

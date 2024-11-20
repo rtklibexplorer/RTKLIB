@@ -1247,14 +1247,14 @@ void __fastcall TOptDialog::ReadAntList(void)
 	pcvs_t pcvs={0};
 	char *p;
 	
-	if (!readpcv(AntPcvFile_Text.c_str(),&pcvs)) return;
+	if (!readpcv(AntPcvFile_Text.c_str(),2,&pcvs)) return;
 	
 	list=new TStringList;
 	list->Add("");
 	list->Add("*");
 	
 	for (int i=0;i<pcvs.n;i++) {
-		if (pcvs.pcv[i].sat) continue;
+		if (pcvs.pcv[i].sat||pcvs.pcv[i].svn) continue;
 		if ((p=strchr(pcvs.pcv[i].type,' '))) *p='\0';
 		if (i>0&&!strcmp(pcvs.pcv[i].type,pcvs.pcv[i-1].type)) continue;
 		list->Add(pcvs.pcv[i].type);
@@ -1262,7 +1262,7 @@ void __fastcall TOptDialog::ReadAntList(void)
 	RovAnt->Items=list;
 	RefAnt->Items=list;
 	
-	free(pcvs.pcv);
+	free_pcvs(&pcvs);
 }
 //---------------------------------------------------------------------------
 void __fastcall TOptDialog::NavSys6Click(TObject *Sender)
