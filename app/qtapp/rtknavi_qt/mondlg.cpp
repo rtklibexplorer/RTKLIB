@@ -386,7 +386,7 @@ void MonitorDialog::setRtk()
     int width[] = {500, 500};
 
     ui->tWConsole->setColumnCount(2);
-    ui->tWConsole->setRowCount(52 + NFREQ*2);
+    ui->tWConsole->setRowCount(49 + NFREQ + ANTNFREQ * 2);
     ui->tWConsole->setHorizontalHeaderLabels(header);
 
     for (int i = 0; (i < ui->tWConsole->columnCount()) && (i < 2); i++)
@@ -471,7 +471,7 @@ void MonitorDialog::showRtk()
     if (rtk.opt.navsys & SYS_IRN) navsys = navsys + tr("NavIC ");
     if (rtk.opt.navsys & SYS_SBS) navsys = navsys + tr("SBAS ");
 
-    if (ui->tWConsole->rowCount() < 55) return;
+    if (ui->tWConsole->rowCount() < 49 + NFREQ + ANTNFREQ * 2) return;
 
     row = 0;
 
@@ -660,10 +660,11 @@ void MonitorDialog::showRtk()
     ui->tWConsole->item(row,   0)->setText(tr("Antenna Type Rover"));
     ui->tWConsole->item(row++, 1)->setText(rtk.opt.pcvr[0].type);
 
-    for (j = 0; j < NFREQ; j++) {
-        off = rtk.opt.pcvr[0].off[j];
-        ui->tWConsole->item(row,   0)->setText(tr("Antenna Phase Center L%1 E/N/U Rover").arg(j+1));
-        ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(off[0], 0, 'f', 3).arg(off[1], 0, 'f', 3).arg(off[2], 0, 'f', 3));
+    for (j = 0; j < ANTNFREQ; j++) {
+        double pco[3];
+        antpco(&rtk.opt.pcvr[0], antcode2freq(j), pco);
+        ui->tWConsole->item(row,   0)->setText(tr("Antenna Phase Center Ant %1 E/N/U Rover").arg(antcode2id(j)));
+        ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(pco[0], 0, 'f', 3).arg(pco[1], 0, 'f', 3).arg(pco[2], 0, 'f', 3));
     }
 
     del = rtk.opt.antdel[0];
@@ -673,10 +674,11 @@ void MonitorDialog::showRtk()
     ui->tWConsole->item(row,   0)->setText(tr("Antenna Type Base Station"));
     ui->tWConsole->item(row++, 1)->setText(rtk.opt.pcvr[1].type);
 
-    for (j = 0; j < NFREQ; j++) {
-        off = rtk.opt.pcvr[1].off[0];
-        ui->tWConsole->item(row,   0)->setText(tr("Antenna Phase Center L%1 E/N/U Base Station").arg(j+1));
-        ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(off[0], 0, 'f', 3).arg(off[1], 0, 'f', 3).arg(off[2], 0, 'f', 3));
+    for (j = 0; j < ANTNFREQ; j++) {
+        double pco[3];
+        antpco(&rtk.opt.pcvr[1], antcode2freq(j), pco);
+        ui->tWConsole->item(row,   0)->setText(tr("Antenna Phase Center Ant %1 E/N/U Base Station").arg(antcode2id(j)));
+        ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(pco[0], 0, 'f', 3).arg(pco[1], 0, 'f', 3).arg(pco[2], 0, 'f', 3));
     }
 
     del = rtk.opt.antdel[1];

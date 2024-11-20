@@ -2374,6 +2374,134 @@ static void nut_iau1980(double t, const double *f, double *dpsi, double *deps)
     *dpsi*=1E-4*AS2R; /* 0.1 mas -> rad */
     *deps*=1E-4*AS2R;
 }
+
+static int code2sys(char code) {
+  switch (code) {
+    case 'G': return SYS_GPS;
+    case 'R': return SYS_GLO;
+    case 'E': return SYS_GAL;
+    case 'J': return SYS_QZS;
+    case 'C': return SYS_CMP;
+    case 'I': return SYS_IRN;
+    case 'L': return SYS_LEO;
+    case 'S': return SYS_SBS;
+  }
+  return 0;
+}
+
+// Add satellite svn to prn mapping -------------------------------------------
+static void addsatsvn(const satsvn_t *satsvn, satsvns_t *satsvns)
+{
+    satsvn_t *data;
+    if (satsvns->nmax <= satsvns->n) {
+        satsvns->nmax += 256;
+        data = (satsvn_t *)realloc(satsvns->satsvn, sizeof(satsvn_t) * satsvns->nmax);
+        if (!data) {
+            trace(1,"addsatsvn: memory allocation error\n");
+            free(satsvns->satsvn);
+            satsvns->satsvn = NULL;
+            satsvns->n = satsvns->nmax = 0;
+            return;
+        }
+        satsvns->satsvn = data;
+    }
+    satsvns->satsvn[satsvns->n++] = *satsvn;
+}
+/* Read SINEX meta data file --------------------------------------------------*/
+extern int readsinex(const char *file, satsvns_t *satsvns) {
+  trace(3, "readsinex: file=%s\n", file);
+
+  FILE *fp = fopen(file, "r");
+  if (!fp) {
+    trace(2, "sinex file open error: %s\n", file);
+    return 0;
+  }
+  int state = 0;
+  char buff[512];
+  while (fgets(buff, sizeof(buff), fp)) {
+    if (buff[0] == '*') continue; // Comment
+    if (strncmp(buff, "+SATELLITE/PRN", 14) == 0) {
+        state = 1;
+        continue;
+    }
+    if (state == 1) {
+      if (strncmp(buff, "-SATELLITE/PRN", 14) == 0) {
+        state = 0;
+        continue;
+      }
+      if (strlen(buff) < 40) {
+        trace(0, "Sinex: unexpect line '%s'\n", buff);
+        continue;
+      }
+      satsvn_t satsvn = {0};
+      int svnsys = code2sys(buff[1]);
+      satsvn.svn = str2num(buff, 2, 3);
+      char satid[8]="";
+      snprintf(satid, 8, "%.3s", buff + 36);
+      satsvn.sat = satid2no(satid);
+      if (satsvn.sat == 0) {
+        trace(1, "Sinex: no mapping to sat for '%s'\n", satid);
+        continue; // Give up on this mapping
+      }
+      if (svnsys != satsys(satsvn.sat, NULL)) {
+        trace(0, "Error: sinex svn sys '%c' and prn sys '%c' not consistent.\n", buff[1], buff[36]);
+        continue;
+      }
+
+      double start_year = str2num(buff, 6, 4);
+      double start_doy = str2num(buff, 11, 3);
+      double start_sod = str2num(buff, 15, 5);
+      if (start_year != 0 || start_doy != 0 || start_sod > 0.5) {
+        double ep[6] = {2000, 1, 1, 0, 0, 0};
+        ep[0] = start_year;
+        satsvn.ts = timeadd(epoch2time(ep), (start_doy - 1.0) * 86400.0 + start_sod);
+      }
+      double end_year = str2num(buff, 21, 4);
+      double end_doy = str2num(buff, 26, 3);
+      double end_sod = str2num(buff, 30, 5);
+      if (end_year != 0 || end_doy != 0 || end_sod > 0.5) {
+        double ep[6] = {2000, 1, 1, 0, 0, 0};
+        ep[0] = end_year;
+        satsvn.te = timeadd(epoch2time(ep), (end_doy - 1.0) * 86400.0 + end_sod);
+      }
+      addsatsvn(&satsvn, satsvns);
+      continue;
+    }
+    // Ignored
+  }
+
+  return 1;
+}
+
+// Search for a mapping from the SVN (system/num) to satellite number (system/PRN).
+// Return: the satellite number (0: error)
+extern int searchsvnsat(int sys, int svn, const gtime_t time, const satsvns_t *satsvns) {
+  trace(4, "searchsvnsat: sys=%2d svn=%s\n", sys, svn);
+  for (int i = 0; i < satsvns->n; i++) {
+    satsvn_t *satsvn = satsvns->satsvn + i;
+    if (satsvn->svn != svn) continue;
+    if (satsys(satsvn->sat, NULL) != sys) continue;
+    if (satsvn->ts.time != 0 && timediff(satsvn->ts, time) > 0.0) continue;
+    if (satsvn->te.time != 0 && timediff(satsvn->te, time) < 0.0) continue;
+    return satsvn->sat;
+  }
+  return 0;
+}
+// Search for a mapping from the satellite number (system/PRN) to and SVN number.
+// Return: the satellite prn number (0: error)
+extern int searchsatsvn(int sat, const gtime_t time, const satsvns_t *satsvns) {
+  trace(4, "searchsatsvn: sat=%d\n", sat);
+  for (int i = 0; i < satsvns->n; i++) {
+    satsvn_t *satsvn = satsvns->satsvn + i;
+    if (satsvn->sat != sat) continue;
+    if (satsvn->ts.time != 0 && timediff(satsvn->ts, time) > 0.0) continue;
+    if (satsvn->te.time != 0 && timediff(satsvn->te, time) < 0.0) continue;
+    return satsvn->svn;
+  }
+  return 0;
+}
+
+
 /* eci to ecef transformation matrix -------------------------------------------
 * compute eci to ecef transformation matrix
 * args   : gtime_t tutc     I   time in utc
@@ -2477,206 +2605,696 @@ static void addpcv(const pcv_t *pcv, pcvs_t *pcvs)
     }
     pcvs->pcv[pcvs->n++]=*pcv;
 }
+// The pcv init bit encoding.
+#define PCV_PCO 1
+#define PCV_NOAZI 2
+#define PCV_PHV 4
 /* read ngs antenna parameter file -------------------------------------------*/
-static int readngspcv(const char *file, pcvs_t *pcvs)
-{
-    FILE *fp;
-    static const pcv_t pcv0={0};
-    pcv_t pcv;
-    double neu[3];
-    int n=0;
-    char buff[256];
+static int readngspcv(const char *file, pcvs_t *pcvs) {
+  FILE *fp;
+  static const pcv_t pcv0 = {0};
+  pcv_t pcv;
+  double neu[3];
+  int n = 0;
+  char buff[256];
 
-    if (!(fp=fopen(file,"r"))) {
-        trace(2,"ngs pcv file open error: %s\n",file);
-        return 0;
+  if (!(fp = fopen(file, "r"))) {
+    trace(2, "ngs pcv file open error: %s\n", file);
+    return 0;
+  }
+  while (fgets(buff, sizeof(buff), fp)) {
+    if (strlen(buff) >= 62 && buff[61] == '|') continue;
+
+    if (buff[0] != ' ') n = 0; /* start line */
+    if (++n == 1) {
+      pcv = pcv0;
+      setstr(pcv.type, buff, 61);
+      pcv.zen1[0] = pcv.zen1[1] = 0;
+      pcv.zen2[0] = pcv.zen2[1] = 90;
+      pcv.dzen[0] = pcv.dzen[1] = 5;
+      pcv.zen_len[0] = pcv.zen_len[1] = 19;
+      pcv.azi_len[0] = pcv.azi_len[1] = 1;
+      pcv.var[0] = calloc(pcv.azi_len[0] * pcv.zen_len[0], sizeof(double));
+      pcv.var[1] = calloc(pcv.azi_len[1] * pcv.zen_len[1], sizeof(double));
+    } else if (n == 2) {
+      if (decodef(buff, 3, neu) < 3) continue;
+      pcv.off[0][0] = neu[1];
+      pcv.off[0][1] = neu[0];
+      pcv.off[0][2] = neu[2];
+    } else if (n == 3)
+      decodef(buff, 10, pcv.var[0] + 0);
+    else if (n == 4)
+      decodef(buff, 9, pcv.var[0] + 10);
+    else if (n == 5) {
+      if (decodef(buff, 3, neu) < 3) continue;
+      pcv.off[1][0] = neu[1];
+      pcv.off[1][1] = neu[0];
+      pcv.off[1][2] = neu[2];
+    } else if (n == 6)
+      decodef(buff, 10, pcv.var[1] + 0);
+    else if (n == 7) {
+      decodef(buff, 9, pcv.var[1] + 10);
+      pcv.init[0] = pcv.init[1] = PCV_PCO | PCV_NOAZI;
+      addpcv(&pcv, pcvs);
     }
-    while (fgets(buff,sizeof(buff),fp)) {
+  }
+  fclose(fp);
 
-        if (strlen(buff)>=62&&buff[61]=='|') continue;
-
-        if (buff[0]!=' ') n=0; /* start line */
-        if (++n==1) {
-            pcv=pcv0;
-            strncpy(pcv.type,buff,61); pcv.type[61]='\0';
-        }
-        else if (n==2) {
-            if (decodef(buff,3,neu)<3) continue;
-            pcv.off[0][0]=neu[1];
-            pcv.off[0][1]=neu[0];
-            pcv.off[0][2]=neu[2];
-        }
-        else if (n==3) decodef(buff,10,pcv.var[0]);
-        else if (n==4) decodef(buff,9,pcv.var[0]+10);
-        else if (n==5) {
-            if (decodef(buff,3,neu)<3) continue;
-            pcv.off[1][0]=neu[1];
-            pcv.off[1][1]=neu[0];
-            pcv.off[1][2]=neu[2];
-        }
-        else if (n==6) decodef(buff,10,pcv.var[1]);
-        else if (n==7) {
-            decodef(buff,9,pcv.var[1]+10);
-            addpcv(&pcv,pcvs);
-        }
-    }
-    fclose(fp);
-
-    return 1;
+  return 1;
 }
-/* read antex file ----------------------------------------------------------*/
-static int readantex(const char *file, pcvs_t *pcvs)
-{
-    FILE *fp;
-    static const pcv_t pcv0={0};
-    pcv_t pcv;
-    double neu[3];
-    int i,f,freq=0,state=0,freqs[]={1,2,5,0};
-    char buff[256];
 
-    trace(3,"readantex: file=%s\n",file);
+// Antex frequencyindex ----------------------------------------------
+//
+// A frequency index is arbitrarily assigned to each disinct frequency
+// used in Antex definitions, as a common key between the observation
+// codes and the Antex codes.
+static int antfreqidx(int sys, int frq) {
+  switch (sys) {
+    case SYS_GPS:
+      switch (frq) {
+        case 1:
+          return ANTFREQL1;
+        case 2:
+          return ANTFREQL2;
+        case 5:
+          return ANTFREQL5;
+      }
+      break;
+    case SYS_GLO:
+      switch (frq) {
+        // For receivers, R01 and R02 do not differentiate by satellite.
+        // For a satellite this could well be the particular frequency.
+        case 1:
+          return ANTFREQG1;
+        case 2:
+          return ANTFREQG2;
+        case 3:
+          return ANTFREQG3;
+          // Note R04 entries often share with R01 (1600.995 vs 1602.0 Mhz)
+        case 4:
+          return ANTFREQG4;
+          // Note R06 entries often share with R02 (1248.06 vs 1246.0 MHz)
+        case 6:
+          return ANTFREQG6;
+      }
+      break;
+    case SYS_GAL:
+      switch (frq) {
+        case 1:
+          return ANTFREQL1;
+        case 5:
+          return ANTFREQL5;
+        case 6:
+          return ANTFREQL6;
+        case 7:
+          return ANTFREQL7;
+        case 8:
+          return ANTFREQL8;
+      }
+      break;
+    case SYS_QZS:
+      switch (frq) {
+        case 1:
+          return ANTFREQL1;
+        case 2:
+          return ANTFREQL2;
+        case 5:
+          return ANTFREQL5;
+        case 6:
+          return ANTFREQL6;
+      }
+      break;
+    case SYS_CMP:
+      switch (frq) {
+        case 1:
+          return ANTFREQL1;
+        case 2:
+          return ANTFREQB1;
+        case 5:
+          return ANTFREQL5;
+        case 6:
+          return ANTFREQB3;
+        case 7:
+          return ANTFREQL7;
+        case 8:
+          return ANTFREQL8;
+      }
+      break;
+    case SYS_IRN:
+      switch (frq) {
+        case 1:
+          return ANTFREQL1;
+        case 5:
+          return ANTFREQL5;
+        case 9:
+          return ANTFREQI9;
+      }
+      break;
+    case SYS_SBS:
+      switch (frq) {
+        case 1:
+          return ANTFREQL1;
+        case 5:
+          return ANTFREQL5;
+      }
+      break;
+  }
+  trace(1, "antfreqidx: unexpected sys=%d frq=%d\n", sys, frq);
+  return -1;
+}
+static double antfreq[ANTNFREQ] = {FREQL1,     FREQL2,    FREQL5,    FREQL6,    FREQE5b,
+                                   FREQE5ab,   FREQ1_GLO, FREQ2_GLO, FREQ3_GLO, FREQ1a_GLO,
+                                   FREQ2a_GLO, FREQ1_CMP, FREQ3_CMP, FREQs};
 
-    if (!(fp=fopen(file,"r"))) {
-        trace(2,"antex pcv file open error: %s\n",file);
-        return 0;
+extern double antcode2freq(int code) {
+  if (code < 0 || code >= ANTNFREQ) return 0.0;
+  return antfreq[code];
+}
+
+static const char *antcodeid[ANTNFREQ] = {"L1", "L2", "L5", "L6", "L7", "L8",
+                                          "G1", "G2", "G3", "G4", "G6",
+                                          "B1", "B3", "I9"};
+extern const char *antcode2id(int code) {
+  if (code < 0 || code >= ANTNFREQ) return "";
+  return antcodeid[code];
+}
+
+
+/* Read antex file ----------------------------------------------------------*/
+static int readantex(const char *file, int filter, pcvs_t *pcvs) {
+  trace(3, "readantex: file=%s filter=%x\n", file, filter);
+
+  FILE *fp = fopen(file, "r");
+  if (!fp) {
+    trace(2, "antex pcv file open error: %s\n", file);
+    return 0;
+  }
+  static const pcv_t pcv0 = {0};
+  pcv_t pcv;
+  int state = 0, azi_num = 0, group[ANTNFREQ] = {0}, fdup[ANTNFREQ] = {0};
+  int procp = 0, phvp = 0;
+  double dazi = 0, zen1 = 0, zen2 = 0, dzen = 0;
+  int azi_len = 0, zen_len = 0;
+  char buff[512];
+  while (fgets(buff, sizeof(buff), fp)) {
+    if (strlen(buff) < 60) continue;
+    if (strstr(buff + 60, "COMMENT")) continue;
+    if (strstr(buff + 60, "ANTEX VERSION / SYST")) continue;
+    if (strstr(buff + 60, "PCV TYPE / REFANT")) continue;
+    if (strstr(buff + 60, "ANTENNA TYPES")) {
+      // ATX2: SATELLITE, MIXED, RECEIVER
+      continue;
     }
-    while (fgets(buff,sizeof(buff),fp)) {
+    if (strstr(buff + 60, "REFERENCE FRAME")) {
+      // ATX2: e.g. IGS20
+      continue;
+    }
+    if (strstr(buff + 60, "RELEASE")) {
+      // ATX2
+      continue;
+    }
+    if (strstr(buff + 60, "END OF HEADER")) continue;
 
-        if (strlen(buff)<60||strstr(buff+60,"COMMENT")) continue;
-
-        if (strstr(buff+60,"START OF ANTENNA")) {
-            pcv=pcv0;
-            state=1;
+    if (strstr(buff + 60, "START OF ANTENNA")) {
+      pcv = pcv0;
+      state = 1;
+      procp = 0;
+      phvp = 0;
+      azi_len = 0;
+      continue;
+    }
+    if (strstr(buff + 60, "END OF ANTENNA")) {
+      if (state != 1) {
+        trace(1, "readantex: unexpected end of antenna\n");
+        continue;
+      }
+      if (procp) addpcv(&pcv, pcvs);
+      state = 0;
+      continue;
+    }
+    if (state == 1 && strstr(buff + 60, "TYPE / SERIAL NO")) {
+      setstr(pcv.type, buff, 20);
+      setstr(pcv.code, buff + 20, 20);
+      if (strlen(pcv.code) == 3) {
+        pcv.sat = satid2no(pcv.code);
+      }
+      if (buff[40] != ' ') {
+        pcv.satsys = code2sys(buff[40]);
+        if (pcv.satsys == 0) {
+          trace(1, "readantex: unexpect SVN sys at line '%s'\n", buff);
+          continue;
         }
-        if (strstr(buff+60,"END OF ANTENNA")) {
-            addpcv(&pcv,pcvs);
-            state=0;
+        pcv.svn = str2num(buff, 41, 3);
+      }
+      procp = (pcv.sat || pcv.svn) ? !(filter & 2) : !(filter & 1);
+      continue;
+    }
+    if (state == 1 && strstr(buff + 60, "TYPE / SN")) {
+      // ATX2, receiver
+      setstr(pcv.type, buff, 20);
+      procp = !(filter & 1);
+      continue;
+    }
+    if (state == 1 && strstr(buff + 60, "TYPE / SVN / SAT ID")) {
+      // ATX2, satellite
+      setstr(pcv.type, buff, 20);
+      pcv.satsys = code2sys(buff[40]);
+      if (pcv.satsys == 0) {
+        trace(1, "readantex: unexpect SVN sys at line '%s'\n", buff);
+        continue;
+      }
+      pcv.svn = str2num(buff, 41, 3);
+      // The mapping to a RTKLIB satellite number needs a time, and with ATX2
+      // uses the satellite meta data.
+      procp = !(filter & 2);
+      continue;
+    }
+    //
+    // Ignore content if it has been filtered out, if it is not being
+    // processed, until the end of this antenna entry.
+    if (!procp) continue;
+    //
+    if (state == 1 && strstr(buff + 60, "METH / BY / # / DATE")) {
+      continue;
+    }
+    if (state == 1 && strstr(buff, "DAZI")) {
+      if (sscanf(buff, "%lf", &dazi) < 1) continue;
+      // azi_len includes the NOAZI entry.
+      azi_len = (dazi < 0.01 ? 0 : 360 / dazi + 1) + 1;
+      continue;
+    }
+    if (state == 1 && strstr(buff, "ZEN1 / ZEN2 / DZEN")) {
+      if (sscanf(buff, "%lf%lf%lf", &zen1, &zen2, &dzen) < 3) continue;
+      zen_len = dzen < 0.01 ? 0 : (zen2 - zen1) / dzen + 1;
+      continue;
+    }
+    if (state == 1 && strstr(buff, "# OF FREQUENCIES")) {
+      continue;
+    }
+    if (state == 1 && strstr(buff, "# OF PHV")) {
+      // ATX2
+      continue;
+    }
+    if (state == 1 && strstr(buff + 60, "VALID FROM")) {
+      if (phvp) {
+        // Save the current entry and start a new entry.
+        addpcv(&pcv, pcvs);
+        // Clear time period and the frequency data.
+        memset(&pcv.ts, 0, sizeof(pcv.ts));
+        memset(&pcv.te, 0, sizeof(pcv.te));
+        for (int idx = 0; idx < ANTNFREQ; idx++) {
+          pcv.zen1[idx] = pcv.zen2[idx] = pcv.dzen[idx] = pcv.dazi[idx] = 0.0;
+          pcv.zen_len[idx] = pcv.azi_len[idx] = pcv.init[idx] = 0;
+          for (int j = 0; j < 3; j ++) pcv.off[idx][j] = 0.0;
+          pcv.var[idx] = NULL;
         }
-        if (!state) continue;
-
-        if (strstr(buff+60,"TYPE / SERIAL NO")) {
-            strncpy(pcv.type,buff   ,20); pcv.type[20]='\0';
-            strncpy(pcv.code,buff+20,20); pcv.code[20]='\0';
-            if (!strncmp(pcv.code+3,"        ",8)) {
-                pcv.sat=satid2no(pcv.code);
+        phvp = 0;
+      }
+      if (str2time(buff, 0, 43, &pcv.ts) < 0)
+        trace(1, "readantex: error parsing pcv 'VALID FROM' time at line '%s'\n", buff);
+      continue;
+    }
+    if (state == 1 && strstr(buff + 60, "VALID UNTIL")) {
+      if (phvp) {
+        // Save the current entry and start a new entry.
+        addpcv(&pcv, pcvs);
+        // Clear time period and the frequency data.
+        memset(&pcv.ts, 0, sizeof(pcv.ts));
+        memset(&pcv.te, 0, sizeof(pcv.te));
+        for (int idx = 0; idx < ANTNFREQ; idx++) {
+          pcv.zen1[idx] = pcv.zen2[idx] = pcv.dzen[idx] = pcv.dazi[idx] = 0.0;
+          pcv.zen_len[idx] = pcv.azi_len[idx] = pcv.init[idx] = 0;
+          for (int j = 0; j < 3; j ++) pcv.off[idx][j] = 0.0;
+          pcv.var[idx] = NULL;
+        }
+        phvp = 0;
+      }
+      if (str2time(buff, 0, 43, &pcv.te) < 0)
+        trace(1, "readantex: error parsing pcv 'VALID UNTIL' time at line '%s'\n", buff);
+      continue;
+    }
+    if (state == 1 && strstr(buff, "SINEX CODE")) {
+      continue;
+    }
+    if (state == 1 && (strstr(buff + 60, "START OF FREQUENCY") ||
+                       strstr(buff + 60, "START OF PHV"))) {
+      phvp = 1;
+      if (strstr(buff + 60, "START OF PHV")) {
+        // ATX2 - "START OF PHV" can include a group of signals. The systems
+        // are not distinguished here but an entry is allocated for each
+        // distinct frequency, e.g. R02 and R06 are often grouped but have
+        // slightly differency frequencies.
+        state = 3;
+      } else {
+        state = 2;
+      }
+      azi_num = 0;
+      // Note all the distrinct frequencies in the group.
+      for (int idx = 0; idx < ANTNFREQ; idx++) {
+        group[idx] = 0;
+        fdup[idx] = 0;
+      }
+      for (int i = 0; i < 10; i++) {
+        int start = 6 * i + 3;
+        // TODO should it break here, is this the end of the list?
+        if (buff[start] == ' ') continue;
+        int sys = code2sys(buff[start]);
+        if (sys == 0) {
+          trace(1, "readantex: unexpected code system='%c'\n", buff[start]);
+          continue;
+        }
+        int frq = -1;
+        if (sscanf(buff + start + 1, "%d", &frq) < 1) {
+          trace(1, "readantex: unexpected code at '%s'\n", buff + start);
+          continue;
+        }
+        if (frq < 0 || frq > 9) {
+          trace(1, "readantex: unexpected code frq=%d\n", frq);
+          continue;
+        }
+        if (pcv.sat && satsys(pcv.sat, NULL) != sys) {
+          trace(1, "readantex: unexpected sat sys %d vs %d\n", satsys(pcv.sat, NULL), sys);
+          continue;
+        }
+        int idx = antfreqidx(sys, frq);
+        if (idx < 0) {
+          trace(1, "readantex: unknown freq idx for sys=%d frq=%d\n", sys, frq);
+          continue;
+        }
+        group[idx] = 1;
+      }
+      // Allocate a var array for each distinct frequency index in the group.
+      for (int idx = 0; idx < ANTNFREQ; idx++) {
+        if (group[idx]) {
+          if (pcv.var[idx] != NULL) {
+            if (zen_len > 0) {
+              fdup[idx] = 1;
+              char code[4];
+              memcpy(code, buff + 3, 3);
+              code[3] = '\0';
+              trace(4, "readantex: duplicate entry type='%s' code=%s idx=%d\n", pcv.type, code, idx);
             }
+          } else {
+            fdup[idx] = 0;
+            pcv.dazi[idx] = dazi;
+            pcv.azi_len[idx] = azi_len;
+            pcv.zen1[idx] = zen1;
+            pcv.zen2[idx] = zen2;
+            pcv.dzen[idx] = dzen;
+            pcv.zen_len[idx] = zen_len;
+            if (zen_len > 0)
+              pcv.var[idx] = calloc(azi_len * zen_len, sizeof(double));
+          }
+          trace(4, "readantex: alloc pcv idx=%d azi_len=%d zen_len=%d %p\n", idx, azi_len, zen_len, (void *)pcv.var[idx]);
         }
-        else if (strstr(buff+60,"VALID FROM")) {
-            if (!str2time(buff,0,43,&pcv.ts)) continue;
-        }
-        else if (strstr(buff+60,"VALID UNTIL")) {
-            if (!str2time(buff,0,43,&pcv.te)) continue;
-        }
-        else if (strstr(buff+60,"START OF FREQUENCY")) {
-            if (!pcv.sat&&buff[3]!='G') continue; /* only read rec ant for GPS */
-            if (sscanf(buff+4,"%d",&f)<1) continue;
-            for (i=0;freqs[i];i++) if (freqs[i]==f) break;
-            if (freqs[i]) freq=i+1;
-            /* for Galileo E5b: save to E2, not E7  */
-            if (satsys(pcv.sat,NULL)==SYS_GAL&&f==7) freq=2;
-        }
-        else if (strstr(buff+60,"END OF FREQUENCY")) {
-            freq=0;
-        }
-        else if (strstr(buff+60,"NORTH / EAST / UP")) {
-            if (freq<1||NFREQ<freq) continue;
-            if (decodef(buff,3,neu)<3) continue;
-            pcv.off[freq-1][0]=neu[pcv.sat?0:1]; /* x or e */
-            pcv.off[freq-1][1]=neu[pcv.sat?1:0]; /* y or n */
-            pcv.off[freq-1][2]=neu[2];           /* z or u */
-        }
-        else if (strstr(buff,"NOAZI")) {
-            if (freq<1||NFREQ<freq) continue;
-            if ((i=decodef(buff+8,19,pcv.var[freq-1]))<=0) continue;
-            for (;i<19;i++) pcv.var[freq-1][i]=pcv.var[freq-1][i-1];
-        }
+      }
+      continue;
     }
-    fclose(fp);
+    if ((state == 2 && strstr(buff + 60, "END OF FREQUENCY")) || (state == 3 && strstr(buff + 60, "END OF PHV"))) {
+      for (int idx = 0; idx < ANTNFREQ; idx++) {
+        if (group[idx]) {
+          if (pcv.azi_len[idx] > 1) {
+            if (azi_num == pcv.azi_len[idx] - 1) {
+              pcv.init[idx] |= PCV_PHV;
+            } else {
+              trace(1, "readantex: %d of %d azimuth elements supplied\n", azi_num, pcv.azi_len[idx]);
+            }
+          }
+          group[idx] = 0;
+        }
+      }
+      state = 1;
+      continue;
+    }
+    if (state == 2 && strstr(buff + 60, "NORTH / EAST / UP")) {
+      double neu[3];
+      if (decodef(buff, 3, neu) < 3) {
+        trace(1, "readantex: N/E/U values short\n");
+        continue;
+      }
+      for (int idx = 0; idx < ANTNFREQ; idx++) {
+        if (group[idx]) {
+          pcv.off[idx][0] = neu[pcv.sat ? 0 : 1]; /* x or e */
+          pcv.off[idx][1] = neu[pcv.sat ? 1 : 0]; /* y or n */
+          pcv.off[idx][2] = neu[2];               /* z or u */
+          pcv.init[idx] |= PCV_PCO;
+        }
+      }
+      continue;
+    }
+    if (state == 3 && strstr(buff + 60, "X / Y / Z")) {
+      // ATX2
+      double xyz[3];
+      if (decodef(buff, 3, xyz) < 3) {
+        trace(1, "readantex: X/Y/Z values short\n");
+        continue;
+      }
+      for (int idx = 0; idx < ANTNFREQ; idx++) {
+        if (group[idx]) {
+          // Note the order of the receiver E and N are swapped for ANTEX 2
+          // compared with 'NORTH / EAST / UP'.
+          pcv.off[idx][0] = xyz[0]; /* x or e */
+          pcv.off[idx][1] = xyz[1]; /* y or n */
+          pcv.off[idx][2] = xyz[2]; /* z or u */
+          pcv.init[idx] |= PCV_PCO;
+        }
+      }
+      continue;
+    }
+    if ((state == 2 || state == 3) && strstr(buff, "NOAZI")) {
+      if (zen_len <= 0) {
+        trace(1, "readantex: NOAZI when zen_len=%d type='%s'\n", zen_len, pcv.type);
+        continue;
+      }
+      double *offs = malloc(zen_len * sizeof(double));
+      if (!offs) {
+        trace(1, "readantex: PHV NOAZI offs alloc failed\n");
+        continue;
+      }
+      int i = decodef(buff + 8, zen_len, offs);
+      if (i < zen_len) {
+        trace(1, "readantex: PHV NOAZI only %d of %d values read\n", i, zen_len);
+        free(offs);
+        continue;
+      }
+      for (int idx = 0; idx < ANTNFREQ; idx++) {
+        if (group[idx]) {
+          if (zen_len != pcv.zen_len[idx]) {
+            trace(1, "readantex: PHV NOAZI dup zen length mismatch %d expected %d\n", zen_len, pcv.zen_len[idx]);
+            continue;
+          }
+          if (fdup[idx]) {
+            // Note certain this is an error, but unexpected?
+            if (pcv.init[idx] != (PCV_PHV | PCV_NOAZI | PCV_PCO))
+              trace(2, "readantex: PHV NOAZI dup unexpected order idx=%d init=%d\n", idx, pcv.init[idx]);
+            for (int j = 0; j < zen_len; j++) {
+              // This is only a violation of the limited expectations here -
+              // that dups are expected to be equivalent so that the system
+              // can be ignored.
+              if (offs[j] != pcv.var[idx][j])
+                trace(1, "readantex: PHV NOAZI dup differs j=%d %lf %lf\n", j, offs[j], pcv.var[idx][j]);
+            }
+            continue;
+          }
+          // Note certain this is an error, but unexpected?
+          if (pcv.init[idx] != PCV_PCO)
+            trace(2, "readantex: PHV NOAZI unexpected order idx=%d init=%d\n", idx, pcv.init[idx]);
+          memcpy(pcv.var[idx], offs, zen_len * sizeof(double));
+          pcv.init[idx] |= PCV_NOAZI;
+        }
+      }
+      free(offs);
+      continue;
+    }
+    if ((state == 2 || state == 3) && !strstr(buff, "NOAZI")) {
+      if (zen_len <= 0) {
+        trace(1, "readantex: PHV AZI when zen_len=%d type='%s'\n", zen_len, pcv.type);
+        continue;
+      }
+      if (azi_len <= 1) {
+        trace(1, "readantex: PHV AZI when azi_len=%d buff='%s'\n", azi_len, buff);
+        continue;
+      }
+      if (azi_num >= azi_len - 1) {
+        trace(1, "readantex: PHV AZI overflow %d expected %d\n", azi_num, azi_len);
+        continue;
+      }
+      double *offs = malloc((zen_len + 1) * sizeof(double));
+      if (!offs) {
+        trace(1, "readantex: PHV AZI offs alloc failed\n");
+        continue;
+      }
+      int i = decodef(buff + 1, zen_len + 1, offs);
+      if (i < zen_len) {
+        trace(1, "readantex: PHV AZI only %d of %d values read\n", i, zen_len);
+        free(offs);
+        continue;
+      }
+      // Check the azi, the first number.
+      if (fabs(offs[0] * 1000.0 - azi_num * dazi) > 0.01) {
+        trace(1, "readantex: PHV AZI error %lf expected %lf azi_num=%d dazi=%lf\n", offs[0], azi_num * dazi, azi_num, dazi);
+        free(offs);
+        continue;
+      }
+      for (int idx = 0; idx < ANTNFREQ; idx++) {
+        if (group[idx]) {
+          if (fdup[idx]) {
+            // Guard the dup size being the same.
+            if (azi_num >= pcv.azi_len[idx] - 1) {
+              trace(1, "readantex PHV AZI dup overflows azi length %d\n", pcv.azi_len[idx]);
+              continue;
+            }
+            if (zen_len != pcv.zen_len[idx]) {
+              trace(1, "readantex PHV AZI dup zen length mismatch %d expected %d\n", zen_len, pcv.zen_len[idx]);
+              continue;
+            }
+            for (int j = 0; j < zen_len; j++) {
+              if (offs[1 + j] != pcv.var[idx][(1 + azi_num) * zen_len + j])
+                trace(1, "readantex PHV AZI dup data differs j=%d %lf %lf\n", j, offs[j], pcv.var[idx][(1 + azi_num) * zen_len + j]);
+            }
+            continue;
+          }
+          memcpy(&pcv.var[idx][(1 + azi_num) * zen_len], offs + 1, zen_len * sizeof(double));
+        }
+      }
+      azi_num++;
+      free(offs);
+      continue;
+    }
+    if (state == 1 && strstr(buff + 60, "START OF GDV")) {
+      state = 4;
+      continue;
+    }
+    if (state == 4 && strstr(buff + 60, "END OF GDV")) {
+      state = 1;
+      continue;
+    }
+    if (state == 4) {
+      // GDV Ignored.
+      continue;
+    }
+    if (state == 1 && strstr(buff + 60, "START OF GAIN")) {
+      state = 5;
+      continue;
+    }
+    if (state == 5 && strstr(buff + 60, "END OF GAIN")) {
+      state = 1;
+      continue;
+    }
+    if (state == 5) {
+      // GAIN Ignored.
+      continue;
+    }
 
-    return 1;
+    trace(1, "readantex: unexpected state=%d at line %s\n", state, buff);
+  }
+  fclose(fp);
+  return 1;
 }
 /* read antenna parameters ------------------------------------------------------
-* read antenna parameters
-* args   : char   *file       I   antenna parameter file (antex)
-*          pcvs_t *pcvs       IO  antenna parameters
-* return : status (1:ok,0:file open error)
-* notes  : file with the extension .atx or .ATX is recognized as antex
-*          file except for antex is recognized ngs antenna parameters
-*          see reference [3]
-*          only support non-azimuth-depedent parameters
-*-----------------------------------------------------------------------------*/
-extern int readpcv(const char *file, pcvs_t *pcvs)
-{
-    pcv_t *pcv;
-    char *ext;
-    int i,stat;
+ * read antenna parameters
+ * args   : char   *file       I   antenna parameter file (antex)
+ *          int    filter      I   bit 0 - exclude rcv, bit 1 - exclude sat
+ *          pcvs_t *pcvs       IO  antenna parameters
+ * return : status (1:ok,0:file open error)
+ * notes  : file with the extension .atx or .ATX is recognized as antex
+ *          file except for antex is recognized ngs antenna parameters
+ *          see reference [3]
+ *          only support non-azimuth-depedent parameters
+ *-----------------------------------------------------------------------------*/
+extern int readpcv(const char *file, int filter, pcvs_t *pcvs) {
+  trace(3, "readpcv: file=%s\n", file);
 
-    trace(3,"readpcv: file=%s\n",file);
+  char *ext = strrchr(file, '.');
+  if (!ext) ext = "";
 
-    if (!(ext=strrchr(file,'.'))) ext="";
-
-    if (!strcmp(ext,".atx")||!strcmp(ext,".ATX")) {
-        stat=readantex(file,pcvs);
-    }
-    else {
-        stat=readngspcv(file,pcvs);
-    }
-    for (i=0;i<pcvs->n;i++) {
-        pcv=pcvs->pcv+i;
-        trace(4,"sat=%2d type=%20s code=%s off=%8.4f %8.4f %8.4f  %8.4f %8.4f %8.4f\n",
-              pcv->sat,pcv->type,pcv->code,pcv->off[0][0],pcv->off[0][1],
-              pcv->off[0][2],pcv->off[1][0],pcv->off[1][1],pcv->off[1][2]);
-    }
-    return stat;
+  int stat = 0;
+  if (!strcmp(ext, ".atx") || !strcmp(ext, ".ATX") ||
+      !strcmp(ext, ".atx2") || !strcmp(ext, ".ATX2")) {
+    stat = readantex(file, filter, pcvs);
+  } else if (!(filter & 1)) {
+    stat = readngspcv(file, pcvs);
+  }
+  for (int i = 0; i < pcvs->n; i++) {
+    pcv_t *pcv = pcvs->pcv + i;
+    trace(4, "sat=%2d type=%20s code=%s off=%8.4f %8.4f %8.4f  %8.4f %8.4f %8.4f\n", pcv->sat,
+          pcv->type, pcv->code, pcv->off[0][0], pcv->off[0][1], pcv->off[0][2], pcv->off[1][0],
+          pcv->off[1][1], pcv->off[1][2]);
+  }
+  return stat;
 }
 /* search antenna parameter ----------------------------------------------------
-* read satellite antenna phase center position
-* args   : int    sat         I   satellite number (0: receiver antenna)
-*          char   *type       I   antenna type for receiver antenna
-*          gtime_t time       I   time to search parameters
-*          pcvs_t *pcvs       IO  antenna parameters
-* return : antenna parameter (NULL: no antenna)
-*-----------------------------------------------------------------------------*/
-extern pcv_t *searchpcv(int sat, const char *type, gtime_t time,
-                        const pcvs_t *pcvs)
-{
-    pcv_t *pcv;
-    char buff[MAXANT],*types[2],*p;
-    int i,j,n=0;
+ * read satellite antenna phase center position
+ * args   : int    sat         I   satellite number (0: receiver antenna)
+ *          char   *type       I   antenna type for receiver antenna
+ *          gtime_t time       I   time to search parameters
+ *          satsvns_t satsvns  I   satellite SVN to PRN mapping
+ *          pcvs_t *pcvs       IO  antenna parameters
+ * return : antenna parameter (NULL: no antenna)
+ *-----------------------------------------------------------------------------*/
+extern pcv_t *searchpcv(int sat, const char *type, gtime_t time, const satsvns_t *satsvns, const pcvs_t *pcvs) {
+  trace(4, "searchpcv: sat=%2d type=%s\n", sat, type);
 
-    trace(4,"searchpcv: sat=%2d type=%s\n",sat,type);
-
-    if (sat) { /* search satellite antenna */
-        for (i=0;i<pcvs->n;i++) {
-            pcv=pcvs->pcv+i;
-            if (pcv->sat!=sat) continue;
-            if (pcv->ts.time!=0&&timediff(pcv->ts,time)>0.0) continue;
-            if (pcv->te.time!=0&&timediff(pcv->te,time)<0.0) continue;
-            return pcv;
+  if (sat) {
+    // Search satellite antenna
+    int prn, sys = satsys(sat, &prn);
+    // Map to an SVN if there is satellite meta data.
+    int svn = 0;
+    if (satsvns) svn = searchsatsvn(sat, time, satsvns);
+    for (int i = 0; i < pcvs->n; i++) {
+      pcv_t *pcv = pcvs->pcv + i;
+      if (pcv->satsys && pcv->satsys != sys) continue;
+      if (svn) {
+        if (pcv->svn != svn) {
+          if (pcv->sat && pcv->sat == sat) {
+            trace(1, "searchpcv: matching sat=%d but mismatching svn=%d %d\n", sat, svn, pcv->svn);
+            // TODO ??
+          }
+          continue;
         }
+        if (pcv->sat && pcv->sat != sat) {
+          trace(1, "searchpcv: matching svn=%d but mismatching sat=%d %d\n", svn, sat, pcv->sat);
+          // TODO ??
+          continue;
+        }
+      } else {
+        // No SVN info, just check the sat no
+        if (pcv->sat != sat) continue;
+      }
+      if (pcv->ts.time != 0 && timediff(pcv->ts, time) > 0.0) continue;
+      if (pcv->te.time != 0 && timediff(pcv->te, time) < 0.0) continue;
+      trace(3, "searchpcv: sat=%2d sys=%2d prn=%3d svn=%3d type=%s\n", sat, sys, prn, pcv->svn, pcv->type);
+      return pcv;
     }
-    else {
-        strcpy(buff,type);
-        char *q;
-        for (p=strtok_r(buff," ",&q);p&&n<2;p=strtok_r(NULL," ",&q)) types[n++]=p;
-        if (n<=0) return NULL;
+    trace(2, "searchpcv: failed for sat=%d sys=%2d prn=%3d\n", sat, sys, prn);
+  } else {
+    char buff[MAXANT];
+    strcpy(buff, type);
+    char *types[2];
+    int n = 0;
+    for (char *q, *p = strtok_r(buff, " ", &q); p && n < 2; p = strtok_r(NULL, " ", &q))
+      types[n++] = p;
+    if (n <= 0) return NULL;
 
-        /* search receiver antenna with radome at first */
-        for (i=0;i<pcvs->n;i++) {
-            pcv=pcvs->pcv+i;
-            for (j=0;j<n;j++) if (!strstr(pcv->type,types[j])) break;
-            if (j>=n) return pcv;
-        }
-        /* search receiver antenna without radome */
-        for (i=0;i<pcvs->n;i++) {
-            pcv=pcvs->pcv+i;
-            if (strstr(pcv->type,types[0])!=pcv->type) continue;
-
-            trace(2,"pcv without radome is used type=%s\n",type);
-            return pcv;
-        }
+    // Search receiver antenna with radome at first
+    for (int i = 0; i < pcvs->n; i++) {
+      pcv_t *pcv = pcvs->pcv + i;
+      int j;
+      for (j = 0; j < n; j++)
+        if (!strstr(pcv->type, types[j])) break;
+      if (j >= n) return pcv;
     }
-    return NULL;
+    // Search receiver antenna without radome
+    for (int i = 0; i < pcvs->n; i++) {
+      pcv_t *pcv = pcvs->pcv + i;
+      if (strstr(pcv->type, types[0]) != pcv->type) continue;
+
+      trace(2, "pcv without radome is used type=%s\n", type);
+      return pcv;
+    }
+    trace(2, "searchpcv: failed for rcv type='%s'\n", type);
+  }
+  return NULL;
 }
 /* read station positions ------------------------------------------------------
 * read positions from station position file
@@ -3808,61 +4426,373 @@ extern double tropmapf(gtime_t time, const double pos[], const double azel[],
     return nmf(time,pos,azel,mapfw); /* NMF */
 #endif
 }
-/* interpolate antenna phase center variation --------------------------------*/
-static double interpvar(double ang, const double *var)
-{
-    double a=ang/5.0; /* ang=0-90 */
-    int i=(int)a;
-    if (i<0) return var[0]; else if (i>=18) return var[18];
-    return var[i]*(1.0-a+i)+var[i+1]*(a-i);
+/* Interpolate antenna phase center variation --------------------------------*/
+static double interpvar(double ang, double start, double end, double delta, const double *var) {
+  double a = (ang - start) / delta;
+  int i = trunc(a);
+  int n = (end - start) / delta + 1;
+  if (i < 0) {
+    trace(3, "interpvar: %d < 0\n", i);
+    return var[0];
+  }
+  else if (i >= n) {
+    trace(3, "interpvar: %d >= %d\n", i, n);
+    return var[n - 1];
+  }
+  return var[i] * (1.0 - (a - i)) + var[i + 1] * (a - i);
 }
-/* receiver antenna model ------------------------------------------------------
-* compute antenna offset by antenna phase center parameters
-* args   : pcv_t *pcv       I   antenna phase center parameters
-*          double *del      I   antenna delta {e,n,u} (m)
-*          double *azel     I   azimuth/elevation for receiver {az,el} (rad)
-*          int     opt      I   option (0:only offset,1:offset+pcv)
-*          double *dant     O   range offsets for each frequency (m)
-* return : none
-* notes  : current version does not support azimuth dependent terms
-*-----------------------------------------------------------------------------*/
-extern void antmodel(const pcv_t *pcv, const double *del, const double *azel,
-                     int opt, double *dant)
-{
-    double e[3],off[3],cosel=cos(azel[1]);
-    int i,j;
 
-    trace(4,"antmodel: azel=%6.1f %4.1f opt=%d\n",azel[0]*R2D,azel[1]*R2D,opt);
+// Find the closest available PCO entry for a given frequency.
+//
+// Returns the closest available Antex frequency index for the supplied
+// frequency. Also the second closest in the same band and on the other side
+// of the supplied frequency, for interpolation, unless the the first is
+// within tolerance and consider a match.
+//
+// Different bands can have distinct offsets that appear unrelated to the
+// change of the PCO with frequency, such as from stacked antenna elements, so
+// interpolation is not attempted between bands.
+//
+// The relationship between the PCO and frequency is typically not be linear
+// even within a band and measurements can have some noise so only interpolate
+// if entries are found either side of the respective frequency. While for
+// some antennas, with a few calibrated frequencies, the relationship between
+// the offset and frequency might suggest fitting a curve for interpolation,
+// there are other antenna calibrations that do not have smooth data.
+//
+static int antpcoidx(const pcv_t *pcv, double freq, double *freq1, double *freq2, int *idx2) {
+  if (freq2) *freq2 = 0.0;
+  if (idx2) *idx2 = -1;
 
-    e[0]=sin(azel[0])*cosel;
-    e[1]=cos(azel[0])*cosel;
-    e[2]=sin(azel[1]);
+  // Closest higher and lower available entries, in the same band.
+  int idxh = -1, idxl = -1;
+  double frqh = 0.0, frql = 0.0;
+  // Closest available entries, in the same band.
+  int idxa1 = -1, idxa2 = -1;
+  double frqa1 = 0.0, frqa2 = 0.0;
 
-    for (i=0;i<NFREQ;i++) {
-        for (j=0;j<3;j++) off[j]=pcv->off[i][j]+del[j];
+  for (int i = 0; i < ANTNFREQ; i++) {
+    // Only consider if there is a PCO entry.
+    if (pcv->init[i] & PCV_PCO) {
+      double frq = antcode2freq(i);
+      // Alternatives in the same band, within 140MHz.
+      if (fabs(frq - freq) > 145e6) continue;
 
-        dant[i]=-dot3(off,e)+(opt?interpvar(90.0-azel[1]*R2D,pcv->var[i]):0.0);
+      // The closest two entries in the same band.
+      if (idxa1 < 0) {
+        idxa1 = i;
+        frqa1 = frq;
+      } else if (fabs(frq - freq) < fabs(frqa1 - freq)) {
+        idxa2 = idxa1;
+        frqa2 = frqa1;
+        idxa1 = i;
+        frqa1 = frq;
+      } else if (idxa2 < 0 || fabs(frq - freq) < fabs(frqa2 - freq)) {
+        idxa2 = i;
+        frqa2 = frq;
+      }
+
+      // Closest higher freq entry
+      if (frq >= freq && (idxh < 0 || frq < frqh)) {
+        idxh = i;
+        frqh = frq;
+      }
+      // Closest lower freq entry
+      if (frq <= freq && (idxl < 0 || frq > frql)) {
+        idxl = i;
+        frql = frq;
+      }
     }
-    trace(4,"antmodel: dant=%6.3f %6.3f\n",dant[0],dant[1]);
-}
-/* satellite antenna model ------------------------------------------------------
-* compute satellite antenna phase center parameters
-* args   : pcv_t *pcv       I   antenna phase center parameters
-*          double nadir     I   nadir angle for satellite (rad)
-*          double *dant     O   range offsets for each frequency (m)
-* return : none
-*-----------------------------------------------------------------------------*/
-extern void antmodel_s(const pcv_t *pcv, double nadir, double *dant)
-{
-    int i;
+  }
 
-    trace(4,"antmodel_s: nadir=%6.1f\n",nadir*R2D);
+  if (idxh < 0 && idxl < 0) {
+    // No entries in the same band, return what was found and issue a warning.
+    trace(3, "antpcoidx: '%s' close PCO not found for freq=%.0lf\n", pcv->type, freq);
+    if (freq1) *freq1 = 0.0;
+    return -1;
+  }
 
-    for (i=0;i<NFREQ;i++) {
-        dant[i]=interpvar(nadir*R2D*5.0,pcv->var[i]);
+  if (idxl < 0) {
+    // Only a higher frequency entry.
+    if (freq1) *freq1 = frqh;
+    return idxh;
+  }
+
+  if (idxh < 0) {
+    // Only a lower frequency entry.
+    if (freq1) *freq1 = frql;
+    return idxl;
+  }
+
+  if (idxh == idxl) {
+    // Only one if there were the same frequency.
+    if (freq1) *freq1 = frqh;
+    return idxh;
+  }
+
+  // Two close alternatives on either side, order them.
+  if (fabs(frqh - freq) <= fabs(frql - freq)) {
+    // If the closer higher frequency is within tolerance then consider it a
+    // match, avoiding interpolation.
+    if (fabs(frqh - freq) > 0.250E6) {
+      if (freq2) *freq2 = frql;
+      if (idx2) *idx2 = idxl;
     }
-    trace(4,"antmodel_s: dant=%6.3f %6.3f\n",dant[0],dant[1]);
+    if (freq1) *freq1 = frqh;
+    return idxh;
+  }
+
+  // If the closer lower frequency is within tolerance then consider it a
+  // match, avoiding interpolation.
+  if (fabs(frql - freq) > 0.250E6) {
+    if (freq2) *freq2 = frqh;
+    if (idx2) *idx2 = idxh;
+  }
+  if (freq1) *freq1 = frql;
+  return idxl;
 }
+
+/* Receiver antenna phase center variation --------------------------------------
+ * Compute antenna offset by antenna phase center parameters
+ * Args   : pcv_t *pcv       I   antenna phase center parameters
+ *          double *azel     I   azimuth/elevation for receiver {az,el} (rad)
+ *          double freq      I   frequency
+ * Return : range offsets for the respective frequency (m)
+ *
+ * Note: this applies the PCV when available, and for the PCO only see antpco().
+ *-----------------------------------------------------------------------------*/
+extern double antpcv(const pcv_t *pcv, const double *azel, double freq) {
+  trace(4, "antpcv: azel=%6.1f %4.1f\n", azel[0] * R2D, azel[1] * R2D);
+
+  double freq1, freq2;
+  int idx2, idx = antpcoidx(pcv, freq, &freq1, &freq2, &idx2);
+  if (idx < 0 || !(pcv->init[idx] & (PCV_PHV | PCV_NOAZI)) || pcv->dzen[idx] < 0.01) {
+    trace(3, "antpcv: no pcv freq=%.0lf\n", freq);
+    return 0.0;
+  }
+
+  if (pcv->zen_len[idx] != (pcv->zen2[idx] - pcv->zen1[idx]) / pcv->dzen[idx] + 1)
+    trace(2, "antpcv: unexpected zen_len\n");
+
+  double dant = 0.0;
+
+  if ((pcv->init[idx] & PCV_PHV) && pcv->dazi[idx] > 0.01) {
+    double pcv1 = 0.0;
+    {
+      double a = azel[0] * R2D / pcv->dazi[idx];
+      int i = trunc(a);
+      double r = a - i;
+      if (i + 1 >= pcv->azi_len[idx] - 1)
+        trace(2, "antpcv azi %d >= len %d\n", i + 1, pcv->azi_len[idx] - 1);
+      if (i < 0) {
+        i = 0;
+        r = 0;
+        trace(2, "antpcv azi < 0 clipped\n");
+      } else if (i >= pcv->azi_len[idx] - 1) {
+        i = pcv->azi_len[idx] - 2;
+        r = 0;
+        trace(2, "antpcv azi >= len clipped\n");
+      }
+      // Interpolate for the zenith at each azimuth step.
+      double dant1 = interpvar(90.0 - azel[1] * R2D, pcv->zen1[idx], pcv->zen2[idx], pcv->dzen[idx],
+                               pcv->var[idx] + (1 + i) * pcv->zen_len[idx]);
+      pcv1 += dant1;
+      if (i + 1 < pcv->azi_len[idx] - 1) {
+        // Interpolate for the zenith at each azimuth step.
+        double dant2 = interpvar(90.0 - azel[1] * R2D, pcv->zen1[idx], pcv->zen2[idx], pcv->dzen[idx],
+                                 pcv->var[idx] + (1 + i + 1) * pcv->zen_len[idx]);
+        // Interpolate for the azimuth.
+        pcv1 += -r * dant1 + r * dant2;
+      }
+    }
+    dant += pcv1;
+
+    if (idx2 >= 0 && freq2 > 0 && pcv->init[idx2] & (PCV_PHV | PCV_NOAZI) && pcv->dzen[idx2] > 0.01 && pcv->dazi[idx2] > 0.01) {
+      // PCV with interpolation between frequencies.
+      if (pcv->zen_len[idx2] != (pcv->zen2[idx2] - pcv->zen1[idx2]) / pcv->dzen[idx2] + 1)
+        trace(2, "antpcv: unexpected zen_len\n");
+      double pcv2 = 0.0;
+      double a = azel[0] * R2D / pcv->dazi[idx2];
+      int i = trunc(a);
+      double r = a - i;
+      if (i + 1 >= pcv->azi_len[idx2] - 1)
+        trace(2, "antpcv azi %d >= len %d\n", i + 1, pcv->azi_len[idx2] - 1);
+      if (i < 0) {
+        i = 0;
+        r = 0;
+        trace(2, "antpcv azi < 0 clipped\n");
+      } else if (i >= pcv->azi_len[idx2] - 1) {
+        i = pcv->azi_len[idx2] - 2;
+        r = 0;
+        trace(2, "antpcv azi >= len clipped\n");
+      }
+      // Interpolate for the zenith at each azimuth step.
+      double dant1 = interpvar(90.0 - azel[1] * R2D, pcv->zen1[idx2], pcv->zen2[idx2], pcv->dzen[idx2],
+                               pcv->var[idx2] + (1 + i) * pcv->zen_len[idx2]);
+      pcv2 += dant1;
+      if (i + 1 < pcv->azi_len[idx2] - 1) {
+        // Interpolate for the zenith at each azimuth step.
+        double dant2 = interpvar(90.0 - azel[1] * R2D, pcv->zen1[idx2], pcv->zen2[idx2], pcv->dzen[idx2],
+                                 pcv->var[idx2] + (1 + i + 1) * pcv->zen_len[idx2]);
+        // Interpolate for the azimuth.
+        pcv2 += -r * dant1 + r * dant2;
+      }
+
+      // Interpolate between frequencies.
+      double lam = CLIGHT / freq, lam1 = CLIGHT / freq1, lam2 = CLIGHT / freq2, dlam = lam2 - lam1;
+      double b = (lam - lam1) / dlam;
+      dant += -b * pcv1 + b * pcv2;
+    }
+    trace(4, "antpcv: dant=%6.3f\n", dant);
+    return dant;
+  }
+
+  // NOAZI
+  if (pcv->init[idx] & PCV_PHV) {
+    double pcv1 = interpvar(90.0 - azel[1] * R2D, pcv->zen1[idx], pcv->zen2[idx], pcv->dzen[idx], pcv->var[idx]);
+    dant += pcv1;
+    if (idx2 >= 0 && freq2 > 0 && pcv->init[idx2] & (PCV_PHV | PCV_NOAZI) && pcv->dzen[idx2] > 0.01) {
+      // PCV with interpolation between frequencies.
+      double pcv2 = interpvar(90.0 - azel[1] * R2D, pcv->zen1[idx2], pcv->zen2[idx2], pcv->dzen[idx2], pcv->var[idx2]);
+      double lam = CLIGHT / freq, lam1 = CLIGHT / freq1, lam2 = CLIGHT / freq2, dlam = lam2 - lam1;
+      double a = (lam - lam1) / dlam;
+      dant += -a * pcv1 + a * pcv2;
+    }
+  }
+
+  trace(4, "antpcv: dant=%6.4f\n", dant);
+  return dant;
+}
+
+/* Receiver antenna model ------------------------------------------------------
+ * Compute antenna offset by antenna phase center parameters
+ * Args   : pcv_t *pcv       I   antenna phase center parameters
+ *          double *del      I   antenna delta {e,n,u} (m)
+ *          double *azel     I   azimuth/elevation for receiver {az,el} (rad)
+ *          int     opt      I   option (0:only offset,1:offset+pcv)
+ *          double freq      I   frequency
+ * Return : range offset for the respective frequency (m)
+ *
+ * Note: this applies the PCO and PCV when available. For the PCO only see
+ * antpco(). The receiver PCO does not depend on the azimuth and elevation to
+ * the satellite (less the PCV) and might affect these angles so the caller
+ * may wish to apply the PCO first and then call antpcv(), particularly if the
+ * antenna delta can be large.
+ *-----------------------------------------------------------------------------*/
+extern double antmodel(const pcv_t *pcv, const double *del, const double *azel, int opt, double freq) {
+  trace(4, "antmodel: azel=%6.1f %4.1f opt=%d\n", azel[0] * R2D, azel[1] * R2D, opt);
+
+  double pco[3];
+  antpco(pcv, freq, pco);
+
+  double off[3];
+  for (int i = 0; i < 3; i++) off[i] = pco[i] + del[i];
+
+  double e[3], cosel = cos(azel[1]);
+  e[0] = sin(azel[0]) * cosel;
+  e[1] = cos(azel[0]) * cosel;
+  e[2] = sin(azel[1]);
+
+  double dant = -dot3(off, e);
+  if (opt) dant += antpcv(pcv, azel, freq);
+
+  trace(4, "antmodel: dant=%6.4f\n", dant);
+  return dant;
+}
+
+/* Satellite antenna model ------------------------------------------------------
+ * Compute satellite antenna phase center parameters
+ * Args   : pcv_t *pcv       I   antenna phase center parameters
+ *          double nadir     I   nadir angle for satellite (rad)
+ *          double freq      I   frequency
+ * Return : range offsets for respective frequency (m)
+ * Note this applies the PCV only, for the PCO see antpco().
+ * Most satellites have only NOAZI entries, and only these are supported here.
+ *-----------------------------------------------------------------------------*/
+extern double antmodel_s(const pcv_t *pcv, double nadir, double freq) {
+  trace(4, "antmodel_s: sys=%d svn=%d nadir=%6.1f\n", pcv->satsys, pcv->svn, nadir * R2D);
+
+  if (pcv->satsys == 0) {
+    trace(2, "antmodel_s: no pcv\n");
+    return 0.0;
+  }
+
+  double freq1, freq2;
+  int idx2, idx = antpcoidx(pcv, freq, &freq1, &freq2, &idx2);
+  if (idx < 0 || !(pcv->init[idx] & PCV_NOAZI)) {
+    trace(2, "antmodel_s: NOAZI PHV not found for sys=%d svn=%d freq=%.0lf idx=%d\n", pcv->satsys, pcv->svn, freq, idx);
+    return 0.0;
+  }
+
+  if (pcv->dzen[idx] < 0.01) {
+    trace(2, "antmodel_s: NOAZI PHV has no zenith entries for sys=%d svn=%d freq=%.0lf idx=%d\n", pcv->satsys, pcv->svn, freq, idx);
+    return 0.0;
+  }
+
+  double dant = interpvar(nadir * R2D, pcv->zen1[idx], pcv->zen2[idx], pcv->dzen[idx], pcv->var[idx]);
+  trace(4, "antmodel_s: dant=%6.4f\n", dant);
+  return dant;
+}
+// Returns the antenna PCO
+// For a receiver this is enu, for a satellite xyz.
+extern void antpco(const pcv_t *pcv, double freq, double pco[3]) {
+  double freq1, freq2;
+  int idx2, idx = antpcoidx(pcv, freq, &freq1, &freq2, &idx2);
+  if (idx < 0) {
+    pco[0] = pco[1] = pco[2] = 0.0;
+    trace(4, "antpco PCO not found for sys=%d svn=%d freq=%.0lf idx=%d\n", pcv->satsys, pcv->svn, freq, idx);
+    return;
+  }
+
+  if (!(pcv->init[idx] & PCV_PCO))
+    trace(2, "antpco: error no pco for sys=%d svn=%d freq=%.0lf idx=%d\n", pcv->satsys, pcv->svn, freq, idx);
+
+  for (int i = 0; i < 3; i++) pco[i] = pcv->off[idx][i];
+
+  if (idx2 >= 0 && freq1 > 0 && freq2 > 0) {
+    // Interpolate between frequencies.
+    double lam = CLIGHT / freq, lam1 = CLIGHT / freq1, lam2 = CLIGHT / freq2, dlam = lam2 - lam1;
+    double a = (lam - lam1) / dlam;
+    for (int j = 0; j < 3; j++)
+      pco[j] += -a * pcv->off[idx][j] + a * pcv->off[idx2][j];
+  }
+
+  trace(4, "antpco: sys=%d svn=%d type=%s pco=%6.4f %6.4f %6.4f\n", pcv->satsys, pcv->svn, pcv->type, pco[0], pco[1], pco[2]);
+  return;
+}
+
+// Copy the pcv structure and the var[] data.
+extern void copy_pcv(pcv_t *dst, const pcv_t *src) {
+  memcpy(dst, src, sizeof(pcv_t));
+  for (int i = 0; i < ANTNFREQ; i++) {
+    if (dst->zen_len[i] > 0 && dst->azi_len[i] > 0) {
+      size_t size = dst->azi_len[i] * dst->zen_len[i] * sizeof(double);
+      dst->var[i] = malloc(size);
+      if (!dst->var[i]) {
+        trace(1, "copy_pcv alloc failured\n");
+      } else {
+        memcpy(dst->var[i], src->var[i], size);
+      }
+    } else if (dst->var[i]) {
+      trace(2, "copy_pcv: empty PHV, zen_len=%d azi_len=%d var=%p\n", dst->zen_len[i], dst->azi_len[i], (void *)dst->var[i]);
+    }
+  }
+}
+// Free all pcv var[] data.
+extern void free_pcv(pcv_t *pcv) {
+  for (int i = 0; i < ANTNFREQ; i++) {
+    free(pcv->var[i]);
+    pcv->var[i] = NULL;
+  }
+}
+// Free all pcvs var[] data, and the pcv array.
+void free_pcvs(pcvs_t *pcvs) {
+  for (int i = 0; i < pcvs->n; i++) free_pcv(&pcvs->pcv[i]);
+  free(pcvs->pcv);
+  pcvs->pcv = NULL;
+  pcvs->n = pcvs->nmax = 0;
+}
+
 /* sun and moon position in eci (ref [4] 5.1.1, 5.2.1) -----------------------*/
 static void sunmoonpos_eci(gtime_t tut, double *rsun, double *rmoon)
 {
