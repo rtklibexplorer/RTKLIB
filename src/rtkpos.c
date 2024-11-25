@@ -649,7 +649,7 @@ static void udrcvbias(rtk_t *rtk, double tt)
     }
 }
 // Detect a change in the observation code for a given frequency index.
-// Only one bias per frequency index per satallite is supported, so if the
+// Only one bias per frequency index per satellite is supported, so if the
 // observation code changes then consider it a slip.
 static void detslp_code(rtk_t *rtk, const obsd_t *obs, int i, int rcv) {
   int sat = obs[i].sat;
@@ -953,63 +953,6 @@ static void udstate(rtk_t *rtk, const obsd_t *obs, const int *sat,
         udbias(rtk,tt,obs,sat,iu,ir,ns,nav);
     }
 }
-/* UD (undifferenced) phase/code residual for satellite ----------------------*/
-static void zdres_sat(int base, double r, const obsd_t *obs, const nav_t *nav, const double *azel,
-                      const prcopt_t *opt, double *y, double *freq) {
-  int nf = NF(opt);
-  if (opt->ionoopt == IONOOPT_IFLC) { /* Iono-free linear combination */
-    int sat = obs->sat;
-    int sys = satsys(sat, NULL);
-    int code1 = obs->code[0];
-    double freq1 = sat2freq(sat, code1, nav);
-    int f2 = seliflc(opt->nf, sys);
-    int code2 = obs->code[f2];
-    double freq2 = sat2freq(sat, code2, nav);
-
-    if (freq1 == 0.0 || freq2 == 0.0) return;
-
-    if (testsnr(base, 0, azel[1], obs->SNR[0] * SNR_UNIT, &opt->snrmask) ||
-        testsnr(base, f2, azel[1], obs->SNR[f2] * SNR_UNIT, &opt->snrmask))
-      return;
-
-    double C1 = SQR(freq1) / (SQR(freq1) - SQR(freq2));
-    double C2 = -SQR(freq2) / (SQR(freq1) - SQR(freq2));
-
-    /* Calc receiver antenna phase center correction */
-    double dant1 = antmodel(opt->pcvr + base, opt->antdel[base], azel, opt->posopt[1], freq1);
-    double dant2 = antmodel(opt->pcvr + base, opt->antdel[base], azel, opt->posopt[1], freq2);
-    double dant_if = C1 * dant1 + C2 * dant2;
-
-    if (obs->L[0] != 0.0 && obs->L[f2] != 0.0) {
-      y[0] = C1 * obs->L[0] * CLIGHT / freq1 + C2 * obs->L[f2] * CLIGHT / freq2 - r - dant_if;
-    }
-    if (obs->P[0] != 0.0 && obs->P[f2] != 0.0) {
-      y[nf] = C1 * obs->P[0] + C2 * obs->P[f2] - r - dant_if;
-    }
-    freq[0] = 1.0;
-    return;
-  }
-
-  int sat = obs->sat;
-  for (int i = 0; i < nf; i++) {
-    int code = obs->code[i];
-    freq[i] = sat2freq(sat, code, nav);
-    if (freq[i] == 0.0) continue;
-
-    /* Check SNR mask */
-    if (testsnr(base, i, azel[1], obs->SNR[i] * SNR_UNIT, &opt->snrmask)) {
-      continue;
-    }
-    /* Calc receiver antenna phase center correction */
-    double dant = antmodel(opt->pcvr + base, opt->antdel[base], azel, opt->posopt[1], freq[i]);
-
-    /* Residuals = observable - estimated range */
-    if (obs->L[i] != 0.0) y[i] = obs->L[i] * CLIGHT / freq[i] - r - dant;
-    if (obs->P[i] != 0.0) y[i + nf] = obs->P[i] - r - dant;
-    trace(4, "zdres_sat: %d: L=%.6f P=%.6f r=%.6f f=%.0f\n", obs->sat, obs->L[i], obs->P[i], r,
-          freq[i]);
-  }
-}
 /* Undifferenced phase/code residuals ----------------------------------------
     Calculate zero diff residuals [observed pseudorange - range]
         output is in y[0:nu-1], only shared input with base is nav
@@ -1054,33 +997,150 @@ static int zdres(int base, const obsd_t *obs, int n, const double *rs, const dou
 
   /* Loop through satellites */
   for (int i = 0; i < n; i++) {
-    /* Compute geometric-range and azimuth/elevation angle */
-    double r = geodist(rs + i * 6, rr_, e + i * 3);
-    if (r <= 0.0) continue;
-    if (satazel(pos, e + i * 3, azel + i * 2) < opt->elmin) continue;
+    int sat = obs[i].sat;
 
-    /* Excluded satellite? */
-    if (satexclude(obs[i].sat, var[i], svh[i], opt)) continue;
+    if (opt->ionoopt == IONOOPT_IFLC) { /* Iono-free linear combination */
+      int sys = satsys(sat, NULL);
+      int code1 = obs[i].code[0];
+      double freq1 = sat2freq(sat, code1, nav);
+      int f2 = seliflc(opt->nf, sys);
+      int code2 = obs[i].code[f2];
+      double freq2 = sat2freq(sat, code2, nav);
 
-    /* Adjust range for satellite clock-bias */
-    r += -CLIGHT * dts[i * 2];
+      if (freq1 == 0.0 || freq2 == 0.0) continue;
+      double C1 = SQR(freq1) / (SQR(freq1) - SQR(freq2));
+      double C2 = -SQR(freq2) / (SQR(freq1) - SQR(freq2));
 
-    /* Adjust range for troposphere delay model */
-    double dtrp = 0.0;
-    if (opt->tropopt <= TROPOPT_SAAS) {
-      dtrp = tropmodel(obs[0].time, pos, azel + i * 2, REL_HUMI);
-    } else if (opt->tropopt == TROPOPT_SBAS) {
-      double vart;
-      dtrp = sbstropcorr(obs[0].time, pos, azel + i * 2, &vart);
-    } else if (opt->tropopt >= TROPOPT_EST) {
-      // Hydrostatic only
-      dtrp = tropmodel(obs[0].time, pos, azel + i * 2, 0.0);
+      // Receiver antenna phase center offset.
+      double pco[3]; // ENU
+      double pco1[3], pco2[3];
+      antpco(opt->pcvr + base, freq1, pco1);
+      antpco(opt->pcvr + base, freq2, pco2);
+      for (int j = 0; j < 3; j++) pco[j] = C1 * pco1[j] + C2 * pco2[j];
+
+      // Add in the antenna delta, which includes the offset from the marker
+      // to the antenna reference point plus eccentricities.
+      for (int j = 0; j < 3; j++) pco[j] += opt->antdel[base][j];
+      double dr[3];
+      enu2ecef(pos, pco, dr);
+      double rpc[3];
+      for (int j = 0; j < 3; j++) rpc[j] = rr_[j] + dr[j];
+      // Recalculate the position, now for the phase center.
+      double rpc_pos[3];
+      ecef2pos(rpc, rpc_pos);
+
+      // Compute geometric-range and azimuth/elevation angle
+      double r = geodist(rs + i * 6, rpc, e + i * 3);
+      if (r <= 0.0) continue;
+      if (satazel(rpc_pos, e + i * 3, azel + i * 2) < opt->elmin) continue;
+
+      // Check SNR mask
+      if (testsnr(base, 0, azel[1 + i * 2], obs[i].SNR[0], &opt->snrmask) ||
+          testsnr(base, f2, azel[1 + i * 2], obs[i].SNR[f2], &opt->snrmask))
+        continue;
+
+      // Excluded satellite?
+      if (satexclude(sat, var[i], svh[i], opt)) continue;
+
+      // Adjust range for satellite clock-bias.
+      r += -CLIGHT * dts[i * 2];
+
+      // Adjust range for troposphere delay model.
+      double dtrp = 0.0;
+      if (opt->tropopt <= TROPOPT_SAAS) {
+        dtrp = tropmodel(obs[0].time, rpc_pos, azel + i * 2, REL_HUMI);
+      } else if (opt->tropopt == TROPOPT_SBAS) {
+        double vart;
+        dtrp = sbstropcorr(obs[0].time, rpc_pos, azel + i * 2, &vart);
+      } else if (opt->tropopt >= TROPOPT_EST) {
+        // Hydrostatic only.
+        dtrp = tropmodel(obs[0].time, rpc_pos, azel + i * 2, 0.0);
+      }
+
+      // Calc receiver antenna phase center variation, from the phase center
+      double dant_if = 0.0;
+      if (opt->posopt[1]) {
+        double dant1 = antpcv(opt->pcvr + base, azel + i * 2, freq1);
+        double dant2 = antpcv(opt->pcvr + base, azel + i * 2, freq2);
+        dant_if = C1 * dant1 + C2 * dant2;
+      }
+
+      if (obs[i].L[0] != 0.0 && obs[i].L[f2] != 0.0)
+        y[0 + i * nf * 2] = C1 * obs[i].L[0] * CLIGHT / freq1 + C2 * obs[i].L[f2] * CLIGHT / freq2 - (r + dant_if + dtrp);
+      if (obs->P[0] != 0.0 && obs->P[f2] != 0.0)
+        y[0 + nf + i * nf * 2] = C1 * obs[i].P[0] + C2 * obs[i].P[f2] - (r + dant_if + dtrp);
+      freq[i * nf] = 1.0;
+      trace(4, "zdres: sat=%d L=%.6f P=%.6f r=%.6f c*dts=%.6f dtrp=%.6f dant=%.6lf\n", sat, obs[i].L[0], obs[i].P[0], r, CLIGHT * dts[i * 2], dtrp, dant_if);
     }
-    r += dtrp;
-    trace(4, "sat=%d r=%.6f c*dts=%.6f dtrp=%.6f\n", obs[i].sat, r, CLIGHT * dts[i * 2], dtrp);
+    else {
+      for (int f = 0; f < nf; f++) {
+        int code = obs[i].code[f];
+        double frq = sat2freq(sat, code, nav);
+        freq[f + i * nf] = frq;
+        if (frq == 0.0) continue;
+        // Receiver antenna phase center offset.
+        double pco[3];
+        antpco(opt->pcvr + base, frq, pco);
 
-    /* Calc undifferenced phase/code residual for satellite */
-    zdres_sat(base, r, obs + i, nav, azel + i * 2, opt, y + i * nf * 2, freq + i * nf);
+        // Add in the antenna delta, which includes the offset from the marker
+        // to the antenna reference point plus eccentricities.
+        for (int j = 0; j < 3; j++) pco[j] += opt->antdel[base][j];
+        double dr[3];
+        enu2ecef(pos, pco, dr);
+        double rpc[3];
+        for (int j = 0; j < 3; j++) rpc[j] = rr_[j] + dr[j];
+        // Recalculate the position, now for the phase center.
+        double rpc_pos[3];
+        ecef2pos(rpc, rpc_pos);
+
+        // Compute geometric-range and azimuth/elevation angle
+        double r = geodist(rs + i * 6, rpc, e + f * 3 + i * nf * 3);
+        if (r <= 0.0) continue;
+        if (satazel(rpc_pos, e + f * 3 + i * nf * 3, azel + i * 2) < opt->elmin) continue;
+
+        // Check SNR mask
+        if (testsnr(base, f, azel[1 + i * 2], obs[i].SNR[f], &opt->snrmask)) continue;
+
+        // Excluded satellite?
+        if (satexclude(sat, var[i], svh[i], opt)) continue;
+
+        // Adjust range for satellite clock-bias
+        r += -CLIGHT * dts[i * 2];
+
+        // Adjust range for troposphere delay model.
+        double dtrp = 0.0;
+        if (opt->tropopt <= TROPOPT_SAAS) {
+          dtrp = tropmodel(obs[0].time, rpc_pos, azel + i * 2, REL_HUMI);
+        } else if (opt->tropopt == TROPOPT_SBAS) {
+          double vart;
+          dtrp = sbstropcorr(obs[0].time, rpc_pos, azel + i * 2, &vart);
+        } else if (opt->tropopt >= TROPOPT_EST) {
+          // Hydrostatic only.
+          dtrp = tropmodel(obs[0].time, rpc_pos, azel + i * 2, 0.0);
+        }
+
+        // Ionospheric correction.
+        double dion = 0.0, vion = 0.0;
+#ifdef RTK_DISABLED
+        // TODO can this help for longer baselines?
+        ionocorr(obs[0].time, nav, sat, rpc_pos, azel + i * 2, opt->ionoopt, &dion, &vion);
+#endif
+        // Scale iono delay for frequency. The slant factor has already been applied.
+        double C = SQR(FREQL1 / frq);
+
+        // Calc receiver antenna phase center variation, from the phase center.
+        double dant = 0.0;
+        if (opt->posopt[1]) dant = antpcv(opt->pcvr + base, azel + i * 2, frq);
+
+        // Calc undifferenced phase/code residual for satellite
+        // Residuals = observable - estimated range
+        if (obs[i].L[f] != 0.0)
+          y[f + i * nf * 2] = obs[i].L[f] * CLIGHT / frq - (r + dant + dtrp - C * dion);
+        if (obs[i].P[f] != 0.0)
+          y[f + nf + i * nf * 2] = obs[i].P[f] - (r + dant + dtrp + C * dion);
+        trace(4, "zdres: sat=%d f=%d frq=%.0f L=%.6f P=%.6f r=%.6f c*dts=%.6f dtrp=%.6f dion=%.6f dant=%.6lf\n", sat, f, frq, obs[i].L[f], obs[i].P[f], r, CLIGHT * dts[i * 2], dtrp, C * dion, dant);
+      }
+    }
   }
   trace(4, "rr_=%.3f %.3f %.3f\n", rr_[0], rr_[1], rr_[2]);
   trace(4, "pos=%.9f %.9f %.3f\n", pos[0] * R2D, pos[1] * R2D, pos[2]);
@@ -1096,7 +1156,7 @@ static int zdres(int base, const obsd_t *obs, int n, const double *rs, const dou
   return 1;
 }
 /* test valid observation data -----------------------------------------------*/
-static int validobs(int i, int j, int f, int nf, double *y)
+static int validobs(int i, int j, int f, int nf, const double *y)
 {
     /* check for valid residuals */
     return y[f+i*nf*2]!=0.0&&y[f+j*nf*2]!=0.0;
@@ -1213,8 +1273,8 @@ static int test_sys(int sys, int m)
         I P = error covariance matrix of float states
         I sat = list of common sats
         I y = zero diff residuals (code and phase, base and rover)
-        I e = line of sight unit vectors to sats
-        I azel = [az, el] to sats
+        I e = line of sight unit vectors to sats, from phase center
+        I azel = [az, el] to sats, from phase center
         I iu,ir = user and ref indices to sats
         I ns = # of sats
         O v = double diff innovations (measurement-model) (phase and code)
@@ -1222,8 +1282,8 @@ static int test_sys(int sys, int m)
         O R = measurement error covariances
         O vflg = bit encoded list of sats used for each double diff  */
 static int ddres(rtk_t *rtk, const obsd_t *obs, double dt, const double *x,
-                 const double *P, const int *sat, double *y, double *e,
-                 double *azel, double *freq, const int *iu, const int *ir,
+                 const double *P, const int *sat, const double *y, const double *e,
+                 const double *azel, const double *freq, const int *iu, const int *ir,
                  int ns, double *v, double *H, double *R, int *vflg)
 {
     prcopt_t *opt=&rtk->opt;
@@ -1296,10 +1356,11 @@ static int ddres(rtk_t *rtk, const obsd_t *obs, double dt, const double *x,
                 v[nv]=(y[f+iu[i]*nf*2]-y[f+ir[i]*nf*2])-
                       (y[f+iu[j]*nf*2]-y[f+ir[j]*nf*2]);
 
-                /* partial derivatives by rover position, combine unit vectors from two sats */
+                /* Partial derivatives by rover position, combine unit vectors from two sats */
                 if (H) {
                     for (k=0;k<3;k++) {
-                        Hi[k]=-e[k+iu[i]*3]+e[k+iu[j]*3];  /* translation of innovation to position states */
+                        /* Translation of innovation to position states */
+                        Hi[k]=-e[k+frq*3+iu[i]*nf*3]+e[k+frq*3+iu[j]*nf*3];
                     }
                 }
                 if (opt->ionoopt==IONOOPT_EST) {
@@ -1449,7 +1510,7 @@ static double intpres(gtime_t time, const obsd_t *obs, int n, const nav_t *nav,
 {
     static obsd_t obsb[MAXOBS];
     static double yb[MAXOBS*NFREQ*2],rs[MAXOBS*6],dts[MAXOBS*2],var[MAXOBS];
-    static double e[MAXOBS*3],azel[MAXOBS*2],freq[MAXOBS*NFREQ];
+    static double e[MAXOBS*NFREQ*3],azel[MAXOBS*2],freq[MAXOBS*NFREQ];
     static int nb=0,svh[MAXOBS*2];
     prcopt_t *opt=&rtk->opt;
     double tt,ttb,*p,*q;
@@ -1964,7 +2025,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
     dts=mat(2,n);           /* satellite clock biases */
     var=mat(1,n);
     y=mat(nf*2,n);
-    e=mat(3,n);
+    e=mat(3*nf,n);
     azel=zeros(2,n);        /* [az, el] */
     freq=zeros(nf,n);
 
@@ -1984,7 +2045,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
          output is in y[nu:nu+nr], see call for rover below for more details                                                 */
     trace(3,"base station:\n");
     if (!zdres(1,obs+nu,nr,rs+nu*6,dts+nu*2,var+nu,svh+nu,nav,rtk->rb,opt,
-               y+nu*nf*2,e+nu*3,azel+nu*2,freq+nu*nf)) {
+               y+nu*nf*2,e+nu*nf*3,azel+nu*2,freq+nu*nf)) {
         errmsg(rtk,"initial base station position error\n");
 
         free(rs); free(dts); free(var); free(y); free(e); free(azel); free(freq);
