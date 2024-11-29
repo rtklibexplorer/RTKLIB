@@ -971,6 +971,24 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
         if (opt->posopt[0]) satantpcv(rs+i*6,rr,nav->pcvs+sat-1,dants);
         antmodel(opt->pcvr,opt->antdel[0],azel+i*2,opt->posopt[1],dantr);
 
+        /* Apply satellite PCO correction here for orbit in CoM */
+        if (opt->sateph==EPHOPT_PREC) {
+            if (opt->ionoopt==IONOOPT_IFLC) {
+                double danto[3];
+                satantoff(obs[i].time,rs+i*6,sat,nav,danto);
+                for (j=0;j<NFREQ;j++) {
+                  dants[j]+=dot(e,danto,3);
+                }
+            }
+            else {
+                double danto[NFREQ][3];
+                satantoff_s(obs[i].time,rs+i*6,sat,nav,danto);
+                for (j=0;j<NFREQ;j++) {
+                    dants[j]+=dot(e,danto[j],3);
+                }
+            }
+        }
+
         /* phase windup model */
         if (!model_phw(rtk->sol.time,sat,nav->pcvs[sat-1].type,
                        opt->posopt[2]?2:0,rs+i*6,rr,&rtk->ssat[sat-1].phw)) {

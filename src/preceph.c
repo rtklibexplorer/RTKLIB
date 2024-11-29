@@ -758,13 +758,55 @@ extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
         dant[i]=C1*dant1+C2*dant2;
     }
 }
+/* satellite antenna phase center offset for single frequencies-----------------
+* compute satellite antenna phase center offset in ecef
+* args   : gtime_t time       I   time (gpst)
+*          double *rs         I   satellite position and velocity (ecef)
+*                                 {x,y,z,vx,vy,vz} (m|m/s)
+*          int    sat         I   satellite number
+*          nav_t  *nav        I   navigation data
+*          double *dant       O   satellite antenna phase center offsets (ecef)
+*                                 NFREQ*{dx,dy,dz} (m)
+* return : none
+*-----------------------------------------------------------------------------*/
+extern void satantoff_s(gtime_t time, const double *rs, int sat, const nav_t *nav,
+                        double *dant)
+{
+    const pcv_t *pcv=nav->pcvs+sat-1;
+    double ex[3],ey[3],ez[3],es[3],r[3],rsun[3],gmst,erpv[5]={0};
+    int i,j;
+
+    trace(4,"satantoff_s: time=%s sat=%2d\n",time_str(time,3),sat);
+
+    for (j=0;j<NFREQ;j++) {
+        for (i=0;i<3;i++) {
+            dant[j*3+i]=0.0;
+        }
+    }
+
+    /* sun position in ecef */
+    sunmoonpos(gpst2utc(time),erpv,rsun,NULL,&gmst);
+
+    /* unit vectors of satellite fixed coordinates */
+    for (i=0;i<3;i++) r[i]=-rs[i];
+    if (!normv3(r,ez)) return;
+    for (i=0;i<3;i++) r[i]=rsun[i]-rs[i];
+    if (!normv3(r,es)) return;
+    cross3(ez,es,r);
+    if (!normv3(r,ey)) return;
+    cross3(ey,ez,ex);
+
+    for (j=0;j<NFREQ;j++) {
+        for (i=0;i<3;i++) {
+            dant[j*3+i]=pcv->off[j][0]*ex[i]+pcv->off[j][1]*ey[i]+pcv->off[j][2]*ez[i];
+        }
+    }
+}
 /* satellite position/clock by precise ephemeris/clock -------------------------
 * compute satellite position/clock with precise ephemeris/clock
 * args   : gtime_t time       I   time (gpst)
 *          int    sat         I   satellite number
 *          nav_t  *nav        I   navigation data
-*          int    opt         I   sat position option
-*                                 (0: center of mass, 1: antenna phase center)
 *          double *rs         O   sat position and velocity (ecef)
 *                                 {x,y,z,vx,vy,vz} (m|m/s)
 *          double *dts        O   sat clock {bias,drift} (s|s/s)
@@ -776,14 +818,14 @@ extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
 *          nav->nc must be set by calling readsp3(), readrnx() or readrnxt()
 *          if precise clocks are not set, clocks in sp3 are used instead
 *-----------------------------------------------------------------------------*/
-extern int peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
+extern int peph2pos(gtime_t time, int sat, const nav_t *nav,
                     double *rs, double *dts, double *var)
 {
     gtime_t time_tt;
-    double rss[3],rst[3],dtss[1],dtst[1],dant[3]={0},vare=0.0,varc=0.0,tt=1E-3;
+    double rss[3],rst[3],dtss[1],dtst[1],vare=0.0,varc=0.0,tt=1E-3;
     int i;
 
-    trace(4,"peph2pos: time=%s sat=%2d opt=%d\n",time_str(time,3),sat,opt);
+    trace(4,"peph2pos: time=%s sat=%2d\n",time_str(time,3),sat);
 
     if (sat<=0||MAXSAT<sat) return 0;
 
@@ -795,12 +837,8 @@ extern int peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
     if (!pephpos(time_tt,sat,nav,rst,dtst,NULL,NULL)||
         !pephclk(time_tt,sat,nav,dtst,NULL)) return 0;
 
-    /* satellite antenna offset correction */
-    if (opt) {
-        satantoff(time,rss,sat,nav,dant);
-    }
     for (i=0;i<3;i++) {
-        rs[i  ]=rss[i]+dant[i];
+        rs[i  ]=rss[i];
         rs[i+3]=(rst[i]-rss[i])/tt;
     }
     /* relativistic effect correction */

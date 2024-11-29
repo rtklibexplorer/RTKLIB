@@ -132,9 +132,9 @@ void utest4(void)
         assert(nav.ne>0);
     readrnxc(file2,&nav);
         assert(nav.nc>0);
-    stat=peph2pos(time,0,&nav,0,rs,dts,&var);
+    stat=peph2pos(time,0,&nav,rs,dts,&var);
         assert(!stat);
-    stat=peph2pos(time,160,&nav,0,rs,dts,&var);
+    stat=peph2pos(time,160,&nav,rs,dts,&var);
         assert(!stat);
 
     fp=fopen("testpeph1.out","w");
@@ -145,7 +145,7 @@ void utest4(void)
         t=timeadd(time,(double)i);
         for (j=0;j<6;j++) rs [j]=0.0;
         for (j=0;j<2;j++) dts[j]=0.0;
-        peph2pos(t,sat,&nav,0,rs,dts,&var);
+        peph2pos(t,sat,&nav,rs,dts,&var);
         fprintf(fp,"%02d %6d %14.3f %14.3f %14.3f %14.3f %10.3f %10.3f %10.3f %10.3f\n",
                 sat,i,rs[0],rs[1],rs[2],dts[0]*1E9,rs[3],rs[4],rs[5],dts[1]*1E9);
     }
