@@ -35,7 +35,7 @@
 *                           move eci2ecef() to rtkcmn.c
 *           2013/05/08 1.9  fix bug on computing std-dev of precise clocks
 *           2013/11/20 1.10 modify option for api readsp3()
-*           2014/04/03 1.11 accept extenstion including sp3,eph,SP3,EPH
+*           2014/04/03 1.11 accept extension including sp3,eph,SP3,EPH
 *           2014/05/23 1.12 add function to read sp3 velocity records
 *                           change api: satantoff()
 *           2014/08/31 1.13 add member cov and vco in peph_t sturct
