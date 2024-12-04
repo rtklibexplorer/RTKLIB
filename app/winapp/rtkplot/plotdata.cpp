@@ -1223,7 +1223,7 @@ void __fastcall TPlot::UpdateObs(int nobs)
             char msg[128];
             
             opt.err[0]=900.0;
-            pntpos(Obs.data+i,j-i,&Nav,&opt,&sol,azel,NULL,msg);
+            pntpos(Obs.data+i,j-i,&Nav,&opt,0,&sol,azel,NULL,msg);
             matcpy(rr,sol.rr,3,1);
             ecef2pos(rr,pos);
         }

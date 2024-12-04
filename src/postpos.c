@@ -797,7 +797,7 @@ static void freeobsnav(obs_t *obs, nav_t *nav)
     free(nav->seph); nav->seph=NULL; nav->ns=nav->nsmax=0;
 }
 /* average of single position ------------------------------------------------*/
-static int avepos(double *ra, int rcv, const obs_t *obs, const nav_t *nav,
+static int avepos(double *ra, int base, const obs_t *obs, const nav_t *nav,
                   const prcopt_t *opt)
 {
     obsd_t data[MAXOBS];
@@ -806,11 +806,11 @@ static int avepos(double *ra, int rcv, const obs_t *obs, const nav_t *nav,
     int i,j,n=0,m,iobs;
     char msg[128];
 
-    trace(3,"avepos: rcv=%d obs.n=%d\n",rcv,obs->n);
+    trace(3,"avepos: base=%d obs.n=%d\n",base,obs->n);
 
     for (i=0;i<3;i++) ra[i]=0.0;
 
-    for (iobs=0;(m=nextobsf(obs,&iobs,rcv))>0;iobs+=m) {
+    for (iobs=0;(m=nextobsf(obs,&iobs,base+1))>0;iobs+=m) {
 
         for (i=j=0;i<m&&i<MAXOBS;i++) {
             data[j]=obs->data[iobs+i];
@@ -819,7 +819,7 @@ static int avepos(double *ra, int rcv, const obs_t *obs, const nav_t *nav,
         }
         if (j<=0||!screent(data[0].time,ts,ts,1.0)) continue; /* only 1 hz */
 
-        if (!pntpos(data,j,nav,opt,&sol,NULL,NULL,msg)) continue;
+        if (!pntpos(data,j,nav,opt,base,&sol,NULL,NULL,msg)) continue;
 
         for (i=0;i<3;i++) ra[i]+=sol.rr[i];
         n++;
@@ -865,47 +865,50 @@ static int getstapos(const char *file, const char *name, double *r)
     trace(1,"no station position: %s %s\n",name,file);
     return 0;
 }
-/* antenna phase center position ---------------------------------------------*/
-static int antpos(prcopt_t *opt, int rcvno, const obs_t *obs, const nav_t *nav,
+// Antenna marker position --------------------------------------------------
+// The delta from the marker to the antenna ARP is in opt->antdel[] and this
+// comes from an antdel config option or from RINEX or RTCM station info.
+static int antpos(prcopt_t *opt, int base, const obs_t *obs, const nav_t *nav,
                   const sta_t *sta, const char *posfile)
 {
-    double *rr=rcvno==1?opt->ru:opt->rb,del[3],pos[3],dr[3]={0};
-    int i,postype=rcvno==1?opt->rovpos:opt->refpos;
-    char *name;
+    trace(3,"antpos  : base=%d\n",base);
 
-    trace(3,"antpos  : rcvno=%d\n",rcvno);
-
-    if (postype==POSOPT_SINGLE) { /* average of single position */
-        if (!avepos(rr,rcvno,obs,nav,opt)) {
+    double *rr=base==0?opt->ru:opt->rb;
+    int postype=base==0?opt->rovpos:opt->refpos;
+    if (postype==POSOPT_SINGLE) { // Average of single position.
+        if (!avepos(rr,base,obs,nav,opt)) {
             showmsg("error : station pos computation");
             return 0;
         }
     }
-    else if (postype==POSOPT_FILE) { /* read from position file */
-        name=stas[rcvno==1?0:1].name;
+    else if (postype==POSOPT_FILE) { // Read from position file.
+        char *name=stas[base].name;
         if (!getstapos(posfile,name,rr)) {
             showmsg("error : no position of %s in %s",name,posfile);
             return 0;
         }
     }
-    else if (postype==POSOPT_RINEX) { /* get from rinex header */
-        if (norm(stas[rcvno==1?0:1].pos,3)<=0.0) {
+    else if (postype==POSOPT_RINEX) { // Get from rinex header.
+        if (norm(stas[base].pos,3)<=0.0) {
             showmsg("error : no position in rinex header");
             trace(1,"no position in rinex header\n");
             return 0;
         }
-        /* add antenna delta unless already done in antpcv() */
-        if (!strcmp(opt->anttype[rcvno],"*")) {
-            if (stas[rcvno==1?0:1].deltype==0) { /* enu */
-                for (i=0;i<3;i++) del[i]=stas[rcvno==1?0:1].del[i];
-                del[2]+=stas[rcvno==1?0:1].hgt;
-                ecef2pos(stas[rcvno==1?0:1].pos,pos);
+        // Add antenna delta unless already done in setpcv().
+        double dr[3]={0};
+        if (!strcmp(opt->anttype[base],"*")) {
+            if (stas[base].deltype==0) { // ENU
+                double del[3];
+                for (int i=0;i<3;i++) del[i]=stas[base].del[i];
+                del[2]+=stas[base].hgt;
+                double pos[3];
+                ecef2pos(stas[base].pos,pos);
                 enu2ecef(pos,del,dr);
-            }  else { /* xyz */
-                for (i=0;i<3;i++) dr[i]=stas[rcvno==1?0:1].del[i];
+            }  else { // XYZ
+                for (int i=0;i<3;i++) dr[i]=stas[base].del[i];
             }
         }
-        for (i=0;i<3;i++) rr[i]=stas[rcvno==1?0:1].pos[i]+dr[i];
+        for (int i=0;i<3;i++) rr[i]=stas[base].pos[i]+dr[i];
     }
     return 1;
 }
@@ -992,16 +995,18 @@ static void setpcv(gtime_t time, prcopt_t *popt, nav_t *nav, const satsvns_t *sa
 
     for (i=0;i<(mode?2:1);i++) {
         popt->pcvr[i]=pcv0;
-        if (!strcmp(popt->anttype[i],"*")) { /* set by station parameters */
+        if (!strcmp(popt->anttype[i],"*")) {
+            // Set by station parameters. This overrides the config antenna
+            // type and antenna delta, which are ignored in this case.
             strcpy(popt->anttype[i],sta[i].antdes);
-            if (sta[i].deltype==1) { /* xyz */
+            if (sta[i].deltype==1) { // XYZ
                 if (norm(sta[i].pos,3)>0.0) {
                     ecef2pos(sta[i].pos,pos);
                     ecef2enu(pos,sta[i].del,del);
                     for (j=0;j<3;j++) popt->antdel[i][j]=del[j];
                 }
             }
-            else { /* enu */
+            else { // ENU
                 for (j=0;j<3;j++) popt->antdel[i][j]=stas[i].del[j];
             }
         }
@@ -1151,17 +1156,17 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
     }
     /* rover/reference fixed position */
     if (popt_.mode==PMODE_FIXED) {
-        if (!antpos(&popt_,1,&obss,&navs,stas,fopt->stapos)) {
+        if (!antpos(&popt_,0,&obss,&navs,stas,fopt->stapos)) {
           err = 1;
           goto done;
         }
-        if (!antpos(&popt_,2,&obss,&navs,stas,fopt->stapos)) {
+        if (!antpos(&popt_,1,&obss,&navs,stas,fopt->stapos)) {
           err = 1;
           goto done;
         }
     }
     else if (PMODE_DGPS<=popt_.mode&&popt_.mode<=PMODE_STATIC_START) {
-        if (!antpos(&popt_,2,&obss,&navs,stas,fopt->stapos)) {
+        if (!antpos(&popt_,1,&obss,&navs,stas,fopt->stapos)) {
           err = 1;
           goto done;
         }

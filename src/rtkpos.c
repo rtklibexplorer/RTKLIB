@@ -2331,7 +2331,7 @@ extern int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
     /* rover position and time by single point positioning, skip if
      position variance smaller than threshold */
     if (rtk->P[0]==0||rtk->P[0]>STD_PREC_VAR_THRESH) {
-        if (!pntpos(obs,nu,nav,&rtk->opt,&rtk->sol,NULL,rtk->ssat,msg)) {
+        if (!pntpos(obs,nu,nav,&rtk->opt,0,&rtk->sol,NULL,rtk->ssat,msg)) {
             errmsg(rtk,"point pos error (%s)\n",msg);
 
             if (!rtk->opt.dynamics) {
@@ -2378,7 +2378,7 @@ extern int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         /* estimate position/velocity of base station,
            skip if position variance below threshold*/
         if (rtk->P[0]==0||rtk->P[0]>STD_PREC_VAR_THRESH) {
-            if (!pntpos(obs+nu,nr,nav,&rtk->opt,&solb,NULL,NULL,msg)) {
+            if (!pntpos(obs+nu,nr,nav,&rtk->opt,1,&solb,NULL,NULL,msg)) {
                 errmsg(rtk,"base station position error (%s)\n",msg);
                 return 0;
             }
