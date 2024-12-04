@@ -1043,7 +1043,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
             if (opt->ionoopt==IONOOPT_EST) {
                 if (rtk->x[II(sat,opt)]==0.0) continue;
                 /* The vertical iono delay is estimated, but the residual is
-                 * in the direction of the slant, so apply the slat factor
+                 * in the direction of the slant, so apply the slant factor
                  * mapping function. */
                 if (H) H[II(sat,opt)+nx*nv]=C*ionmapf(pos,azel+i*2);
             }
