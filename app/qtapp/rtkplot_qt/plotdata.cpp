@@ -1213,7 +1213,7 @@ void Plot::updateObservation(int nobs)
 
         if (plotOptDialog->getReceiverPosition() == 0) { // single point position
             opt.err[0] = 900.0;
-            pntpos(observation.data + i, j - i, &navigation, &opt, &sol, azel, NULL, msg);
+            pntpos(observation.data + i, j - i, &navigation, &opt, 0, &sol, azel, NULL, msg);
             matcpy(rr, sol.rr, 3, 1);
             ecef2pos(rr, pos);
         } else if (plotOptDialog->getReceiverPosition() == 1) { // lat/lon/height

@@ -1817,7 +1817,7 @@ EXPORT int lambda_search(int n, int m, const double *a, const double *Q,
 
 /* standard positioning ------------------------------------------------------*/
 EXPORT int pntpos(const obsd_t *obs, int n, const nav_t *nav,
-                  const prcopt_t *opt, sol_t *sol, double *azel,
+                  const prcopt_t *opt, int base, sol_t *sol, double *azel,
                   ssat_t *ssat, char *msg);
 
 /* precise positioning -------------------------------------------------------*/

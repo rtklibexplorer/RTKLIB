@@ -617,7 +617,7 @@ static void *rtksvrthread(void *arg)
         if (fobs[1]>0&&svr->rtk.opt.refpos==POSOPT_SINGLE) {
             if ((svr->rtk.opt.maxaveep<=0||svr->nave<svr->rtk.opt.maxaveep)&&
                 pntpos(svr->obs[1][0].data,svr->obs[1][0].n,&svr->nav,
-                       &svr->rtk.opt,&sol,NULL,NULL,msg)) {
+                       &svr->rtk.opt,1,&sol,NULL,NULL,msg)) {
                 svr->nave++;
                 for (i=0;i<3;i++) {
                     svr->rb_ave[i]+=(sol.rr[i]-svr->rb_ave[i])/svr->nave;
