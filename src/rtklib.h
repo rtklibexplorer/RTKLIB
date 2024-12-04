@@ -1362,6 +1362,7 @@ typedef struct {        /* RTK server type */
     char cmds_periodic[3][MAXRCVCMD]; /* periodic commands */
     char cmd_reset[MAXRCVCMD]; /* reset command */
     double bl_reset;    /* baseline length to reset (km) */
+    pcvs_t pcvsr;       // Receiver antenna parameters.
     rtklib_lock_t lock; /* lock flag */
 } rtksvr_t;
 

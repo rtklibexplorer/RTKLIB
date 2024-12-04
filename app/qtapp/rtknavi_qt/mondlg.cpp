@@ -664,12 +664,12 @@ void MonitorDialog::showRtk()
         double pco[3];
         antpco(&rtk.opt.pcvr[0], antcode2freq(j), pco);
         ui->tWConsole->item(row,   0)->setText(tr("Antenna Phase Center Ant %1 E/N/U Rover").arg(antcode2id(j)));
-        ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(pco[0], 0, 'f', 3).arg(pco[1], 0, 'f', 3).arg(pco[2], 0, 'f', 3));
+        ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(pco[0], 0, 'f', 4).arg(pco[1], 0, 'f', 4).arg(pco[2], 0, 'f', 4));
     }
 
     del = rtk.opt.antdel[0];
     ui->tWConsole->item(row,   0)->setText(tr("Antenna Delta E/N/U Rover"));
-    ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(del[0], 0, 'f', 3).arg(del[1], 0, 'f', 3).arg(del[2], 0, 'f', 3));
+    ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(del[0], 0, 'f', 4).arg(del[1], 0, 'f', 4).arg(del[2], 0, 'f', 4));
 
     ui->tWConsole->item(row,   0)->setText(tr("Antenna Type Base Station"));
     ui->tWConsole->item(row++, 1)->setText(rtk.opt.pcvr[1].type);
@@ -678,12 +678,12 @@ void MonitorDialog::showRtk()
         double pco[3];
         antpco(&rtk.opt.pcvr[1], antcode2freq(j), pco);
         ui->tWConsole->item(row,   0)->setText(tr("Antenna Phase Center Ant %1 E/N/U Base Station").arg(antcode2id(j)));
-        ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(pco[0], 0, 'f', 3).arg(pco[1], 0, 'f', 3).arg(pco[2], 0, 'f', 3));
+        ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(pco[0], 0, 'f', 4).arg(pco[1], 0, 'f', 4).arg(pco[2], 0, 'f', 4));
     }
 
     del = rtk.opt.antdel[1];
     ui->tWConsole->item(row,   0)->setText(tr("Antenna Delta E/N/U Base Station"));
-    ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(del[0], 0, 'f', 3).arg(del[1], 0, 'f', 3).arg(del[2], 0, 'f', 3));
+    ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1 m, %2 m, %3 m").arg(del[0], 0, 'f', 4).arg(del[1], 0, 'f', 4).arg(del[2], 0, 'f', 4));
 
     ui->tWConsole->item(row,   0)->setText(tr("Precise Ephemeris Time/# of Epoch"));
     ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1-%2 (%3)").arg(s1, s2).arg(ne));
@@ -819,7 +819,7 @@ void MonitorDialog::showSat()
             ui->tWConsole->item(n, j++)->setText(fix == 1 ? tr("FLOAT") : (fix == 2 ? tr("FIX") : (fix == 3 ? tr("HOLD") : tr("-"))));
 		}
         for (k = 0; k < nfreq; k++)
-            ui->tWConsole->item(n, j++)->setText(QString::number(ssat->resp[k], 'f', 2));
+            ui->tWConsole->item(n, j++)->setText(QString::number(ssat->resp[k], 'f', 3));
         for (k = 0; k < nfreq; k++)
             ui->tWConsole->item(n, j++)->setText(QString::number(ssat->resc[k], 'f', 4));
         for (k = 0; k < nfreq; k++)

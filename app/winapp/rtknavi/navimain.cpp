@@ -1173,7 +1173,7 @@ void __fastcall TMainForm::SvrStart(void)
             PrcOpt.exsats[sat-1]=ex;
         }
     }
-    if ((RovAntPcvF||RefAntPcvF)&&!readpcv(AntPcvFileF.c_str(),&pcvr)) {
+    if ((RovAntPcvF||RefAntPcvF)&&!readpcv(AntPcvFileF.c_str(),2,&rtksvr.pcvr)) {
         Message->Caption=s.sprintf("rcv ant file read error %s",AntPcvFileF.c_str());
         Message->Hint=Message->Caption;
         return;
@@ -1203,9 +1203,6 @@ void __fastcall TMainForm::SvrStart(void)
             Message->Hint=Message->Caption;
         }
         for (i=0;i<3;i++) PrcOpt.antdel[1][i]=RefAntDel[i];
-    }
-    if (RovAntPcvF||RefAntPcvF) {
-        free_pcvs(&pcvr);
     }
     if (PrcOpt.sateph==EPHOPT_PREC||PrcOpt.sateph==EPHOPT_SSRCOM||PrcOpt.mode>=PMODE_PPP_KINEMA) {
         satsvns_t satsvns = {0};
@@ -1341,6 +1338,9 @@ void __fastcall TMainForm::SvrStop(void)
     }
     rtksvrstop(&rtksvr,(const char **)cmds);
     
+    free_pcvs(&rtksvr.pcvr);
+    for (int i = 0; i < MAXSAT; i++) free_pcv(&rtksvr.nav.pcvs[i]);
+
     BtnStart    ->Visible=true;
     BtnOpt      ->Enabled=true;
     BtnExit     ->Enabled=true;

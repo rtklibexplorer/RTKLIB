@@ -231,42 +231,57 @@ static void update_ionutc(rtksvr_t *svr, nav_t *nav, int index)
         }
         svr->nmsg[index][2]++;
     }
-/* update antenna position ---------------------------------------------------*/
-static void update_antpos(rtksvr_t *svr, int index)
-{
-    sta_t *sta;
-    double pos[3],del[3]={0},dr[3];
-    int i;
+// Update antenna position ---------------------------------------------------
+static void update_antpos(rtksvr_t *svr, int index) {
+  sta_t *sta;
+  if (svr->format[index] == STRFMT_RTCM2 || svr->format[index] == STRFMT_RTCM3) {
+    sta = &svr->rtcm[index].sta;
+  } else {
+    sta = &svr->raw[index].sta;
+  }
+  if (index == 1 && svr->rtk.opt.refpos == POSOPT_RTCM) {
+    // Update base station position.
+    for (int i = 0; i < 3; i++) svr->rtk.rb[i] = sta->pos[i];
+  }
+  if (index == 0 && svr->rtk.opt.rovpos == POSOPT_RTCM &&
+      (svr->rtk.opt.mode == PMODE_FIXED || svr->rtk.opt.mode == PMODE_PPP_FIXED)) {
+    // Update rover fixed position.
+    for (int i = 0; i < 3; i++) svr->rtk.opt.ru[i] = sta->pos[i];
+  }
 
-        if (svr->rtk.opt.refpos==POSOPT_RTCM&&index==1) {
-        if (svr->format[1]==STRFMT_RTCM2||svr->format[1]==STRFMT_RTCM3) {
-            sta=&svr->rtcm[1].sta;
-            }
-        else {
-            sta=&svr->raw[1].sta;
-        }
-        /* update base station position */
-            for (i=0;i<3;i++) {
-            svr->rtk.rb[i]=sta->pos[i];
-            }
-            /* antenna delta */
-            ecef2pos(svr->rtk.rb,pos);
-        if (sta->deltype) { /* xyz */
-            del[2]=sta->hgt;
-                enu2ecef(pos,del,dr);
-                for (i=0;i<3;i++) {
-                svr->rtk.rb[i]+=sta->del[i]+dr[i];
-                }
-            }
-            else { /* enu */
-            enu2ecef(pos,sta->del,dr);
-                for (i=0;i<3;i++) {
-                    svr->rtk.rb[i]+=dr[i];
-                }
-            }
-        }
-        svr->nmsg[index][4]++;
+  // Antenna type and delta. These are updated independently of the antenna
+  // marker position above when the anttype is "*".
+  if (strcmp(svr->rtk.opt.anttype[index], "*") == 0) {
+    if (sta->antdes[0] != '\0' && strcmp(svr->rtk.opt.pcvr[index].type, sta->antdes) != 0) {
+      // Antenna type is to be set from the RTCM stream, and does not match
+      // the current pcv_t type, so search for this pcv.
+      pcv_t *pcv = searchpcv(0, sta->antdes, utc2gpst(timeget()), NULL, &svr->pcvsr);
+      if (!pcv) {
+        tracet(2, "no index=%d antenna '%s'", index, sta->antdes);
+      } else {
+        tracet(2, "updated index=%d antenna to '%s'", index, sta->antdes);
+        copy_pcv(&svr->rtk.opt.pcvr[index], pcv);
+      }
     }
+    // Update the delta from the marker position to the antenna ARP, taking
+    // into account the RCTM antenna height. This overrides any config delta
+    // values which are ignored in this path.
+    if (sta->deltype == 1) {  // XYZ
+      // Convert to the antdel ENU, adding the height.
+      // Need at least an approx position to map the delta.
+      if (norm(sta->pos, 3) > 0.0) {
+        double pos[3];
+        ecef2pos(sta->pos, pos);
+        ecef2enu(pos, sta->del, svr->rtk.opt.antdel[index]);
+        svr->rtk.opt.antdel[index][2] += sta->hgt;
+      }
+    } else {  // ENU
+      for (int i = 0; i < 3; i++) svr->rtk.opt.antdel[index][i] = sta->del[i];
+      svr->rtk.opt.antdel[index][2] += sta->hgt;
+    }
+  }
+  svr->nmsg[index][4]++;
+}
 /* update ssr corrections ----------------------------------------------------*/
 static void update_ssr(rtksvr_t *svr, int index)
 {
