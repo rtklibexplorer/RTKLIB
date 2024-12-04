@@ -363,7 +363,7 @@ static int readcmd(const char *file, char *cmd, int type)
     return 1;
 }
 /* Read antenna file ---------------------------------------------------------*/
-static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav) {
+static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav, pcvs_t *pcvsr) {
   trace(3, "readant:\n");
 
   const pcv_t pcv0 = {0};
@@ -371,18 +371,16 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav) {
 
   if (*filopt.rcvantp) {
     gtime_t time = timeget();
-    pcvs_t pcvr = {0};
-    if (readpcv(filopt.rcvantp, 2, &pcvr)) {
+    if (readpcv(filopt.rcvantp, 2, pcvsr)) {
       for (int i = 0; i < 2; i++) {
         if (!*opt->anttype[i]) continue;
-        pcv_t *pcv = searchpcv(0, opt->anttype[i], time, NULL, &pcvr);
+        pcv_t *pcv = searchpcv(0, opt->anttype[i], time, NULL, pcvsr);
         if (!pcv) {
           vt_printf(vt, "no antenna %s in %s", opt->anttype[i], filopt.rcvantp);
           continue;
         }
         copy_pcv(&opt->pcvr[i], pcv);
       }
-      free_pcvs(&pcvr);
     } else
       vt_printf(vt, "antenna file open error %s", filopt.rcvantp);
   }
@@ -455,7 +453,7 @@ static int startsvr(vt_t *vt)
     pos2ecef(pos,npos);
 
     /* read antenna file */
-    readant(vt,&prcopt,&svr.nav);
+    readant(vt,&prcopt,&svr.nav,&svr.pcvsr);
     
     /* read dcb file */
     if (*filopt.dcb) {
@@ -537,6 +535,7 @@ static void stopsvr(vt_t *vt)
     if (solopt[0].geoid>0) closegeoid();
     
     for (int i = 0; i < 2; i++) free_pcv(&prcopt.pcvr[i]);
+    free_pcvs(&svr.pcvsr);
     for (int i = 0; i < MAXSAT; i++) free_pcv(&svr.nav.pcvs[i]);
 
     vt_printf(vt,"stop rtk server\n");
@@ -787,10 +786,10 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %d\n","# of average single pos base",nave);
     vt_printf(vt,"%-28s: %s\n","ant type rover",rtk.opt.pcvr[0].type);
     del=rtk.opt.antdel[0];
-    vt_printf(vt,"%-28s: %.3f %.3f %.3f\n","ant delta rover",del[0],del[1],del[2]);
+    vt_printf(vt,"%-28s: %.4f %.4f %.4f\n","ant delta rover",del[0],del[1],del[2]);
     vt_printf(vt,"%-28s: %s\n","ant type base" ,rtk.opt.pcvr[1].type);
     del=rtk.opt.antdel[1];
-    vt_printf(vt,"%-28s: %.3f %.3f %.3f\n","ant delta base",del[0],del[1],del[2]);
+    vt_printf(vt,"%-28s: %.4f %.4f %.4f\n","ant delta base",del[0],del[1],del[2]);
     ecef2enu(pos,rtk.rb+3,vel);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","vel enu (m/s) base",
             vel[0],vel[1],vel[2]);

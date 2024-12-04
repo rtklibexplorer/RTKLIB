@@ -1130,6 +1130,11 @@ void MainWindow::serverStart()
         tracelevel(optDialog->solutionOptions.trace);
     }
 
+    if (!readpcv(optDialog->fileOptions.rcvantp, 2, &rtksvr->pcvsr)) {
+        ui->lblMessage->setText(tr("Receiver antenna file read error: %1").arg(optDialog->fileOptions.rcvantp));
+        return;
+    }
+
     if (optDialog->processingOptions.sateph == EPHOPT_PREC ||
         optDialog->processingOptions.sateph == EPHOPT_SSRCOM ||
         optDialog->processingOptions.mode >= PMODE_PPP_KINEMA) {
@@ -1139,6 +1144,7 @@ void MainWindow::serverStart()
 
         if (!readpcv(optDialog->fileOptions.satantp, 1, &pcvs)) {
             ui->lblMessage->setText(tr("Satellite antenna file read error: %1").arg(optDialog->fileOptions.satantp));
+            free_pcvs(&rtksvr->pcvsr);
             return;
         }
         for (i = 0; i < MAXSAT; i++) {
@@ -1296,6 +1302,9 @@ void MainWindow::serverStop()
         }
     }
     rtksvrstop(rtksvr, (const char **)cmds);
+
+    free_pcvs(&rtksvr->pcvsr);
+    for (int i = 0; i < MAXSAT; i++) free_pcv(&rtksvr->nav.pcvs[i]);
 
     for (i = 0; i < 3; i++) delete[] cmds[i];
 
