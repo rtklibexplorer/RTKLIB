@@ -894,21 +894,7 @@ static int antpos(prcopt_t *opt, int base, const obs_t *obs, const nav_t *nav,
             trace(1,"no position in rinex header\n");
             return 0;
         }
-        // Add antenna delta unless already done in setpcv().
-        double dr[3]={0};
-        if (!strcmp(opt->anttype[base],"*")) {
-            if (stas[base].deltype==0) { // ENU
-                double del[3];
-                for (int i=0;i<3;i++) del[i]=stas[base].del[i];
-                del[2]+=stas[base].hgt;
-                double pos[3];
-                ecef2pos(stas[base].pos,pos);
-                enu2ecef(pos,del,dr);
-            }  else { // XYZ
-                for (int i=0;i<3;i++) dr[i]=stas[base].del[i];
-            }
-        }
-        for (int i=0;i<3;i++) rr[i]=stas[base].pos[i]+dr[i];
+        for (int i=0;i<3;i++) rr[i]=stas[base].pos[i];
     }
     return 1;
 }
@@ -997,9 +983,12 @@ static void setpcv(gtime_t time, prcopt_t *popt, nav_t *nav, const satsvns_t *sa
         popt->pcvr[i]=pcv0;
         if (!strcmp(popt->anttype[i],"*")) {
             // Set by station parameters. This overrides the config antenna
-            // type and antenna delta, which are ignored in this case.
+            // type and antenna delta, which are ignored in this case. The
+            // delta is applied even if the antenna type does not map to a
+            // known PCV, to at least get to then ARP.
             strcpy(popt->anttype[i],sta[i].antdes);
             if (sta[i].deltype==1) { // XYZ
+                // Need at least an approx position to map the delta.
                 if (norm(sta[i].pos,3)>0.0) {
                     ecef2pos(sta[i].pos,pos);
                     ecef2enu(pos,sta[i].del,del);
@@ -1146,10 +1135,7 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
 
     }
     /* set antenna parameters */
-    if (popt_.mode!=PMODE_SINGLE) {
-        setpcv(obss.n>0?obss.data[0].time:timeget(),&popt_,&navs,&satsvns,&pcvss,&pcvsr,
-               stas);
-    }
+    setpcv(obss.n>0?obss.data[0].time:timeget(),&popt_,&navs,&satsvns,&pcvss,&pcvsr,stas);
     /* read ocean tide loading parameters */
     if (popt_.mode>PMODE_SINGLE&&*fopt->blq) {
         readotl(&popt_,fopt->blq,stas);
