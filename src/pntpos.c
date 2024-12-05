@@ -287,64 +287,110 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
                    const ssat_t *ssat, double *v, double *H, double *var,
                    double *azel, int *vsat, double *resp, int *ns)
 {
-    gtime_t time;
-    double r,freq,dion=0.0,dtrp=0.0,vmeas,vion=0.0,vtrp=0.0,rr[3],pos[3],dtr,e[3],P;
-    int i,j,nv=0,sat,sys,mask[NX-3]={0};
+    double rr[3];
+    for (int i=0;i<3;i++) rr[i]=x[i];
+    double dtr=x[3];
 
-    for (i=0;i<3;i++) rr[i]=x[i];
-    dtr=x[3];
-
+    // Geodetic position of the marker.
+    double pos[3];
     ecef2pos(rr,pos);
     trace(3, "rescode: iter=%d base=%d rr=%.3f %.3f %.3f\n", iter, base, rr[0], rr[1], rr[2]);
-    
-    for (i=*ns=0;i<n&&i<MAXOBS;i++) {
+
+    int nv=0,mask[NX-3]={0};
+    double snr_max=opt->err[5];
+    *ns=0;
+    for (int i=0;i<n&&i<MAXOBS;i++) {
         vsat[i]=0; azel[i*2]=azel[1+i*2]=resp[i]=0.0;
-        time=obs[i].time;
-        sat=obs[i].sat;
-        if (!(sys=satsys(sat,NULL))) continue;
+        gtime_t time=obs[i].time;
+        int sat=obs[i].sat, sys=satsys(sat,NULL);
+        if (!sys) continue;
         
-        /* reject duplicated observation data */
+        /* Reject duplicated observation data */
         if (i<n-1&&i<MAXOBS-1&&sat==obs[i+1].sat) {
             char tstr[40];
             trace(2,"duplicated obs data %s sat=%d\n",time2str(time,tstr,3),sat);
             i++;
             continue;
         }
-        /* excluded satellite? */
+        /* Excluded satellite? */
         if (satexclude(sat,vare[i],svh[i],opt)) continue;
         
-        /* geometric distance and elevation mask*/
-        if ((r=geodist(rs+i*6,rr,e))<=0.0) continue;
-        if (satazel(pos,e,azel+i*2)<opt->elmin) continue;
-        
+        double freq=sat2freq(sat,obs[i].code[0],nav);
+        if (freq==0.0) continue;
+
+        // Receiver antenna phase center offset.
+        double pco[3]; // ENU
+        double freq2 = 0.0, C1 = 0.0, C2 = 0.0; // Also needed for PCV
+        if (opt->ionoopt==IONOOPT_IFLC) {
+          int f2 = seliflc(opt->nf, sys);
+          freq2 = sat2freq(sat, obs[i].code[f2], nav);
+          if (freq2 == 0.0) continue;
+          // Iono-free LC
+          C1 = SQR(freq) / (SQR(freq) - SQR(freq2));
+          C2 = -SQR(freq2) / (SQR(freq) - SQR(freq2));
+          double pco1[3], pco2[3];
+          antpco(opt->pcvr + base, freq, pco1);
+          antpco(opt->pcvr + base, freq2, pco2);
+          for (int j = 0; j < 3; j++) pco[j] = C1 * pco1[j] + C2 * pco2[j];
+        } else {
+          antpco(opt->pcvr + base, freq, pco);
+        }
+
+        // Add in the antenna delta, which includes the offset from the marker
+        // to the antenna reference point plus eccentricities.
+        for (int j = 0; j < 3; j++) pco[j] += opt->antdel[base][j];
+        double dr[3];
+        enu2ecef(pos, pco, dr);
+        double rpc[3];
+        for (int j = 0; j < 3; j++) rpc[j] = rr[j] + dr[j];
+        // Recalculate the geodetic position, now for the phase center.
+        double rpc_pos[3];
+        ecef2pos(rpc, rpc_pos);
+
+        // Compute geometric distance and azimuth/elevation angle
+        double e[3], r = geodist(rs + i * 6, rpc, e);
+        if (r <= 0.0) continue;
+        if (satazel(rpc_pos,e,azel+i*2)<opt->elmin) continue;
+
+        double dion = 0.0, vion = 0.0, dtrp = 0.0, vtrp = 0.0, dant = 0.0;
         if (iter>0) {
-            /* test SNR mask */
+            /* Test SNR mask */
             if (!snrmask(obs+i,azel+i*2,opt,base)) continue;
-        
-            /* ionospheric correction */
-            if (!ionocorr(time,nav,sat,pos,azel+i*2,opt->ionoopt,&dion,&vion)) {
+
+            if (opt->ionoopt!=IONOOPT_IFLC) {
+              // Ionospheric correction.
+              if (!ionocorr(time,nav,sat,rpc_pos,azel+i*2,opt->ionoopt,&dion,&vion))
                 continue;
+              // Convert from FREQL1 to freq.
+              dion*=SQR(FREQL1/freq);
+              vion*=SQR(SQR(FREQL1/freq));
             }
-            if ((freq=sat2freq(sat,obs[i].code[0],nav))==0.0) continue;
-            /* Convert from FREQL1 to freq */
-            dion*=SQR(FREQL1/freq);
-            vion*=SQR(SQR(FREQL1/freq));
-        
-            /* tropospheric correction */
-            if (!tropcorr(time,nav,pos,azel+i*2,opt->tropopt,&dtrp,&vtrp)) {
+
+            /* Tropospheric correction */
+            if (!tropcorr(time,nav,rpc_pos,azel+i*2,opt->tropopt,&dtrp,&vtrp))
                 continue;
+
+            // Receiver antenna phase center variation.
+            if (opt->posopt[1]) {
+              if (opt->ionoopt==IONOOPT_IFLC) {
+                dant = C1 * antpcv(opt->pcvr + base, azel + i * 2, freq) +
+                    C2 * antpcv(opt->pcvr + base, azel + i * 2, freq2);
+              } else {
+                dant = antpcv(opt->pcvr + base, azel + i * 2, freq);
+              }
             }
         }
-        /* pseudorange with code bias correction */
-        if ((P=prange(obs+i,nav,opt,&vmeas))==0.0) continue;
-        
-        /* pseudorange residual */
-        v[nv]=P-(r+dtr-CLIGHT*dts[i*2]+dion+dtrp);
-        trace(4,"sat=%d: v=%.3f P=%.3f r=%.3f dtr=%.6f dts=%.6f dion=%.3f dtrp=%.3f\n",
-            sat,v[nv],P,r,dtr,dts[i*2],dion,dtrp);
-        
+        /* Pseudorange with code bias correction */
+        double vmeas, P = prange(obs+i,nav,opt,&vmeas);
+        if (P==0.0) continue;
+
+        /* Pseudorange residual */
+        v[nv]=P-(r+dant+dtr-CLIGHT*dts[i*2]+dion+dtrp);
+        trace(4,"sat=%d: v=%.3f P=%.3f r=%.3f dant=%.4f dtr=%.6f dts=%.6f dion=%.3f dtrp=%.3f\n",
+              sat,v[nv],P,r,dant,dtr,dts[i*2],dion,dtrp);
+
         /* design matrix */
-        for (j=0;j<NX;j++) {
+        for (int j=0;j<NX;j++) {
             H[j+nv*NX]=j<3?-e[j]:(j==3?1.0:0.0);
         }
         /* time system offset and receiver bias correction */
@@ -369,10 +415,10 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
               azel[i*2]*R2D,azel[1+i*2]*R2D,resp[i],sqrt(var[nv-1]));
     }
     /* constraint to avoid rank-deficient */
-    for (i=0;i<NX-3;i++) {
+    for (int i=0;i<NX-3;i++) {
         if (mask[i]) continue;
         v[nv]=0.0;
-        for (j=0;j<NX;j++) H[j+nv*NX]=j==i+3?1.0:0.0;
+        for (int j=0;j<NX;j++) H[j+nv*NX]=j==i+3?1.0:0.0;
         var[nv++]=0.01;
     }
     return nv;
