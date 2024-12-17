@@ -357,7 +357,10 @@ QColor Plot::observationColor(const obsd_t *obs, double az, double el, QVariant 
     }
 
     // check against elevation mask
-    if (el < plotOptDialog->getElevationMask() * D2R || (plotOptDialog->getElevationMaskEnabled() && el < elevationMaskData[static_cast<int>(az * R2D + 0.5)]))
+    double azel[2];
+    azel[0] = az;
+    azel[1] = el;
+    if (el < plotOptDialog->getElevationMask() * D2R || (plotOptDialog->getElevationMaskEnabled() && testelmask(azel, &elevationMask)))
         return plotOptDialog->getHideLowSatellites() ? Qt::black : plotOptDialog->getMarkerColor(0, 0);
 
     return color;

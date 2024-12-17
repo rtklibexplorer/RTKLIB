@@ -119,7 +119,7 @@ static int moniport     =0;             /* monitor port */
 static int keepalive    =0;             /* keep alive flag */
 static int start        =0;             /* auto start */
 static int fswapmargin  =30;            /* file swap margin (s) */
-static char sta_name[256]="";           /* station name */
+static char sta_name[2][256]={"",""};   /* Station name: rover, base. */
 
 static prcopt_t prcopt;                 /* processing options */
 static solopt_t solopt[2]={{0}};        /* solution options */
@@ -127,7 +127,7 @@ static filopt_t filopt  ={""};          /* file options */
 
 /* help text -----------------------------------------------------------------*/
 static const char *usage[]={
-    "usage: rtkrcv [-s][-p port][-d dev][-o file][-w pwd][-r level][-t level][-sta sta]",
+    "usage: rtkrcv [-s][-p port][-d dev][-o file][-w pwd][-r level][-t level]",
     "options",
     "  -s         start RTK server on program startup",
     "  -nc        start RTK server on program startup with no console",
@@ -138,7 +138,6 @@ static const char *usage[]={
     "  -w pwd     login password for remote console (\"\": no password)",
     "  -r level   output solution status file (0:off,1:states,2:residuals)",
     "  -t level   debug trace level (0:off,1-5:on)",
-    "  -sta sta   station name for receiver dcb",
     "  --deamon   detach from the console",
     "  --version  print the version and exit"
 };
@@ -241,6 +240,9 @@ static opt_t rcvopts[]={
     {"file-cmdfile2",   2,  (void *)rcvcmds[1],          ""     },
     {"file-cmdfile3",   2,  (void *)rcvcmds[2],          ""     },
     
+    {"sta1-name",       2,  (void *)&sta_name[0],        ""     },
+    {"sta2-name",       2,  (void *)&sta_name[1],        ""     },
+
     {"",0,NULL,""}
 };
 /* print usage ---------------------------------------------------------------*/
@@ -455,10 +457,19 @@ static int startsvr(vt_t *vt)
     /* read antenna file */
     readant(vt,&prcopt,&svr.nav,&svr.pcvsr);
     
-    /* read dcb file */
+    strcpy(sta[0].name, sta_name[0]);
+    strcpy(sta[1].name, sta_name[1]);
+    // Read dcb file.
     if (*filopt.dcb) {
-        strcpy(sta[0].name,sta_name);
-        readdcb(filopt.dcb,&svr.nav,sta);
+        readdcb(filopt.dcb, &svr.nav, sta);
+    }
+    // Read the elevation mask patterns.
+    if (*filopt.elmask) {
+      int mode = PMODE_DGPS <= prcopt.mode && prcopt.mode <= PMODE_FIXED;
+      for (int i = 0; i < (mode ? 2 : 1); i++) {
+        const char *name = sta[i].name;
+        readelmask(filopt.elmask, name, &prcopt.elmask[i]);
+      }
     }
     /* open geoid data file */
     if (solopt[0].geoid>0&&!opengeoid(solopt[0].geoid,filopt.geoid)) {
@@ -1571,7 +1582,7 @@ static void deamonise(void)
 
 /* rtkrcv main -----------------------------------------------------------------
 * synopsis
-*     rtkrcv [-s][-nc][-p port][-d dev][-o file][-r level][-t level][-sta sta]
+*     rtkrcv [-s][-nc][-p port][-d dev][-o file][-r level][-t level]
 *
 * description
 *     A command line version of the real-time positioning AP by rtklib. To start
@@ -1599,7 +1610,6 @@ static void deamonise(void)
 *     -w pwd     login password for remote console ("": no password)
 *     -r level   output solution status file (0:off,1:states,2:residuals)
 *     -t level   debug trace level (0:off,1-5:on)
-*     -sta sta   station name for receiver dcb
 *     --deamon   detach from the console
 *     --version  prints the version and exits
 *
@@ -1696,7 +1706,6 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-w")&&i+1<argc) strcpy(passwd,argv[++i]);
         else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-sta")&&i+1<argc) strcpy(sta_name,argv[++i]);
         else if (!strcmp(argv[i], "--deamon")) deamon=1;
         else if (!strcmp(argv[i], "--version")) {
             fprintf(stderr, "rtkrcv RTKLIB %s %s\n", VER_RTKLIB, PATCH_LEVEL);

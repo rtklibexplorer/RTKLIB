@@ -1034,6 +1034,9 @@ static int zdres(int base, const obsd_t *obs, int n, const double *rs, const dou
       if (r <= 0.0) continue;
       if (satazel(rpc_pos, e + i * 3, azel + i * 2) < opt->elmin) continue;
 
+      // Check elevation mask.
+      if (testelmask(azel + i * 2, &opt->elmask[base])) continue;
+
       // Check SNR mask
       if (testsnr(base, 0, azel[1 + i * 2], obs[i].SNR[0], &opt->snrmask) ||
           testsnr(base, f2, azel[1 + i * 2], obs[i].SNR[f2], &opt->snrmask))
@@ -1097,6 +1100,9 @@ static int zdres(int base, const obsd_t *obs, int n, const double *rs, const dou
         double r = geodist(rs + i * 6, rpc, e + f * 3 + i * nf * 3);
         if (r <= 0.0) continue;
         if (satazel(rpc_pos, e + f * 3 + i * nf * 3, azel + i * 2) < opt->elmin) continue;
+
+        // Check elevation mask.
+        if (testelmask(azel + i * 2, &opt->elmask[base])) continue;
 
         // Check SNR mask
         if (testsnr(base, f, azel[1 + i * 2], obs[i].SNR[f], &opt->snrmask)) continue;

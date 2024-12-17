@@ -575,6 +575,25 @@ extern int testsnr(int base, int idx, double el, double snr,
 
     return snr<minsnr;
 }
+/* Test elevation mask ---------------------------------------------------------
+* Test elevation mask
+* Args   : double *azel     I   azimuth/elevation angle {az,el} (rad)
+*          elmask_t *elmask I   elevation mask vector (360 x 1) (1 deg)
+*                                 elmask[i]: elevation mask at azimuth i (rad)
+* Return : status (1:masked,0:unmasked)
+*-----------------------------------------------------------------------------*/
+extern int testelmask(const double *azel, const elmask_t *elmask)
+{
+    double az = azel[0] * R2D;
+
+    // 0 <= az < 360.0
+    az -= floor(az / 360.0) * 360.0;
+    int azi = round(az);
+    if (azi < 0) azi = 0;
+    if (azi >= 360) azi = 360;
+
+    return azel[1] < elmask->elmask[azi];
+}
 /* obs type string to obs code -------------------------------------------------
 * convert obs code type string to obs code
 * args   : char   *str   I      obs code string ("1C","1P","1Y",...)
@@ -3295,6 +3314,121 @@ extern pcv_t *searchpcv(int sat, const char *type, gtime_t time, const satsvns_t
     trace(2, "searchpcv: failed for rcv type='%s'\n", type);
   }
   return NULL;
+}
+/* Read elevation mask file ----------------------------------------------------
+* Read elevation mask file
+* Args   : char   *file     I   elevation mask file
+*          char   *sta      I   station name. If NULL match the first.
+*          elmask_t *elmask O   elevation mask pattern.
+* Return : status (1:ok,0:error or not found)
+* Notes  : text format of the elevation mask file
+*            STATION_NAME_1
+*            AZ1  EL1
+*            AZ2  EL2
+*            ...
+*            STATION_NAME_2
+*            ...
+*          (1) EL{i} defines the elevation mask (deg) at the azimuth angle az
+*              (AZ{i} <= az (deg) < AZ{i+1}, AZ1 < AZ2 < ... < AZ{n}, n <= 360)
+*          (2) text after % or # is treated as comments
+*-----------------------------------------------------------------------------*/
+extern int readelmask(const char *file, const char *sta, elmask_t *elmask) {
+  trace(3, "readelmask: sta=%s file=%s\n", sta, file);
+
+  elmask->name[0] = '\0';
+  for (int i = 0; i < 360; i++) elmask->elmask[i] = 0;
+
+  FILE *fp = fopen(file, "r");
+  if (!fp) {
+    fprintf(stderr, "elevation mask file open error : %s\n", file);
+    return 0;
+  }
+
+  char staname[17] = "UNKNOWN";
+  if (sta) {
+    // Upper case the station name.
+    if (sscanf(sta, "%16s", staname) < 1) return 0;
+    for (int i = 0; i < strlen(staname); i++) staname[i] = (char)toupper((int)staname[i]);
+  }
+
+  // Search for a station name.
+  char buff[256];
+  while (fgets(buff, sizeof(buff), fp)) {
+    if (buff[0] == '%' || buff[0] == '#') continue;
+    char *p;
+    if ((p = strchr(buff, '%'))) *p = '\0';
+    if ((p = strchr(buff, '#'))) *p = '\0';
+    // Upper case the station name.
+    char name[17];
+    if (sscanf(buff, "%16s", name) < 1) continue;
+    for (int i = 0; i < strlen(name); i++) name[i] = (char)toupper((int)name[i]);
+    if (sta && strcmp(name, staname) != 0) continue;
+
+    double az_prev = 0.0, el_prev = 0.0;
+    while (fgets(buff, sizeof(buff), fp)) {
+      if (buff[0] == '%' || buff[0] == '#') continue;
+      char *p;
+      if ((p = strchr(buff, '%'))) *p = '\0';
+      if ((p = strchr(buff, '#'))) *p = '\0';
+      double az, el;
+      if (sscanf(buff, "%lf %lf", &az, &el) != 2) break;
+      if (az - az_prev < -1e-6 || az > 360.0) {
+        trace(2, "readelmask: unexpected az=%lf sta=%s file=%s: '%s'\n", az, sta, file);
+        fclose(fp);
+        return 0;
+      }
+      int j = round(az_prev);
+      for (; j < round(az); j++) elmask->elmask[j] = el_prev * D2R;
+      elmask->elmask[j] = el * D2R;
+      az_prev = az;
+      el_prev = el;
+      if (az >= 360.0) break;
+    }
+
+    int j = round(az_prev);
+    for (; j < 361; j++) elmask->elmask[j] = el_prev * D2R;
+
+    strcpy(elmask->name, name);
+    fclose(fp);
+    return 1;
+  }
+
+  trace(2, "readelmask: not found sta=%s file=%s\n", sta, file);
+  fclose(fp);
+  return 0;
+}
+/* Save elevation mask file ----------------------------------------------------
+* Save elevation mask file
+* Args   : char   *file     I   elevation mask file
+*          elmask_t *elmask O   elevation mask pattern.
+* Return : none
+*-----------------------------------------------------------------------------*/
+extern void saveelmask(const char *file, elmask_t *elmask)
+{
+    trace(3,"saveelmask: sta=%s file=%s\n",elmask->name,file);
+
+    FILE *fp=fopen(file,"w");
+    if (!fp) {
+      fprintf(stderr,"elevation mask file open error : %s\n",file);
+      return;
+    }
+
+    char staname[17]="UNKNOWN";
+    if (elmask->name[0] != '\0') strcpy(staname, elmask->name);
+
+    fprintf(fp, "%% Elevation Mask\n");
+    fprintf(fp, "%% AZI    EL (deg)\n");
+    fprintf(fp, "%s\n", staname);
+    fprintf(fp, " %6.1lf %5.1lf\n", 0.0, elmask->elmask[0] * R2D);
+
+    double prev_el = elmask->elmask[0];
+    for (int az = 1; az <= 360; az++) {
+      double el = elmask->elmask[az];
+      if (fabs(el - prev_el) < 1e-3) continue;
+      fprintf(fp, " %6.1lf %5.1lf\n", (double)az, el * R2D);
+      prev_el = el;
+    }
+    fclose(fp);
 }
 /* read station positions ------------------------------------------------------
 * read positions from station position file

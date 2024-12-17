@@ -1039,6 +1039,11 @@ typedef struct {        /* SNR mask type */
     double mask[NFREQ][9]; /* mask (dBHz) at 5,10,...85 deg */
 } snrmask_t;
 
+typedef struct {        // Station elevation mask pattern.
+  char name[MAXANT];    // Station name.
+  float elmask[361];    // Elevation mask pattern (rad), per degree azimuth.
+} elmask_t;
+  
 typedef struct {        /* processing options type */
     int mode;           /* positioning mode (PMODE_???) */
     int soltype;        /* solution type (0:forward,1:backward,2:combined) */
@@ -1103,6 +1108,7 @@ typedef struct {        /* processing options type */
     double odisp[2][6*11]; /* ocean tide loading parameters {rov,base} */
     int  freqopt;       /* disable L2-AR */
     char pppopt[256];   /* ppp option */
+    elmask_t elmask[2]; // Elevation mask pattern: rover, base.
 } prcopt_t;
 
 typedef struct {        /* solution options type */
@@ -1137,6 +1143,7 @@ typedef struct {        /* file options type */
     char dcb    [MAXSTRPATH]; /* dcb data file */
     char eop    [MAXSTRPATH]; /* eop data file */
     char blq    [MAXSTRPATH]; /* ocean tide loading blq file */
+    char elmask [MAXSTRPATH]; // Elevation mask pattern file.
     char tempdir[MAXSTRPATH]; /* ftp/http temporary directory */
     char geexe  [MAXSTRPATH]; /* google earth exec file */
     char solstat[MAXSTRPATH]; /* solution statistics file */
@@ -1419,6 +1426,7 @@ EXPORT int  code2idx(int sys, uint8_t code);
 EXPORT int  satexclude(int sat, double var, int svh, const prcopt_t *opt);
 EXPORT int  testsnr(int base, int freq, double el, double snr,
                     const snrmask_t *mask);
+EXPORT int testelmask(const double *azel, const elmask_t *elmask);
 EXPORT void setcodepri(int sys, int idx, const char *pri);
 EXPORT int  getcodepri(int sys, uint8_t code, const char *opt);
 
@@ -1515,6 +1523,8 @@ EXPORT void freenav(nav_t *nav, int opt);
 EXPORT int  readblq(const char *file, const char *sta, double *odisp);
 EXPORT int  readerp(const char *file, erp_t *erp);
 EXPORT int  geterp (const erp_t *erp, gtime_t time, double *val);
+EXPORT int  readelmask(const char *file, const char *sta, elmask_t *elmask);
+EXPORT void saveelmask(const char *file, elmask_t *elmask);
 
 /* debug trace functions -----------------------------------------------------*/
 #ifdef TRACE

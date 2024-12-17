@@ -2664,6 +2664,23 @@
         </widget>
        </item>
        <item row="15" column="0">
+        <widget class="QLabel" name="Label34b">
+         <property name="text">
+          <string>Elevation Mask Pattern File</string>
+         </property>
+         <property name="buddy">
+          <cstring>lEElmaskFile</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="0">
+        <widget class="QLineEdit" name="lEElmaskFile">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Input the file path of an elevation mask patterns file (option: &lt;span style=&quot; font-style:italic;&quot;&gt;file-elmaskfile&lt;/span&gt;). &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="0">
         <widget class="QLabel" name="lblIonosphereFile">
          <property name="text">
           <string>Ionosphere Data File</string>
@@ -2673,14 +2690,14 @@
          </property>
         </widget>
        </item>
-       <item row="16" column="0">
+       <item row="17" column="0">
         <widget class="QLineEdit" name="lEIonosphereFile">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Input the file path of an ionospheric corrections file (*.yyi)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
-       <item row="17" column="0">
+       <item row="18" column="0">
         <widget class="QLabel" name="lblLocalDirectory">
          <property name="text">
           <string>FTP/HTTP Local Directory</string>
@@ -2690,7 +2707,7 @@
          </property>
         </widget>
        </item>
-       <item row="18" column="0">
+       <item row="19" column="0">
         <widget class="QLineEdit" name="lELocalDirectory">
          <property name="toolTip">
           <string>Local directory for downloaded data</string>
@@ -3551,6 +3568,7 @@
   <tabstop>lEDCBFile</tabstop>
   <tabstop>lEEOPFile</tabstop>
   <tabstop>lEBLQFile</tabstop>
+  <tabstop>lEElmaskFile</tabstop>
   <tabstop>lEIonosphereFile</tabstop>
   <tabstop>lELocalDirectory</tabstop>
   <tabstop>sBServerCycle</tabstop>

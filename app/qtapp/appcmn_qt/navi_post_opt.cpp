@@ -139,6 +139,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     processingOptions = prcopt_default;
     solutionOptions = solopt_default;
     fileOptions.blq[0] = '\0';
+    fileOptions.elmask[0] = '\0';
     fileOptions.dcb[0] = '\0';
     fileOptions.eop[0] = '\0';
     fileOptions.geexe[0] = '\0';
@@ -207,6 +208,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     ui->lEGeoidDataFile->setCompleter(fileCompleter);
     ui->lEEOPFile->setCompleter(fileCompleter);
     ui->lEBLQFile->setCompleter(fileCompleter);
+    ui->lEElmaskFile->setCompleter(fileCompleter);
 
     QCompleter *dirCompleter = new QCompleter(this);
     QFileSystemModel *dirModel = new QFileSystemModel(dirCompleter);
@@ -257,6 +259,13 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     acBLQFileView->setToolTip(tr("View File"));
     acBLQFileView->setEnabled(false);
 
+    // Elmask file line edit actions
+    QAction *acElmaskFileSelect = ui->lEElmaskFile->addAction(QIcon(":/buttons/folder"), QLineEdit::TrailingPosition);
+    acBLQFileSelect->setToolTip(tr("Select File"));
+    QAction *acElmaskFileView = ui->lEElmaskFile->addAction(QIcon(":/buttons/doc"), QLineEdit::TrailingPosition);
+    acElmaskFileView->setToolTip(tr("View File"));
+    acElmaskFileView->setEnabled(false);
+
     // EOP file line edit actions
     QAction *acEOPFileSelect = ui->lEEOPFile->addAction(QIcon(":/buttons/folder"), QLineEdit::TrailingPosition);
     acEOPFileSelect->setToolTip(tr("Select File"));
@@ -305,6 +314,10 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     connect(acBLQFileView, &QAction::triggered, this, &OptDialog::viewBLQFile);
     connect(ui->lEBLQFile, &QLineEdit::textChanged, this, [acBLQFileView, this]()
             {acBLQFileView->setEnabled(QFile::exists(ui->lEBLQFile->text()));});
+    connect(acElmaskFileSelect, &QAction::triggered, this, &OptDialog::selectElmaskFile);
+    connect(acElmaskFileView, &QAction::triggered, this, &OptDialog::viewElmaskFile);
+    connect(ui->lEElmaskFile, &QLineEdit::textChanged, this, [acElmaskFileView, this]()
+            {acElmaskFileView->setEnabled(QFile::exists(ui->lEElmaskFile->text()));});
     connect(acStationPositionFileSelect, &QAction::triggered, this, &OptDialog::selectStationPositionFile);
     connect(acStationPositionFileView, &QAction::triggered, this, &OptDialog::viewStationPositionFile);
     connect(ui->lEStationPositionFile, &QLineEdit::textChanged, this, [acStationPositionFileView, this]()
@@ -630,6 +643,24 @@ void OptDialog::viewBLQFile()
     textViewer->show();
 }
 //---------------------------------------------------------------------------
+void OptDialog::selectElmaskFile()
+{
+    QString filename = QFileDialog::getOpenFileName(this, tr("Elevation mask pattern File"), ui->lEElmaskFile->text(), tr("Elevation Mask File (*.txt);;All (*.*)"));
+
+    if (!filename.isEmpty())
+        ui->lEElmaskFile->setText(QDir::toNativeSeparators(filename));
+}
+//---------------------------------------------------------------------------
+void OptDialog::viewElmaskFile()
+{
+    QString elmaskFilename = ui->lEElmaskFile->text();
+
+    if (elmaskFilename.isEmpty()) return;
+
+    textViewer->read(elmaskFilename);
+    textViewer->show();
+}
+//---------------------------------------------------------------------------
 void OptDialog::selectLocalDirectory()
 {
     QString dir = ui->lELocalDirectory->text();
@@ -695,6 +726,7 @@ void OptDialog::updateOptions()
     strncpy(fileOptions.dcb, qPrintable(ui->lEDCBFile->text()), MAXSTRPATH-1);
     strncpy(fileOptions.eop, qPrintable(ui->lEEOPFile->text()), MAXSTRPATH-1);
     strncpy(fileOptions.blq, qPrintable(ui->lEBLQFile->text()), MAXSTRPATH-1);
+    strncpy(fileOptions.elmask, qPrintable(ui->lEElmaskFile->text()), MAXSTRPATH-1);
     if (options == NaviOptions)
         strncpy(fileOptions.tempdir, qPrintable(ui->lELocalDirectory->text()), MAXSTRPATH-1);
     // fileOptions.geexe
@@ -1083,6 +1115,7 @@ void OptDialog::load(const QString &file)
     ui->lEDCBFile->setText(filopt.dcb);
     ui->lEEOPFile->setText(filopt.eop);
     ui->lEBLQFile->setText(filopt.blq);
+    ui->lEElmaskFile->setText(filopt.elmask);
     if (options == NaviOptions)
         ui->lELocalDirectory->setText(filopt.tempdir);
     // filopt.geexe
@@ -1258,6 +1291,7 @@ void OptDialog::save(const QString &file)
     strncpy(filopt.dcb, qPrintable(ui->lEDCBFile->text()), MAXSTRPATH-1);
     strncpy(filopt.eop, qPrintable(ui->lEEOPFile->text()), MAXSTRPATH-1);
     strncpy(filopt.blq, qPrintable(ui->lEBLQFile->text()), MAXSTRPATH-1);
+    strncpy(filopt.elmask, qPrintable(ui->lEElmaskFile->text()), MAXSTRPATH-1);
     if (options == NaviOptions)
         strncpy(filopt.tempdir, qPrintable(ui->lELocalDirectory->text()), MAXSTRPATH-1);
     // filopt.geexe
@@ -1432,6 +1466,7 @@ void OptDialog::saveOptions(QSettings &settings)
     settings.setValue("setting/dcbfile", ui->lEDCBFile->text());
     settings.setValue("setting/eopfile", ui->lEEOPFile->text());
     settings.setValue("setting/blqfile", ui->lEBLQFile->text());
+    settings.setValue("setting/elmaskfile", ui->lEElmaskFile->text());
     settings.setValue("setting/localdirectory", ui->lELocalDirectory->text());
 
     if (options == NaviOptions) {
@@ -1636,6 +1671,7 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->lEDCBFile->setText(settings.value("setting/dcbfile", "").toString());
     ui->lEEOPFile->setText(settings.value("setting/eopfile", "").toString());
     ui->lEBLQFile->setText(settings.value("setting/blqfile", "").toString());
+    ui->lEElmaskFile->setText(settings.value("setting/elmaskfile", "").toString());
     if (options == NaviOptions)
         ui->lELocalDirectory->setText(settings.value("setting/localdirectory", QDir::tempPath()).toString());
 

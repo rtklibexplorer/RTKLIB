@@ -970,7 +970,8 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
         sat=obs[i].sat;
 
         if ((r=geodist(rs+i*6,rr,e))<=0.0||
-            satazel(pos,e,azel+i*2)<opt->elmin) {
+            satazel(pos,e,azel+i*2)<opt->elmin||
+            testelmask(azel+i*2,&opt->elmask[0])) {
             exc[i]=1;
             continue;
         }

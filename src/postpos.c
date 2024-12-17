@@ -1074,7 +1074,7 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
     prcopt_t popt_=*popt;
     char tracefile[1024],statfile[1024],path[1024],outfiletm[1024]={0};
     const char *ext;
-    int i,j,k,dcb_ok;
+    int j,k,dcb_ok;
 
     trace(3,"execses : n=%d outfile=%s\n",n,outfile);
 
@@ -1119,12 +1119,13 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
 
     /* read dcb parameters from DCB, BIA, BSX files */
     dcb_ok = 0;
-    for (i=0;i<MAX_CODE_BIASES;i++) for (k=0;k<MAX_CODE_BIAS_FREQS;k++) {
+    for (int i=0;i<MAX_CODE_BIASES;i++)
+      for (k=0;k<MAX_CODE_BIAS_FREQS;k++) {
         /* FIXME: cbias later initialized with 0 in readdcb()!  */
         for (j=0;j<MAXSAT;j++) navs.cbias[j][k][i]=-1;
         for (j=0;j<MAXRCV;j++) navs.rbias[j][k][i]=0;
-        }
-    for (i=0;i<n;i++) {  /* first check infiles for .BIA or .BSX files */
+      }
+    for (int i=0;i<n;i++) {  /* first check infiles for .BIA or .BSX files */
         if ((dcb_ok=readdcb(infile[i],&navs,stas))) break;
     }
     if (!dcb_ok&&*fopt->dcb) {  /* then check if DCB file specified */
@@ -1157,6 +1158,15 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
           goto done;
         }
     }
+    // Read the elevation mask patterns.
+    if (*fopt->elmask) {
+      int mode = PMODE_DGPS <= popt->mode && popt->mode <= PMODE_FIXED;
+      for (int i = 0; i < (mode ? 2 : 1); i++) {
+        const char *name = stas[i].name;
+        readelmask(fopt->elmask, name, &popt_.elmask[i]);
+      }
+    }
+
     /* open solution statistics */
     if (flag&&sopt->sstat>0) {
         strcpy(statfile,outfile);

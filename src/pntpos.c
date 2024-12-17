@@ -350,11 +350,15 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
         // Compute geometric distance and azimuth/elevation angle
         double e[3], r = geodist(rs + i * 6, rpc, e);
         if (r <= 0.0) continue;
+        // Compute azel and test minimum elevation mask.
         if (satazel(rpc_pos,e,azel+i*2)<opt->elmin) continue;
 
         double dion = 0.0, vion = 0.0, dtrp = 0.0, vtrp = 0.0, dant = 0.0;
         if (iter>0) {
-            /* Test SNR mask */
+            // Test elevation mask.
+            if (testelmask(azel+i*2,&opt->elmask[base])) continue;
+
+            // Test SNR mask.
             if (!snrmask(obs+i,azel+i*2,opt,base)) continue;
 
             if (opt->ionoopt!=IONOOPT_IFLC) {

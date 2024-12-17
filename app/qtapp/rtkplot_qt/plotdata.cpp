@@ -342,48 +342,6 @@ void Plot::readNavigation(const QStringList &files)
     updatePlot();
     updateEnable();
 }
-// read elevation mask data -------------------------------------------------
-void Plot::readElevationMaskData(const QString &file)
-{
-    QFile fp(file);
-    double az_prev = 0.0, el_prev = 0.0, az, el;
-    int i, j;
-    QByteArray buff;
-    bool okay;
-
-    trace(3, "readElevationMaskData\n");
-
-    // reset elevation mask
-    for (i = 0; i <= 360; i++)
-        elevationMaskData[i] = 0.0;
-
-    if (!fp.open(QIODevice::ReadOnly)) {
-        showMessage(tr("No elevation mask data: %1...").arg(file));
-        showLegend(QStringList());
-        return;
-    }
-
-    while (!fp.atEnd()) {
-        buff = fp.readLine();
-
-        if (buff.at(0) == '%') continue; // comment
-
-        QList<QByteArray> tokens = buff.split(' ');
-        if (tokens.size() != 2) continue;
-        az = tokens.at(0).toDouble(&okay); if (!okay) continue;
-        el = tokens.at(1).toDouble(&okay); if (!okay) continue;
-
-        if (az_prev < az && az <= 360.0 && 0.0 <= el && el <= 90.0) {
-            for (j = static_cast<int>(az_prev); j < static_cast<int>(az); j++)
-                elevationMaskData[j] = el_prev * D2R;
-            elevationMaskData[j] = el * D2R;
-        }
-        az_prev = az;
-        el_prev = el;
-    }
-    updatePlot();
-    updateEnable();
-}
 // generate visibility data ----------------------------------------------------
 void Plot::generateVisibilityData()
 {
@@ -957,10 +915,10 @@ void Plot::saveDop(const QString &file)
         for (j = indexObservation[i]; j < observation.n && j < indexObservation[i + 1]; j++) {
             if (satelliteMask[observation.data[j].sat - 1]) continue;
             if (elevation[j] < plotOptDialog->getElevationMask() * D2R) continue;
-            if (plotOptDialog->getElevationMaskEnabled() && elevation[j] < elevationMaskData[static_cast<int>(azimuth[j] * R2D + 0.5)]) continue;
-
             azel[ns * 2] = azimuth[j];
             azel[ns * 2 + 1] = elevation[j];
+            if (plotOptDialog->getElevationMaskEnabled() && testelmask(azel + ns * 2, &elevationMask)) continue;
+
             ns++;
         }
         if (ns <= 0) continue;
@@ -1035,28 +993,6 @@ void Plot::saveSnrMp(const QString &file)
                        .arg(elevation[j] * R2D, 8, 'f', 1).arg(observation.data[j].SNR[k] * SNR_UNIT, 9, 'f', 2).arg(!multipath[k] ? 0.0 : multipath[k][j], 10, 'f', 4);
             fp.write(data.toLatin1());
         }
-    }
-}
-// save elev mask --------------------------------------------------------------
-void Plot::saveElevationMask(const QString &file)
-{
-    QFile fp(file);
-    QString data;
-    double el, prev_el = 0.0;
-
-    trace(3, "saveElevationMask: file=%s\n", qPrintable(file));
-
-    if (!(fp.open(QIODevice::WriteOnly))) return;
-
-    fp.write("%% Elevation Mask\n");
-    fp.write("%% AZ(deg) EL(deg)\n");
-
-    for (int az = 0; az <= 360; az++) {
-        el = floor(elevationMaskData[az] * R2D / 0.1 + 0.5) * 0.1;
-        if (qFuzzyCompare(el, prev_el)) continue;
-        data = QString("%1 %2\n").arg(static_cast<double>(az), 9, 'f', 1).arg(el, 6, 'f', 1);
-        fp.write(data.toLatin1());
-        prev_el = el;
     }
 }
 // connect to external sources ----------------------------------------------
@@ -1425,7 +1361,7 @@ void Plot::clear()
         initsolbuf(solutionData + 1, 1, plotOptDialog->getRtBufferSize() + 1);
     }
 
-    for (int i = 0; i <= 360; i++) elevationMaskData[i] = 0.0;
+    for (int i = 0; i <= 360; i++) elevationMask.elmask[i] = 0.0;
 
     wayPoints.clear();
     selectedWayPoint = -1;
@@ -1502,7 +1438,7 @@ void Plot::generateElevationMaskFromSkyImage()
                 n = 0;
             }
         }
-        elevationMaskData[az] = el0 == 90.0 ? 0.0 : el0 * D2R;
+        elevationMask.elmask[az] = el0 == 90.0 ? 0.0 : el0 * D2R;
     }
     updateSky();
 }

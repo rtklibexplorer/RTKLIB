@@ -91,6 +91,8 @@ protected slots:
     void viewEOPFile();
     void selectBLQFile();
     void viewBLQFile();
+    void selectElmaskFile();
+    void viewElmaskFile();
     void showSnrMaskDialog();
     void checkLineEditValidator();
 

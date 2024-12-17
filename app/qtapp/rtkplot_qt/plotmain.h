@@ -278,7 +278,6 @@ private:
     void generateVisibilityData();
     void saveDop(const QString &file);
     void saveSnrMp(const QString &file);
-    void saveElevationMask(const QString &file);
     void connectPath(const QString &path, int ch);
     int isObservation(const QString &file);
     void updateObservation(int nobs);
@@ -412,7 +411,7 @@ protected:
     QString rtFieldSeperator;
     int rtTimeoutTime;
     int rtReconnectTime;
-    double elevationMaskData[361];
+    elmask_t elevationMask;
     
     // time options
     int timeEnabled[3];
@@ -442,7 +441,6 @@ protected:
     void savePositionFile(const QString &file);
     void saveWaypoints(const QString &file);
     void generateObservationSlips(int *LLI);
-    void readElevationMaskData(const QString &file);
     void refresh_MapView();
     double getYRange();
     QString plotDetails(const QPoint &globalPos);

@@ -54,10 +54,9 @@ void Plot::updateTimeObservation()
         for (i = indexObservation[observationIndex]; i < observation.n && i < indexObservation[observationIndex + 1]; i++, nobs++) {
             if (satelliteMask[observation.data[i].sat - 1] || !satelliteSelection[observation.data[i].sat - 1]) continue;
             if (elevation[i] < plotOptDialog->getElevationMask() * D2R) continue;
-            if (plotOptDialog->getElevationMaskEnabled() && elevation[i] < elevationMaskData[static_cast<int>(azimuth[i] * R2D + 0.5)]) continue;
-
             azel[nsat * 2] = azimuth[i];
             azel[1 + nsat * 2] = elevation[i];
+            if (plotOptDialog->getElevationMaskEnabled() && testelmask(azel + nsat * 2, &elevationMask)) continue;
             nsat++;
         }
     }
