@@ -457,11 +457,30 @@ static int startsvr(vt_t *vt)
     /* read antenna file */
     readant(vt,&prcopt,&svr.nav,&svr.pcvsr);
     
+    // Read erp data.
+    if (*filopt.eop) {
+        free(svr.nav.erp.data);
+        svr.nav.erp.data = NULL;
+        svr.nav.erp.n = svr.nav.erp.nmax = 0;
+        if (!readerp(filopt.eop, &svr.nav.erp)) {
+          trace(2,"no erp data: %s\n", filopt.eop);
+          vt_printf(vt, "erp data open error: %s\n", filopt.eop);
+        }
+    }
+
     strcpy(sta[0].name, sta_name[0]);
     strcpy(sta[1].name, sta_name[1]);
     // Read dcb file.
     if (*filopt.dcb) {
         readdcb(filopt.dcb, &svr.nav, sta);
+    }
+    // Read ocean tide loading parameters.
+    if (prcopt.mode > PMODE_SINGLE && *filopt.blq) {
+      int mode = PMODE_DGPS <= prcopt.mode && prcopt.mode <= PMODE_FIXED;
+      for (int i = 0; i < (mode ? 2 : 1); i++) {
+        const char *name = sta[i].name;
+        readblq(filopt.blq, name, prcopt.odisp[i]);
+      }
     }
     // Read the elevation mask patterns.
     if (*filopt.elmask) {
@@ -545,6 +564,11 @@ static void stopsvr(vt_t *vt)
 #endif
     if (solopt[0].geoid>0) closegeoid();
     
+    // Free erp data.
+    free(svr.nav.erp.data);
+    svr.nav.erp.data = NULL;
+    svr.nav.erp.n = svr.nav.erp.nmax = 0;
+
     for (int i = 0; i < 2; i++) free_pcv(&prcopt.pcvr[i]);
     free_pcvs(&svr.pcvsr);
     for (int i = 0; i < MAXSAT; i++) free_pcv(&svr.nav.pcvs[i]);
