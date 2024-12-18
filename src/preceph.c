@@ -780,7 +780,8 @@ extern void satantoff_s(gtime_t time, const double *rs, int sat, const nav_t *na
     double ex[3],ey[3],ez[3],es[3],r[3],rsun[3],gmst,erpv[5]={0};
     int i,j;
 
-    trace(4,"satantoff_s: time=%s sat=%2d\n",time_str(time,3),sat);
+    char tstr[40];
+    trace(4,"satantoff_s: time=%s sat=%2d\n",time2str(time,tstr,3),sat);
 
     for (j=0;j<NFREQ;j++) {
         for (i=0;i<3;i++) {
