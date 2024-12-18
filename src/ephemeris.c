@@ -738,7 +738,7 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
 *          double *var      O   sat position and clock error variance (m^2)
 *          int    *svh      O   sat health flag (-1:correction not available)
 * return : status (1:ok,0:error)
-* notes  : satellite position is referenced to antenna phase center
+* notes  : satellite position is referenced to center of mass
 *          satellite clock does not include code bias correction (tgd or bgd)
 *-----------------------------------------------------------------------------*/
 extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
@@ -756,7 +756,7 @@ extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
         case EPHOPT_SSRAPC: return satpos_ssr (time,teph,sat,nav, 0,rs,dts,var,svh);
         case EPHOPT_SSRCOM: return satpos_ssr (time,teph,sat,nav, 1,rs,dts,var,svh);
         case EPHOPT_PREC  :
-            if (!peph2pos(time,sat,nav,1,rs,dts,var)) break; else return 1;
+            if (!peph2pos(time,sat,nav,rs,dts,var)) break; else return 1;
     }
     *svh=-1;
     return 0;

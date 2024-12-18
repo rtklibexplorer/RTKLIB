@@ -1616,10 +1616,12 @@ EXPORT void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts,
                      double *var);
 EXPORT void seph2pos(gtime_t time, const seph_t *seph, double *rs, double *dts,
                      double *var);
-EXPORT int  peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
+EXPORT int  peph2pos(gtime_t time, int sat, const nav_t *nav,
                      double *rs, double *dts, double *var);
 EXPORT void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
                       double *dant);
+EXPORT void satantoff_s(gtime_t time, const double *rs, int sat, const nav_t *nav,
+                      double *dant);                      
 EXPORT int  satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
                    const nav_t *nav, double *rs, double *dts, double *var,
                    int *svh);
