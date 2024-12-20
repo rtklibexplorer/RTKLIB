@@ -1035,7 +1035,7 @@ static int zdres(int base, const obsd_t *obs, int n, const double *rs,
 
     /* adjust rcvr pos for earth tide correction */
     if (opt->tidecorr) {
-        tidedisp(gpst2utc(obs[0].time),rr_,opt->tidecorr,&nav->erp,
+        tidedisp(gpst2utc(obs[0].time),rr_,opt->tidecorr==1?1:7,&nav->erp,
                  opt->odisp[base],disp);
         for (i=0;i<3;i++) rr_[i]+=disp[i];
     }
