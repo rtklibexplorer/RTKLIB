@@ -1627,7 +1627,7 @@ extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
     char s[64];
     uint8_t *p=buff;
     
-    trace(4,"outsols :\n");
+    trace(3,"outsols : sol->stat=%d\n",sol->stat);
     
     /* suppress output if std is over opt->maxsolstd */
     if (opt->maxsolstd>0.0&&sol_std(sol)>opt->maxsolstd) {
@@ -1655,6 +1655,7 @@ extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
         }
         sprintf(s,"%4d%.16s%*.*f",week,sep,6+(timeu<=0?0:timeu+1),timeu,gpst);
     }
+    trace(3,"sol->stat2=%d\n",sol->stat);
     switch (opt->posf) {
         case SOLF_LLH:  p+=outpos (p,s,sol,opt);   break;
         case SOLF_XYZ:  p+=outecef(p,s,sol,opt);   break;

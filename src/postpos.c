@@ -412,6 +412,7 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
               (popt->mode==PMODE_STATIC||popt->mode==PMODE_STATIC_START||popt->mode==PMODE_PPP_STATIC);
     
     /* initialize unless running backwards on a combined run with phase reset disabled */
+    rtk->epoch=0;
     if (mode==SOLMODE_SINGLE_DIR || !reverse || popt->soltype==SOLTYPE_COMBINED)
         rtkinit(rtk,popt);
     
@@ -575,7 +576,10 @@ static void combres(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
                 for (k=0;k<3;k++) sols.rr[k]=rbs[k]+rr_s[k];
             }
             else {
-                if (smoother(solf[i].rr,Qf,solb[j].rr,Qb,3,sols.rr,Qs)) continue;
+                if (smoother(solf[i].rr,Qf,solb[j].rr,Qb,3,sols.rr,Qs)) {
+                    trace(3,"Position smoothing failed\n");
+                    continue;
+                }
             }
             sols.qr[0]=(float)Qs[0];
             sols.qr[1]=(float)Qs[4];
@@ -596,7 +600,10 @@ static void combres(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
                 Qb[1]=Qb[3]=solb[j].qv[3];
                 Qb[5]=Qb[7]=solb[j].qv[4];
                 Qb[2]=Qb[6]=solb[j].qv[5];
-                if (smoother(solf[i].rr+3,Qf,solb[j].rr+3,Qb,3,sols.rr+3,Qs)) continue;
+                if (smoother(solf[i].rr+3,Qf,solb[j].rr+3,Qb,3,sols.rr+3,Qs)) {
+                    trace(3,"Velocity smoothing failed\n");
+                    continue;
+                }
                 sols.qv[0]=(float)Qs[0];
                 sols.qv[1]=(float)Qs[4];
                 sols.qv[2]=(float)Qs[8];
@@ -799,7 +806,7 @@ static int avepos(double *ra, int rcv, const obs_t *obs, const nav_t *nav,
         
         if (!pntpos(data,j,nav,opt,&sol,NULL,NULL,msg)) continue;
         
-        for (i=0;i<3;i++) ra[i]+=sol.rr[i];
+        for (i=0;i<3;i++) ra[i]+=sol.rr_init[i];
         n++;
     }
     if (n<=0) {

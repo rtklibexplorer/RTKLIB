@@ -156,13 +156,15 @@
 #endif
 #include "rtklib.h"
 
-/* constants -----------------------------------------------------------------*/
+/* constants/macros ---------------------------------------------------*/
 
 #define POLYCRC32   0xEDB88320u /* CRC32 polynomial */
 #define POLYCRC24Q  0x1864CFBu  /* CRC24Q polynomial */
+#define MAX_VAR_EPH SQR(300.0)  /* max variance eph to reject satellite (m^2) */
 
 #define SQR(x)      ((x)*(x))
-#define MAX_VAR_EPH SQR(300.0)  /* max variance eph to reject satellite (m^2) */
+#define MAX(x,y)    ((x)>=(y)?(x):(y))
+#define NF(opt)     ((opt)->ionoopt==IONOOPT_IFLC?1:(opt)->nf)
 
 static const double gpst0[]={1980,1, 6,0,0,0}; /* gps time reference */
 static const double gst0 []={1999,8,22,0,0,0}; /* galileo system time reference */
@@ -210,8 +212,9 @@ const prcopt_t prcopt_default={ /* defaults processing options */
     1,1,1,1,0,                  /* armaxiter,estion,esttrop,dynamics,tidecorr */
     1,0,0,0,0,                  /* niter,codesmooth,intpref,sbascorr,sbassatsel */
     0,0,                        /* rovpos,refpos */
-    {300.0,300.0,300.0},        /* eratio[] */
+    {300.0,300.0,300.0,300.0,300.0,300.0,300.0,300.0,300.0},       /* eratio[G1,G2,G5,R1,R2,R5,E1,E2,E5] */
     {100.0,0.003,0.003,0.0,1.0,52.0,0.0,0.0}, /* err[-,base,el,bl,dop,snr_max,snr,rcverr] */
+    {1,1,0.125,1.5,1,1,1,1,0.125},  /* constellation weight[G1,G2,G5,R1,R2,R5,E1,E2,E5] */
     {30.0,0.03,0.3},            /* std[] */
     {1E-4,1E-3,1E-4,1E-1,1E-2,0.0}, /* prn[] */
     5E-12,                      /* sclkstab */
@@ -346,6 +349,15 @@ static const uint32_t tbl_CRC24Q[]={
     0xE37B16,0x6537ED,0x69AE1B,0xEFE2E0,0x709DF7,0xF6D10C,0xFA48FA,0x7C0401,
     0x42FA2F,0xC4B6D4,0xC82F22,0x4E63D9,0xD11CCE,0x575035,0x5BC9C3,0xDD8538
 };
+/* weighting factors for raw measurements 12/22*/
+// static double efact[6][3] = {
+//    {1.00, 1.00, 0.125}, /* GPS */
+//    {1.50, 1.00, 1.00}, /* GLO */
+//    {1.00, 1.00, 0.125}, /* GAL */
+//    {1.00, 1.00, 0.66}, /* CMP */
+//    {1.00, 1.00, 0.66}, /* QZS */
+//    {1.00, 1.00, 0.66}, /* IRN */
+//};
 /* function prototypes -------------------------------------------------------*/
 #ifdef MKL
 #define LAPACK
@@ -548,6 +560,56 @@ extern int satexclude(int sat, double var, int svh, const prcopt_t *opt)
         return 1;
     }
     return 0;
+}
+/* satellite system to index */
+static int sys2ix(int sys)
+{
+    switch (sys) {
+        case SYS_GPS: return 0;
+        case SYS_SBS: return 0;
+        case SYS_GLO: return 1;
+        case SYS_GAL: return 2;
+        case SYS_CMP: return 3;
+        case SYS_QZS: return 4;
+        case SYS_IRN: return 5;
+    }
+    return 0;
+}
+/* single-differenced measurement error variance -----------------------------*/
+extern double varerr(int sat, int sys, double el, double snr_rover, double snr_base,
+                     double bl, double dt, int f, const prcopt_t *opt, const obsd_t *obs)
+{
+    double a,b,c,d,e;
+    double snr_max=opt->err[5];
+    double fact;
+    double sinel=sin(el),var;
+    int nf=NF(opt),frq,code,sysix;
+
+    frq=f%nf;code=f<nf?0:1;
+    /* set variance factor based on constellation and frequency */
+    sysix=sys2ix(sys);
+    fact=opt->cwght[sysix*3+frq];
+    /* increase variance factor for psuedoranges */
+    if (code) fact*=opt->eratio[sysix*3+frq];
+    /* adjust variance for config parameters */
+    a=fact*opt->err[1];  /* base term */
+    b=fact*opt->err[2];  /* el term */
+    c=opt->err[3]*bl/1E4; /* baseline term */
+    d=CLIGHT*opt->sclkstab*dt; /* clock term */
+    /* calculate variance */
+    var=2.0*(a*a+b*b/sinel/sinel+c*c)+d*d;
+    if (opt->err[6]>0) {  /* add SNR term */
+        e=fact*opt->err[6];
+        var+=e*e*(pow(10,0.1*MAX(snr_max-snr_rover,0))+
+                  pow(10,0.1*MAX(snr_max-snr_base, 0)));
+    }
+    if (opt->err[7]>0.0) {   /* add rcvr stdevs term */
+        if (code) var+=SQR(opt->err[7]*0.01*(1<<(obs->Pstd[frq]+5))); /* 0.01*2^(n+5) */
+        else var+=SQR(opt->err[7]*obs->Lstd[frq]*0.004*0.2); /* 0.004 cycles -> m) */
+    }
+
+    var*=(opt->ionoopt==IONOOPT_IFLC)?SQR(3.0):1.0;
+    return var;
 }
 /* test SNR mask ---------------------------------------------------------------
 * test SNR mask

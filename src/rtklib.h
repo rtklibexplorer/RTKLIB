@@ -57,9 +57,9 @@ extern "C" {
 
 /* constants -----------------------------------------------------------------*/
 
-#define VER_RTKLIB  "demo5"             /* library version */
+#define VER_RTKLIB  "GDSC_2023"             /* library version */
 
-#define PATCH_LEVEL "b34h"               /* patch level */
+#define PATCH_LEVEL "tips"               /* patch level */
 
 #define COPYRIGHT_RTKLIB \
             "Copyright (C) 2007-2020 T.Takasu\nAll rights reserved."
@@ -383,7 +383,8 @@ extern "C" {
 #define SOLQ_SINGLE 5                   /* solution status: single */
 #define SOLQ_PPP    6                   /* solution status: PPP */
 #define SOLQ_DR     7                   /* solution status: dead reckoning */
-#define MAXSOLQ     7                   /* max number of solution status */
+#define SOLQ_VEL    8                   /* solution status: doppler velocity */
+#define MAXSOLQ     8                   /* max number of solution status */
 
 #define SOLTYPE_FORWARD  0              /* solution type: forward */
 #define SOLTYPE_BACKWARD 1              /* solution type: backward */
@@ -873,6 +874,7 @@ typedef struct {        /* solution type */
     gtime_t eventime;   /* time of event (GPST) */
     double rr[6];       /* position/velocity (m|m/s) */
                         /* {x,y,z,vx,vy,vz} or {e,n,u,ve,vn,vu} */
+    double rr_init[3];
     float  qr[6];       /* position variance/covariance (m^2) */
                         /* {c_xx,c_yy,c_zz,c_xy,c_yz,c_zx} or */
                         /* {c_ee,c_nn,c_uu,c_en,c_nu,c_ue} */
@@ -1018,9 +1020,10 @@ typedef struct {        /* processing options type */
     int refpos;         /* base position for relative mode */
                         /* (0:pos in prcopt,  1:average of single pos, */
                         /*  2:read from file, 3:rinex header, 4:rtcm pos) */
-    double eratio[NFREQ]; /* code/phase error ratio */
+    double eratio[NFREQ*3]; /* code/phase error ratio [G1,G2,G5,R1,R2,R5,E1,E2,E5,...] */
     double err[8];      /* observation error terms */
                         /* [reserved,constant,elevation,baseline,doppler,snr-max,snr, rcv_std] */
+    double cwght[NFREQ*3]; /* constellation weight[G1,G2,G5,R1,R2,R5,E1,E2,E5,...] */
     double std[3];      /* initial-state std [0]bias,[1]iono [2]trop */
     double prn[6];      /* process-noise std [0]bias,[1]iono [2]trop [3]acch [4]accv [5] pos */
     double sclkstab;    /* satellite clock stability (sec/sec) */
@@ -1151,6 +1154,8 @@ typedef struct {        /* satellite status type */
     double phw;         /* phase windup (cycle) */
     gtime_t pt[2][NFREQ]; /* previous carrier-phase time */
     double  ph[2][NFREQ]; /* previous carrier-phase observable (cycle) */
+    double  D[NFREQ];     /* previous doppler measurement */
+    double Pf[NFREQ];     /* previous smoothed pseudorange */
 } ssat_t;
 
 typedef struct {        /* ambiguity control type */
@@ -1180,6 +1185,10 @@ typedef struct {        /* RTK control/result type */
     prcopt_t opt;       /* processing options */
     int initial_mode;   /* initial positioning mode */
     int epoch;          /* epoch number */
+    double drift;       /* receiver clock drift */
+    double vel_ud;      /* up/down velocity estimate */
+    double acc_ud;      /* up/down accel estimate */
+    int estvel_fail;
 } rtk_t;
 
 typedef struct {        /* receiver raw data control type */
@@ -1756,6 +1765,10 @@ EXPORT int lambda_search(int n, int m, const double *a, const double *Q,
 EXPORT int pntpos(const obsd_t *obs, int n, const nav_t *nav,
                   const prcopt_t *opt, sol_t *sol, double *azel,
                   ssat_t *ssat, char *msg);
+EXPORT int estvel(rtk_t *rtk, const obsd_t *obs, const int nobs,
+                   const int ns, const int *iu,
+                   const double *rs_dop, const double *dts_dop, const nav_t *nav,
+                   const prcopt_t *opt, sol_t *sol, const double *azel_dop);
 
 /* precise positioning -------------------------------------------------------*/
 EXPORT void rtkinit(rtk_t *rtk, const prcopt_t *opt);
@@ -1764,6 +1777,8 @@ EXPORT int  rtkpos (rtk_t *rtk, const obsd_t *obs, int nobs, const nav_t *nav);
 EXPORT int  rtkopenstat(const char *file, int level);
 EXPORT void rtkclosestat(void);
 EXPORT int  rtkoutstat(rtk_t *rtk, char *buff);
+EXPORT double varerr(int sat, int sys, double el, double snr_rover, double snr_base,
+                     double bl, double dt, int f, const prcopt_t *opt, const obsd_t *obs);
 
 /* precise point positioning -------------------------------------------------*/
 EXPORT void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav);

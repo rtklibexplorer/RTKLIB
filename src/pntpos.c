@@ -46,34 +46,6 @@
 #define MIN_EL      (5.0*D2R)   /* min elevation for measurement error (rad) */
 # define MAX_GDOP   30          /* max gdop for valid solution  */
 
-/* pseudorange measurement error variance ------------------------------------*/
-static double varerr(const prcopt_t *opt, const ssat_t *ssat, const obsd_t *obs, double el, int sys)
-{
-    double fact=1.0,varr,snr_rover;
-
-    switch (sys) {
-        case SYS_GPS: fact *= EFACT_GPS; break;
-        case SYS_GLO: fact *= EFACT_GLO; break;
-        case SYS_SBS: fact *= EFACT_SBS; break;
-        case SYS_CMP: fact *= EFACT_CMP; break;
-        case SYS_QZS: fact *= EFACT_QZS; break;
-        case SYS_IRN: fact *= EFACT_IRN; break;
-        default:      fact *= EFACT_GPS; break;
-    }
-    if (el<MIN_EL) el=MIN_EL;
-    /* var = R^2*(a^2 + (b^2/sin(el) + c^2*(10^(0.1*(snr_max-snr_rover)))) + (d*rcv_std)^2) */
-    varr=SQR(opt->err[1])+SQR(opt->err[2])/sin(el);
-    if (opt->err[6]>0.0) {  /* if snr term not zero */
-        snr_rover=(ssat)?SNR_UNIT*ssat->snr_rover[0]:opt->err[5];
-        varr+=SQR(opt->err[6])*pow(10,0.1*MAX(opt->err[5]-snr_rover,0));
-    }
-    varr*=SQR(opt->eratio[0]);
-    if (opt->err[7]>0.0) {
-        varr+=SQR(opt->err[7]*0.01*(1<<(obs->Pstd[0]+5)));  /* 0.01*2^(n+5) m */
-    }
-    if (opt->ionoopt==IONOOPT_IFLC) varr*=SQR(3.0); /* iono-free */
-    return SQR(fact)*varr;
-}
 /* get group delay parameter (m) ---------------------------------------------*/
 static double gettgd(int sat, const nav_t *nav, int type)
 {
@@ -357,9 +329,10 @@ static int rescode(int iter, const obsd_t *obs, int n, const double *rs,
         /* variance of pseudorange error */
         var[nv]=vare[i]+vmeas+vion+vtrp;
         if (ssat)
-            var[nv++]+=varerr(opt,&ssat[i],&obs[i],azel[1+i*2],sys);
+           var[nv++]+=varerr(sat,sys,azel[1+i*2],SNR_UNIT*ssat[sat-1].snr_rover[0],
+               opt->err[5],0,0,opt->nf,opt,&obs[i]);
         else
-            var[nv++]+=varerr(opt,NULL,&obs[i],azel[1+i*2],sys);
+           var[nv++]+=varerr(sat,sys,azel[1+i*2],opt->err[5],opt->err[5],0,0,opt->nf,opt,&obs[i]);
         trace(4,"sat=%2d azel=%5.1f %4.1f res=%7.3f sig=%5.3f\n",obs[i].sat,
               azel[i*2]*R2D,azel[1+i*2]*R2D,resp[i],sqrt(var[nv-1]));
     }
@@ -449,13 +422,14 @@ static int estpos(const obsd_t *obs, int n, const double *rs, const double *dts,
             sol->dtr[2]=x[5]/CLIGHT; /* GAL-GPS time offset (s) */
             sol->dtr[3]=x[6]/CLIGHT; /* BDS-GPS time offset (s) */
             sol->dtr[4]=x[7]/CLIGHT; /* IRN-GPS time offset (s) */
-            for (j=0;j<6;j++) sol->rr[j]=j<3?x[j]:0.0;
-            for (j=0;j<3;j++) sol->qr[j]=(float)Q[j+j*NX];
-            sol->qr[3]=(float)Q[1];    /* cov xy */
-            sol->qr[4]=(float)Q[2+NX]; /* cov yz */
-            sol->qr[5]=(float)Q[2];    /* cov zx */
+            for (j=0;j<6;j++) sol->rr_init[j]=j<3?x[j]:0.0;
+//            for (j=0;j<3;j++) sol->qr[j]=(float)Q[j+j*NX];
+//            sol->qr[3]=(float)Q[1];    /* cov xy */
+//            sol->qr[4]=(float)Q[2+NX]; /* cov yz */
+//            sol->qr[5]=(float)Q[2];    /* cov zx */
             sol->ns=(uint8_t)ns;
             sol->age=sol->ratio=0.0;
+            trace(3,"clk offsets: %12.3f %12.3f %12.3f %12.3f\n",x[3],x[4],x[5],x[6]);
             
             /* validate solution */
             if ((stat=valsol(azel,vsat,n,opt,v,nv,NX,msg))) {
@@ -546,89 +520,191 @@ static int raim_fde(const obsd_t *obs, int n, const double *rs,
     return stat;
 }
 /* range rate residuals ------------------------------------------------------*/
-static int resdop(const obsd_t *obs, int n, const double *rs, const double *dts,
-                  const nav_t *nav, const double *rr, const double *x,
-                  const double *azel, const int *vsat, double err, double *v,
-                  double *H)
+static int resdop(rtk_t *rtk, const obsd_t *obs, const int ns,
+                  const int *iu, const int nf,
+                  const double *rs_dop, const double *dts_dop,
+                  const double *azel_dop, const double *rs_car, const double *dts_car,
+                  const double *azel_car, const nav_t *nav, const double *rr,
+                  const double *x, double *v,
+                  double *H, int *svh)
 {
     double freq,rate,pos[3],E[9],a[3],e[3],vs[3],cosel,sig;
-    int i,j,nv=0;
+    const double *azel,*rs;
+    double dts,D,L,Lp,dL,Dp;
+    int i,j,ix,f,nv=0,sat;
     
-    trace(3,"resdop  : n=%d\n",n);
-    
+    trace(3,"resdop  : ns=%d\n",ns);
     ecef2pos(rr,pos); xyz2enu(pos,E);
     
-    for (i=0;i<n&&i<MAXOBS;i++) {
+    for (i=0;i<ns;i++) {
+        ix=iu[i];
+        sat=obs[ix].sat;
+        for (f=0;f<nf;f++) {
+            //trace(3,"sat=%d f=%d:\n",sat,f);
+            /* excluded satellite?  */
+            if (satexclude(sat,0,svh[i],&rtk->opt)) {
+                trace(3,"Sat excluded\n");
+                continue;
+            }
+            Dp=rtk->ssat[sat-1].D[f];
+            //D=Dp!=0?(obs[ix].D[f]+Dp)/2:obs[ix].D[f];  // average velocity over last epoch (matches TDCP)
+            D=obs[ix].D[f];    // instantaneous velocity, matches kalman filter
+            L=obs[ix].L[f];
+            Lp=rtk->ssat[sat-1].ph[0][f];
+            freq=sat2freq(sat,obs[ix].code[f],nav);
         
-        freq=sat2freq(obs[i].sat,obs[i].code[0],nav);
-        
-        if (obs[i].D[0]==0.0||freq==0.0||!vsat[i]||norm(rs+3+i*6,3)<=0.0) {
+            if (obs[ix].D[f]==0.0||freq==0.0) {
+                //trace(3,"skip sat=%d f=%d D=%.2f freq=%.2f slip=%d\n",sat,f,obs[ix].D[f],freq,rtk->ssat[sat-1].slip[f]);
             continue;
         }
+
+            /* Weight observation */
+            sig=100*sqrt(varerr(sat,rtk->ssat[sat-1].sys,azel_dop[1+ix*2],
+                            SNR_UNIT*rtk->ssat[sat-1].snr_rover[f],rtk->opt.err[5],
+                            0,1,f,&rtk->opt,&obs[ix]));
+
+            /* default to doppler */
+            sig*= rtk->opt.err[4]; /* doppler weight */
+            rs=&rs_dop[ix*6];
+            azel=&azel_dop[ix*2];
+            dts=dts_dop[ix*2+1];
+            if (azel_dop[ix*2+1]<rtk->opt.elmin) continue; //sig*=10;
+            if (testsnr(0,f,azel_dop[ix*2+1],obs[ix].SNR[f]*SNR_UNIT,&rtk->opt.snrmask)) continue; //sig*=10;
+
+            /* time differenced carrier phase residuals */
+            if (fabs(timediff(obs->time, rtk->ssat[sat-1].pt[0][f]))<fabs(1.5 * rtk->tt)) {
+                dL = (Lp - L) / rtk->tt;
+                //if (x[3]!=rtk->drift)  /* if not first iteration */
+                    trace(3, "sat=%d f=%d: D=%.2f dL=%.2f L=%.2f Lp=%.2f\n",sat,f,
+                        D, dL, L, Lp);
+                /* use TDCP if looks like valid data */
+                //if (fabs(D-dL)<5&&L!=0&&Lp!=0) {
+                if (fabs(D-dL)<0&&L!=0&&Lp!=0) {    // disable TDCP
+                //if (!(rtk->ssat[sat-1].slip[f]&1)&&L!=0&&Lp!=0) {
+                    D=dL;  /* use carrier phase difference */
+                    rs=&rs_car[ix*6];
+                    azel=&azel_car[ix*2];
+                    dts=dts_car[ix*2+1];
+                    sig/=rtk->opt.err[4]; /* reduce variance for delta carrier phase */
+                    //if (rtk->opt.mode==PMODE_VEL) rtk->ssat[sat-1].outc[f]=0;
+                }
+                if (L==0||rtk->ssat[sat-1].slip[f]&1) sig*=rtk->opt.err[4];  /* increase variance if no valid phase */
+            } else sig*=10;  /* increase variance if gap before last obs */
+               // continue;  /* skip if gap before last obs */
         /* LOS (line-of-sight) vector in ECEF */
-        cosel=cos(azel[1+i*2]);
-        a[0]=sin(azel[i*2])*cosel;
-        a[1]=cos(azel[i*2])*cosel;
-        a[2]=sin(azel[1+i*2]);
+            cosel=cos(azel[1]);
+            a[0]=sin(azel[0])*cosel;
+            a[1]=cos(azel[0])*cosel;
+            a[2]=sin(azel[1]);
         matmul("TN",3,1,3,1.0,E,a,0.0,e);
         
         /* satellite velocity relative to receiver in ECEF */
         for (j=0;j<3;j++) {
-            vs[j]=rs[j+3+i*6]-x[j];
+                vs[j]=rs[j+3]-x[j];
         }
         /* range rate with earth rotation correction */
-        rate=dot(vs,e,3)+OMGE/CLIGHT*(rs[4+i*6]*rr[0]+rs[1+i*6]*x[0]-
-                                      rs[3+i*6]*rr[1]-rs[  i*6]*x[1]);
-        
-        /* Std of range rate error (m/s) */
-        sig=(err<=0.0)?1.0:err*CLIGHT/freq;
-        
+            rate=dot(vs,e,3)+OMGE/CLIGHT*(rs[4]*rr[0]+rs[1]*x[0]-
+                                          rs[3]*rr[1]-rs[0]*x[1]);
         /* range rate residual (m/s) */
-        v[nv]=(-obs[i].D[0]*CLIGHT/freq-(rate+x[3]-CLIGHT*dts[1+i*2]))/sig;
-        
+            v[nv]=(-D*CLIGHT/freq-(rate+x[3]-CLIGHT*dts))/sig;
+            //if (x[3]!=rtk->drift) /* if not first iteration */
+                trace(3,"sat=%d f=%d: rs[3]=%.6f D=%.2f f=%.1f rate=%.3f x[3]=%.3f dts=%.6f v=%.2f sig=%.4f\n",
+                    sat, f, rs[3], D, freq, rate, x[3], dts*1e6, v[nv]*sig, sig);
         /* design matrix */
         for (j=0;j<4;j++) {
             H[j+nv*4]=((j<3)?-e[j]:1.0)/sig;
         }
-        nv++;
+        /* skip outliers if not first iteration */
+        //if (x[3]==rtk->drift||sig>1||fabs(v[nv]*sig) < 0.25)   // 0.5
+        if (x[3]==rtk->drift||fabs(v[nv]*sig) < 5.0)   // 0.5
+        //if (rtk->epoch<5||fabs(v[nv]*sig) < 5.0)   // 0.5
+            nv++;
+        else
+            trace(3,"outlier: sat=%d f=%d\n",sat, f);
+        }
     }
     return nv;
 }
 /* estimate receiver velocity ------------------------------------------------*/
-static void estvel(const obsd_t *obs, int n, const double *rs, const double *dts,
-                   const nav_t *nav, const prcopt_t *opt, sol_t *sol,
-                   const double *azel, const int *vsat)
+extern int estvel(rtk_t *rtk, const obsd_t *obs, const int nobs,
+                   const int ns, const int *iu,
+                   const double *rs_dop, const double *dts_dop, const nav_t *nav,
+                   const prcopt_t *opt, sol_t *sol, const double *azel_dop)
 {
-    double x[4]={0},dx[4],Q[16],*v,*H;
-    double err=opt->err[4]; /* Doppler error (Hz) */
-    int i,j,nv;
-    
-    v=mat(n,1); H=mat(4,n);
+    double x[4],dx[4],Q[16],vel[3],*v,*H,*var;
+    double *rs_car,*dts_car,*azel_car;
+    gtime_t time;
+    double tt,pos[3],r,e[3],sig=0;
+    int i,j,nv=0,svh[MAXOBS*2],info;
+//#define MAX_CLOCK_DRIFT 3.0   /* pixel 4xl */
+#define MAX_CLOCK_DRIFT 1000.0    /* sm-325f */
+#define MAX_UD_VEL 5.0 //2.0
+#define MAX_UD_ACCEL 100.0 // 1.0
+
+    v=mat(1,ns*2); H=mat(4,ns*2);
+    rs_car=mat(6,nobs); dts_car=mat(2,nobs);azel_car=zeros(2,nobs);
+    var=zeros(2,nobs);
+
+    rtk->estvel_fail=1;
+    for (i=0;i<3;i++) dx[i]=x[i]=rtk->x[i+3];
+    x[3]=rtk->drift;
+
+    /* get azel and range for use with carrier phase measurements */
+    trace(3,"estvel: tt=%.3f\n",rtk->tt);
+    time=timeadd(sol->time,rtk->tt/2);
+    satposs(time,obs,nobs,nav,opt->sateph,rs_car,dts_car,var,svh);
+    ecef2pos(sol->rr,pos);
+    for (i=0;i<ns;i++) {
+        /* calculate sat angles for carrier phase */
+        r=geodist(rs_car+iu[i]*6,sol->rr,e);
+        satazel(pos,e,azel_car+iu[i]*2);
+    }
     
     for (i=0;i<MAXITR;i++) {
         
         /* range rate residuals (m/s) */
-        if ((nv=resdop(obs,n,rs,dts,nav,sol->rr,x,azel,vsat,err,v,H))<4) {
+        if ((nv=resdop(rtk,obs,ns,iu,opt->nf,rs_dop,dts_dop,azel_dop,rs_car,dts_car,
+            azel_car,nav,sol->rr,x,v,H,svh))<4) {
+                trace(3,"estvel fail for too few sats: nv=%d\n",nv);
+                rtk->estvel_fail=1;
             break;
         }
         /* least square estimation */
-        if (lsq(H,v,4,nv,dx,Q)) break;
-        
+        if ((info=lsq(H,v,4,nv,dx,Q))) {
+            trace(1,"lsq error info=%d\n",info);
+            break;
+        }
         for (j=0;j<4;j++) x[j]+=dx[j];
-        
+        trace(3,"drift=%.2f x[3]=%.2f diff=%.2f\n",rtk->drift,x[3],x[3]-rtk->drift);
+        trace(3,"estvel : vx=%.3f vy=%.3f vz=%.3f, ns=%d nv=%d\n",x[0],x[1],x[2],ns,nv);
+        ecef2enu(pos,x,vel);
+        trace(3,"   enu : ve=%.3f vn=%.3f vu=%.3f udaccel=%.3f\n",vel[0],vel[1],vel[2],vel[2]-rtk->vel_ud);
         if (norm(dx,4)<1E-6) {
-            trace(3,"estvel : vx=%.3f vy=%.3f vz=%.3f, n=%d\n",x[0],x[1],x[2],n);
-            matcpy(sol->rr+3,x,3,1);
-            sol->qv[0]=(float)Q[0];  /* xx */
-            sol->qv[1]=(float)Q[5];  /* yy */
-            sol->qv[2]=(float)Q[10]; /* zz */
-            sol->qv[3]=(float)Q[1];  /* xy */
-            sol->qv[4]=(float)Q[6];  /* yz */
-            sol->qv[5]=(float)Q[2];  /* zx */
+            if ((fabs(x[3]-rtk->drift)<MAX_CLOCK_DRIFT||rtk->drift==0)&&
+                (fabs(vel[2]-rtk->vel_ud)<MAX_UD_ACCEL&&fabs(vel[2])<MAX_UD_VEL)) {  /* skip clock jump */
+                matcpy(sol->rr+3,x,3,1);
+                sol->qv[0]=(float)Q[0];  /* xx */
+                sol->qv[1]=(float)Q[5];  /* yy */
+                sol->qv[2]=(float)Q[10]; /* zz */
+                sol->qv[3]=(float)Q[1];  /* xy */
+                sol->qv[4]=(float)Q[6];  /* yz */
+                sol->qv[5]=(float)Q[2];  /* zx */
+                rtk->estvel_fail=0;
+                rtk->acc_ud = rtk->tt==0?0:(vel[2]-rtk->vel_ud)/rtk->tt;
+                rtk->vel_ud=vel[2];
+            } else {
+                trace(3,"estvel fail, drift:=%.2f->%.2f ud_vel=%.2f\n",rtk->drift,x[3],vel[2]);
+                nv=0;
+                rtk->vel_ud=rtk->acc_ud=0;
+                //rtk->drift=0;
+            }
+            rtk->drift=x[3];         /* save clock drift for next epoch */
             break;
         }
     }
-    free(v); free(H);
+    free(v);free(H);free(var);
+    free(rs_car);free(dts_car);free(azel_car);
+    return(nv);
 }
 /* single-point positioning ----------------------------------------------------
 * compute receiver position, velocity, clock bias by single-point positioning
@@ -689,9 +765,9 @@ extern int pntpos(const obsd_t *obs, int n, const nav_t *nav,
         stat=raim_fde(obs,n,rs,dts,var,svh,nav,&opt_,ssat,sol,azel_,vsat,resp,msg);
     }
     /* estimate receiver velocity with Doppler */
-    if (stat) {
+/*    if (stat) {
         estvel(obs,n,rs,dts,nav,&opt_,sol,azel_,vsat);
-    }
+    }  */
     if (azel) {
         for (i=0;i<n*2;i++) azel[i]=azel_[i];
     }

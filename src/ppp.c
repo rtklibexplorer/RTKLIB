@@ -323,7 +323,7 @@ static int model_phw(gtime_t time, int sat, const char *type, int opt,
     return 1;
 }
 /* measurement error variance ------------------------------------------------*/
-static double varerr(int sat, int sys, double el, double snr_rover,
+static double varerr_ppp(int sat, int sys, double el, double snr_rover,
                      int f, const prcopt_t *opt, const obsd_t *obs)
 {
     double a,b,e;
@@ -1032,7 +1032,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
             else        rtk->ssat[sat-1].resp[frq]=v[nv];   /* pseudorange */
 
             /* variance */
-            var[nv]=varerr(sat,sys,azel[1+i*2],
+            var[nv]=varerr_ppp(sat,sys,azel[1+i*2],
                     SNR_UNIT*rtk->ssat[sat-1].snr_rover[frq],
                     j,opt,obs+i);
             var[nv] +=vart+SQR(C)*vari+var_rs[i];
