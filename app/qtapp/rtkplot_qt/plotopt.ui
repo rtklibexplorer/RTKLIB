@@ -1571,6 +1571,16 @@
         </property>
         <item>
          <property name="text">
+          <string>1 cm</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2 cm</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>5 cm</string>
          </property>
         </item>

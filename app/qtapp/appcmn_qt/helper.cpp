@@ -1,13 +1,13 @@
 #include "helper.h"
 
-#include "rtklib.h"
-
 #include <math.h>
 
 #include <QLabel>
 #include <QComboBox>
 #include <QStandardItemModel>
 #include <QMessageBox>
+
+#include "rtklib.h"
 
 
 //---------------------------------------------------------------------------

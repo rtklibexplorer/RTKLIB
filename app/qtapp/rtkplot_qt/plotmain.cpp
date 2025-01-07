@@ -243,9 +243,9 @@ Plot::Plot(QWidget *parent) : QMainWindow(parent), ui(new Ui::Plot)
 
     rangeListPopupAction = new QWidgetAction(ui->btnRangeList);
     lWRangeList = new QListWidget();
-    float rangeValue[] = {0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10};
-    for (int i = 0; i < (int)(sizeof(rangeValue)/sizeof(float)); i++) {
-        float value = rangeValue[i];
+    double rangeValue[] = {0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10};
+    for (int i = 0; i < (int)(sizeof(rangeValue)/sizeof(double)); i++) {
+        double value = rangeValue[i];
         QString unit;
 
         if (fmod(value, 1000) == 0) {
@@ -2630,12 +2630,12 @@ void Plot::fitRange(int all)
         delete pos;
     }
     // add margins
-    xl[0] -= 0.05;
-    xl[1] += 0.05;
-    yl[0] -= 0.05;
-    yl[1] += 0.05;
-    zl[0] -= 0.05;
-    zl[1] += 0.05;
+    xl[0] -= 0.015;
+    xl[1] += 0.015;
+    yl[0] -= 0.015;
+    yl[1] += 0.015;
+    zl[0] -= 0.015;
+    zl[1] += 0.015;
 
     if (all || plotType == PLOT_TRK) {
         graphTrack->setLimits(xl, yl);
