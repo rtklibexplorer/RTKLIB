@@ -1454,6 +1454,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
                     /* include next day precise ephemeris or rinex brdc nav */
                     ttte=tte;
                     if (ext&&(!strcmp(ext,".sp3")||!strcmp(ext,".SP3")||
+                              !strcmp(ext,".clk")||!strcmp(ext,".CLK")||
                               !strcmp(ext,".eph")||!strcmp(ext,".EPH"))) {
                         ttte=timeadd(ttte,3600.0);
                     }
