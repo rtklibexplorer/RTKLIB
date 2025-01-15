@@ -444,7 +444,7 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
 
     solstatic=sopt->solstatic&&
               (popt->mode==PMODE_STATIC||popt->mode==PMODE_STATIC_START||popt->mode==PMODE_PPP_STATIC);
-    
+
     rtcm_path[0]='\0';
 
     while ((nobs=inputobs(obs_ptr,rtk->sol.stat,popt))>=0) {
@@ -846,9 +846,9 @@ static int getstapos(const char *file, const char *name, double *r)
     }
     while (fgets(buff,sizeof(buff),fp)) {
         if ((p=strchr(buff,'%'))) *p='\0';
-        
+
         if (sscanf(buff,"%lf %lf %lf %255s",pos,pos+1,pos+2,sname)<4) continue;
-        
+
         for (p=sname,q=name;*p&&*q;p++,q++) {
             if (toupper((int)*p)!=toupper((int)*q)) break;
         }
@@ -1417,7 +1417,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
             closeses(&navs,&pcvss,&pcvsr);
             return 0;
         }
-        for (i=0;i<n&&i<MAXINFILE;i++) {
+        for (i=0;i<=n&&i<MAXINFILE;i++) {
             if (!(ifile[i]=(char *)malloc(1024))) {
                 for (;i>=0;i--) free(ifile[i]);
                 closeses(&navs,&pcvss,&pcvsr);
@@ -1465,7 +1465,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
                 while (k<nf) index[k++]=j;
 
                 if (nf>=MAXINFILE) {
-                    trace(2,"too many input files. trancated\n");
+                    trace(2,"too many input files. truncated\n");
                     break;
                 }
             }
