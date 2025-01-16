@@ -1617,7 +1617,7 @@
         </widget>
        </item>
        <item row="3" column="2">
-        <widget class="QCheckBox" name="C09">
+        <widget class="QCheckBox" name="C08">
          <property name="toolTip">
           <string>Pilot</string>
          </property>
@@ -1692,7 +1692,7 @@
         </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QCheckBox" name="C08">
+        <widget class="QCheckBox" name="C07">
          <property name="toolTip">
           <string>Data</string>
          </property>

@@ -182,10 +182,10 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     textViewer = new TextViewer(this);
     freqDialog = new FreqDialog(this);
     
-    QStringList freq_tooltips = {tr("Single Frequency"),
-                                 tr("L1 and L2 Dual-Frequency"),
+    QStringList freq_tooltips = {tr("Single Frequency"), tr("L1 and L2 Dual-Frequency"),
                                  tr("L1, L2 and L5 Triple-Frequency"),
-                                 tr("Experimental, not fully supported")};
+                                 tr("Four-Frequency"), tr("Five-Frequency"), tr("Six-Frequency"),
+                                 tr("Seven-Frequency")};
 
     for (int i = 0; i < NFREQ; i++) {
         label = label + (i > 0 ? "+" : "") + QString("L%1").arg(freq[i]);

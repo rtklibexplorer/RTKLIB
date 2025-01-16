@@ -714,7 +714,7 @@ int Graph::clipPoint(QPoint *p0, int area, QPoint *p1)
 
     if (area & 1) { // left
         if (p0->x() == p1->x()) return 0;
-        y_ = p0->y() + (p1->y() - p0->y()) * (xmin - p0->x()) / (p1->x() - p0->x());
+        y_ = p0->y() + (int64_t)(p1->y() - p0->y()) * (xmin - p0->x()) / (p1->x() - p0->x());
         if (ymin <= y_ && y_ <= ymax) {
             p0->setX(xmin);
             p0->setY(y_);
@@ -723,7 +723,7 @@ int Graph::clipPoint(QPoint *p0, int area, QPoint *p1)
 	}
     if (area & 2) { // right
         if (p0->x() == p1->x()) return 0;
-        y_ = p0->y() + (p1->y() - p0->y()) * (xmax - p0->x()) / (p1->x() - p0->x());
+        y_ = p0->y() + (int64_t)(p1->y() - p0->y()) * (xmax - p0->x()) / (p1->x() - p0->x());
         if (ymin <= y_ && y_ <= ymax) {
             p0->setX(xmax);
             p0->setY(y_);
@@ -732,7 +732,7 @@ int Graph::clipPoint(QPoint *p0, int area, QPoint *p1)
 	}
     if (area & 4) { // upper
         if (p0->y() == p1->y()) return 0;
-        x_ = p0->x() + (p1->x() - p0->x()) * (ymin - p0->y()) / (p1->y() - p0->y());
+        x_ = p0->x() + (int64_t)(p1->x() - p0->x()) * (ymin - p0->y()) / (p1->y() - p0->y());
         if (xmin <= x_ && x_ <= xmax) {
             p0->setX(x_);
             p0->setY(ymin);
@@ -741,7 +741,7 @@ int Graph::clipPoint(QPoint *p0, int area, QPoint *p1)
 	}
     if (area & 8) { // lower
         if (p0->y()==p1->y()) return 0;
-        x_ = p0->x() + (p1->x() - p0->x()) * (ymax - p0->y()) / (p1->y() - p0->y());
+        x_ = p0->x() + (int64_t)(p1->x() - p0->x()) * (ymax - p0->y()) / (p1->y() - p0->y());
         if (xmin <= x_ && x_ <= xmax) {
             p0->setX(x_);
             p0->setY(ymax);
