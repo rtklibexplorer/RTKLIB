@@ -1676,6 +1676,8 @@ EXPORT void seph2pos(gtime_t time, const seph_t *seph, double *rs, double *dts,
                      double *var);
 EXPORT int  peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
                      double *rs, double *dts, double *var);
+EXPORT int pephpos_avail(gtime_t time, const nav_t *nav, int avail[MAXSAT]);
+EXPORT int pephclk_avail(gtime_t time, const nav_t *nav, int avail[MAXSAT]);
 EXPORT void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
                       double *dant);
 EXPORT int  satpos(gtime_t time, gtime_t teph, int sat, int ephopt,

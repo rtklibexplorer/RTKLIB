@@ -59,6 +59,7 @@
 #define MAXARG      10                  /* max number of args in a command */
 #define MAXCMD      256                 /* max length of a command */
 #define MAXSTR      1024                /* max length of a stream */
+#define MAXFILE     4                   // Max number of input files.
 #define OPTSDIR     "."                 /* default config directory */
 #define OPTSFILE    "rtkrcv.conf"       /* default config file */
 #define NAVIFILE    "rtkrcv.nav"        /* navigation save file */
@@ -125,9 +126,12 @@ static prcopt_t prcopt;                 /* processing options */
 static solopt_t solopt[2]={{0}};        /* solution options */
 static filopt_t filopt  ={""};          /* file options */
 
+static const char *infiles[MAXFILE];
+static int num_infiles = 0;
+
 /* help text -----------------------------------------------------------------*/
 static const char *usage[]={
-    "usage: rtkrcv [-s][-p port][-d dev][-o file][-w pwd][-r level][-t level]",
+    "usage: rtkrcv [-s][-p port][-d dev][-o file][-w pwd][-r level][-t level][...]",
     "options",
     "  -s         start RTK server on program startup",
     "  -nc        start RTK server on program startup with no console",
@@ -139,7 +143,8 @@ static const char *usage[]={
     "  -r level   output solution status file (0:off,1:states,2:residuals)",
     "  -t level   debug trace level (0:off,1-5:on)",
     "  --deamon   detach from the console",
-    "  --version  print the version and exit"
+    "  --version  print the version and exit",
+    "  RINEX CLK and SP3 files many be suppied, the default maximum is 4 files."
 };
 static const char *helptxt[]={
     "start                 : start rtk server",
@@ -150,6 +155,7 @@ static const char *helptxt[]={
     "satellite [-n] [cycle]: show satellite status",
     "observ [-n] [cycle]   : show observation data",
     "navidata [cycle]      : show navigation data",
+    "pephdata              : show precise ephemeris and clock data availability",
     "stream [cycle]        : show stream status",
     "ssr [cycle]           : show ssr corrections",
     "error                 : show error/warning messages",
@@ -453,6 +459,14 @@ static int startsvr(vt_t *vt)
     pos[1]=nmeapos[1]*D2R;
     pos[2]=nmeapos[2];
     pos2ecef(pos,npos);
+
+    // Read prec ephemeris data.
+    svr.nav.ne = svr.nav.nemax = 0;
+    for (int i = 0; i < num_infiles; i++) readsp3(infiles[i], &svr.nav, 0);
+
+    // Read precise clock files.
+    svr.nav.nc = svr.nav.ncmax = 0;
+    for (int i = 0; i < num_infiles; i++) readrnxc(infiles[i], &svr.nav);
 
     /* read antenna file */
     readant(vt,&prcopt,&svr.nav,&svr.pcvsr);
@@ -975,6 +989,50 @@ static void prnavidata(vt_t *vt)
     vt_printf(vt,"UTC: %9.2E %9.2E %9.2E %9.2E  LEAPS: %.0f\n",utc[0],utc[1],utc[2],
             utc[3],utc[4]);
 }
+/* Print precise ephemeris and clock data availability -----------------------*/
+static void prpephdata(vt_t *vt)
+{
+    gtime_t time;
+    int ppos[MAXSAT], pclk[MAXSAT];
+    int nppos, npclk;
+
+    trace(4,"prnpephdata:\n");
+
+    rtksvrlock(&svr);
+    time=svr.rtk.sol.time;
+    nppos = pephpos_avail(time, &svr.nav, ppos);
+    npclk = pephclk_avail(time, &svr.nav, pclk);
+    rtksvrunlock(&svr);
+
+    if (svr.nav.ne > 0) {
+      vt_printf(vt,"\n%sPrecise ephemeris:%s %d", ESC_BOLD, ESC_RESET, nppos);
+      int last_sys = 0;
+      for (int i = 0; i < MAXSAT; i++) {
+        if (ppos[i]) {
+          int sys = satsys(i + 1, NULL);
+          char id[8];
+          satno2id(i + 1, id);
+          vt_printf(vt,"%s%s", sys == last_sys ? " " : "\n", id);
+          last_sys = sys;
+        }
+      }
+      vt_printf(vt,"\n");
+    }
+    if (svr.nav.nc > 0) {
+      vt_printf(vt,"\n%sPrecise clocks:%s %d", ESC_BOLD, ESC_RESET, npclk);
+      int last_sys = 0;
+      for (int i = 0; i < MAXSAT; i++) {
+        if (pclk[i]) {
+          int sys = satsys(i + 1, NULL);
+          char id[8];
+          satno2id(i + 1, id);
+          vt_printf(vt,"%s%s", sys == last_sys ? " " : "\n", id);
+          last_sys = sys;
+        }
+      }
+      vt_printf(vt,"\n");
+    }
+}
 /* print error/warning messages ----------------------------------------------*/
 static void prerror(vt_t *vt)
 {
@@ -1171,6 +1229,14 @@ static void cmd_navidata(char **args, int narg, vt_t *vt)
         prnavidata(vt);
         if (cycle>0) sleepms(cycle); else return;
     }
+    vt_printf(vt,"\n");
+}
+/* Precise ephemeris and clock data availability command ---------------------*/
+static void cmd_pephdata(char **args, int narg, vt_t *vt)
+{
+    trace(3,"cmd_pephdata:\n");
+
+    prpephdata(vt);
     vt_printf(vt,"\n");
 }
 /* error command -------------------------------------------------------------*/
@@ -1391,8 +1457,8 @@ static void *con_thread(void *arg)
 {
     const char *cmds[]={
         "start","stop","restart","solution","status","satellite","observ",
-        "navidata","stream","ssr","error","option","set","load","save","log",
-        "help","?","exit","shutdown",""
+        "navidata","pephdata","stream","ssr","error","option","set",
+        "load","save","log","help","?","exit","shutdown",""
     };
     con_t *con=(con_t *)arg;
     int i,j,narg;
@@ -1446,20 +1512,21 @@ static void *con_thread(void *arg)
             case  5: cmd_satellite(args,narg,con->vt); break;
             case  6: cmd_observ   (args,narg,con->vt); break;
             case  7: cmd_navidata (args,narg,con->vt); break;
-            case  8: cmd_stream   (args,narg,con->vt); break;
-            case  9: cmd_ssr      (args,narg,con->vt); break;
-            case 10: cmd_error    (args,narg,con->vt); break;
-            case 11: cmd_option   (args,narg,con->vt); break;
-            case 12: cmd_set      (args,narg,con->vt); break;
-            case 13: cmd_load     (args,narg,con->vt); break;
-            case 14: cmd_save     (args,narg,con->vt); break;
-            case 15: cmd_log      (args,narg,con->vt); break;
-            case 16: cmd_help     (args,narg,con->vt); break;
+            case  8: cmd_pephdata (args,narg,con->vt); break;
+            case  9: cmd_stream   (args,narg,con->vt); break;
+            case 10: cmd_ssr      (args,narg,con->vt); break;
+            case 11: cmd_error    (args,narg,con->vt); break;
+            case 12: cmd_option   (args,narg,con->vt); break;
+            case 13: cmd_set      (args,narg,con->vt); break;
+            case 14: cmd_load     (args,narg,con->vt); break;
+            case 15: cmd_save     (args,narg,con->vt); break;
+            case 16: cmd_log      (args,narg,con->vt); break;
             case 17: cmd_help     (args,narg,con->vt); break;
-            case 18: /* exit */
+            case 18: cmd_help     (args,narg,con->vt); break;
+            case 19: /* exit */
                 if (con->vt->type) con->state=0;
                 break;
-            case 19: /* shutdown */
+            case 20: /* shutdown */
                 if (!strcmp(args[0],"shutdown")) {
                     vt_printf(con->vt,"rtk server shutdown ...\n");
                     sleepms(1000);
@@ -1606,7 +1673,7 @@ static void deamonise(void)
 
 /* rtkrcv main -----------------------------------------------------------------
 * synopsis
-*     rtkrcv [-s][-nc][-p port][-d dev][-o file][-r level][-t level]
+*     rtkrcv [-s][-nc][-p port][-d dev][-o file][-r level][-t level][...]
 *
 * description
 *     A command line version of the real-time positioning AP by rtklib. To start
@@ -1636,6 +1703,7 @@ static void deamonise(void)
 *     -t level   debug trace level (0:off,1-5:on)
 *     --deamon   detach from the console
 *     --version  prints the version and exits
+*     RINEX CLK and SP3 files many be suppied.
 *
 * command
 *     start
@@ -1667,6 +1735,9 @@ static void deamonise(void)
 *
 *     navidata [cycle]
 *       Show navigation data. Use option cycle for cyclic display.
+*
+*     pephdata
+*       Show precise ephemeris and clock data availability.
 *
 *     stream [cycle]
 *       Show stream status. Use option cycle for cyclic display.
@@ -1735,7 +1806,8 @@ int main(int argc, char **argv)
             fprintf(stderr, "rtkrcv RTKLIB %s %s\n", VER_RTKLIB, PATCH_LEVEL);
             exit(0);
         }
-        else printusage();
+        else if (*argv[i] == '-') printusage();
+        else if (num_infiles < MAXFILE) infiles[num_infiles++] = argv[i];
     }
     if (deamon) deamonise();
     if (trace>0) {

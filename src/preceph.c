@@ -638,6 +638,50 @@ static int pephpos(gtime_t time, int sat, const nav_t *nav, double *rs,
     if (varc) *varc=SQR(std);
     return 1;
 }
+// Available precise ephemeris, for monitoring.
+//
+// The logic parallels pephpos, to return true for each satellite with
+// enought data to compute the precise ephemeris.
+//
+// Returns the number of satellites with avaiable precise ephemeris.
+//
+extern int pephpos_avail(gtime_t time, const nav_t *nav, int avail[MAXSAT]) {
+  for (int i = 0; i < MAXSAT; i++) avail[i] = 0;
+
+  if (nav->ne < NMAX + 1 ||
+      timediff(time, nav->peph[0].time) < -MAXDTE ||
+      timediff(time, nav->peph[nav->ne - 1].time) > MAXDTE) {
+    return 0;
+  }
+
+  // Binary search.
+  int i = 0;
+  for (int j = nav->ne - 1; i < j; ) {
+    int k = (i + j) / 2;
+    if (timediff(nav->peph[k].time, time) < 0.0) i = k + 1; else j = k;
+  }
+  int index = i <= 0 ? 0 : i - 1;
+  // Polynomial interpolation for orbit.
+  i = index - (NMAX + 1) / 2;
+  if (i < 0) i = 0; else if (i + NMAX >= nav->ne) i = nav->ne - NMAX - 1;
+
+  int n = 0;
+  for (int k = 0; k < MAXSAT; k++) {
+    int ok = 1;
+    for (int j = 0; j <= NMAX; j++) {
+      if (norm(nav->peph[i + j].pos[k], 3) <= 0.0) {
+        ok = 0;
+        break;
+      }
+    }
+    if (ok) {
+      avail[k] = 1;
+      n++;
+    }
+  }
+  return n;
+}
+
 /* satellite clock by precise clock ------------------------------------------*/
 static int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
                    double *varc)
@@ -686,6 +730,49 @@ static int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
     }
     if (varc) *varc=SQR(std);
     return 1;
+}
+// Available precise clock, for monitoring.
+//
+// The logic parallels pephclk, to return true for each satellite with
+// enought data to compute the precise ephemeris.
+//
+// Returns the number of satellites with avaiable precise ephemeris.
+//
+extern int pephclk_avail(gtime_t time, const nav_t *nav, int avail[MAXSAT]) {
+  for (int i = 0; i < MAXSAT; i++) avail[i] = 0;
+
+  if (nav->nc < 2 ||
+      timediff(time, nav->pclk[0].time) < -MAXDTE ||
+      timediff(time, nav->pclk[nav->nc-1].time) > MAXDTE) {
+    // trace(3,"no prec clock %s sat=%2d\n",time2str(time,tstr,0),sat);
+    return 0;
+  }
+
+  // Binary search.
+  int i = 0;
+  for (int j = nav->nc - 1; i < j; ) {
+    int k = (i + j) / 2;
+    if (timediff(nav->pclk[k].time, time) < 0.0) i = k + 1; else j = k;
+  }
+  int index = i <= 0 ? 0 : i - 1;
+
+  // Linear interpolation for clock.
+  double t0 = timediff(time, nav->pclk[index].time);
+  double t1 = timediff(time, nav->pclk[index + 1].time);
+
+  int n = 0;
+  for (int k = 0; k < MAXSAT; k++) {
+    double c0 = nav->pclk[index  ].clk[k][0];
+    double c1 = nav->pclk[index+1].clk[k][0];
+    if (t0 <= 0.0) {
+      if (c0 == 0.0) continue;
+    } else if (t1 >= 0.0) {
+      if (c1 == 0.0) continue;
+    } else if (c0 == 0.0 || c1 == 0.0) continue;
+    avail[k] = 1;
+    n++;
+  }
+  return n;
 }
 /* Satellite antenna phase center offset ---------------------------------------
  * Compute satellite antenna phase center offset in ECEF
