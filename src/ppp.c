@@ -397,7 +397,8 @@ static double mwmeas(const obsd_t *obs, const nav_t *nav)
 
     if (freq1==0.0||freq2==0.0||obs->L[0]==0.0||obs->L[1]==0.0||
         obs->P[0]==0.0||obs->P[1]==0.0) return 0.0;
-    trace(3,"mwmeas: %12.1f %12.1f %15.3f %15.3f %15.3f %15.3f %d %d\n",freq1,freq2,obs->L[0],obs->L[1],obs->P[0],obs->P[1],obs->code[0],obs->code[1]);
+    trace(5,"mwmeas: sat=%d %12.1f %12.1f %15.3f %15.3f %15.3f %15.3f %d %d\n",
+          obs->sat,freq1,freq2,obs->L[0],obs->L[1],obs->P[0],obs->P[1],obs->code[0],obs->code[1]);
     return (obs->L[0]-obs->L[1])*CLIGHT/(freq1-freq2)-
            (freq1*obs->P[0]+freq2*obs->P[1])/(freq1+freq2);
 }
@@ -800,7 +801,8 @@ static void udbias_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
             /* reset fix flags */
             for (k=0;k<MAXSAT;k++) rtk->ambc[sat-1].flags[k]=0;
 
-            trace(3,"udbias_ppp: sat=%2d bias=%.3f\n",sat,bias[i]);
+            trace(3,"udbias_ppp: sat=%2d L%s bias=%7.3f\n",
+                  sat,code2obs(obs[i].code[f]),bias[i]);
         }
     }
 }
@@ -1066,16 +1068,17 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
 
             /* variance */
             var[nv]=varerr(sat,sys,azel[1+i*2],
-                    SNR_UNIT*rtk->ssat[sat-1].snr_rover[frq],
-                    j,opt,obs+i);
+                           SNR_UNIT*rtk->ssat[sat-1].snr_rover[frq],
+                           j,opt,obs+i);
             var[nv] +=vart+SQR(C)*vari+var_rs[i];
             if (sys==SYS_GLO&&code==1) var[nv]+=VAR_GLO_IFB;
 
-            trace(3,"%s sat=%2d %s%d res=%9.4f sig=%9.4f el=%4.1f\n",str,sat,
-                  code?"P":"L",frq+1,res,sqrt(var[nv]),azel[1+i*2]*R2D);
+            trace(3,"%s post=%2d sat=%2d %s%d res=%9.4f sig=%9.4f el=%4.1f\n",
+                  str,post,sat,code?"P":"L",frq+1,res,sqrt(var[nv]),azel[1+i*2]*R2D);
 
             /* reject satellite by pre-fit residuals */
-            if (post==0&&opt->maxinno[code]>0.0&&fabs(res)>opt->maxinno[code]) {
+            double maxinno = (post==-1?1000:10*opt->maxinno[code]);
+            if (post<=0&&opt->maxinno[code]>0.0&&fabs(res)>maxinno) {
                 trace(2,"outlier (%d) rejected %s sat=%2d %s%d res=%9.4f el=%4.1f\n",
                       post,str,sat,code?"P":"L",frq+1,res,azel[1+i*2]*R2D);
                 exc[i]=1; rtk->ssat[sat-1].rejc[frq]++;
@@ -1241,8 +1244,8 @@ extern void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         matcpy(Pp,rtk->P,rtk->nx,rtk->nx);
 
         /* prefit residuals
-         * NOTE: does not reject satellites with large pre-fit residuals in
-         *       first iteration by using argument post = -1
+         * NOTE: use different limit for pre-fit residuals in first iteration
+         *       by using argument post = -1
          * */
         if (!(nv=ppp_res(i==0?-1:0,obs,n,rs,dts,var,svh,dr,exc,nav,xp,rtk,v,H,R,azel))) {
             trace(2,"%s ppp (%d) no valid obs data\n",str,i+1);
