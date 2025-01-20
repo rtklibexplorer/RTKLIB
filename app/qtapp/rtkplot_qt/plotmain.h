@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 #ifndef plotmainH
 #define plotmainH
 //---------------------------------------------------------------------------
@@ -43,6 +43,7 @@
 #define PLOT_SNR    10                  // plot-type: snr/mp-plot
 #define PLOT_SNRE   11                  // plot-type: snr/mp-el-plot
 #define PLOT_MPS    12                  // plot-type: mp-skyplot
+#define PLOT_IONOS  13                  // plot-type: iono-skyplot
 
 #define ORG_STARTPOS 0                  // plot-origin: start position
 #define ORG_ENDPOS  1                   // plot-origin: end position
@@ -249,7 +250,7 @@ private:
     obs_t observation;
     nav_t navigation;
     sta_t station;
-    double *azimuth, *elevation, *multipath[NFREQ+NEXOBS];
+    double *azimuth, *elevation, *multipath[NFREQ+NEXOBS], *ionosphere;
     char streamBuffer[1024];
     int nStreamBuffer;
     
@@ -283,6 +284,7 @@ private:
     int isObservation(const QString &file);
     void updateObservation(int nobs);
     void updateMp();
+    void updateIono();
     void clearObservation();
     void clearSolution();
     void readWaitStart();
@@ -348,7 +350,8 @@ private:
     void drawSnr(QPainter &g,int level);
     void drawSnrE(QPainter &g,int level);
     void drawMpSky(QPainter &g,int level);
-    
+    void drawIonoSky(QPainter &g,int level);
+
     TIMEPOS *solutionToPosition(solbuf_t *sol, int index, int qflag, int type);
     TIMEPOS *solutionToNsat(solbuf_t *sol, int index, int qflag);
     
@@ -362,6 +365,7 @@ private:
     QColor sysColor(int sat);
     QColor snrColor(double snr);
     QColor mpColor(double mp);
+    QColor ionoColor(double iono);
     void readStationPosition(const QString &file, const QString &sta, double *rr);
     int searchPosition(int x, int y);
     void timeSpan(gtime_t *ts, gtime_t *te, double *tint);

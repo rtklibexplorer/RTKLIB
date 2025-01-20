@@ -1,0 +1,10 @@
+# build windows apps (BROKEN)
+
+add_subdirectory(rtkconv)
+#add_subdirectory(rtkget)
+#add_subdirectory(rtklaunch)
+#add_subdirectory(rtknavi)
+#add_subdirectory(rtkplot)
+#add_subdirectory(rtkpost)
+#add_subdirectory(srctblbrows)
+#add_subdirectory(strsvrt)

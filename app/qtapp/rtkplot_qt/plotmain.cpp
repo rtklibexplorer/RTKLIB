@@ -650,7 +650,7 @@ void Plot::dropEvent(QDropEvent *event)
         if ((ext == "jpg") || (ext == "jpeg")) {
             if (plotType == PLOT_TRK)
                 readMapData(file);
-            else if (plotType == PLOT_SKY || plotType == PLOT_MPS)
+            else if (plotType == PLOT_SKY || plotType == PLOT_MPS || plotType == PLOT_IONOS)
                 readSkyData(file);
         };
     } else if (isObservation(files.at(0))) {
@@ -2332,7 +2332,7 @@ void Plot::updateEnable()
     ui->cBSatelliteList->setVisible(plotType == PLOT_RES || plotType == PLOT_RESE || plotType >= PLOT_OBS ||
                                     plotType == PLOT_SKY || plotType == PLOT_DOP ||
                                     plotType == PLOT_SNR || plotType == PLOT_SNRE ||
-                                    plotType == PLOT_MPS);
+                                    plotType == PLOT_MPS || plotType == PLOT_IONOS);
     ui->cBQFlag->setEnabled(data);
     ui->cBObservationType->setEnabled(data && !simulatedObservation);
     ui->cBObservationTypeSNR->setEnabled(data && !simulatedObservation);
@@ -2406,7 +2406,7 @@ void Plot::updateEnable()
     // show dialog actions
     ui->menuShowTrack->setEnabled(data);
     ui->btnShowTrack->setVisible(ui->menuShowTrack->isEnabled());
-    ui->btnShowSkyplot->setVisible(plotType == PLOT_SKY || plotType == PLOT_MPS);
+    ui->btnShowSkyplot->setVisible(plotType == PLOT_SKY || plotType == PLOT_MPS || plotType == PLOT_IONOS);
     ui->menuShowSkyplot->setEnabled(ui->btnShowSkyplot->isVisible());
     ui->btnShowMap->setVisible(plotType == PLOT_TRK);
     ui->btnShowMap->setEnabled(!ui->btnSolution12->isChecked());
@@ -2421,7 +2421,8 @@ void Plot::updateEnable()
 
     // show actions
     ui->btnShowImage->setVisible((plotType == PLOT_TRK && !mapImageOriginal.isNull()) ||
-                                 ((plotType == PLOT_SKY || plotType == PLOT_MPS) && !skyImageOriginal.isNull()));
+                                 ((plotType == PLOT_SKY || plotType == PLOT_MPS || plotType == PLOT_IONOS)
+                                                                                          && !skyImageOriginal.isNull()));
     ui->menuShowImage->setEnabled(ui->btnShowImage->isVisible());
     ui->btnShowGrid->setVisible(plotType == PLOT_TRK);
     ui->menuShowGrid->setEnabled(ui->btnShowGrid->isVisible());

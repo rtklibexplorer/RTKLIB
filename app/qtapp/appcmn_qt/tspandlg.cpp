@@ -4,7 +4,6 @@
 #include <QDateTime>
 #include <QTimeZone>
 
-#include "plotmain.h"
 #include "tspandlg.h"
 #include "timedlg.h"
 

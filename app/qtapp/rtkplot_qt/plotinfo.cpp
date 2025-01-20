@@ -18,7 +18,7 @@
 void Plot::updateStatusBarInformation()
 {
     int showObs = (PLOT_OBS <= plotType && plotType <= PLOT_DOP) ||
-                   plotType == PLOT_SNR || plotType == PLOT_SNRE || plotType == PLOT_MPS;
+                   plotType == PLOT_SNR || plotType == PLOT_SNRE || plotType == PLOT_MPS || plotType == PLOT_IONOS;
 
     trace(3, "updateStatusBarInformation:\n");
 
@@ -41,6 +41,7 @@ void Plot::updateTimeObservation()
     static QStringList legend_snr = {" SNR = ...45.", "..40.", "..35.", "..30.", "..25 ", "", " <25 "};
     static QStringList legend_sys = {" SYS = GPS ", "GLO ", "GAL ", "QZS ", "BDS ", "IRN ", "SBS"};
     static QStringList legend_mp = {" MP = ..0.6", "..0.3", "..0.0..", "-0.3..", "-0.6..", "", ""};
+    static QStringList legend_iono = {" TEC = 0", "..10", "..20", "..30", "..40", "..50", "..60.."};
     QStringList legend;
     QString msg;
     double azel[MAXOBS * 2], dop[4] = { 0 };
@@ -80,6 +81,9 @@ void Plot::updateTimeObservation()
         } else if (plotType == PLOT_MPS) {
             msg += QStringLiteral("NSAT = %1 ").arg(nsat);
             legend = legend_mp;
+        } else if (plotType == PLOT_IONOS) {
+            msg += QStringLiteral("NSAT = %1 ").arg(nsat);
+            legend = legend_iono;
         } else {
             msg += QStringLiteral("NSAT = %1 ").arg(nsat);
             legend = simulatedObservation ? legend_sys : legend_snr;
@@ -147,6 +151,7 @@ void Plot::updateInfoObservation()
     static QStringList legend_snr = {" SNR = ...45.", "..40.", "..35.", "..30.", "..25 ", "", " <25 "};
     static QStringList legend_sys = {" SYS = GPS ", "GLO ", "GAL ", "QZS ", "BDS ", "IRN ", "SBS"};
     static QStringList legend_mp = {" MP = ..0.6", "..0.3", "..0.0..", "-0.3..", "-0.6..", "", ""};
+    static QStringList legend_iono = {" TEC = 0", "..10", "..20", "..30", "..40", "..50", "..60.."};
     QString msg;
     QStringList legend;
     QString timeStartString, timeEndString;
@@ -183,6 +188,8 @@ void Plot::updateInfoObservation()
             legend = simulatedObservation ? legend_sys : legend_freqs;
         } else if (plotType == PLOT_MPS) {
             legend = legend_mp;
+        } else if (plotType == PLOT_IONOS) {
+            legend = legend_iono;
         } else if (plotType == PLOT_SNRE) {
             legend = QStringList({"", "", "", "", "", "", ""});
         } else {
@@ -299,6 +306,7 @@ void Plot::updatePlotTypeMenu()
         ui->cBPlotTypeSelection->addItem(PTypes[PLOT_SNR], PLOT_SNR);
         ui->cBPlotTypeSelection->addItem(PTypes[PLOT_SNRE], PLOT_SNRE);
         ui->cBPlotTypeSelection->addItem(PTypes[PLOT_MPS], PLOT_MPS);
+        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_IONOS], PLOT_IONOS);
     }
 
     // select previously selected item again
@@ -442,7 +450,7 @@ void Plot::updatePoint(int x, int y)
 
             msg = latLonString(pos, 8);
         }
-    } else if (plotType == PLOT_SKY || plotType == PLOT_MPS) { // sky-plot
+    } else if (plotType == PLOT_SKY || plotType == PLOT_MPS || plotType == PLOT_IONOS) { // sky-plot
         graphSky->getLimits(xl, yl);
         graphSky->toPos(p, q[0], q[1]);
         r = (xl[1] - xl[0] < yl[1] - yl[0] ? xl[1] - xl[0] : yl[1] - yl[0]) * 0.45;

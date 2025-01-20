@@ -1,5 +1,5 @@
-#ifndef DOUBLEUNITVALIDATOR_H
-#define DOUBLEUNITVALIDATOR_H
+#ifndef INTUNITVALIDATOR_H
+#define INTUNITVALIDATOR_H
 
 #include <QIntValidator>
 
@@ -18,4 +18,4 @@ protected:
     QString m_suffix;
 };
 
-#endif // DOUBLEUNITVALIDATOR_H
+#endif // INTUNITVALIDATOR_H

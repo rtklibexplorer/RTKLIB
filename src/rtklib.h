@@ -50,9 +50,13 @@ extern "C" {
 #endif
 
 #ifdef WIN_DLL
-#define EXPORT __declspec(dllexport) /* for Windows DLL */
+  #define EXPORT __declspec(dllexport) /* for Windows DLL */
 #else
-#define EXPORT
+  #ifdef WIN32
+    #define EXPORT __declspec(dllimport)
+  #else
+    #define EXPORT
+  #endif
 #endif
 
 /* constants -----------------------------------------------------------------*/

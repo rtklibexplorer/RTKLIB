@@ -25,7 +25,7 @@ extern "C" {
 //---------------------------------------------------------------------------
 const QString PTypes[] = {
     QT_TR_NOOP("Ground Track"), QT_TR_NOOP("Position"), QT_TR_NOOP("Velocity"), QT_TR_NOOP("Acceleration"), QT_TR_NOOP("NSat"), QT_TR_NOOP("Residuals"), QT_TR_NOOP("Residuals-El"),
-    QT_TR_NOOP("Sat Visibility"), QT_TR_NOOP("Skyplot"),  QT_TR_NOOP("DOP/NSat"), QT_TR_NOOP("SNR/MP/El"), QT_TR_NOOP("SNR/MP-El"), QT_TR_NOOP("MP-Skyplot"), ""
+    QT_TR_NOOP("Sat Visibility"), QT_TR_NOOP("Skyplot"),  QT_TR_NOOP("DOP/NSat"), QT_TR_NOOP("SNR/MP/El"), QT_TR_NOOP("SNR/MP-El"), QT_TR_NOOP("MP-Skyplot"),  QT_TR_NOOP("Iono-Skyplot"), ""
 };
 // show message in status-bar -----------------------------------------------
 void Plot::showMessage(const QString &msg)
@@ -404,6 +404,40 @@ QColor Plot::mpColor(double mp)
     if (mp <= -0.6) return colors[0];
 
     a = (mp+0.8) / 0.4;
+    i = static_cast<int>(a);
+    remainder = a - i;
+    c1 = colors[i];
+    c2 = colors[i + 1];
+    r1 = static_cast<uint32_t>(remainder * c2.red() + (1.0 - remainder) * c1.red()) & 0xFF;
+    g1 = static_cast<uint32_t>(remainder * c2.green() + (1.0 - remainder) * c1.green()) & 0xFF;
+    b1 = static_cast<uint32_t>(remainder * c2.blue() + (1.0 - remainder) * c1.blue()) & 0xFF;
+
+    return QColor(r1, g1, b1);
+}
+// get ionosphere color -------------------------------------------------------------
+QColor Plot::ionoColor(double iono)
+{
+    QColor colors[7];
+    QColor c1, c2;
+    uint32_t r1, b1, g1;
+    double a, remainder;
+    int i;
+
+    if (isnan(iono))
+        return plotOptDialog->getMarkerColor(0, 0);
+
+    colors[6] = plotOptDialog->getMarkerColor(0, 7);       /*  60...70 */
+    colors[5] = plotOptDialog->getMarkerColor(0, 6);       /*  50...60 */
+    colors[4] = plotOptDialog->getMarkerColor(0, 5);       /*  40...50 */
+    colors[3] = plotOptDialog->getMarkerColor(0, 4);       /*  30...40 */
+    colors[2] = plotOptDialog->getMarkerColor(0, 3);       /*  20...30 */
+    colors[1] = plotOptDialog->getMarkerColor(0, 2);       /*  10...20 */
+    colors[0] = plotOptDialog->getMarkerColor(0, 1);       /*  0 ...10 */
+
+    if (iono >= 70) return colors[4];
+    if (iono <= 0) return colors[0];
+
+    a = iono / 10;
     i = static_cast<int>(a);
     remainder = a - i;
     c1 = colors[i];

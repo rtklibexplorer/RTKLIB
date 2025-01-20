@@ -71,6 +71,7 @@ void Plot::updateDisplay()
             case  PLOT_SNR: drawSnr(c, level);   break;
             case  PLOT_SNRE: drawSnrE(c, level);   break;
             case  PLOT_MPS: drawMpSky(c, level);   break;
+            case  PLOT_IONOS: drawIonoSky(c, level);   break;
         }
 
         ui->lblDisplay->setPixmap(buffer);
@@ -1334,10 +1335,118 @@ void Plot::drawSky(QPainter &c, int level)
     double x, y, xp, yp, xs, ys, dt, dx, dy, xl[2], yl[2], radius;
     int i, j, freq, ind = observationIndex;
     int hh = (int)(QFontMetrics(plotOptDialog->getFont()).height() * 1.5);
+    char satId[8];
 
     trace(3, "drawSky: level=%d\n", level);
 
     graphSky->getLimits(xl, yl);
+    graphSky->getExtent(p1, p2);
+    // show statistics
+    if (plotOptDialog->getShowStats() && ui->btnShowTrack->isChecked() && 0 <= ind && ind < nObservation && !simulatedObservation) {
+
+        if (obstype.isNull()) {  // "ALL" selected
+            s = QString::asprintf("%3s: %*s %*s%*s %*s", "SAT", NFREQ, "PR", NFREQ, "CP",
+                                  NFREQ*3, "CN0", NFREQ, "LLI");
+        } else {
+            s = tr("SAT: SIG  OBS   CN0 LLI");
+        }
+        QFont monoFont("Monospace");
+        monoFont.setStyleHint(QFont::TypeWriter);
+        graphSky->drawText(c, p2, s, Qt::black, Graph::Alignment::Right, Graph::Alignment::Top, 0, monoFont);
+
+        p2.ry() += 3;
+
+        for (i = indexObservation[ind]; i < observation.n && i < indexObservation[ind + 1]; i++) {
+            obs = &observation.data[i];
+            if (satelliteMask[obs->sat - 1] || !satelliteSelection[obs->sat - 1]) continue;
+            if (plotOptDialog->getHideLowSatellites() && elevation[i] < plotOptDialog->getElevationMask() * D2R) continue;
+            if (plotOptDialog->getHideLowSatellites() && plotOptDialog->getElevationMaskEnabled() && elevation[i] < elevationMaskData[static_cast<int>(azimuth[i] * R2D + 0.5)]) continue;
+
+            satno2id(obs->sat, satId);
+            s = QStringLiteral("%1: ").arg(satId, 3, QChar('-'));
+
+            if (obstype.isNull()) {  // "ALL"
+                for (j = 0; j < NFREQ; j++)
+                    s += obs->P[j] == 0.0 ? "-" : "C";
+                s += " ";
+
+                for (j = 0; j < NFREQ; j++)
+                    s += obs->L[j] == 0.0 ? "-" : "L";
+                s += " ";
+
+                // SNR
+                for (j = 0; j < NFREQ; j++) {
+                    if (obs->P[j] == 0.0 && obs->L[j] == 0.0)
+                        s += "-- ";
+                    else
+                        s += QStringLiteral("%1 ").arg(obs->SNR[j] * SNR_UNIT, 2, 'f', 0, QChar('0'));
+                }
+
+                // LLI
+                for (j = 0; j < NFREQ; j++) {
+                    if (obs->L[j] == 0.0) s += "-";
+                    else s += QString::number(obs->LLI[j]);
+                }
+            } else if (strcmp(obstype.typeName(), "int") == 0) {  // frequency
+                freq = obstype.toInt();
+                freq -= freq > 2 ? 2 : 0;  /* L1,L2,L5,L6 ... */
+
+                if (!obs->code[freq-1]) continue;
+
+                s += QStringLiteral("%1  %2 %3 %4  ").arg(code2obs(obs->code[freq - 1]), 3).arg(
+                    obs->P[freq - 1] == 0.0 ? "-" : "C",
+                    obs->L[freq - 1] == 0.0 ? "-" : "L",
+                    obs->D[freq - 1] == 0.0 ? "-" : "D");
+
+                // SNR
+                if (obs->P[freq - 1] == 0.0 && obs->L[freq - 1] == 0.0)
+                    s += "---- ";
+                else
+                    s += QStringLiteral("%1 ").arg(obs->SNR[freq - 1] * SNR_UNIT, 4, 'f', 1);
+
+                // LLI
+                if (obs->L[freq-1] == 0.0)
+                    s += " -";
+                else
+                    s += QString("%1").arg(obs->LLI[freq - 1], 2);
+
+            } else {  // code
+                for (j = 0; j < NFREQ + NEXOBS; j++)
+                    if (!strcmp(code2obs(obs->code[j]), qPrintable(obstype.toString()))) break;
+                if (j >= NFREQ + NEXOBS) continue;
+
+                s += QStringLiteral("%1  %2 %3 %4 ").arg(code2obs(obs->code[j]), 3).arg(
+                    obs->P[j] == 0.0 ? "-" : "C",
+                    obs->L[j] == 0.0 ? "-" : "L",
+                    obs->D[j] == 0.0 ? "-" : "D");
+
+                // SNR
+                if (obs->P[j] == 0.0 && obs->L[j] == 0.0)
+                    s += "---- ";
+                else
+                    s += QStringLiteral("%1 ").arg(obs->SNR[j] * SNR_UNIT, 4, 'f', 1);
+
+                // LLI
+                if (obs->L[j] == 0.0)
+                    s += " -";
+                else
+                    s += QString("%1").arg(obs->LLI[j], 2);
+            }
+
+            QColor col = observationColor(obs, azimuth[i], elevation[i], obstype);
+            p2.ry() += hh;
+
+            graphSky->drawText(c, p2, s, col == Qt::black ? plotOptDialog->getMarkerColor(0, 0) : col, Graph::Alignment::Right, Graph::Alignment::Top, 0, monoFont);
+        }
+    }
+
+    if (navigation.n <= 0 && navigation.ng <= 0 && !simulatedObservation) {  // indicate if no navigation data is available
+        graphSky->getExtent(p1, p2);
+        p2.rx() -= 10;
+        p2.ry() -= 3;
+        drawLabel(graphSky, c, p2, tr("No navigation data"), Graph::Alignment::Right, Graph::Alignment::Bottom);
+    }
+
     radius = qMin(xl[1] - xl[0], yl[1] - yl[0]) * 0.45;
 
     if (ui->btnShowImage->isChecked())
@@ -2263,6 +2372,124 @@ void Plot::drawMpSky(QPainter &c, int level)
             graphSky->drawMark(c, x, y, Graph::MarkerTypes::Circle, plotOptDialog->getCColor(2), fontsize * 2 + 5, 0);
             graphSky->drawText(c, x, y, QString(id), plotOptDialog->getCColor(0), Graph::Alignment::Center, Graph::Alignment::Center, 0);
         }
+    }
+}
+// draw iono-skyplot ----------------------------------------------------------
+void Plot::drawIonoSky(QPainter &c, int level)
+{
+    double radius, xl[2], yl[2], xs, ys;
+    QPoint p1, p2;
+    char satId[16];
+    QString s;
+    obsd_t *obs;
+    int hh = (int)(QFontMetrics(plotOptDialog->getFont()).height() * 1.5);
+
+    trace(3, "drawIonoSky: level=%d\n", level);
+
+    if (!ionosphere)
+        updateIono();
+
+    graphSky->getLimits(xl, yl);
+    radius = qMin(xl[1] - xl[0], yl[1] - yl[0]) * 0.45;
+
+    if (ui->btnShowImage->isChecked())
+        drawSkyImage(c, level);
+
+    if (ui->btnShowSkyplot->isChecked())
+        graphSky->drawSkyPlot(c, 0.0, 0.0, plotOptDialog->getCColor(1), plotOptDialog->getCColor(2), plotOptDialog->getCColor(0), radius * 2.0);
+
+    if (!ui->btnSolution1->isChecked() || nObservation <= 0 || simulatedObservation) return;
+
+    graphSky->getScale(xs, ys);
+
+    for (uint8_t sat = 1; sat <= MAXSAT; sat++) {
+        double previous[MAXSAT][2] = {{0}};
+
+        if (satelliteMask[sat - 1] || !satelliteSelection[sat - 1]) continue;
+
+        int siz = plotOptDialog->getPlotStyle() < 2 ? plotOptDialog->getMarkSize() : 1;
+
+        for (int i = 0; i < observation.n; i++) {
+            obs = observation.data+i;
+
+            if (obs->sat != sat || elevation[i] <= 0.0) continue;
+
+            // calculate position
+            double x = radius * sin(azimuth[i]) * (1.0 - 2.0 * elevation[i] / PI);
+            double y = radius * cos(azimuth[i]) * (1.0 - 2.0 * elevation[i] / PI);
+            double xp = previous[sat-1][0];
+            double yp = previous[sat-1][1];
+            QColor col = ionoColor(ionosphere[i]);
+
+            if ((x - xp) * (x - xp) + (y - yp) * (y - yp) >= xs * xs) {
+                graphSky->drawMark(c, x, y, Graph::MarkerTypes::Dot, col, siz, 0);
+                graphSky->drawMark(c, x, y, Graph::MarkerTypes::Dot, plotOptDialog->getPlotStyle() < 2 ? col : plotOptDialog->getCColor(3), siz, 0);
+                previous[sat - 1][0] = x;
+                previous[sat - 1][1] = y;
+            }
+        }
+    }
+
+    // highlight selected data
+    if (ui->btnShowTrack->isChecked() && 0 <= observationIndex && observationIndex < nObservation) {
+        int fontsize = plotOptDialog->getFont().pointSize();
+        for (int i = indexObservation[observationIndex]; i < observation.n && i < indexObservation[observationIndex + 1]; i++) {
+            obs = observation.data+i;
+
+            if (satelliteMask[obs->sat-1] || !satelliteSelection[obs->sat-1] || elevation[i] <= 0.0) continue;
+
+            QColor col = ionoColor(ionosphere[i]);
+            double x = radius * sin(azimuth[i]) * (1.0 - 2.0 * elevation[i] / PI);
+            double y = radius * cos(azimuth[i]) * (1.0 - 2.0 * elevation[i] / PI);
+
+            satno2id(obs->sat, satId);
+
+            graphSky->drawMark(c, x, y, Graph::MarkerTypes::Dot, col, fontsize * 2 + 5, 0);
+            graphSky->drawMark(c, x, y, Graph::MarkerTypes::Circle, plotOptDialog->getCColor(2), fontsize * 2 + 5, 0);
+            graphSky->drawText(c, x, y, QString(satId), plotOptDialog->getCColor(0), Graph::Alignment::Center, Graph::Alignment::Center, 0);
+        }
+    }
+
+    // show statistics
+    if (plotOptDialog->getShowStats() && ui->btnShowTrack->isChecked() &&
+        0 <= observationIndex && observationIndex < nObservation && !simulatedObservation) {
+        graphSky->getExtent(p1, p2);
+        p2.rx() -= 10; p2.ry() = p1.y() + 8;
+
+        s = tr("SAT: SIG1 SIG2  TEC ");
+        QFont monoFont("Monospace");
+        monoFont.setStyleHint(QFont::TypeWriter);
+        graphSky->drawText(c, p2, s, Qt::black, Graph::Alignment::Right, Graph::Alignment::Top, 0, monoFont);
+
+        p2.ry() += hh;
+
+        for (int i = indexObservation[observationIndex]; i < observation.n && i < indexObservation[observationIndex + 1]; i++) {
+            obs = &observation.data[i];
+            if (satelliteMask[obs->sat - 1] || !satelliteSelection[obs->sat - 1]) continue;
+            if (plotOptDialog->getHideLowSatellites() && elevation[i] < plotOptDialog->getElevationMask() * D2R) continue;
+            if (plotOptDialog->getHideLowSatellites() && plotOptDialog->getElevationMaskEnabled() && elevation[i] < elevationMaskData[static_cast<int>(azimuth[i] * R2D + 0.5)]) continue;
+
+            satno2id(obs->sat, satId);
+            s = QStringLiteral("%1: ").arg(satId, 3, QChar('-'));
+
+            s += QStringLiteral("%1 %2").arg(code2obs(obs->code[0]), 4).arg(code2obs(obs->code[1]), 4);
+            if (isnan(ionosphere[i])) s += QStringLiteral("  --- ");
+            else s += QStringLiteral(" %1").arg(ionosphere[i] , 5, 'f', 1);
+
+            QFont monoFont("Monospace");
+            monoFont.setStyleHint(QFont::TypeWriter);
+            QColor col = ionoColor(ionosphere[i]);
+            graphSky->drawText(c, p2, s, col, Graph::Alignment::Right, Graph::Alignment::Top, 0, monoFont);
+
+            p2.ry() += hh;
+        }
+    }
+
+    if (navigation.n <= 0 && navigation.ng <= 0 && !simulatedObservation) {  // indicate if no navigation data is available
+        graphSky->getExtent(p1, p2);
+        p2.rx() -= 10;
+        p2.ry() -= 3;
+        drawLabel(graphSky, c, p2, tr("No navigation data"), Graph::Alignment::Right, Graph::Alignment::Bottom);
     }
 }
 // draw residuals and SNR/elevation plot ------------------------------------

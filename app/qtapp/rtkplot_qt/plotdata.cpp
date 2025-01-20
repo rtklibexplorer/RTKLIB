@@ -1200,6 +1200,8 @@ void Plot::updateObservation(int nobs)
     indexObservation = new int[nobs + 1];
     azimuth = new double[observation.n];
     elevation = new double[observation.n];
+    std::fill_n(azimuth, observation.n, 0);
+    std::fill_n(elevation, observation.n, 0);
 
     readWaitStart();
     showLegend(QStringList());
@@ -1229,7 +1231,9 @@ void Plot::updateObservation(int nobs)
             if (simulatedObservation) {
                 char name[8];
                 satno2id(sat, name);
-                if (!tle_pos(time, name, "", "", &tleData, NULL, rs)) continue;
+                if (!tle_pos(time, name, "", "", &tleData, NULL, rs)) {
+                    continue;
+                }
             } else {
                 if (!satpos(time, time, sat, EPHOPT_BRDC, &navigation, rs, dts, &var, &svh)) {
                     continue;
@@ -1325,6 +1329,47 @@ void Plot::updateMp()
     }
     readWaitEnd();
 }
+// update ionosphere ------------------------------------------------------------
+void Plot::updateIono()
+{
+    obsd_t *data;
+    double freq1, freq2, I, p1, p2;
+    int i, j, per, per_ = -1;
+
+    trace(3, "updateIono\n");
+
+    delete ionosphere;
+    ionosphere = NULL;
+
+    if (observation.n <= 0) return;
+
+    ionosphere = new double[observation.n];
+    for (j = 0; j < observation.n; j++) ionosphere[j] = 0.0;
+    std::fill_n(ionosphere, observation.n, NAN);
+    readWaitStart();
+    showLegend(QStringList());
+
+    for (i = 0; i < observation.n; i++) {
+        data = observation.data + i;
+        freq1 = sat2freq(data->sat, data->code[0], &navigation);
+        freq2 = sat2freq(data->sat, data->code[1], &navigation);
+        if (data->P[0] == 0.0 || data->P[1] == 0.0 || freq1 == 0.0 || freq2 == 0.0 || freq1 == freq2) continue;
+
+        I = 1/ 40.308 * SQR(freq1)*SQR(freq2)/(SQR(freq1)-SQR(freq2))*1e-16;
+        p1 =  data->P[0];  // TODO: consider biases
+        p2 =  data->P[1];
+        ionosphere[i] = I * (p2 - p1);
+
+        per = i * 100 / observation.n;
+        if (per != per_) {
+            showMessage(tr("Updating ionosphere... %1%").arg(per));
+            per_ = per;
+            qApp->processEvents();
+        }
+    }
+    showMessage("");
+    readWaitEnd();
+}
 // set connect path ---------------------------------------------------------
 void Plot::connectPath(const QString &path, int channel)
 {
@@ -1369,6 +1414,8 @@ void Plot::clearObservation()
         delete [] multipath[i];
         multipath[i] = NULL;
     }
+    delete ionosphere;
+    ionosphere = NULL;
 
     observationFiles.clear();
     navigationFiles.clear();

@@ -532,8 +532,10 @@ void Graph::drawText(QPainter &c, const QPoint &p, const QString &str, const QCo
         case Graph::Alignment::Top: flags |= Qt::AlignTop; break;
     }
 
+    c.save();
     QPen pen = c.pen();
     c.setBrush(Qt::NoBrush);
+    pen.setStyle(Qt::PenStyle::SolidLine);
     pen.setColor(color);
     c.setPen(pen);
 
@@ -542,8 +544,7 @@ void Graph::drawText(QPainter &c, const QPoint &p, const QString &str, const QCo
     c.translate(p);
     c.rotate(-rot);
     c.drawText(off, str);
-    c.rotate(rot);
-    c.translate(-p);
+    c.restore();
 }
 //---------------------------------------------------------------------------
 void Graph::drawText(QPainter &c, const QPoint &p, const QString &str, const QColor &color, int ha, int va,
@@ -566,11 +567,12 @@ void Graph::drawText(QPainter &c, const QPoint &p, const QString &str, const QCo
         case 2: flags |= Qt::AlignTop; break;
     }
 
-    QFont old_font = c.font();
+    c.save();
     c.setFont(font);
 
     QPen pen = c.pen();
     c.setBrush(Qt::NoBrush);
+    pen.setStyle(Qt::PenStyle::SolidLine);
     pen.setColor(color);
     c.setPen(pen);
 
@@ -579,9 +581,7 @@ void Graph::drawText(QPainter &c, const QPoint &p, const QString &str, const QCo
     c.translate(p);
     c.rotate(-rot);
     c.drawText(off, str);
-    c.rotate(rot);
-    c.translate(-p);
-    c.setFont(old_font);
+    c.restore();
 }
 //---------------------------------------------------------------------------
 void Graph::drawText(QPainter &c, double x, double y, const QString &str, const QColor &color,
