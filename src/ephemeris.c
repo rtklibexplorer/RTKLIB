@@ -650,7 +650,7 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
     }
     /* inconsistency between orbit and clock correction */
     if (ssr->iod[0]!=ssr->iod[1]) {
-        trace(2,"inconsist ssr correction: %s sat=%2d iod=%d %d\n",
+        trace(2,"inconsistent ssr correction: %s sat=%2d iod=%d %d\n",
               time2str(time,tstr,0),sat,ssr->iod[0],ssr->iod[1]);
         *svh=-1;
         return 0;
