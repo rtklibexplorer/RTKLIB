@@ -1611,6 +1611,8 @@ EXPORT int  open_rnxctr (rnxctr_t *rnx, FILE *fp);
 EXPORT int  input_rnxctr(rnxctr_t *rnx, FILE *fp);
 
 /* ephemeris and clock functions ---------------------------------------------*/
+EXPORT int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
+                   double *varc);
 EXPORT double eph2clk (gtime_t time, const eph_t  *eph);
 EXPORT double geph2clk(gtime_t time, const geph_t *geph);
 EXPORT double seph2clk(gtime_t time, const seph_t *seph);
@@ -1625,7 +1627,7 @@ EXPORT int  peph2pos(gtime_t time, int sat, const nav_t *nav,
 EXPORT void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
                       double *dant);
 EXPORT void satantoff_s(gtime_t time, const double *rs, int sat, const nav_t *nav,
-                      double *dant);                      
+                        double *dant);
 EXPORT int  satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
                    const nav_t *nav, double *rs, double *dts, double *var,
                    int *svh);
