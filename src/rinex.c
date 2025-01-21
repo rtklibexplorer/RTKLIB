@@ -1688,8 +1688,8 @@ extern int rnxcomment(rnxopt_t *opt, const char *format, ...) {
     return 1;
 }
 
-/* read RINEX OBS and NAV files ------------------------------------------------
-* read RINEX OBS and NAV files
+/* read RINEX OBS, NAV and Clock-RINEX files -----------------------------------
+* read RINEX OBS, NAV and Clock-RINEX files
 * args   : char *file    I      file (wild-card * expanded) ("": stdin)
 *          int   rcv     I      receiver number for obs data
 *         (gtime_t ts)   I      observation time start (ts.time==0: no limit)
