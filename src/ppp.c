@@ -530,7 +530,7 @@ static void udpos_ppp(rtk_t *rtk)
     }
     /* initialize position for first epoch */
     if (norm(rtk->x,3)<=0.0) {
-        for (i=0;i<3;i++) initx(rtk,rtk->sol.rr[i],VAR_POS,i);
+        for (i=0;i<3;i++) initx(rtk,rtk->sol.rr_init[i],VAR_POS,i);
         if (rtk->opt.dynamics) {
             for (i=3;i<6;i++) initx(rtk,rtk->sol.rr[i],VAR_VEL,i);
             for (i=6;i<9;i++) initx(rtk,1E-6,VAR_ACC,i);
@@ -546,7 +546,7 @@ static void udpos_ppp(rtk_t *rtk)
     /* kinematic mode without dynamics */
     if (!rtk->opt.dynamics) {
         for (i=0;i<3;i++) {
-            initx(rtk,rtk->sol.rr[i],VAR_POS,i);
+            initx(rtk,rtk->sol.rr_init[i],VAR_POS,i);
         }
         return;
     }
@@ -556,7 +556,7 @@ static void udpos_ppp(rtk_t *rtk)
 
     if (var>VAR_POS) {
         /* reset position with large variance */
-        for (i=0;i<3;i++) initx(rtk,rtk->sol.rr[i],VAR_POS,i);
+        for (i=0;i<3;i++) initx(rtk,rtk->sol.rr_init[i],VAR_POS,i);
         for (i=3;i<6;i++) initx(rtk,rtk->sol.rr[i],VAR_VEL,i);
         for (i=6;i<9;i++) initx(rtk,1E-6,VAR_ACC,i);
         trace(2,"reset rtk position due to large variance: var=%.3f\n",var);
@@ -1032,9 +1032,9 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
             else        rtk->ssat[sat-1].resp[frq]=v[nv];   /* pseudorange */
 
             /* variance */
-            var[nv]=varerr_ppp(sat,sys,azel[1+i*2],
-                    SNR_UNIT*rtk->ssat[sat-1].snr_rover[frq],
-                    j,opt,obs+i);
+            var[nv]=varerr(sat,sys,azel[1+i*2],
+                    SNR_UNIT*rtk->ssat[sat-1].snr_rover[frq],opt->err[5],0,
+                    rtk->tt,NF(opt)*code+frq,opt,obs+i);
             var[nv] +=vart+SQR(C)*vari+var_rs[i];
             if (sys==SYS_GLO&&code==1) var[nv]+=VAR_GLO_IFB;
 
