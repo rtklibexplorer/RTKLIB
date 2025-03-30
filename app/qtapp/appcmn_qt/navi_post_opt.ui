@@ -23,7 +23,7 @@
       <enum>QTabWidget::TabPosition::North</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabSettings1">
       <attribute name="title">
@@ -200,7 +200,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="lblPosMode">
          <property name="text">
-          <string>Positioning Mode</string>
+          <string>Positionin&amp;g Mode</string>
          </property>
          <property name="buddy">
           <cstring>cBPositionMode</cstring>
@@ -562,7 +562,7 @@
        <item row="5" column="0">
         <widget class="QLabel" name="Label8">
          <property name="text">
-          <string>Ionosphere Correction</string>
+          <string>Ionosphere &amp;Correction</string>
          </property>
          <property name="buddy">
           <cstring>cBIonosphereOption</cstring>
@@ -612,7 +612,7 @@
        <item row="4" column="0" colspan="2">
         <widget class="QLabel" name="Label3">
          <property name="text">
-          <string>Receiver Dynamics / Earth Tides Correction</string>
+          <string>Recei&amp;ver Dynamics / Earth Tides Correction</string>
          </property>
          <property name="buddy">
           <cstring>cBDynamicModel</cstring>
@@ -622,7 +622,7 @@
        <item row="3" column="0" colspan="2">
         <widget class="QLabel" name="lblElevationMask">
          <property name="text">
-          <string>Elevation Mask (°) / SNR Mask (dbHz)</string>
+          <string>E&amp;levation Mask (°) / SNR Mask (dbHz)</string>
          </property>
          <property name="buddy">
           <cstring>cBElevationMask</cstring>
@@ -642,7 +642,7 @@
        <item row="10" column="0" colspan="2">
         <widget class="QLabel" name="Label35">
          <property name="text">
-          <string>Excluded Satellites (+PRN: Included)</string>
+          <string>E&amp;xcluded Satellites (+PRN: Included)</string>
          </property>
          <property name="buddy">
           <cstring>lEExcludedSatellites</cstring>
@@ -859,7 +859,7 @@
        <item row="18" column="0">
         <widget class="QLabel" name="label_6">
          <property name="text">
-          <string>Max Position Var. for AR / AR Filter</string>
+          <string>Ma&amp;x Position Var. for AR / AR Filter</string>
          </property>
          <property name="buddy">
           <cstring>sBMaxPositionVarAR</cstring>
@@ -976,7 +976,7 @@
        <item row="21" column="0">
         <widget class="QLabel" name="label_8">
          <property name="text">
-          <string>Glonass Hardware Bias</string>
+          <string>&amp;Glonass Hardware Bias</string>
          </property>
          <property name="buddy">
           <cstring>sBGlonassHwBias</cstring>
@@ -1013,7 +1013,7 @@
        <item row="13" column="0">
         <widget class="QLabel" name="Label11">
          <property name="text">
-          <string>Outlier Threshold for Code / Phase</string>
+          <string>Outlier Threshold for &amp;Code / Phase</string>
          </property>
          <property name="buddy">
           <cstring>sBRejectCode</cstring>
@@ -1140,7 +1140,7 @@
        <item row="5" column="0">
         <widget class="QLabel" name="Label13">
          <property name="text">
-          <string>Min Lock Time / Elevation to Fix Ambiguity</string>
+          <string>Min &amp;Lock Time / Elevation to Fix Ambiguity</string>
          </property>
          <property name="buddy">
           <cstring>sBLockCountFixAmbiguity</cstring>
@@ -1193,7 +1193,7 @@
        <item row="20" column="0">
         <widget class="QLabel" name="label_7">
          <property name="text">
-          <string>Hold Amb. Variance / Hold Amb. Gain</string>
+          <string>Hold Amb. &amp;Variance / Hold Amb. Gain</string>
          </property>
          <property name="buddy">
           <cstring>sBVarHoldAmb</cstring>
@@ -1294,7 +1294,7 @@
        <item row="9" column="0">
         <widget class="QLabel" name="Label18">
          <property name="text">
-          <string>Geoid Model</string>
+          <string>&amp;Geoid Model</string>
          </property>
          <property name="buddy">
           <cstring>cBOutputGeoid</cstring>
@@ -1304,7 +1304,7 @@
        <item row="5" column="0">
         <widget class="QLabel" name="lblLatLonFormat">
          <property name="text">
-          <string>Latitude Longitude Format / Field Separator</string>
+          <string>&amp;Latitude Longitude Format / Field Separator</string>
          </property>
          <property name="buddy">
           <cstring>cBLatLonFormat</cstring>
@@ -1507,7 +1507,7 @@
        <item row="2" column="0">
         <widget class="QLabel" name="Label20">
          <property name="text">
-          <string>Output Header / Proc. Options / Velocity</string>
+          <string>Output Header / Proc. Options / &amp;Velocity</string>
          </property>
          <property name="buddy">
           <cstring>cBOutputHeader</cstring>
@@ -1562,7 +1562,7 @@
        <item row="7" column="0">
         <widget class="QLabel" name="lblFieldSeperator">
          <property name="text">
-          <string>Output Single if Solution Outage / Max Solution Std.</string>
+          <string>Output Single if Solution Outage / Ma&amp;x Solution Std.</string>
          </property>
          <property name="buddy">
           <cstring>cBOutputSingle</cstring>
@@ -1755,7 +1755,7 @@
           <item row="3" column="0">
            <widget class="QLabel" name="Label28">
             <property name="text">
-             <string>Zenith Tropospheric Delay</string>
+             <string>&amp;Zenith Tropospheric Delay</string>
             </property>
             <property name="buddy">
              <cstring>sBProcessNoise3</cstring>
@@ -1785,7 +1785,7 @@
           <item row="2" column="0">
            <widget class="QLabel" name="Label27">
             <property name="text">
-             <string>Vertical Ionospheric Delay</string>
+             <string>&amp;Vertical Ionospheric Delay</string>
             </property>
             <property name="buddy">
              <cstring>sBProcessNoise2</cstring>
@@ -2006,7 +2006,7 @@
           <item row="6" column="0">
            <widget class="QLabel" name="label_3">
             <property name="text">
-             <string>Carrier Phase Error: SNR / SNR max</string>
+             <string>Carrier Phase Error: SNR / SNR ma&amp;x</string>
             </property>
             <property name="buddy">
              <cstring>sBMeasurementErrorSNR</cstring>
@@ -2041,7 +2041,7 @@
              <bool>true</bool>
             </property>
             <property name="text">
-             <string>Code/Carrier-Phase Error Ratio L1/L2/L5</string>
+             <string>Code/Carrier-Phase Error Ratio &amp;L1/L2/L5</string>
             </property>
             <property name="buddy">
              <cstring>sBMeasurementErrorR1</cstring>
@@ -2175,7 +2175,7 @@
           <item row="3" column="4">
            <widget class="QLabel" name="lblReferenceAntennaD">
             <property name="text">
-             <string>Delta-E/N/U (m)</string>
+             <string>De&amp;lta-E/N/U (m)</string>
             </property>
             <property name="buddy">
              <cstring>sBReferenceAntennaE</cstring>
@@ -2275,7 +2275,7 @@
           <item row="0" column="0">
            <widget class="QLabel" name="lblMaxAveEp">
             <property name="text">
-             <string>Max # Average</string>
+             <string>Ma&amp;x # Average</string>
             </property>
             <property name="buddy">
              <cstring>sBMaxAveEp</cstring>
@@ -2577,7 +2577,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="Label38">
          <property name="text">
-          <string>Satellite Antenna PCV File ANTEX/NGS PCV</string>
+          <string>Satellite Antenna PC&amp;V File ANTEX/NGS PCV</string>
          </property>
          <property name="buddy">
           <cstring>lESatellitePcvFile</cstring>
@@ -2597,7 +2597,7 @@
        <item row="24" column="0">
         <widget class="QLabel" name="lblLocalDirectory">
          <property name="text">
-          <string>FTP/HTTP Local Directory</string>
+          <string>FTP/HTTP &amp;Local Directory</string>
          </property>
          <property name="buddy">
           <cstring>lELocalDirectory</cstring>

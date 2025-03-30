@@ -407,8 +407,7 @@ bool Plot::eventFilter(QObject *obj, QEvent *event)
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
             mouseMove(mouseEvent);
             return true;
-        } else
-            ui->lblMessage2->setText("");
+        };
     }
     if (event->type() == QEvent::Resize)
     {
@@ -600,6 +599,11 @@ void Plot::closeEvent(QCloseEvent *)
 
     saveOption();
 
+    for (int sel=0; sel<2; sel++) {
+        freesolbuf(solutionData + sel);
+        freesolstatbuf(solutionStat + sel);
+    }
+
     if (traceLevel > 0) traceclose();
 }
 
@@ -639,7 +643,7 @@ void Plot::dropEvent(QDropEvent *event)
         return;
 
     foreach(QUrl url, event->mimeData()->urls()) {
-        files.append(QDir::toNativeSeparators(url.toString()));
+        files.append(QDir::toNativeSeparators(url.toLocalFile()));
     }
 
     const QString &file = files.at(0);
@@ -652,13 +656,13 @@ void Plot::dropEvent(QDropEvent *event)
                 readMapData(file);
             else if (plotType == PLOT_SKY || plotType == PLOT_MPS || plotType == PLOT_IONOS)
                 readSkyData(file);
-        };
-    } else if (isObservation(files.at(0))) {
-        readObservation(files);
-    } else if (!ui->btnSolution1->isChecked() && ui->btnSolution2->isChecked()) {
-        readSolution(files, 1);
-    } else {
-        readSolution(files, 0);
+        } else if (isObservation(files.at(0))) {
+            readObservation(files);
+        } else if (!ui->btnSolution1->isChecked() && ui->btnSolution2->isChecked()) {
+            readSolution(files, 1);
+        } else {
+            readSolution(files, 0);
+        }
     }
 }
 // callback on menu-open-solution-1 -----------------------------------------
@@ -1318,7 +1322,8 @@ void Plot::rangeListItemSelected()
     trace(3, "rangeListItemSelected\n");
 
     lWRangeList->close();
-    rangeListPopupAction->toggle();
+    if(QWidget *p = lWRangeList->parentWidget())
+        p->close();
 
     setRange(0, getYRange());
     updatePlot();

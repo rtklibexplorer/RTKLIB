@@ -569,7 +569,7 @@ void OptDialog::viewDCBFile()
 //---------------------------------------------------------------------------
 void OptDialog::selectEOPFile()
 {
-    QString filename = QFileDialog::getOpenFileName(this, tr("EOP Date File"), ui->lEEOPFile->text(), tr("EOP Data File (*.eop *.erp);;All (*.*)"));
+    QString filename = QFileDialog::getOpenFileName(this, tr("EOP Date File"), ui->lEEOPFile->text(), tr("EOP Data File (*.eop *.erp *.EOP *.ERP);;All (*.*)"));
 
     if (!filename.isEmpty())
         ui->lEEOPFile->setText(QDir::toNativeSeparators(filename));

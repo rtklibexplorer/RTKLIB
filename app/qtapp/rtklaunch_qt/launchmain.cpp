@@ -54,7 +54,7 @@ MainForm::MainForm(QWidget *parent)
 
     QSettings settings(iniFile, QSettings::IniFormat);
     option = settings.value("pos/option", 0).toInt();
-    minimize = settings.value("pos/minimize", 1).toInt();
+    minimize = settings.value("pos/minimize", 0).toInt();
     ui->btnRtklib->setStatusTip(tr("RTKLIB Version %1 %2").arg(VER_RTKLIB, PATCH_LEVEL));
 
     QCommandLineParser parser;
@@ -90,7 +90,7 @@ MainForm::MainForm(QWidget *parent)
     ui->btnOption->setVisible(false);  // used options dialog
 
     trayMenu = new QMenu(this);
-    trayMenu->addAction(tr("Expand"), this, &MainForm::expandWindow);
+    trayMenu->addAction(tr("&Expand"), this, &MainForm::expandWindow);
     trayMenu->addSeparator();
     trayMenu->addAction(tr("RTK&PLOT"), this, &MainForm::launchRTKPlot);
     trayMenu->addAction(tr("&RTKPOST"), this, &MainForm::launchRTKPost);
@@ -100,7 +100,7 @@ MainForm::MainForm(QWidget *parent)
     trayMenu->addAction(tr("RTK&STR"), this, &MainForm::launchStrSvr);
     trayMenu->addAction(tr("&NTRIP BROWSER"), this, &MainForm::launchSrcTblBrows);
     trayMenu->addSeparator();
-    trayMenu->addAction(tr("&Exit"), this, &MainForm::close);
+    trayMenu->addAction(tr("E&xit"), this, &MainForm::close);
 
     trayIcon.setContextMenu(trayMenu);
     trayIcon.setIcon(QIcon(":/icons/rtk9"));

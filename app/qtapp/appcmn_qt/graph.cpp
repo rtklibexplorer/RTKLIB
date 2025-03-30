@@ -62,8 +62,8 @@ int Graph::toPoint(double x_, double y_, QPoint &p)
     else if (x_ >  1E6) x_ =  1E6;
     if      (y_ < -1E6) y_ = -1E6;
     else if (y_ >  1E6) y_ =  1E6;
-    p.setX((int)floor((x_ + 0.5)));
-    p.setY((int)floor((y_ + 0.5)));
+    p.setX((int)floor(x_ + 0.5));
+    p.setY((int)floor(y_ + 0.5));
 
     return (x - xt < x_) && (x_ < x + width - 1 + xt) &&
         (y - xt < y_) && (y_ < y + height - 1 + xt);

@@ -62,6 +62,12 @@ add_executable(rtknavi_qt
     ../icon/resources.qrc
 
 )
+if(QT_VERSION GREATER_EQUAL 6.5)
+        qt_add_translations(rtknavi_qt
+		SOURCE_TARGETS rtknavi_qt
+		INCLUDE_DIRECTORIES . ..appcmn_qt
+        )
+endif()
 target_link_libraries(rtknavi_qt PRIVATE
         rtklib
         Qt${QT_VERSION_MAJOR}::Core
@@ -74,4 +80,8 @@ set_target_properties(rtknavi_qt PROPERTIES
     WIN32_EXECUTABLE ON
     MACOSX_BUNDLE ON
 )
-
+install(TARGETS rtknavi_qt RUNTIME DESTINATION bin)
+if (UNIX)
+   install(FILES rtknavi_qt.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
+   install(FILES ../icon/rtknavi.png DESTINATION ${XDG_APPS_PIXMAPS_DIR})
+endif()

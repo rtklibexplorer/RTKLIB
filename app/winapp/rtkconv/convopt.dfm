@@ -462,7 +462,7 @@ object ConvOptDialog: TConvOptDialog
     Style = csDropDownList
     ItemIndex = 0
     TabOrder = 2
-    Text = '2.10'
+    Text = '3.03'
     OnChange = RnxVerChange
     Items.Strings = (
       '2.10'
@@ -472,7 +472,11 @@ object ConvOptDialog: TConvOptDialog
       '3.01'
       '3.02'
       '3.03'
-      '3.04')
+      '3.04'
+      '3.05'
+      '4.00'
+      '4.01'
+      '4.02')
   end
   object RnxFile: TCheckBox
     Left = 327

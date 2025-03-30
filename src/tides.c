@@ -121,17 +121,17 @@ static void tide_solid(const double *rsun, const double *rmoon,
 static void tide_oload(gtime_t tut, const double *odisp, double *denu)
 {
     const double args[][5]={
-        {1.40519E-4, 2.0,-2.0, 0.0, 0.00},  /* M2 */
-        {1.45444E-4, 0.0, 0.0, 0.0, 0.00},  /* S2 */
-        {1.37880E-4, 2.0,-3.0, 1.0, 0.00},  /* N2 */
-        {1.45842E-4, 2.0, 0.0, 0.0, 0.00},  /* K2 */
-        {0.72921E-4, 1.0, 0.0, 0.0, 0.25},  /* K1 */
-        {0.67598E-4, 1.0,-2.0, 0.0,-0.25},  /* O1 */
-        {0.72523E-4,-1.0, 0.0, 0.0,-0.25},  /* P1 */
-        {0.64959E-4, 1.0,-3.0, 1.0,-0.25},  /* Q1 */
-        {0.53234E-5, 0.0, 2.0, 0.0, 0.00},  /* Mf */
-        {0.26392E-5, 0.0, 1.0,-1.0, 0.00},  /* Mm */
-        {0.03982E-5, 2.0, 0.0, 0.0, 0.00}   /* Ssa */
+        {1.40519E-4, 2.0,-2.0, 0.0, 0.00},  // M2 semidiurnal principal lunar.
+        {1.45444E-4, 0.0, 0.0, 0.0, 0.00},  // S2 semidiurnal principal solar.
+        {1.37880E-4, 2.0,-3.0, 1.0, 0.00},  // N2 semidiurnal lunar elliptical.
+        {1.45842E-4, 2.0, 0.0, 0.0, 0.00},  // K2 semidiurnal luni-solar declination.
+        {0.72921E-4, 1.0, 0.0, 0.0, 0.25},  // K1 diurnal luni-solar declination.
+        {0.67598E-4, 1.0,-2.0, 0.0,-0.25},  // O1 diurnal principal lunar.
+        {0.72523E-4,-1.0, 0.0, 0.0,-0.25},  // P1 diurnal principal solar.
+        {0.64959E-4, 1.0,-3.0, 1.0,-0.25},  // Q1 diurnal elliptical lunar.
+        {0.53234E-5, 0.0, 2.0, 0.0, 0.00},  // Mf Lunar fortnightly.
+        {0.26392E-5, 0.0, 1.0,-1.0, 0.00},  // Mm Lunar monthly.
+        {0.03982E-5, 2.0, 0.0, 0.0, 0.00}   // Ssa Solar semiannual.
     };
     const double ep1975[]={1975,1,1,0,0,0};
     double ep[6],fday,days,t,t2,t3,a[5],ang,dp[3]={0};
@@ -258,7 +258,7 @@ extern void tidedisp(gtime_t tutc, const double *rr, int opt, const erp_t *erp,
     pos[0]=asin(rr[2]/norm(rr,3));
     pos[1]=atan2(rr[1],rr[0]);
     xyz2enu(pos,E);
-    
+
     if (opt&1) { /* solid earth tides */
         
         /* sun and moon position in ecef */

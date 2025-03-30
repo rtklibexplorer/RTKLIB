@@ -87,6 +87,26 @@
           <string>3.04</string>
          </property>
         </item>
+        <item>
+         <property name="text">
+          <string>3.05</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4.00</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4.01</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4.02</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item>

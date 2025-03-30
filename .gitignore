@@ -11,20 +11,26 @@ Debug_Build
 __history
 __astcache
 
-
-# cmake
+# CMake files
 CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
+**/cmake-build-debug
+**/CMakeCache.txt
+**/cmake_install.cmake
+**/install_manifest.txt
+**/CMakeFiles/
+**/CTestTestfile.cmake
+**/Makefile
+**/*.cbp
+**/CMakeScripts
+**/compile_commands.json
+CPackConfig.cmake
+CPackSourceConfig.cmake
+
+# QT
+.qt/
+.lupdate/
 
 # Ignore compilation results
 

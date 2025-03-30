@@ -625,7 +625,7 @@ void MainForm::stopServer()
 void MainForm::updateStreamMonitor()
 {
     static const QString types[] = {
-        tr("None"), tr("Serial"), tr("File"), tr("TCP Server"), tr("TCP Client"), tr("Ntrip Sever"),
+        tr("None"), tr("Serial"), tr("File"), tr("TCP Server"), tr("TCP Client"), tr("Ntrip Server"),
         tr("Ntrip Client"), tr("FTP"), tr("HTTP"), tr("Ntrip Caster"), tr("UDP Server"),
         tr("UDP Client"), tr("Mem Buffer")
     };

@@ -5,7 +5,7 @@
 *
 * version : $Revision: 1.0 $ $Date: 2024/07/23$
 * references:
-*   [1] Unicore N4 Products Commands and Logs Reference Book R1.4 (June 2024)
+*   [1] Unicore N4 Products Commands and Logs Reference Book R1.6 (Oct 2024)
 *
 * history :
 *   2024/07/23  1.0  new
@@ -170,9 +170,11 @@ static int sig2code(int sys, int sigtype, int l2c)
     else if (sys == SYS_QZS) {
         switch (sigtype) {
         case  0: return CODE_L1C; // L1C/A
-        case  9: return l2c == 1 ? CODE_L2S : CODE_L2W;  // L2P(Y),semi-codeless or L2C(M)
+        case  1: return CODE_L1E; // L1C/B
         case  3: return CODE_L1L; // L1C pilot
+        case  4: return CODE_L1Z; // L1S
         case  6: return CODE_L5I; // L5 Data
+        case  9: return l2c == 1 ? CODE_L2S : CODE_L2W;  // L2P(Y),semi-codeless or L2C(M)
         case 11: return CODE_L1S; // L1C Data
         case 14: return CODE_L5Q; // L5 Pilot
         case 17: return CODE_L2L; // L2C(L)
@@ -199,8 +201,8 @@ static int sig2code(int sys, int sigtype, int l2c)
     }
     else if (sys == SYS_IRN) {
         switch (sigtype) {
-        case  6: return CODE_L5A; //L5 Data
-        case  14: return CODE_L5C; //L5 Pilot
+        case  6: return CODE_L5A;  // L5 Data
+        case  14: return CODE_L5C; // L5 Pilot
         default: return 0;
         }
     }

@@ -6,10 +6,13 @@
 #include <QColor>
 #include <QPoint>
 #include <QLabel>
+#include <QCoreApplication>
 
 //---------------------------------------------------------------------------
 class Graph // graph class
 {
+    Q_DECLARE_TR_FUNCTIONS(Graph)
+
 public:
     explicit Graph(QPaintDevice *parent);
 

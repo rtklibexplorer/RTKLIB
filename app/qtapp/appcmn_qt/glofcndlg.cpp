@@ -17,7 +17,12 @@ GloFcnDialog::GloFcnDialog(QWidget* parent) : QDialog(parent), ui(new Ui::GloFcn
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &GloFcnDialog::reject);
     connect(ui->btnClear, &QPushButton::clicked, this, &GloFcnDialog::clearFrequencies);
     connect(ui->btnRead, &QPushButton::clicked, this, &GloFcnDialog::readRinex);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    connect(ui->cBEnableFcn, &QCheckBox::checkStateChanged, this, &GloFcnDialog::updateEnable);
+#else
     connect(ui->cBEnableFcn, &QCheckBox::stateChanged, this, &GloFcnDialog::updateEnable);
+#endif
 
     updateEnable();
 }

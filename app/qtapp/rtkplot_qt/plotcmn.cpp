@@ -23,9 +23,11 @@ extern "C" {
     }
 }
 //---------------------------------------------------------------------------
-const QString PTypes[] = {
-    QT_TR_NOOP("Ground Track"), QT_TR_NOOP("Position"), QT_TR_NOOP("Velocity"), QT_TR_NOOP("Acceleration"), QT_TR_NOOP("NSat"), QT_TR_NOOP("Residuals"), QT_TR_NOOP("Residuals-El"),
-    QT_TR_NOOP("Sat Visibility"), QT_TR_NOOP("Skyplot"),  QT_TR_NOOP("DOP/NSat"), QT_TR_NOOP("SNR/MP/El"), QT_TR_NOOP("SNR/MP-El"), QT_TR_NOOP("MP-Skyplot"),  QT_TR_NOOP("Iono-Skyplot"), ""
+const char *PTypes[] = {
+    QT_TRANSLATE_NOOP("Plot", "Ground Track"), QT_TRANSLATE_NOOP("Plot", "Position"), QT_TRANSLATE_NOOP("Plot", "Velocity"), QT_TRANSLATE_NOOP("Plot", "Acceleration"),
+    QT_TRANSLATE_NOOP("Plot", "NSat"), QT_TRANSLATE_NOOP("Plot", "Residuals"), QT_TRANSLATE_NOOP("Plot", "Residuals-El"),
+    QT_TRANSLATE_NOOP("Plot", "Sat Visibility"), QT_TRANSLATE_NOOP("Plot", "Skyplot"),  QT_TRANSLATE_NOOP("Plot", "DOP/NSat"), QT_TRANSLATE_NOOP("Plot", "SNR/MP/El"),
+    QT_TRANSLATE_NOOP("Plot", "SNR/MP-El"), QT_TRANSLATE_NOOP("Plot", "MP-Skyplot"),  QT_TRANSLATE_NOOP("Plot", "Iono-Skyplot"), ""
 };
 // show message in status-bar -----------------------------------------------
 void Plot::showMessage(const QString &msg)

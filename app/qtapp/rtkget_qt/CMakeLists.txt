@@ -25,6 +25,13 @@ add_executable(rtkget_qt
     ../icon/resources.qrc
 
 )
+if(QT_VERSION GREATER_EQUAL 6.5)
+	qt_add_translations(rtkget_qt
+		            SOURCE_TARGETS rtkget_qt
+			    INCLUDE_DIRECTORIES . ..appcmn_qt
+        )		
+endif()
+
 target_link_libraries(rtkget_qt PRIVATE
         rtklib
         Qt${QT_VERSION_MAJOR}::Core
@@ -36,3 +43,8 @@ set_target_properties(rtkget_qt PROPERTIES
     MACOSX_BUNDLE ON
 )
 
+install(TARGETS rtkget_qt RUNTIME DESTINATION bin)
+if (UNIX)
+   install(FILES rtkget_qt.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
+   install(FILES ../icon/rtkget.png DESTINATION ${XDG_APPS_PIXMAPS_DIR})
+endif()

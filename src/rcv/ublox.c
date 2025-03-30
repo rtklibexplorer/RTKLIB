@@ -1290,7 +1290,7 @@ static int decode_ubx(raw_t *raw)
         case ID_TIMTM2  : return decode_timtm2  (raw);
     }
     if (raw->outtype) {
-        sprintf(raw->msgtype,"UBX 0x%02X 0x%02X (%4d)",type>>8,type&0xF,
+        sprintf(raw->msgtype,"UBX 0x%02X 0x%02X (%4d)",type>>8,type&0xFF,
                 raw->len);
     }
     return 0;

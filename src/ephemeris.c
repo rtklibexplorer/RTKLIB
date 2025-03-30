@@ -390,18 +390,15 @@ extern void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts,
 *-----------------------------------------------------------------------------*/
 extern double seph2clk(gtime_t time, const seph_t *seph)
 {
-    double t;
-    int i;
-
     char tstr[40];
     trace(4,"seph2clk: time=%s sat=%2d\n",time2str(time,tstr,3),seph->sat);
 
-    t=timediff(time,seph->t0);
+    double ts = timediff(time, seph->t0), t = ts;
 
-    for (i=0;i<2;i++) {
-        t-=seph->af0+seph->af1*t;
+    for (int i = 0; i < 2; i++) {
+      t = ts - (seph->af0 + seph->af1 * t);
     }
-    return seph->af0+seph->af1*t;
+    return seph->af0 + seph->af1 * t;
 }
 /* sbas ephemeris to satellite position and clock bias -------------------------
 * compute satellite position and clock bias with sbas ephemeris

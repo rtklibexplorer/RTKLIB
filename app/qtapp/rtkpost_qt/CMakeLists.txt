@@ -34,6 +34,12 @@ add_executable(rtkpost_qt
     ../icon/resources.qrc
 
 )
+if(QT_VERSION GREATER_EQUAL 6.5)
+        qt_add_translations(TARGETS rtkpost_qt
+		SOURCE_TARGETS rtkpost_qt
+		INCLUDE_DIRECTORIES . ..appcmn_qt
+        )
+endif()
 target_link_libraries(rtkpost_qt PRIVATE
         rtklib
         Qt${QT_VERSION_MAJOR}::Core
@@ -44,4 +50,8 @@ set_target_properties(rtkpost_qt PROPERTIES
     WIN32_EXECUTABLE ON
     MACOSX_BUNDLE ON
 )
-
+install(TARGETS rtkpost_qt RUNTIME DESTINATION bin)
+if (UNIX)
+   install(FILES rtkpost_qt.desktop DESTINATION ${XDG_APPS_INSTALL_DIR})
+   install(FILES ../icon/rtkpost.png DESTINATION ${XDG_APPS_PIXMAPS_DIR})
+endif()

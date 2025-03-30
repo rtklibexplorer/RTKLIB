@@ -2160,6 +2160,51 @@ static void outrnx_glo_bias(FILE *fp, const rnxopt_t *opt)
         fprintf(fp,"%*s%-20s\n",60,"",label);
     }
 }
+
+// Canonicalize to IGS antenna format
+//
+// The IGS Antenna name is 15 columns maximum and the radome name is 4 columns
+// in columns 17-20.
+// ref: https://files.igs.org/pub/station/general/rcvr_ant.tab
+static char *igsanttype(const char *anttype, char buff[21]) {
+  // Default
+  for (int i = 0; i < 20; i++) buff[i] = ' ';
+  buff[20] = 0;
+
+  // Skip leading space.
+  int i = 0;
+  while (anttype[i] != 0 && anttype[i] == ' ') i++;
+  if (anttype[i] == 0) return buff;
+
+  // Fill antenna name
+  int j = 0;
+  for (; j < 15; j++, i++) {
+    if (anttype[i] == 0 || anttype[i] == ' ') break;
+    buff[j] = anttype[i];
+  }
+  if (j == 15) {
+    // Skip to the end of the antenna name.
+    int skip = 0;
+    for (; anttype[i] != 0 && anttype[i] != ' '; i++, skip++);
+    if (skip > 0) trace(1, "igsanttype: antenna name truncated to 15 characters: '%s'\n", anttype);
+  }
+
+  // Search for a radome name.
+  while (anttype[i] != 0 && anttype[i] == ' ') i++;
+  if (anttype[i] == 0) return buff;
+
+  // Fill with the radome name.
+  j = 16;
+  for (; j < 20; j++, i++) {
+    if (anttype[i] == 0 || anttype[i] == ' ') break;
+    buff[j] = anttype[i];
+  }
+  if (j < 20 || !(anttype[i] == 0 || anttype[i] == ' '))
+    trace(1, "igsanttype: expected 4 character radome name: '%s'\n", anttype);
+
+  return buff;
+}
+
 /* output RINEX observation data file header -----------------------------------
 * output RINEX observation data file header
 * args   : FILE   *fp       I   output file pointer
@@ -2205,7 +2250,8 @@ extern int outrnxobsh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
             "OBSERVER / AGENCY");
     fprintf(fp,"%-20.20s%-20.20s%-20.20s%-20s\n",opt->rec[0],opt->rec[1],
             opt->rec[2],"REC # / TYPE / VERS");
-    fprintf(fp,"%-20.20s%-20.20s%-20.20s%-20s\n",opt->ant[0],opt->ant[1],
+    char buff[21];
+    fprintf(fp,"%-20.20s%-20.20s%-20.20s%-20s\n",opt->ant[0], igsanttype(opt->ant[1], buff),
             "","ANT # / TYPE");
 
     for (i=0;i<3;i++) if (fabs(opt->apppos[i])<1E8) pos[i]=opt->apppos[i];

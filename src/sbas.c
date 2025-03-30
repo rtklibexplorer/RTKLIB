@@ -530,7 +530,7 @@ static int cmpmsgs(const void *p1, const void *p2)
 }
 /* read sbas message file ------------------------------------------------------
 * read sbas message file
-* args   : char     *file   I   sbas message file (wind-card * is expanded)
+* args   : char     *file   I   sbas message file (wild-card * is expanded)
 *          int      sel     I   sbas satellite prn number selection (0:all)
 *         (gtime_t  ts      I   start time)
 *         (gtime_t  te      I   end time  )

@@ -57,10 +57,10 @@ static char *getsrctbl(const QString addr)
 
     if (!stropen(&str, STR_NTRIPCLI, STR_MODE_R, qPrintable(addr))) {
         lock = 0;
-        QMetaObject::invokeMethod(mainForm, "showMsg", Qt::QueuedConnection, Q_ARG(QString, QT_TR_NOOP("stream open error")));
+        QMetaObject::invokeMethod(mainForm, "showMsg", Qt::QueuedConnection, Q_ARG(QString, qApp->translate("MainForm", "stream open error")));
 		return NULL;
 	}
-    QMetaObject::invokeMethod(mainForm, "showMsg", Qt::QueuedConnection, Q_ARG(QString, QT_TR_NOOP("connecting...")));
+    QMetaObject::invokeMethod(mainForm, "showMsg", Qt::QueuedConnection, Q_ARG(QString, qApp->translate("MainForm", "connecting...")));
 
     while (p < buff + MAXSRCTBL - 1) {
         int ns = strread(&str, (uint8_t *)p, (buff + MAXSRCTBL - p - 1));
@@ -73,7 +73,7 @@ static char *getsrctbl(const QString addr)
         if (stat <= 0) break;
         if (strstr(buff, ENDSRCTBL)) break;
         if ((int)(tickget() - tick) > NTRIP_TIMEOUT) {
-            QMetaObject::invokeMethod(mainForm, "showMsg", Qt::QueuedConnection, Q_ARG(QString, QT_TR_NOOP("response timeout")));
+            QMetaObject::invokeMethod(mainForm, "showMsg", Qt::QueuedConnection, Q_ARG(QString, qApp->translate("MainForm", "response timeout")));
 			break;
 		}
 	}
@@ -580,7 +580,7 @@ void MainForm::showTable()
 //---------------------------------------------------------------------------
 void MainForm::showMsg(const QString &msg)
 {
-    ui->lblMessage->setText(msg);
+    ui->lblMessage->setText(tr(qPrintable(msg)));
 }
 //---------------------------------------------------------------------------
 void MainForm::updateMap()

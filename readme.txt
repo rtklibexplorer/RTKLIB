@@ -19,7 +19,18 @@ CUIs:
 
 
 
-LINUX: To build and install code
+WINDOWS/LINUX CLI & GUI (except for Embarcadero GUI) using CMake
+
+1) create a build directory
+ > mkdir build
+ > cd build/
+2) setup CMake project
+ > cmake ..
+3) compile CLI & GUI
+ > make
+
+
+LINUX: To build and install code (DEPRECATED)
 
 CUIs:
 1) cd app/consapp/<appName>/gcc

@@ -57,10 +57,10 @@ static const char *help[]={
 " if run foreground or send signal SIGINT for background process.",
 " if both of the input stream and the output stream follow #format, the",
 " format of input messages are converted to output. To specify the output",
-" messages, use -msg option. If the option -in or -out omitted, stdin for",
-" input or stdout for output is used. If the stream in the option -in or -out",
-" is null, stdin or stdout is used as well.",
-" Command options are as follows.",
+" messages, use the -msg option before the respective -out options. If the",
+" option -in or -out omitted, stdin for input or stdout for output is used.",
+" If the stream in the option -in or -out is null, stdin or stdout is used as",
+" well. Command options are as follows.",
 "",
 " -in  stream[#format] input  stream path and format",
 " -out stream[#format] output stream path and format",
@@ -89,7 +89,7 @@ static const char *help[]={
 "    binex        : BINEX (only in)",
 "    rt17         : Trimble RT17 (only in)",
 "    sbf          : Septentrio SBF (only in)",
-"    unc          : Unicore (only in)",
+"    unicore      : Unicore (only in)",
 "",
 " -msg \"type[(tint)][,type[(tint)]...]\"",
 "                   rtcm message types and output intervals (s)",
@@ -200,24 +200,46 @@ static int decodepath(const char *path, int *type, char *strpath, int *fmt)
     strcpy(strpath,p+3);
     return 1;
 }
-/* read receiver commands ----------------------------------------------------*/
-static void readcmd(const char *file, char *cmd, int type)
+/* Read receiver commands ----------------------------------------------------*/
+static void readcmd(const char *file, char *cmd, size_t size, int type)
 {
-    FILE *fp;
-    char buff[MAXSTR],*p=cmd;
-    int i=0;
-    
-    *p='\0';
-    
-    if (!(fp=fopen(file,"r"))) return;
-    
-    while (fgets(buff,sizeof(buff),fp)) {
-        if (*buff=='@') i++;
-        else if (i==type&&p+strlen(buff)+1<cmd+MAXRCVCMD) {
-            p+=sprintf(p,"%s",buff);
-        }
+  cmd[0] = '\0';
+
+  FILE *fp = fopen(file, "r");
+  if (!fp) return;
+
+  int i = 0;
+  int line_start = 0;
+  size_t end = 0;
+  char buff[81];
+  while (fgets(buff, sizeof(buff), fp)) {
+    size_t avail = strlen(buff);
+    int line_end = avail > 0 && (buff[avail - 1] == '\n' || buff[avail - 1] == '\r');
+    if (line_start && *buff == '@') {
+      i++;
+      // Flush to the end of this line.
+      while (!line_end && fgets(buff, sizeof(buff), fp)) {
+        avail = strlen(buff);
+        line_end = avail > 0 && (buff[avail - 1] == '\n' || buff[avail - 1] == '\r');
+      }
+      line_start = line_end;
+      continue;
     }
-    fclose(fp);
+    line_start = line_end;
+    if (i != type) continue;
+    size_t req = end + avail + 1;
+    if (req > size) {
+      // Fill as much as possible and exit.
+      memcpy(cmd + end, buff, size - end);
+      cmd[size - 1] = '\0';
+      fprintf(stderr, "Stream command size overflow in file %s\n", file);
+      break;
+    }
+    memcpy(cmd + end, buff, avail);
+    end += avail;
+    cmd[end] = '\0';
+  }
+  fclose(fp);
 }
 
 static void deamonise(void)
@@ -263,26 +285,32 @@ int main(int argc, char **argv)
     static char s1[MAXSTR][MAXSTRPATH]={{0}},s2[MAXSTR][MAXSTRPATH]={{0}};
     char *paths[MAXSTR],*logs[MAXSTR];
     char *cmdfile[MAXSTR]={"","","","",""},*cmds[MAXSTR],*cmds_periodic[MAXSTR];
-    char *local="",*proxy="",*msg="1004,1019",*opt="",buff[256],*p;
+    char *local="",*proxy="",*opt="",buff[256],*p;
     char strmsg[MAXSTRMSG]="",*antinfo="",*rcvinfo="";
     char *ant[]={"","",""},*rcv[]={"","",""},*logfile="";
     int i,j,n=0,dispint=5000,trlevel=0,opts[]={10000,10000,2000,32768,10,0,30,0};
     int types[MAXSTR]={STR_FILE,STR_FILE},stat[MAXSTR]={0},log_stat[MAXSTR]={0};
     int byte[MAXSTR]={0},bps[MAXSTR]={0},fmts[MAXSTR]={0},sta=0;
     int deamon=0;
+    const char *msg = "1004,1019"; // Current messages.
+    const char *msgs[MAXSTR];      // Messages per output stream.
     
     for (i=0;i<MAXSTR;i++) {
         paths[i]=s1[i];
         logs[i]=s2[i];
         cmds[i]=cmd_strs[i];
         cmds_periodic[i]=cmd_periodic_strs[i];
+        msgs[i] = msg;
     }
     for (i=1;i<argc;i++) {
         if (!strcmp(argv[i],"-in")&&i+1<argc) {
             if (!decodepath(argv[++i],types,paths[0],fmts)) return EXIT_FAILURE;
         }
+        else if (!strcmp(argv[i],"-msg")&&i+1<argc) msg=argv[++i];
         else if (!strcmp(argv[i],"-out")&&i+1<argc&&n<MAXSTR-1) {
             if (!decodepath(argv[++i],types+n+1,paths[n+1],fmts+n+1)) return EXIT_FAILURE;
+            // Capture the current messages for this output stream.
+            msgs[n + 1] = msg;
             n++;
         }
         else if (!strcmp(argv[i],"-p")&&i+3<argc) {
@@ -301,7 +329,6 @@ int main(int argc, char **argv)
             stadel[1]=atof(argv[++i]);
             stadel[2]=atof(argv[++i]);
         }
-        else if (!strcmp(argv[i],"-msg")&&i+1<argc) msg=argv[++i];
         else if (!strcmp(argv[i],"-opt")&&i+1<argc) opt=argv[++i];
         else if (!strcmp(argv[i],"-sta")&&i+1<argc) sta=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-d"  )&&i+1<argc) dispint=atoi(argv[++i]);
@@ -340,7 +367,7 @@ int main(int argc, char **argv)
             fprintf(stderr,"specify input format\n");
             return EXIT_FAILURE;
         }
-        if (!(conv[i]=strconvnew(fmts[0],fmts[i+1],msg,sta,sta!=0,opt))) {
+        if (!(conv[i]=strconvnew(fmts[0],fmts[i+1],msgs[i+1],sta,sta!=0,opt))) {
             fprintf(stderr,"stream conversion error\n");
             return EXIT_FAILURE;
         }
@@ -376,8 +403,8 @@ int main(int argc, char **argv)
     strsetproxy(proxy);
     
     for (i=0;i<MAXSTR;i++) {
-        if (*cmdfile[i]) readcmd(cmdfile[i],cmds[i],0);
-        if (*cmdfile[i]) readcmd(cmdfile[i],cmds_periodic[i],2);
+        if (*cmdfile[i]) readcmd(cmdfile[i],cmds[i], sizeof(cmd_strs[0]),0);
+        if (*cmdfile[i]) readcmd(cmdfile[i],cmds_periodic[i], sizeof(cmd_periodic_strs[0]), 2);
     }
     /* start stream server */
     if (!strsvrstart(&strsvr,opts,types,(const char **)paths,(const char **)logs,conv,(const char **)cmds,(const char **)cmds_periodic,
@@ -401,7 +428,7 @@ int main(int argc, char **argv)
         sleepms(dispint);
     }
     for (i=0;i<MAXSTR;i++) {
-        if (*cmdfile[i]) readcmd(cmdfile[i],cmds[i],1);
+        if (*cmdfile[i]) readcmd(cmdfile[i],cmds[i],sizeof(cmd_strs[0]),1);
     }
     /* stop stream server */
     strsvrstop(&strsvr,(const char **)cmds);

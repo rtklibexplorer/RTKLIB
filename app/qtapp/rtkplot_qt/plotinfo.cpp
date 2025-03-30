@@ -284,29 +284,29 @@ void Plot::updatePlotTypeMenu()
     ui->cBPlotTypeSelection->clear();
 
     if (solutionData[0].n > 0 || solutionData[1].n > 0 || (nObservation <= 0 && solutionStat[0].n <= 0 && solutionStat[1].n <= 0)) {
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_TRK], PLOT_TRK);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_SOLP], PLOT_SOLP);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_SOLV], PLOT_SOLV);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_SOLA], PLOT_SOLA);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_NSAT], PLOT_NSAT);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_TRK]), PLOT_TRK);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_SOLP]), PLOT_SOLP);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_SOLV]), PLOT_SOLV);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_SOLA]), PLOT_SOLA);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_NSAT]), PLOT_NSAT);
     }
 
     if (nObservation > 0) {
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_OBS], PLOT_OBS);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_SKY], PLOT_SKY);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_DOP], PLOT_DOP);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_OBS]), PLOT_OBS);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_SKY]), PLOT_SKY);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_DOP]), PLOT_DOP);
     }
 
     if (solutionStat[0].n > 0 || solutionStat[1].n > 0) {
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_RES], PLOT_RES);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_RESE], PLOT_RESE);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_RES]), PLOT_RES);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_RESE]), PLOT_RESE);
     }
 
     if ((nObservation > 0)  && (!simulatedObservation)) {
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_SNR], PLOT_SNR);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_SNRE], PLOT_SNRE);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_MPS], PLOT_MPS);
-        ui->cBPlotTypeSelection->addItem(PTypes[PLOT_IONOS], PLOT_IONOS);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_SNR]), PLOT_SNR);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_SNRE]), PLOT_SNRE);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_MPS]), PLOT_MPS);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_IONOS]), PLOT_IONOS);
     }
 
     // select previously selected item again
@@ -424,7 +424,7 @@ void Plot::updateObservationType()
 void Plot::updatePoint(int x, int y)
 {
     gtime_t time;
-    QPoint p = ui->lblDisplay->mapFromGlobal(QPoint(x, y));
+    QPoint p(x, y);
     double enu[3] = { 0 }, rr[3], pos[3], xx, yy, r, xl[2], yl[2], q[2], az, el;
     int i;
     QString msg;

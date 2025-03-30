@@ -63,7 +63,7 @@
 #define SQR(x)      ((x)*(x))
 #define SQRT(x)     ((x)<0.0||(x)!=(x)?0.0:sqrt(x))
 
-extern const QString PTypes[];
+extern const char* PTypes[];
 
 namespace Ui {
 class Plot;

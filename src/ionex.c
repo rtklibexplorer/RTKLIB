@@ -274,7 +274,7 @@ static void combtec(nav_t *nav)
 /* read ionex tec grid file ----------------------------------------------------
 * read ionex ionospheric tec grid file
 * args   : char   *file       I   ionex tec grid file
-*                                 (wind-card * is expanded)
+*                                 (wild-card * is expanded)
 *          nav_t  *nav        IO  navigation data
 *                                 nav->nt, nav->ntmax and nav->tec are modified
 *          int    opt         I   read option (1: no clear of tec data,0:clear)

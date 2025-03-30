@@ -559,8 +559,8 @@ void __fastcall TMainForm::SvrStop(void)
 void __fastcall TMainForm::Timer2Timer(TObject *Sender)
 {
 	const char *types[]={
-		"None","Serial","File","TCP Server","TCP Client","Ntrip Sever",
-		"Ntrip Client","FTP","HTTP","Ntrip Cast","UDP Sever","UDP Client"
+		"None","Serial","File","TCP Server","TCP Client","Ntrip Server",
+		"Ntrip Client","FTP","HTTP","Ntrip Cast","UDP Server","UDP Client"
 	};
 	const char *modes[]={"-","R","W","R/W"};
 	const char *states[]={"ERR","-","WAIT","CONN"};

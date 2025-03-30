@@ -4,6 +4,7 @@
 #include <QColor>
 #include <QPainter>
 #include <QDebug>
+#include <QScreen>
 
 #include "rtklib.h"
 #include "plotmain.h"
@@ -44,9 +45,13 @@ void Plot::updateDisplay()
 
     if (flush) {
         QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        if (buffer.size() != ui->lblDisplay->size())
-            buffer = QPixmap(ui->lblDisplay->size());
-
+        QSize widgetSize = ui->lblDisplay->size();
+        qreal dpr = QGuiApplication::primaryScreen()->devicePixelRatio();
+        if (buffer.size() != widgetSize)
+        {
+            buffer = QPixmap(widgetSize * dpr);
+            buffer.setDevicePixelRatio(dpr);
+        }
         if (buffer.isNull()) return;
         buffer.fill(plotOptDialog->getCColor(0));
 
@@ -349,7 +354,7 @@ void Plot::drawTrackImage(QPainter &c, int level)
     graphTrack->toPoint(x2, y1, p2);
     QRect r(p1, p2);
     if (mapImageScaled.size() != r.size())  // avoid scaling the image each time it is drawn
-        mapImageScaled = mapImageOriginal.scaled(r.size());
+        mapImageScaled = mapImageOriginal.scaled(r.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
     c.drawImage(r, mapImageScaled);
 }
 // check in boundary --------------------------------------------------------

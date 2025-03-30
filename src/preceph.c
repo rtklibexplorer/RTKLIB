@@ -304,7 +304,7 @@ static void combpeph(nav_t *nav, int opt)
 /* read sp3 precise ephemeris file ---------------------------------------------
 * read sp3 precise ephemeris/clock files and set them to navigation data
 * args   : char   *file       I   sp3-c precise ephemeris file
-*                                 (wind-card * is expanded)
+*                                 (wild-card * is expanded)
 *          nav_t  *nav        IO  navigation data
 *          int    opt         I   options (1: only observed + 2: only predicted +
 *                                 4: not combined)

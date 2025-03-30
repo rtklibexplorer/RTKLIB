@@ -16,7 +16,7 @@ MapViewOptDialog::MapViewOptDialog(QWidget* parent)
 {
     ui->setupUi(this);
 
-    QAction *acNotes = new QAction("?");
+    QAction *acNotes = new QAction("?", this);
     ui->lEApiKey->addAction(acNotes, QLineEdit::TrailingPosition);
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &MapViewOptDialog::accept);
