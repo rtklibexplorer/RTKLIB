@@ -647,7 +647,7 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
     }
     /* inconsistency between orbit and clock correction */
     if (ssr->iod[0]!=ssr->iod[1]) {
-        trace(2,"inconsist ssr correction: %s sat=%2d iod=%d %d\n",
+        trace(2,"inconsistent ssr correction: %s sat=%2d iod=%d %d\n",
               time2str(time,tstr,0),sat,ssr->iod[0],ssr->iod[1]);
         *svh=-1;
         return 0;
@@ -735,7 +735,7 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
 *          double *var      O   sat position and clock error variance (m^2)
 *          int    *svh      O   sat health flag (-1:correction not available)
 * return : status (1:ok,0:error)
-* notes  : satellite position is referenced to antenna phase center
+* notes  : satellite position is referenced to center of mass
 *          satellite clock does not include code bias correction (tgd or bgd)
 *-----------------------------------------------------------------------------*/
 extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
@@ -753,7 +753,7 @@ extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
         case EPHOPT_SSRAPC: return satpos_ssr (time,teph,sat,nav, 0,rs,dts,var,svh);
         case EPHOPT_SSRCOM: return satpos_ssr (time,teph,sat,nav, 1,rs,dts,var,svh);
         case EPHOPT_PREC  :
-            if (!peph2pos(time,sat,nav,1,rs,dts,var)) break; else return 1;
+            if (!peph2pos(time,sat,nav,rs,dts,var)) break; else return 1;
     }
     *svh=-1;
     return 0;
@@ -775,12 +775,12 @@ extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
 *          dts[(0:1)+i*2]= obs[i] sat clock {bias,drift} (s|s/s)
 *          var[i]        = obs[i] sat position and clock error variance (m^2)
 *          svh[i]        = obs[i] sat health flag
-*          if no navigation data, set 0 to rs[], dts[], var[] and svh[]
-*          satellite position and clock are values at signal transmission time
-*          satellite position is referenced to antenna phase center
-*          satellite clock does not include code bias correction (tgd or bgd)
-*          any pseudorange and broadcast ephemeris are always needed to get
-*          signal transmission time
+*          Satellite position and clock are values at signal transmission time.
+*          Precise satellite position is referenced to center of mass
+*          Satellite clock does not include code bias correction (tgd or bgd).
+*          At least one pseudorange and satellite clock offsets from precise
+*          products or broadcast ephemeris always needed to get signal
+*          transmission time.
 *-----------------------------------------------------------------------------*/
 extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
                     int ephopt, double *rs, double *dts, double *var, int *svh)
@@ -807,10 +807,18 @@ extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
         /* transmission time by satellite clock */
         time[i]=timeadd(obs[i].time,-pr/CLIGHT);
 
-        /* satellite clock bias by broadcast ephemeris */
-        if (!ephclk(time[i],teph,obs[i].sat,nav,&dt)) {
+        /* satellite clock offset from precise products or broadcast ephemeris */
+        if (ephopt==EPHOPT_PREC&&nav->nc>0) {
+          if(!pephclk(time[i],obs[i].sat,nav,&dt,NULL)) {
+            trace(3,"no precise clock %s sat=%2d\n",time2str(time[i],tstr,3),obs[i].sat);
+            continue;
+          }
+        }
+        else {
+          if(!ephclk(time[i],teph,obs[i].sat,nav,&dt)) {
             trace(3,"no broadcast clock %s sat=%2d\n",time2str(time[i],tstr,3),obs[i].sat);
             continue;
+          }
         }
         time[i]=timeadd(time[i],-dt);
 
@@ -821,10 +829,13 @@ extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
             continue;
         }
         /* if no precise clock available, use broadcast clock instead */
+        /* NOTE: broadcast clock from ephclk() does NOT include relativistic
+         *       correction for GPS, GAL and BDS! */
         if (dts[i*2]==0.0) {
             if (!ephclk(time[i],teph,obs[i].sat,nav,dts+i*2)) continue;
             dts[1+i*2]=0.0;
             *var=SQR(STD_BRDCCLK);
+            trace(3,"no precise clock, use broadcast %s sat=%2d\n",time2str(time[i],tstr,3),obs[i].sat);
         }
         trace(4,"satposs: %d,time=%.9f dt=%.9f pr=%.3f rs=%13.3f %13.3f %13.3f dts=%12.3f var=%7.3f\n",
             obs[i].sat,time[i].sec,dt,pr,rs[i*6],rs[1+i*6],rs[2+i*6],dts[i*2]*1E9,

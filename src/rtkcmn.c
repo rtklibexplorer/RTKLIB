@@ -207,7 +207,7 @@ const prcopt_t prcopt_default={ /* defaults processing options */
     15.0*D2R,{{0,0}},           /* elmin,snrmask */
     0,3,3,1,0,1,                /* sateph,modear,glomodear,gpsmodear,bdsmodear,arfilter */
     20,0,4,5,10,20,             /* maxout,minlock,minfixsats,minholdsats,mindropsats,minfix */
-    1,1,1,1,0,                  /* armaxiter,estion,esttrop,dynamics,tidecorr */
+    1,1,1,1,0,                  /* armaxiter,ionoopt,tropopt,dynamics,tidecorr */
     1,0,0,0,0,                  /* niter,codesmooth,intpref,sbascorr,sbassatsel */
     0,0,                        /* rovpos,refpos */
     {300.0,300.0,300.0},        /* eratio[] */
@@ -221,7 +221,7 @@ const prcopt_t prcopt_default={ /* defaults processing options */
     {5.0,30.0},                 /* maxinno {phase,code} */
     {0},{0},{0},                /* baseline,ru,rb */
     {"",""},                    /* anttype */
-    {{0}},{{0}},{0},            /* antdel,pcv,exsats */
+    {{0}},{{0}},{0},            /* antdel,pcvr,exsats */
     1,1                         /* maxaveep,initrst */
 };
 const solopt_t solopt_default={ /* defaults solution output options */
@@ -273,7 +273,7 @@ static char codepris[7][MAXFREQ][16]={  /* code priority for each freq-index */
     {"CABXZ"   ,"XIQ"       ,"XIQ"     ,"ABCXZ"  ,"IQX"    ,""}, /* GAL */
     {"CLSXZBE" ,"LSX"       ,"IQXDPZ"  ,"LSXEZ"  ,""       ,""}, /* QZS */
     {"C"       ,"IQX"       ,""        ,""       ,""       ,""}, /* SBS */
-    {"IQXDPSLZAN","IQXDPZ"  ,"DPX"     ,"IQXDPZA" ,"DPX"    ,""}, /* BDS */
+    {"IQXDPSLZAN","IQXDPZ"  ,"DPX"     ,"IQXDPZA" ,"DPX"   ,""}, /* BDS */
     {"ABCX"    ,"ABCX"      ,"DPX"     ,""       ,""       ,""}  /* IRN */
 };
 static fatalfunc_t *fatalfunc=NULL; /* fatal callback function */
@@ -3289,7 +3289,7 @@ extern int execcmd(const char *cmd)
 }
 /* expand file path ------------------------------------------------------------
 * expand file path with wild-card (*) in file
-* args   : char   *path     I   file path to expand (captal insensitive)
+* args   : char   *path     I   file path to expand (capital insensitive)
 *          char   *paths    O   expanded file paths
 *          int    nmax      I   max number of expanded file paths
 * return : number of expanded file paths

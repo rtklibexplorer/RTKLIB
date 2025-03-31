@@ -48,6 +48,7 @@ util/gencrc/genxor
 util/rnx2rtcm/rnx2rtcm
 util/simobs/gcc/simobs
 
+test/data/geoiddata/
 test/utest/*.out
 test/utest/t_atmos
 test/utest/t_coord

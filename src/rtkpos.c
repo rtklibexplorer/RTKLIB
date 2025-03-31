@@ -359,7 +359,7 @@ static void outsolstat(rtk_t *rtk,const nav_t *nav)
     char buff[3*MAXSOLMSG+1];
     int n=rtkoutstat(rtk,statlevel,buff);
     buff[n]='\0';
-    
+
     fputs(buff,fp_stat);
 }
 /* save error message --------------------------------------------------------*/
@@ -503,7 +503,7 @@ static void udpos(rtk_t *rtk, double tt)
     /* static mode */
     if (rtk->opt.mode==PMODE_STATIC||rtk->opt.mode==PMODE_STATIC_START) return;
 
-    /* kinmatic mode without dynamics */
+    /* kinematic mode without dynamics */
     if (!rtk->opt.dynamics) {
         for (i=0;i<3;i++) initx(rtk,rtk->sol.rr[i],VAR_POS,i);
         return;
@@ -549,7 +549,7 @@ static void udpos(rtk_t *rtk, double tt)
     matmul("NN",nx,1,nx,F,x,xp);
     matmul("NN",nx,nx,nx,F,P,FP);
     matmul("NT",nx,nx,nx,FP,F,P);
-    
+
     for (i=0;i<nx;i++) {
         rtk->x[ix[i]]=xp[i];
         for (j=0;j<nx;j++) {
@@ -648,7 +648,7 @@ static void udrcvbias(rtk_t *rtk, double tt)
     }
 }
 // Detect a change in the observation code for a given frequency index.
-// Only one bias per frequency index per satallite is supported, so if the
+// Only one bias per frequency index per satellite is supported, so if the
 // observation code changes then consider it a slip.
 static void detslp_code(rtk_t *rtk, const obsd_t *obs, int i, int rcv) {
   int sat = obs[i].sat;
@@ -926,7 +926,7 @@ static void udstate(rtk_t *rtk, const obsd_t *obs, const int *sat,
                     const int *iu, const int *ir, int ns, const nav_t *nav)
 {
     trace(3,"udstate : ns=%d\n",ns);
-    
+
     double tt=rtk->tt;
 
     /* Temporal update of position/velocity/acceleration */
@@ -1599,7 +1599,7 @@ static void holdamb(rtk_t *rtk, const double *xa)
     double *v,*H,*R;
     int i,j,n,m,f,info,index[MAXSAT],nb=rtk->nx-rtk->na,nv=0,nf=NF(&rtk->opt);
     double dd;
-    
+
     trace(3,"holdamb :\n");
 
     v=mat(nb,1); H=zeros(nb,rtk->nx);
@@ -1785,12 +1785,12 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
                 /* rtk->xa = rtk->x-Qab*Qb^-1*(b0-b) */
                 matmul("NN",nb,1,nb,Qb ,y,db); /* db = Qb^-1*(b0-b) */
                 matmulm("NN",na,1,nb,Qab,db,rtk->xa); /* rtk->xa = rtk->x-Qab*db */
-                
+
                 /* rtk->Pa=rtk->P-Qab*Qb^-1*Qab') */
                 /* covariance of fixed solution (Qa=Qa-Qab*Qb^-1*Qab') */
                 matmul("NN",na,nb,nb,Qab,Qb ,QQ);  /* QQ = Qab*Qb^-1 */
                 matmulm("NT",na,na,nb,QQ ,Qab,rtk->Pa); /* rtk->Pa = rtk->P-QQ*Qab' */
-                
+
                 trace(3,"resamb : validation ok (nb=%d ratio=%.2f thresh=%.2f s=%.2f/%.2f)\n",
                       nb,s[0]==0.0?0.0:s[1]/s[0],rtk->sol.thres,s[0],s[1]);
 
@@ -2107,7 +2107,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
 
         /* calc double diff residuals again after kalman filter update for float solution */
         nv=ddres(rtk,obs,dt,xp,Pp,sat,y,e,azel,freq,iu,ir,ns,v,NULL,R,vflg);
-        
+
         /* validation of float solution, always returns 1, msg to trace file if large residual */
         if (valpos(rtk,v,R,vflg,nv,4.0)) {
 
