@@ -35,6 +35,7 @@ CPackSourceConfig.cmake
 # Ignore compilation results
 
 bin/*
+build/*
 lib/libRTKLib.so*
 app/consapp/convbin/gcc/convbin
 app/consapp/pos2kml/gcc/pos2kml
