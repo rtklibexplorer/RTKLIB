@@ -3910,6 +3910,8 @@ extern void antmodel_s(const pcv_t *pcv, double nadir, double *dant)
 }
 
 /* Sun and moon position in ECI (ref [4] 5.1.1, 5.2.1) -----------------------*/
+void epv00(double date1, double date2, double pvh[2][3], double pvb[2][3]) {}
+void moon98(double date1, double date2, double pv[2][3]) {}
 static void sunmoonpos_eci(gtime_t tutc, double *rsun, double *rmoon) {
   char tstr[40];
   trace(4, "sunmoonpos_eci: tutc=%s\n", time2str(tutc, tstr, 3));
