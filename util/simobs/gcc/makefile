@@ -7,7 +7,7 @@ CFLAGS = -std=c99 -Wall -O3 -pedantic -I$(SRC) -DTRACE -DENAGLO -DENAQZS -DENAGA
 #LDLIBS  = -lm
 LDLIBS  = ../../../lib/iers/gcc/iers.a -lgfortran -lm -lrt
 
-simobs     : simobs.o geoid.o ephemeris.o ionex.o ppp.o ppp_ar.o preceph.o rinex.o rtkcmn.o trace.o sbas.o tides.o
+simobs     : simobs.o geoid.o ephemeris.o ionex.o ppp.o ppp_ar.o preceph.o rinex.o rtkcmn.o trace.o sbas.o sofa.o tides.o
 
 simobs.o   : ../simobs.c
 	$(CC) -c $(CFLAGS) ../simobs.c
@@ -31,6 +31,8 @@ trace.o   : $(SRC)/rtklib.h $(SRC)/trace.c
 	$(CC) -c $(CFLAGS) $(SRC)/trace.c
 sbas.o      : $(SRC)/sbas.c
 	$(CC) -c $(CFLAGS) $(SRC)/sbas.c
+sofa.o   : $(SRC)/sofa.c
+	$(CC) -c $(CFLAGS) $(SRC)/sofa.c	
 tides.o     : $(SRC)/tides.c
 	$(CC) -c $(CFLAGS) $(SRC)/tides.c
 
@@ -42,6 +44,7 @@ ppp.o       : $(SRC)/rtklib.h
 ppp_ar.o    : $(SRC)/rtklib.h
 preceph.o   : $(SRC)/rtklib.h
 rtkcmn.o    : $(SRC)/rtklib.h
+sofa.o      : $(SRC)/rtklib.h
 sbas.o      : $(SRC)/rtklib.h
 tides.o     : $(SRC)/rtklib.h
 
