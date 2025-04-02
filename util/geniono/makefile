@@ -1,5 +1,6 @@
 # makefile for ppp_local
 
+BINDIR   = ../../bin
 RTKLIBDIR=../../src
 
 CFLAGS = -Wall -O3 -I$(RTKLIBDIR) -DTRACE
@@ -40,7 +41,7 @@ test2:
 	./gengrid "stec/iono_*.stec" -d stec_grid
 
 install:
-	cp -f $(BIN) /usr/local/bin
+	cp -f $(BIN) $(BINDIR)
 
 clean:
 	rm -f $(BIN) *.o *.trace

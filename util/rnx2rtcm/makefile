@@ -1,6 +1,6 @@
 # makefile for rnx2rtcm
 
-BINDIR = /usr/local/bin
+BINDIR = ../../bin
 SRC    = ../../src
 OPTIONS= -DTRACE -DENAGLO -DENAQZS -DENAGAL -DENACMP -DENAIRN -DNFREQ=3 -DNEXOBS=3
 CFLAGS = -std=c99 -Wall -O3 -pedantic -I$(SRC) $(OPTIONS)
