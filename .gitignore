@@ -35,7 +35,7 @@ CPackSourceConfig.cmake
 # Ignore compilation results
 
 bin/*
-build/*
+build
 lib/librtklib.so
 app/consapp/convbin/gcc/convbin
 app/consapp/pos2kml/gcc/pos2kml
