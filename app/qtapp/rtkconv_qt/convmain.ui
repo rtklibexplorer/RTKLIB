@@ -45,7 +45,7 @@
           <bool>true</bool>
          </property>
          <property name="timeSpec">
-          <enum>Qt::TimeSpec::UTC</enum>
+          <enum>Qt::UTC</enum>
          </property>
         </widget>
        </item>
@@ -85,7 +85,7 @@
           <bool>true</bool>
          </property>
          <property name="timeSpec">
-          <enum>Qt::TimeSpec::UTC</enum>
+          <enum>Qt::UTC</enum>
          </property>
         </widget>
        </item>
@@ -280,7 +280,7 @@
           <string>File format</string>
          </property>
          <property name="sizeAdjustPolicy">
-          <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
+          <enum>QComboBox::AdjustToContents</enum>
          </property>
         </widget>
        </item>
@@ -537,7 +537,7 @@
       <item>
        <widget class="QPushButton" name="btnAbort">
         <property name="toolTip">
-         <string>Abort conversion</string>
+         <string>Abort RTKConv</string>
         </property>
         <property name="text">
          <string>Abort</string>

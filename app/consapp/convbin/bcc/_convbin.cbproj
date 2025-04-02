@@ -247,6 +247,9 @@
             <BuildOrder>9</BuildOrder>
             <BuildOrder>2</BuildOrder>
         </CppCompile>
+        <CppCompile Include="..\..\..\..\src\sofa.c">
+            <BuildOrder>27</BuildOrder>
+        </CppCompile>
         <CppCompile Include="..\..\..\..\src\trace.c">
             <BuildOrder>25</BuildOrder>
         </CppCompile>

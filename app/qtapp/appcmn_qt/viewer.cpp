@@ -39,7 +39,7 @@ void TextViewer::setOption(int option)
         ui->btnReadSave->setVisible(false);
     } else if (option == 2) {
         ui->btnReload->setVisible(false);
-        ui->btnReadSave->setText(tr("Save..."));
+        ui->btnReadSave->setText(tr("&Save..."));
     }
 }
 //---------------------------------------------------------------------------
@@ -57,7 +57,7 @@ void TextViewer::reloadText()
 //---------------------------------------------------------------------------
 void TextViewer::readSaveFile()
 {
-    if (ui->btnReadSave->text() == tr("Save..."))
+    if (ui->btnReadSave->text() == tr("&Save..."))
         save(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, QString(), file)));
     else
         read(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, QString(), file)));

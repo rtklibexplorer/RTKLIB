@@ -3,7 +3,7 @@
 
 #include <QString>
 
-QString htmlPage() {
+QString getHtmlPage() {
     return QStringLiteral(R"~~~(
 
 <!------------------------------------------------------------------------------

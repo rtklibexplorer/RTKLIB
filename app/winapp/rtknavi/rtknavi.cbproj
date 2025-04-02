@@ -478,6 +478,9 @@
             <BuildOrder>40</BuildOrder>
             <BuildOrder>23</BuildOrder>
         </CppCompile>
+        <CppCompile Include="..\..\..\src\sofa.c">
+            <BuildOrder>61</BuildOrder>
+        </CppCompile>
         <CppCompile Include="..\..\..\src\solution.c">
             <BuildOrder>45</BuildOrder>
             <BuildOrder>12</BuildOrder>

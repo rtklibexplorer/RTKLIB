@@ -282,7 +282,7 @@
    <item row="12" column="0">
     <widget class="QLabel" name="Label18">
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Capability of Caster to receive NMEA message with approximate position from Client&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>Capability of Caster to receive NMEA message with approximate position from Client</string>
      </property>
      <property name="text">
       <string>&amp;NMEA</string>
@@ -414,7 +414,7 @@
    <item row="17" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>

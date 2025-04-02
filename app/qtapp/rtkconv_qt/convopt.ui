@@ -142,7 +142,7 @@
       <item>
        <widget class="QLabel" name="lbTimeTolerance">
         <property name="text">
-         <string>Time Torelance</string>
+         <string>Time Tolerance</string>
         </property>
         <property name="buddy">
          <cstring>sBTimeTolerance</cstring>
@@ -900,7 +900,7 @@
       <item>
        <widget class="QDialogButtonBox" name="buttonBox">
         <property name="standardButtons">
-         <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
+         <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
         </property>
        </widget>
       </item>

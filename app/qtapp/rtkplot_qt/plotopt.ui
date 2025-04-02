@@ -1317,6 +1317,11 @@
         </item>
         <item>
          <property name="text">
+          <string>40</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
           <string>50</string>
          </property>
         </item>

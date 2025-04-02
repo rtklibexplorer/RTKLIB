@@ -329,7 +329,7 @@ static int inputobs(obsd_t *obs, int solq, const prcopt_t *popt)
                   nr=nextobsb(&obss,&iobsr,2);
                 }
             } else {
-                /* If not interpolating, fnd the closest iobsr timestamp before or after iobsu. */
+                /* If not interpolating, find the closest iobsr timestamp before or after iobsu. */
                 double dt=fabs(timediff(obss.data[iobsr].time,obss.data[iobsu].time));
                 int i=iobsr,nr=nextobsb(&obss,&i,2);
                 while (nr>0) {

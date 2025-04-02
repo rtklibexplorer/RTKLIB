@@ -7,14 +7,14 @@ USEFORM("..\appcmn\timedlg.cpp", TimeDialog);
 USEFORM("..\appcmn\viewer.cpp", TextViewer);
 USEFORM("..\appcmn\vieweropt.cpp", ViewerOptDialog);
 USEFORM("codeopt.cpp", CodeOptDialog);
-USEFORM("..\appcmn\keydlg.cpp", KeyDialog);
+USEFORM("convmain.cpp", MainWindow);
 USEFORM("..\appcmn\aboutdlg.cpp", AboutDialog);
 USEFORM("..\appcmn\confdlg.cpp", ConfDialog);
 USEFORM("..\appcmn\freqdlg.cpp", FreqDialog);
 USEFORM("..\appcmn\glofcndlg.cpp", GloFcnDialog);
-USEFORM("startdlg.cpp", StartDialog);
-USEFORM("convmain.cpp", MainWindow);
+USEFORM("..\appcmn\keydlg.cpp", KeyDialog);
 USEFORM("convopt.cpp", ConvOptDialog);
+USEFORM("startdlg.cpp", StartDialog);
 //---------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {

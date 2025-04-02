@@ -209,6 +209,9 @@
         <CppCompile Include="..\..\..\src\rtkcmn.c">
             <BuildOrder>2</BuildOrder>
         </CppCompile>
+        <CppCompile Include="..\..\..\src\sofa.c">
+            <BuildOrder>4</BuildOrder>
+        </CppCompile>
         <CppCompile Include="..\..\..\src\trace.c">
             <BuildOrder>3</BuildOrder>
         </CppCompile>

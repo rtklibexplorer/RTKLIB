@@ -15,24 +15,24 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="sizeConstraint">
-    <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+    <enum>QLayout::SetMinimumSize</enum>
    </property>
    <item row="0" column="0">
     <widget class="QTableWidget" name="tableWidget">
      <property name="verticalScrollBarPolicy">
-      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+      <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
      <property name="horizontalScrollBarPolicy">
-      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+      <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
      <property name="sizeAdjustPolicy">
-      <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
+      <enum>QAbstractScrollArea::AdjustToContents</enum>
      </property>
      <property name="autoScroll">
       <bool>false</bool>
      </property>
      <property name="editTriggers">
-      <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+      <set>QAbstractItemView::NoEditTriggers</set>
      </property>
      <property name="showDropIndicator" stdset="0">
       <bool>false</bool>
@@ -41,13 +41,13 @@
       <bool>false</bool>
      </property>
      <property name="selectionMode">
-      <enum>QAbstractItemView::SelectionMode::NoSelection</enum>
+      <enum>QAbstractItemView::NoSelection</enum>
      </property>
      <property name="textElideMode">
-      <enum>Qt::TextElideMode::ElideNone</enum>
+      <enum>Qt::ElideNone</enum>
      </property>
      <property name="gridStyle">
-      <enum>Qt::PenStyle::DotLine</enum>
+      <enum>Qt::DotLine</enum>
      </property>
      <property name="cornerButtonEnabled">
       <bool>false</bool>
@@ -64,7 +64,7 @@
      </row>
      <row>
       <property name="text">
-       <string>Galileos</string>
+       <string>Galileo</string>
       </property>
      </row>
      <row>
@@ -397,7 +397,7 @@
    <item row="1" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::StandardButton::Ok</set>
+      <set>QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>395</width>
+    <width>402</width>
     <height>286</height>
    </rect>
   </property>
@@ -24,7 +24,7 @@
    <item row="2" column="0">
     <widget class="QLabel" name="labelm">
      <property name="text">
-      <string>%m</string>
+      <string notr="true">%m</string>
      </property>
     </widget>
    </item>
@@ -38,21 +38,21 @@
    <item row="1" column="0">
     <widget class="QLabel" name="labely">
      <property name="text">
-      <string>%y</string>
+      <string notr="true">%y</string>
      </property>
     </widget>
    </item>
    <item row="4" column="0">
     <widget class="QLabel" name="labeln">
      <property name="text">
-      <string>%n</string>
+      <string notr="true">%n</string>
      </property>
     </widget>
    </item>
    <item row="3" column="3">
     <widget class="QLabel" name="labelH">
      <property name="text">
-      <string>%H</string>
+      <string notr="true">%H</string>
      </property>
     </widget>
    </item>
@@ -66,14 +66,14 @@
    <item row="1" column="3">
     <widget class="QLabel" name="labelM">
      <property name="text">
-      <string>%M</string>
+      <string notr="true">%M</string>
      </property>
     </widget>
    </item>
    <item row="6" column="3">
     <widget class="QLabel" name="labelhc">
      <property name="text">
-      <string>%hc</string>
+      <string notr="true">%hc</string>
      </property>
     </widget>
    </item>
@@ -87,7 +87,7 @@
    <item row="4" column="3">
     <widget class="QLabel" name="labelha">
      <property name="text">
-      <string>%ha</string>
+      <string notr="true">%ha</string>
      </property>
     </widget>
    </item>
@@ -101,7 +101,7 @@
    <item row="3" column="0">
     <widget class="QLabel" name="labeld">
      <property name="text">
-      <string>%d</string>
+      <string notr="true">%d</string>
      </property>
     </widget>
    </item>
@@ -115,21 +115,21 @@
    <item row="2" column="3">
     <widget class="QLabel" name="labelS">
      <property name="text">
-      <string>%S</string>
+      <string notr="true">%S</string>
      </property>
     </widget>
    </item>
    <item row="0" column="3">
     <widget class="QLabel" name="labelh">
      <property name="text">
-      <string>%h</string>
+      <string notr="true">%h</string>
      </property>
     </widget>
    </item>
    <item row="6" column="0">
     <widget class="QLabel" name="labelW">
      <property name="text">
-      <string>%W</string>
+      <string notr="true">%W</string>
      </property>
     </widget>
    </item>
@@ -143,14 +143,14 @@
    <item row="10" column="3" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::StandardButton::Ok</set>
+      <set>QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
    <item row="5" column="0">
     <widget class="QLabel" name="labelD">
      <property name="text">
-      <string>%D</string>
+      <string notr="true">%D</string>
      </property>
     </widget>
    </item>
@@ -171,7 +171,7 @@
    <item row="5" column="3">
     <widget class="QLabel" name="labelhb">
      <property name="text">
-      <string>%hb</string>
+      <string notr="true">%hb</string>
      </property>
     </widget>
    </item>
@@ -213,7 +213,7 @@
    <item row="0" column="0">
     <widget class="QLabel" name="labelY">
      <property name="text">
-      <string>%Y</string>
+      <string notr="true">%Y</string>
      </property>
     </widget>
    </item>
@@ -227,14 +227,14 @@
    <item row="7" column="0">
     <widget class="QLabel" name="labelr">
      <property name="text">
-      <string>%r</string>
+      <string notr="true">%r</string>
      </property>
     </widget>
    </item>
    <item row="8" column="0">
     <widget class="QLabel" name="labelS_2">
      <property name="text">
-      <string>%S</string>
+      <string notr="true">%S</string>
      </property>
     </widget>
    </item>
@@ -248,7 +248,7 @@
    <item row="9" column="0">
     <widget class="QLabel" name="labels">
      <property name="text">
-      <string>%s</string>
+      <string notr="true">%s</string>
      </property>
     </widget>
    </item>
@@ -262,7 +262,7 @@
    <item row="0" column="2" rowspan="10">
     <widget class="Line" name="line">
      <property name="orientation">
-      <enum>Qt::Orientation::Vertical</enum>
+      <enum>Qt::Vertical</enum>
      </property>
     </widget>
    </item>
@@ -276,14 +276,14 @@
    <item row="9" column="3">
     <widget class="QLabel" name="labelb">
      <property name="text">
-      <string>%b</string>
+      <string notr="true">%b</string>
      </property>
     </widget>
    </item>
    <item row="8" column="3">
     <widget class="QLabel" name="labelN">
      <property name="text">
-      <string>%N</string>
+      <string notr="true">%N</string>
      </property>
     </widget>
    </item>
@@ -297,14 +297,14 @@
    <item row="7" column="3">
     <widget class="QLabel" name="labelt">
      <property name="text">
-      <string>%t</string>
+      <string notr="true">%t</string>
      </property>
     </widget>
    </item>
    <item row="7" column="4">
     <widget class="QLabel" name="label15_min">
      <property name="text">
-      <string>: 15 minutes (00, 15,30, 45)</string>
+      <string>: 15 minutes (00, 15, 30, 45)</string>
      </property>
     </widget>
    </item>

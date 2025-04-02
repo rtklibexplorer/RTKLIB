@@ -77,10 +77,10 @@ target_link_libraries(rtkplot_qt PRIVATE
 	Qt${QT_VERSION_MAJOR}::SerialPort
 )
 
-if(${QtWebEngineWidgets_FOUND})
+if((${Qt5WebEngineWidgets_FOUND}) OR (${Qt6WebEngineWidgets_FOUND}))
    target_link_libraries(rtkplot_qt PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets)
 else()
-  if(${QtWebKitWidgets_FOUND})
+  if((${Qt5WebKitWidgets_FOUND}) OR (${Qt6WebKitWidgets_FOUND}))
      target_link_libraries(rtkplot_qt PRIVATE Qt${QT_VERSION_MAJOR}::WebKitWidgets)
   endif()
 endif()

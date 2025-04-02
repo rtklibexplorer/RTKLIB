@@ -44,12 +44,13 @@
 
 USEFORM("vmapdlg.cpp", VecMapDialog);
 USEFORM("skydlg.cpp", SkyImgDialog);
+USEFORM("..\appcmn\refdlg.cpp", RefDialog);
 USEFORM("..\appcmn\mntpoptdlg.cpp", MntpOptDialog);
 USEFORM("..\appcmn\keydlg.cpp", KeyDialog);
-USEFORM("..\appcmn\refdlg.cpp", RefDialog);
+USEFORM("..\appcmn\serioptdlg.cpp", SerialOptDialog);
+USEFORM("..\appcmn\tspandlg.cpp", SpanDialog);
 USEFORM("..\appcmn\timedlg.cpp", TimeDialog);
 USEFORM("..\appcmn\tcpoptdlg.cpp", TcpOptDialog);
-USEFORM("..\appcmn\serioptdlg.cpp", SerialOptDialog);
 USEFORM("..\appcmn\confdlg.cpp", ConfDialog);
 USEFORM("..\appcmn\cmdoptdlg.cpp", CmdOptDialog);
 USEFORM("..\appcmn\aboutdlg.cpp", AboutDialog);
@@ -57,10 +58,9 @@ USEFORM("..\appcmn\console.cpp", Console);
 USEFORM("..\appcmn\ftpoptdlg.cpp", FtpOptDialog);
 USEFORM("..\appcmn\freqdlg.cpp", FreqDialog);
 USEFORM("..\appcmn\fileoptdlg.cpp", FileOptDialog);
-USEFORM("..\appcmn\tspandlg.cpp", SpanDialog);
 USEFORM("plotmain.cpp", Plot);
-USEFORM("pntdlg.cpp", PntDialog);
 USEFORM("plotopt.cpp", PlotOptDialog);
+USEFORM("pntdlg.cpp", PntDialog);
 USEFORM("conndlg.cpp", ConnectDialog);
 USEFORM("..\appcmn\vieweropt.cpp", ViewerOptDialog);
 USEFORM("..\appcmn\viewer.cpp", TextViewer);

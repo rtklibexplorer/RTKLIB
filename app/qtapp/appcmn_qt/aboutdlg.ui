@@ -17,42 +17,42 @@
    <item row="4" column="0" colspan="2">
     <widget class="QLabel" name="lbWebsite">
      <property name="text">
-      <string>TextLabel</string>
+      <string/>
      </property>
     </widget>
    </item>
    <item row="5" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::StandardButton::Ok</set>
+      <set>QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
    <item row="0" column="1">
     <widget class="QLabel" name="lbAbout">
      <property name="text">
-      <string>TextLabel</string>
+      <string/>
      </property>
     </widget>
    </item>
    <item row="2" column="1">
     <widget class="QLabel" name="lbCopyright">
      <property name="text">
-      <string>TextLabel</string>
+      <string/>
      </property>
     </widget>
    </item>
    <item row="1" column="1">
     <widget class="QLabel" name="lbVersion">
      <property name="text">
-      <string>TextLabel</string>
+      <string/>
      </property>
     </widget>
    </item>
    <item row="3" column="1">
     <widget class="QLabel" name="lbCopyrightQt">
      <property name="text">
-      <string>TextLabel</string>
+      <string/>
      </property>
     </widget>
    </item>

@@ -39,6 +39,14 @@ target_link_libraries(srctblbrows_qt PRIVATE
 	Qt${QT_VERSION_MAJOR}::Concurrent
 )
 
+if((${Qt5WebEngineWidgets_FOUND}) OR (${Qt6WebEngineWidgets_FOUND}))
+   target_link_libraries(srctblbrows_qt PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets)
+else()
+  if((${Qt5WebKitWidgets_FOUND}) OR (${Qt6WebKitWidgets_FOUND}))
+     target_link_libraries(srctblbrows_qt PRIVATE Qt${QT_VERSION_MAJOR}::WebKitWidgets)
+  endif()
+endif()
+
 set_target_properties(srctblbrows_qt PROPERTIES
     WIN32_EXECUTABLE ON
     MACOSX_BUNDLE ON

@@ -41,6 +41,7 @@ GoogleMapView::GoogleMapView(QWidget *parent)
     fixCenter = true;
 
     load_page();
+    htmlPage = getHtmlPage();
 }
 //---------------------------------------------------------------------------
 void GoogleMapView::load_page()

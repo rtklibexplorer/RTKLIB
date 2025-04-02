@@ -31,20 +31,20 @@
 
 #include <Vcl.Styles.hpp>
 #include <Vcl.Themes.hpp>
+USEFORM("..\appcmn\refdlg.cpp", RefDialog);
 USEFORM("..\appcmn\mntpoptdlg.cpp", MntpOptDialog);
 USEFORM("..\appcmn\maskoptdlg.cpp", MaskOptDialog);
-USEFORM("..\appcmn\keydlg.cpp", KeyDialog);
-USEFORM("..\appcmn\refdlg.cpp", RefDialog);
+USEFORM("..\appcmn\serioptdlg.cpp", SerialOptDialog);
+USEFORM("..\appcmn\vieweropt.cpp", ViewerOptDialog);
 USEFORM("..\appcmn\viewer.cpp", TextViewer);
 USEFORM("..\appcmn\tcpoptdlg.cpp", TcpOptDialog);
-USEFORM("..\appcmn\serioptdlg.cpp", SerialOptDialog);
+USEFORM("..\appcmn\keydlg.cpp", KeyDialog);
 USEFORM("..\appcmn\confdlg.cpp", ConfDialog);
 USEFORM("..\appcmn\cmdoptdlg.cpp", CmdOptDialog);
 USEFORM("..\appcmn\aboutdlg.cpp", AboutDialog);
 USEFORM("..\appcmn\fileoptdlg.cpp", FileOptDialog);
 USEFORM("..\appcmn\ftpoptdlg.cpp", FtpOptDialog);
 USEFORM("..\appcmn\freqdlg.cpp", FreqDialog);
-USEFORM("..\appcmn\vieweropt.cpp", ViewerOptDialog);
 USEFORM("rcvoptdlg.cpp", RcvOptDialog);
 USEFORM("markdlg.cpp", MarkDialog);
 USEFORM("logstrdlg.cpp", LogStrDialog);

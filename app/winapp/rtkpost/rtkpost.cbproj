@@ -360,6 +360,9 @@
         <CppCompile Include="..\..\..\src\sbas.c">
             <BuildOrder>38</BuildOrder>
         </CppCompile>
+        <CppCompile Include="..\..\..\src\sofa.c">
+            <BuildOrder>40</BuildOrder>
+        </CppCompile>
         <CppCompile Include="..\..\..\src\solution.c">
             <BuildOrder>39</BuildOrder>
         </CppCompile>

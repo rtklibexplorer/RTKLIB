@@ -20,14 +20,14 @@
 
 
 
+USEFORM("staoptdlg.cpp", StaListDialog);
 USEFORM("getoptdlg.cpp", DownOptDialog);
-USEFORM("getmain.cpp", MainForm);
+USEFORM("..\appcmn\timedlg.cpp", TimeDialog);
 USEFORM("..\appcmn\keydlg.cpp", KeyDialog);
 USEFORM("..\appcmn\aboutdlg.cpp", AboutDialog);
-USEFORM("..\appcmn\timedlg.cpp", TimeDialog);
+USEFORM("getmain.cpp", MainForm);
 USEFORM("..\appcmn\vieweropt.cpp", ViewerOptDialog);
 USEFORM("..\appcmn\viewer.cpp", TextViewer);
-USEFORM("staoptdlg.cpp", StaListDialog);
 //---------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
@@ -35,14 +35,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	{
 		Application->Initialize();
 		Application->CreateForm(__classid(TMainForm), &MainForm);
-		Application->CreateForm(__classid(TDownOptDialog), &DownOptDialog);
-		Application->CreateForm(__classid(TTimeDialog), &TimeDialog);
-		Application->CreateForm(__classid(TKeyDialog), &KeyDialog);
-		Application->CreateForm(__classid(TAboutDialog), &AboutDialog);
-		Application->CreateForm(__classid(TTextViewer), &TextViewer);
-		Application->CreateForm(__classid(TViewerOptDialog), &ViewerOptDialog);
-		Application->CreateForm(__classid(TStaListDialog), &StaListDialog);
-		Application->Run();
+         Application->CreateForm(__classid(TDownOptDialog), &DownOptDialog);
+         Application->CreateForm(__classid(TTimeDialog), &TimeDialog);
+         Application->CreateForm(__classid(TKeyDialog), &KeyDialog);
+         Application->CreateForm(__classid(TAboutDialog), &AboutDialog);
+         Application->CreateForm(__classid(TTextViewer), &TextViewer);
+         Application->CreateForm(__classid(TViewerOptDialog), &ViewerOptDialog);
+         Application->CreateForm(__classid(TStaListDialog), &StaListDialog);
+         Application->Run();
 	}
 	catch (Exception &exception)
 	{

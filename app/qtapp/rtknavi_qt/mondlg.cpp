@@ -1338,7 +1338,7 @@ void MonitorDialog::setSbsNavigations()
 //---------------------------------------------------------------------------
 void MonitorDialog::showSbsNavigations()
 {
-    seph_t seph[MAXPRNSBS - MINPRNSBS + 1];
+    seph_t seph[NSATSBS];
 	gtime_t time;
     int i, n, nsat, valid, prn, off = ui->cBSelectEphemeris->currentIndex();
     char tstr[40], id[8];

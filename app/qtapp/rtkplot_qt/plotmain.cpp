@@ -99,6 +99,7 @@ extern "C" {
 Plot::Plot(QWidget *parent) : QMainWindow(parent), ui(new Ui::Plot)
 {
     ui->setupUi(this);
+    setAcceptDrops(true);
 
     setWindowIcon(QIcon(":/icons/rtk2"));
 
@@ -1253,11 +1254,6 @@ void Plot::activateSolution1()
 {
     trace(3, "activateSolution1\n");
 
-    if (solutionData[0].n <= 0 && observation.n < 0) {
-        ui->btnSolution1->setChecked(false);
-        return;
-    }
-
     ui->btnSolution12->setChecked(false);
 
     updateTime();
@@ -1268,11 +1264,6 @@ void Plot::activateSolution1()
 void Plot::activateSolution2()
 {
     trace(3, "activateSolution2\n");
-
-    if (solutionData[1].n <= 0) {
-        ui->btnSolution2->setChecked(false);
-        return;
-    }
 
     ui->btnSolution12->setChecked(false);
 

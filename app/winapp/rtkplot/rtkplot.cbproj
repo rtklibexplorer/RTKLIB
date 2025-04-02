@@ -477,6 +477,9 @@
         <CppCompile Include="..\..\..\src\sbas.c">
             <BuildOrder>58</BuildOrder>
         </CppCompile>
+        <CppCompile Include="..\..\..\src\sofa.c">
+            <BuildOrder>61</BuildOrder>
+        </CppCompile>
         <CppCompile Include="..\..\..\src\solution.c">
             <BuildOrder>59</BuildOrder>
         </CppCompile>

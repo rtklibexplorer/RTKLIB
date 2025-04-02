@@ -19,6 +19,6 @@ AboutDialog::AboutDialog(QWidget *parent, QPixmap icon, QString aboutString)
     ui->lbAbout->setText(QStringLiteral("<b>%1</b>").arg(aboutString));
     ui->lbVersion->setText(tr("with RTKLIB Version %1 %2").arg(VER_RTKLIB, PATCH_LEVEL));
     ui->lbCopyright->setText(COPYRIGHT_RTKLIB);
-    ui->lbCopyrightQt->setText(tr("Qt Version\nCopyright (C) 2016-2024 Jens Reimann"));
+    ui->lbCopyrightQt->setText(tr("Qt Version\nCopyright (C) 2016-2025 Jens Reimann"));
     ui->lbWebsite->setText(tr("Support: <a href=\"https://github.com/rtklibexplorer\">https://github.com/rtklibexplorer</a>"));
 }

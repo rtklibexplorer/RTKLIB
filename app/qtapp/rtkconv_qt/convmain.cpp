@@ -451,7 +451,7 @@ void MainWindow::selectInputFile()
 {
     QString filename = QFileDialog::getOpenFileName(this, tr("Input RTCM, RCV RAW or RINEX File"), ui->cBInputFile->currentText(),
                                                     tr("All (*.*);;RTCM 2 (*.rtcm2);;RTCM 3 (*.rtcm3);;NovtAtel (*.gps);;ublox (*.ubx);;SuperStart II (*.log);;"
-                                                       "Hemisphere (*.bin);;Javad (*.jps);;RINEX OBS (*.obs *.*O);Septentrio (*.sbf)"));
+                                                       "Hemisphere (*.bin);;Javad (*.jps);;RINEX OBS (*.obs *.*O);;Septentrio (*.sbf)"));
 
     if (!filename.isEmpty()) {
         ui->cBInputFile->setCurrentText(QDir::toNativeSeparators(filename));
@@ -557,7 +557,7 @@ void MainWindow::selectOutputFile7()
 {
     QString selectedFilter = tr("RINEX CNAV (*.cnav *.*C)");
 
-    QString filename = QFileDialog::getOpenFileName(this, tr("Output SRINEX CNAVFile"), ui->lEOutputFile7->text(),
+    QString filename = QFileDialog::getOpenFileName(this, tr("Output RINEX CNAV File"), ui->lEOutputFile7->text(),
                                                     tr("All (*.*);;RINEX OBS (*.obs *.*O);;RINEX NAV (*.nav *.*N *.*P);;RINEX GNAV (*.gnav *.*G);;RINEX HNAV (*.hnav *.*H);;"
                                                        "RINEX QNAV (*.qnav *.*Q);;RINEX LNAV (*.lnav *.*L);;RINEX CNAV (*.cnav *.*C);;RINEX INAV (*.inav *.*I);;"
                                                        "SBAS Log (*.sbs);;LEX Log (*.lex)"), &selectedFilter);

@@ -2644,7 +2644,7 @@ static void iauRxp(const double r[3][3], const double p[3], double rp[3])
   iauCp(wrp, rp);
 }
 
-static void iauRxpv(const double r[3][3], const double pv[2][3], double rpv[2][3])
+static void iauRxpv(const double r[3][3], double pv[2][3], double rpv[2][3])
 /*
 **  - - - - - - - -
 **   i a u R x p v
@@ -3098,5 +3098,5 @@ void moon98(double date1, double date2, double pv[2][3])
   iauRz(-gamb, rm);
 
   /* Rotate the Moon position and velocity into GCRS (Note 6). */
-  iauRxpv(rm, pv, pv);
+  iauRxpv((const double (*)[3])rm, pv, pv);
 }

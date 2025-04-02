@@ -40,6 +40,7 @@ protected:
     void resizeEvent(QResizeEvent*);
 
 private:
+    QString htmlPage;
     int state;
     double latitude, longitude;
     int zoom;

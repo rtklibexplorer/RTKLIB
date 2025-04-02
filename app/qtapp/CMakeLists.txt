@@ -11,35 +11,43 @@ include_directories(
 )
 
 #
-# Finding Qt
+# Find Qt
 #
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
 
-message(STATUS "Using Qt Version ${QT_VERSION_MAJOR}")
+message(STATUS "Qt: Using Qt Version ${QT_VERSION_MAJOR}")
+
+# required components
 find_package(Qt${QT_VERSION_MAJOR} NO_MODULE REQUIRED COMPONENTS Gui Widgets Concurrent Xml SerialPort)
 
+# optional components
 find_package(
     Qt${QT_VERSION_MAJOR} NO_MODULE QUIET
     OPTIONAL_COMPONENTS
     WebEngineWidgets
     WebKitWidgets
+    LinguistTools
 )
+if((${Qt5WebEngineWidgets_FOUND}) OR (${Qt6WebEngineWidgets_FOUND}))
+   message(STATUS "Qt: Found optional QtWebEngine")
+   add_definitions(-DQWEBENGINE)
+else()
+   if((${Qt5WebKitWidgets_FOUND}) OR (${Qt6WebKitWidgets_FOUND}))
+      message(STATUS "Qt: Found optional QtWebKit")
+      add_definitions(-DQWEBKIT)
+   endif()
+endif()
+
 set(CMAKE_AUTOMOC TRUE)
 set(CMAKE_AUTORCC TRUE)
 set(CMAKE_AUTOUIC TRUE)
-if(${QT_VERSION_MAJOR} EQUAL 6)
+
+# translation
+if((${QT_VERSION_MAJOR} EQUAL 6) AND (${Qt6LinguistTools_FOUND}))
    # add translation support
-   find_package(Qt6 REQUIRED COMPONENTS LinguistTools)
-
-   qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES de)
-endif()
-
-if(${QtWebEngineWidgets_FOUND})
-   add_definitions(-DQWEBENGINE)
-endif()
-
-if(${QtWebKitWidgets_FOUND})
-	add_definitions(-DQWEBKIT)
+   set(LANGUAGES en de)
+   message(STATUS "Qt: Adding translation: ${LANGUAGES}")
+   qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES ${LANGUAGES})
 endif()
 
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)
@@ -56,8 +64,10 @@ if(QT_VERSION_MAJOR GREATER_EQUAL 6)
 endif()
 
 # try to set up the menu system
-find_program(XDG-MIME_EXECUTABLE xdg-mime)
-find_program(XDG-DESKTOP-MENU_EXECUTABLE xdg-desktop-menu)
+if (LINUX)
+    find_program(XDG-MIME_EXECUTABLE xdg-mime)
+    find_program(XDG-DESKTOP-MENU_EXECUTABLE xdg-desktop-menu)
+endif()
 
 if(WIN32)
 	add_definitions(-DWIN32)
@@ -75,3 +85,4 @@ add_subdirectory(strsvr_qt)
 if(IERS_MODEL)
    target_link_libraries(-liers -lgfortran)
 endif()
+

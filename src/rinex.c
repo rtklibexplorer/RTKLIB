@@ -1235,7 +1235,7 @@ static int decode_eph(double ver, int sat, gtime_t toc, const double *data,
         eph->code=(int)data[20];      /* data sources */
                                       /* bit 0 set: I/NAV E1-B */
                                       /* bit 1 set: F/NAV E5a-I */
-                                      /* bit 2 set: F/NAV E5b-I */
+                                      /* bit 2 set: I/NAV E5b-I */
                                       /* bit 8 set: af0-af2 toc are for E5a.E1 */
                                       /* bit 9 set: af0-af2 toc are for E5b.E1 */
         eph->svh =(int)data[24];      /* sv health */

@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------
-#ifndef gmviewH
-#define gmviewH
+#ifndef mapviewH
+#define mapviewH
 //---------------------------------------------------------------------------
 #include <QDialog>
 #include <QTimer>

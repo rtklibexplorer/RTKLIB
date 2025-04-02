@@ -52,7 +52,10 @@ void Plot::updateDisplay()
             buffer = QPixmap(widgetSize * dpr);
             buffer.setDevicePixelRatio(dpr);
         }
-        if (buffer.isNull()) return;
+        if (buffer.isNull()) {
+            QGuiApplication::restoreOverrideCursor();
+            return;
+        }
         buffer.fill(plotOptDialog->getCColor(0));
 
         QPainter c(&buffer);
