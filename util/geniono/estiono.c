@@ -43,7 +43,7 @@ static void initx(double *x, double *P, int nx, int i, double xi, double var)
 /* detect cycle slip ---------------------------------------------------------*/
 static int det_slip(const obsd_t *obs, const nav_t *nav, stat_t *stat)
 {
-    double G0;
+    double G0,G1;
     
     if (obs->L[0]!=0.0&&obs->L[1]!=0.0) {
         G0=stat[obs->sat-1].gf;
@@ -52,7 +52,7 @@ static int det_slip(const obsd_t *obs, const nav_t *nav, stat_t *stat)
     }
     return (obs->LLI[0]&3)||(obs->LLI[1]&3);
 }
-/* initizlize ionosphere parameter --------------------------------------------*/
+/* initiazlize ionosphere parameter --------------------------------------------*/
 static void init_iono(const obsd_t *obs, const double *azel, double *x,
                       double *P, int nx)
 {
