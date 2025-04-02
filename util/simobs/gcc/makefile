@@ -27,12 +27,12 @@ rinex.o     : $(SRC)/rinex.c
 	$(CC) -c $(CFLAGS) $(SRC)/rinex.c
 rtkcmn.o    : $(SRC)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
-trace.o   : $(SRC)/rtklib.h $(SRC)/trace.c
+trace.o   : $(SRC)/trace.c
 	$(CC) -c $(CFLAGS) $(SRC)/trace.c
 sbas.o      : $(SRC)/sbas.c
 	$(CC) -c $(CFLAGS) $(SRC)/sbas.c
 sofa.o   : $(SRC)/sofa.c
-	$(CC) -c $(CFLAGS) $(SRC)/sofa.c	
+	$(CC) -c $(CFLAGS) $(SRC)/sofa.c
 tides.o     : $(SRC)/tides.c
 	$(CC) -c $(CFLAGS) $(SRC)/tides.c
 
@@ -47,6 +47,7 @@ rtkcmn.o    : $(SRC)/rtklib.h
 sofa.o      : $(SRC)/rtklib.h
 sbas.o      : $(SRC)/rtklib.h
 tides.o     : $(SRC)/rtklib.h
+trace.o:    : $(SRC)/rtklib.h
 
 install:
 	cp simobs $(BINDIR)
