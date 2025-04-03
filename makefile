@@ -104,7 +104,8 @@ testeph_:
 # Clean up
 
 clean:
-	cd $(RTKLIB_bld); $(PMAKE) clean
+	cd $(RTKLIB_bld); if [ -e makefile ]; then $(PMAKE) clean; fi
+	rm -rf $(RTKLIB_bld)/*
 	cd $(IERS);     make clean
 	cd $(UTEST);    make clean
 	cd $(GENCRC);   make clean
