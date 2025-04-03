@@ -62,7 +62,7 @@ endif
 # Targets
 
 all: init \
-	 iers_ apps_ simobs_
+	 iers_ apps_
 
 utils: gencrc_ logfile_ rnx2rtcm_ simobs_ # geniono_ testeph_
 
