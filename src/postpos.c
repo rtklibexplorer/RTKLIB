@@ -1417,7 +1417,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
             closeses(&navs,&pcvss,&pcvsr);
             return 0;
         }
-        for (i=0;i<=n&&i<MAXINFILE;i++) {
+        for (i=0;i<n+1&&i<MAXINFILE;i++) {
             if (!(ifile[i]=(char *)malloc(1024))) {
                 for (;i>=0;i--) free(ifile[i]);
                 closeses(&navs,&pcvss,&pcvsr);
@@ -1478,7 +1478,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
 
             if (stat==1) break;
         }
-        for (i=0;i<n&&i<MAXINFILE;i++) free(ifile[i]);
+        for (i=0;i<n+1&&i<MAXINFILE;i++) free(ifile[i]);
     }
     else if (ts.time!=0) {
         for (i=0;i<n&&i<MAXINFILE;i++) {
