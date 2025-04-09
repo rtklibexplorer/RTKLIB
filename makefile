@@ -12,6 +12,7 @@
 #   2022/11/02  AHA  Added clean-up of old Qt makefiles
 #   2022/11/22  AHA  Restored compilation of iers lib
 #   2025/03/31  AHA  Switch to cmake
+#   2025/04/09  AHA  Adapt build targets
 #
 #-------------------------------------------------------------------------------
 
@@ -61,10 +62,9 @@ endif
 
 # Targets
 
-all: init \
-	 iers_ apps_
+all: init apps_
 
-utils: gencrc_ logfile_ rnx2rtcm_ simobs_ # geniono_ testeph_
+utils: iers_ gencrc_ logfile_ rnx2rtcm_ simobs_ # geniono_ testeph_
 
 utest: utest_
 
@@ -78,7 +78,7 @@ iers_:
 	cd $(IERS); $(PMAKE)
 
 utest_:
-	cd $(UTEST); $(PMAKE)
+	cd $(UTEST); $(PMAKE) all; $(PMAKE) utest
 
 apps_:
 	cd $(RTKLIB_bld); cmake ..; $(PMAKE)
