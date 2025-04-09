@@ -73,6 +73,8 @@ if(WIN32)
 	add_definitions(-DWIN32)
 endif()
 
+#add_subdirectory(appcmn_qt)
+#set_property(DIRECTORY appcmn_qt PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
 add_subdirectory(rtkconv_qt)
 add_subdirectory(rtkget_qt)
 add_subdirectory(rtklaunch_qt)
@@ -81,8 +83,3 @@ add_subdirectory(rtkplot_qt)
 add_subdirectory(rtkpost_qt)
 add_subdirectory(srctblbrows_qt)
 add_subdirectory(strsvr_qt)
-
-if(IERS_MODEL)
-   target_link_libraries(-liers -lgfortran)
-endif()
-

@@ -27,6 +27,7 @@ CMakeUserPresets.json
 **/compile_commands.json
 CPackConfig.cmake
 CPackSourceConfig.cmake
+build/
 
 # QT
 .qt/

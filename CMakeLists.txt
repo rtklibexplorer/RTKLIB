@@ -17,6 +17,9 @@ option(IERS_MODEL "Use Earth models from IERS" OFF)
 add_definitions(-DENAGLO -DENAQZS -DENACMP -DENAGAL -DENAIRN -DNFREQ=3 -DNEXOBS=3 -DTRACE -DSVR_REUSEADDR)
 
 
+# 3rd party libs
+add_subdirectory(lib)
+
 # rtklib library
 add_subdirectory(src)
 
