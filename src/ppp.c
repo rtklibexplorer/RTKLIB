@@ -107,14 +107,14 @@
 #define NC(opt)     (NSYS)
 #define NT(opt)     ((opt)->tropopt<TROPOPT_EST?0:((opt)->tropopt==TROPOPT_EST?1:3))
 #define NI(opt)     ((opt)->ionoopt==IONOOPT_EST?MAXSAT:0)
-#define ND(opt)     ((opt)->nf>=3?1:0)
+#define ND(opt)     ((opt)->nf>=3?NSYS*((opt)->nf-2):0)
 #define NR(opt)     (NP(opt)+NC(opt)+NT(opt)+NI(opt)+ND(opt))
 #define NB(opt)     (NF(opt)*MAXSAT)
 #define NX(opt)     (NR(opt)+NB(opt))
 #define IC(s,opt)   (NP(opt)+(s))
 #define IT(opt)     (NP(opt)+NC(opt))
 #define II(s,opt)   (NP(opt)+NC(opt)+NT(opt)+(s)-1)
-#define ID(opt)     (NP(opt)+NC(opt)+NT(opt)+NI(opt))
+#define ID(k,f,opt) (NP(opt)+NC(opt)+NT(opt)+NI(opt)+(k*((opt)->nf-2))+(f-2))
 #define IB(s,f,opt) (NR(opt)+MAXSAT*(f)+(s)-1)
 
 /* standard deviation of state -----------------------------------------------*/
@@ -159,7 +159,14 @@ extern int pppoutstat(rtk_t *rtk, char *buff)
                x[i+2]*1E9/CLIGHT,x[i+3]*1E9/CLIGHT,STD(rtk,i)*1E9/CLIGHT,
                STD(rtk,i+1)*1E9/CLIGHT,STD(rtk,i+2)*1E9/CLIGHT,
                STD(rtk,i+2)*1E9/CLIGHT);
-
+    /* receiver biases */
+    for(int f=2;f<rtk->opt.nf;f++) {
+        i=ID(0,f,&rtk->opt);
+        p+=sprintf(p,"$DCB,%d,%.3f,%d,%d,%.3f,%.3f,%.3f,%.3f,%.4f,%.4f,%.4f,%.4f\n",
+                   week,tow,rtk->sol.stat,f,
+                   x[i],x[i+1],x[i+2],x[i+3],
+                   STD(rtk,i),STD(rtk,i+1),STD(rtk,i+2),STD(rtk,i+3));
+      }
     /* tropospheric parameters */
     if (rtk->opt.tropopt==TROPOPT_EST||rtk->opt.tropopt==TROPOPT_ESTG) {
         i=IT(&rtk->opt);
@@ -717,15 +724,20 @@ static void udiono_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         }
     }
 }
-/* temporal update of L5-receiver-dcb parameters -----------------------------*/
+/* temporal update of receiver-dcb parameters --------------------------------*/
 static void uddcb_ppp(rtk_t *rtk)
 {
-    int i=ID(&rtk->opt);
 
-    trace(3,"uddcb_ppp:\n");
+    trace(3,"uddcb_ppp: nsys=%d nf=%d nd=%d\n",NSYS,rtk->opt.nf,ND(&rtk->opt));
 
-    if (rtk->x[i]==0.0) {
-        initx(rtk,1E-6,VAR_DCB,i);
+    for (int k=0;k<NSYS;k++) {
+        for(int f=2;f<rtk->opt.nf;f++) {
+            int i=ID(k,f,&rtk->opt);
+            trace(4,"uddcb_ppp: sys=%d f=%d id=%d\n",k,f,i);
+            if (rtk->x[i]==0.0) {
+                initx(rtk,1E-6,VAR_DCB,i);
+            }
+        }
     }
 }
 /* temporal update of phase biases -------------------------------------------*/
@@ -1065,9 +1077,9 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                  * mapping function. */
                 if (H) H[II(sat,opt)+nx*nv]=C*ionmapf(pos,azel+i*2);
             }
-            if (frq==2&&code==1) { /* L5-receiver-dcb */
-                dcb+=rtk->x[ID(opt)];
-                if (H) H[ID(opt)+nx*nv]=1.0;
+            if (frq>=2&&code==1) { /* receiver-dcb */
+                dcb+=rtk->x[ID(k,frq,opt)];
+                if (H) H[ID(k,frq,opt)+nx*nv]=1.0;
             }
             if (code==0) { /* phase bias */
                 if ((bias=x[IB(sat,frq,opt)])==0.0) continue;
