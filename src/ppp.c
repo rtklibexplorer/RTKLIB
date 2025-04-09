@@ -153,6 +153,7 @@ extern int pppoutstat(rtk_t *rtk, char *buff)
                    vel[2],acc[0],acc[1],acc[2],0.0,0.0,0.0,0.0,0.0,0.0);
     }
     /* receiver clocks */
+    /* FIXME: this requires NSYS>=4 !! */
     i=IC(0,&rtk->opt);
     p+=sprintf(p,"$CLK,%d,%.3f,%d,%d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
                week,tow,rtk->sol.stat,1,x[i]*1E9/CLIGHT,x[i+1]*1E9/CLIGHT,
@@ -160,6 +161,7 @@ extern int pppoutstat(rtk_t *rtk, char *buff)
                STD(rtk,i+1)*1E9/CLIGHT,STD(rtk,i+2)*1E9/CLIGHT,
                STD(rtk,i+2)*1E9/CLIGHT);
     /* receiver biases */
+    /* FIXME: this requires NSYS>=4 !! */
     for(int f=2;f<rtk->opt.nf;f++) {
         i=ID(0,f,&rtk->opt);
         p+=sprintf(p,"$DCB,%d,%.3f,%d,%d,%.3f,%.3f,%.3f,%.3f,%.4f,%.4f,%.4f,%.4f\n",
