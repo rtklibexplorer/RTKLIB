@@ -1052,7 +1052,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                 case SYS_GLO: k=1; break;
                 case SYS_GAL: k=2; break;
                 case SYS_CMP: k=3; break;
-                case SYS_IRN: k=4; break;
+                case SYS_QZS: k=4; break;
                 default:      k=0; break;
             }
             cdtr=x[IC(k,opt)];
