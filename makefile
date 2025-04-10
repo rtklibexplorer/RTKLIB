@@ -13,6 +13,7 @@
 #   2022/11/22  AHA  Restored compilation of iers lib
 #   2025/03/31  AHA  Switch to cmake
 #   2025/04/09  AHA  Adapt build targets
+#   2025/04/10  AHA  Avoid using rm -rf *
 #
 #-------------------------------------------------------------------------------
 
@@ -104,8 +105,7 @@ testeph_:
 # Clean up
 
 clean:
-	cd $(RTKLIB_bld); if [ -e makefile ]; then $(PMAKE) clean; fi
-	rm -rf $(RTKLIB_bld)/*
+	if [ -d "$(RTKLIB_bld)" ]; then cd $(RTKLIB_bld); $(PMAKE) clean; rm -rf ./*; fi
 	cd $(IERS);     make clean
 	cd $(UTEST);    make clean
 	cd $(GENCRC);   make clean
