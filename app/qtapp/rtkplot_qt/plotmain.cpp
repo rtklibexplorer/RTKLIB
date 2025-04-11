@@ -158,6 +158,8 @@ Plot::Plot(QWidget *parent) : QMainWindow(parent), ui(new Ui::Plot)
     for (int i = 0; i < NFREQ + NEXOBS; i++)
         multipath[i] = NULL;
 
+    ionosphere = NULL;
+
     graphTrack = new Graph(ui->lblDisplay);
     graphTrack->fit = 0;
 

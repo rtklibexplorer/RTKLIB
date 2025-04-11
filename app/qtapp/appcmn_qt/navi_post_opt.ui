@@ -680,7 +680,7 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QComboBox" name="cBAmbiguityResolutionGPS">
+        <widget class="QComboBox" name="cBAmbiguityResolution">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define integer ambiguity resolution strategy for GPS (option &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-armode&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
@@ -754,7 +754,7 @@
           <string>Integer Ambiguity Res (GPS/GLO/BDS)</string>
          </property>
          <property name="buddy">
-          <cstring>cBAmbiguityResolutionGPS</cstring>
+          <cstring>cBAmbiguityResolution</cstring>
          </property>
         </widget>
        </item>
@@ -3442,7 +3442,7 @@
   <tabstop>cBNavSys6</tabstop>
   <tabstop>cBNavSys7</tabstop>
   <tabstop>cBNavSys5</tabstop>
-  <tabstop>cBAmbiguityResolutionGPS</tabstop>
+  <tabstop>cBAmbiguityResolution</tabstop>
   <tabstop>cBAmbiguityResolutionGLO</tabstop>
   <tabstop>cBAmbiguityResolutionBDS</tabstop>
   <tabstop>sBValidThresARMin</tabstop>

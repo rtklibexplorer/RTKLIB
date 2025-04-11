@@ -90,10 +90,10 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     ui->cBSatelliteEphemeris->setItemData(EPHOPT_SSRAPC, tr("Broadcast ephemeris with RTCM SSR correction (antenna phase center value)"), Qt::ToolTipRole);
     ui->cBSatelliteEphemeris->setItemData(EPHOPT_SSRCOM, tr("Broadcast ephemeris with RTCM SSR correction (satellite center of mass value)"), Qt::ToolTipRole);
 
-    ui->cBAmbiguityResolutionGPS->setItemData(0, tr("No ambiguity resolution"), Qt::ToolTipRole);
-    ui->cBAmbiguityResolutionGPS->setItemData(1, tr("Continuously static integer ambiguities are estimated and resolved"), Qt::ToolTipRole);
-    ui->cBAmbiguityResolutionGPS->setItemData(2, tr("Integer ambiguity is estimated and resolved by epoch-by-epoch basis"), Qt::ToolTipRole);
-    ui->cBAmbiguityResolutionGPS->setItemData(3, tr("Continuously static integer ambiguities are estimated and resolved.\n"
+    ui->cBAmbiguityResolution->setItemData(0, tr("No ambiguity resolution"), Qt::ToolTipRole);
+    ui->cBAmbiguityResolution->setItemData(1, tr("Continuously static integer ambiguities are estimated and resolved"), Qt::ToolTipRole);
+    ui->cBAmbiguityResolution->setItemData(2, tr("Integer ambiguity is estimated and resolved by epoch-by-epoch basis"), Qt::ToolTipRole);
+    ui->cBAmbiguityResolution->setItemData(3, tr("Continuously static integer ambiguities are estimated and resolved.\n"
                                                     "If the validation OK, the ambiguities are constrained to the resolved values."), Qt::ToolTipRole);
 
     ui->cBAmbiguityResolutionGLO->setItemData(0, tr("No ambiguity resolution"), Qt::ToolTipRole);
@@ -103,6 +103,9 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     ui->cBAmbiguityResolutionGLO->setItemData(2, tr("Nulls out inter-frequency biases after first fix-and-hold of GPS satellites"), Qt::ToolTipRole);
     ui->cBAmbiguityResolutionGLO->setItemData(3, tr("Receiver inter-frequency biases auto-calibrate but require\n"
                                                     "reasonably accurate initial estimates (see GLO HW Bias)"), Qt::ToolTipRole);
+
+    ui->cBAmbiguityResolutionBDS->setItemData(0, tr("Enable ambiguity resolution"), Qt::ToolTipRole);
+    ui->cBAmbiguityResolutionBDS->setItemData(1, tr("Disable ambiguity resolution"), Qt::ToolTipRole);
 
     ui->cBSolutionFormat->setItemData(0, tr("Latitude, longitude and height"), Qt::ToolTipRole);
     ui->cBSolutionFormat->setItemData(1, tr("X/Y/Z components of ECEF coordinates"), Qt::ToolTipRole);
@@ -181,7 +184,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
 
     textViewer = new TextViewer(this);
     freqDialog = new FreqDialog(this);
-    
+
     QStringList freq_tooltips = {tr("Single Frequency"), tr("L1 and L2 Dual-Frequency"),
                                  tr("L1, L2 and L5 Triple-Frequency"),
                                  tr("Four-Frequency"), tr("Five-Frequency"), tr("Six-Frequency"),
@@ -313,7 +316,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     connect(ui->lERoverPosition1, &QLineEdit::textChanged, this, &OptDialog::checkLineEditValidator);
     connect(ui->lERoverPosition2, &QLineEdit::textChanged, this, &OptDialog::checkLineEditValidator);
     connect(ui->lERoverPosition3, &QLineEdit::textChanged, this, &OptDialog::checkLineEditValidator);
-    connect(ui->cBAmbiguityResolutionGPS, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OptDialog::updateEnable);
+    connect(ui->cBAmbiguityResolution, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OptDialog::updateEnable);
     connect(ui->cBRoverAntennaPcv, &QCheckBox::clicked, this, &OptDialog::updateEnable);
     connect(ui->cBReferenceAntennaPcv, &QCheckBox::clicked, this, &OptDialog::updateEnable);
     connect(ui->cBOutputHeight, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OptDialog::updateEnable);
@@ -413,7 +416,7 @@ void OptDialog::selectStationPositionFile()
 void OptDialog::showSnrMaskDialog()
 {
     MaskOptDialog maskOptDialog(this);
-    
+
     maskOptDialog.setSnrMask(snrmask);
 
     maskOptDialog.exec();
@@ -463,7 +466,7 @@ void OptDialog::selectRoverPosition()
 
     getPosition(ui->cBRoverPositionType->currentIndex(), edit, p);
     ecef2pos(p, posi);
-    
+
     refDialog.setRoverPosition(posi[0] * R2D, posi[1] * R2D, posi[2]);
     refDialog.stationPositionFile = ui->lEStationPositionFile->text();
     refDialog.move(pos().x() + size().width() / 2 - refDialog.size().width() / 2,
@@ -686,7 +689,7 @@ void OptDialog::updateOptions()
     processingOptions.elmin = ui->cBElevationMask->currentText().toDouble() * D2R;
     // snrmask: already set by calling mask dialog
     processingOptions.sateph = ui->cBSatelliteEphemeris->currentIndex();
-    processingOptions.modear = ui->cBAmbiguityResolutionGPS->currentIndex();
+    processingOptions.modear = ui->cBAmbiguityResolution->currentIndex();
     processingOptions.glomodear = ui->cBAmbiguityResolutionGLO->currentIndex();
     processingOptions.bdsmodear = ui->cBAmbiguityResolutionBDS->currentIndex();
     processingOptions.arfilter = ui->cBARFilter->currentIndex();
@@ -922,7 +925,7 @@ void OptDialog::load(const QString &file)
     ui->cBElevationMask->setCurrentIndex(ui->cBElevationMask->findText(QString::number(prcopt.elmin * R2D, 'f', 0)));
     snrmask = prcopt.snrmask;
     ui->cBSatelliteEphemeris->setCurrentIndex(prcopt.sateph);
-    ui->cBAmbiguityResolutionGPS->setCurrentIndex(prcopt.modear);
+    ui->cBAmbiguityResolution->setCurrentIndex(prcopt.modear);
     ui->cBAmbiguityResolutionGLO->setCurrentIndex(prcopt.glomodear);
     ui->cBAmbiguityResolutionBDS->setCurrentIndex(prcopt.bdsmodear);
     ui->cBARFilter->setCurrentIndex(prcopt.arfilter);
@@ -1096,7 +1099,7 @@ void OptDialog::save(const QString &file)
     procOpts.elmin = ui->cBElevationMask->currentText().toDouble() * D2R;
     procOpts.snrmask = snrmask;
     procOpts.sateph = ui->cBSatelliteEphemeris->currentIndex();
-    procOpts.modear = ui->cBAmbiguityResolutionGPS->currentIndex();
+    procOpts.modear = ui->cBAmbiguityResolution->currentIndex();
     procOpts.glomodear = ui->cBAmbiguityResolutionGLO->currentIndex();
     procOpts.bdsmodear = ui->cBAmbiguityResolutionBDS->currentIndex();
     procOpts.arfilter = ui->cBARFilter->currentIndex();
@@ -1272,7 +1275,7 @@ void OptDialog::saveOptions(QSettings &settings)
                               snrmask.mask[i][j]);
 
     settings.setValue("prcopt/ephopt", ui->cBSatelliteEphemeris->currentIndex());
-    settings.setValue("prcopt/modear", ui->cBAmbiguityResolutionGPS->currentIndex());
+    settings.setValue("prcopt/modear", ui->cBAmbiguityResolution->currentIndex());
     settings.setValue("prcopt/glomodear", ui->cBAmbiguityResolutionGLO->currentIndex());
     settings.setValue("prcopt/bdsmodear", ui->cBAmbiguityResolutionBDS->currentIndex());
     settings.setValue("prcopt/arfilter", ui->cBARFilter->currentIndex());
@@ -1429,7 +1432,7 @@ void OptDialog::saveOptions(QSettings &settings)
         settings.setValue("setting/posfontcolor", static_cast<int>(positionFontColor.rgb()));
         settings.setValue("setting/posfontbold", positionFnt.bold());
         settings.setValue("setting/posfontitalic", positionFnt.italic());
-    } else if (options == PostOptions) {        
+    } else if (options == PostOptions) {
         QString rovList = ui->tERoverList->toPlainText();
         QString refList = ui->tEBaseList->toPlainText();
 
@@ -1471,7 +1474,7 @@ void OptDialog::loadOptions(QSettings &settings)
             snrmask.mask[i][j] =
                 settings.value(QString("prcopt/snrmask_%1_%2").arg(i + 1).arg(j + 1), 0.0).toInt();
     ui->cBSatelliteEphemeris->setCurrentIndex(settings.value("prcopt/ephopt", EPHOPT_BRDC).toInt());
-    ui->cBAmbiguityResolutionGPS->setCurrentIndex(settings.value("prcopt/modear", 1).toInt());
+    ui->cBAmbiguityResolution->setCurrentIndex(settings.value("prcopt/modear", 1).toInt());
     ui->cBAmbiguityResolutionGLO->setCurrentIndex(settings.value("prcopt/glomodear", 0).toInt());
     ui->cBAmbiguityResolutionBDS->setCurrentIndex(settings.value("prcopt/bdsmodear", 0).toInt());
     ui->cBARFilter->setCurrentIndex(settings.value("prcopt/arfilter", 1).toInt());
@@ -1674,16 +1677,16 @@ void OptDialog::updateEnable()
     ui->cBPositionOption5->setEnabled(true);
     ui->cBPositionOption6->setEnabled(ppp);
 
-    ui->cBAmbiguityResolutionGPS->setEnabled(ar);
-    ui->cBAmbiguityResolutionGLO->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() > 0 && ui->cBNavSys2->isChecked());
-    ui->cBAmbiguityResolutionBDS->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() > 0 && ui->cBNavSys6->isChecked());
+    ui->cBAmbiguityResolution->setEnabled(ar);
+    ui->cBAmbiguityResolutionGLO->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() > 0 && ui->cBNavSys2->isChecked());
+    ui->cBAmbiguityResolutionBDS->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() > 0 && ui->cBNavSys6->isChecked());
     ui->cBARFilter->setEnabled(ar || ppp);
     ui->sBOutageCountResetAmbiguity->setEnabled(ar || ppp);
-    ui->sBLockCountFixAmbiguity->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() >= 1);
+    ui->sBLockCountFixAmbiguity->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() >= 1);
     ui->sBMinFixSats->setEnabled(ar || ppp);
     ui->sBMinHoldSats->setEnabled(ar || ppp);
     ui->sBMinDropSats->setEnabled(ar || ppp);
-    ui->sBFixCountHoldAmbiguity->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() == 3);
+    ui->sBFixCountHoldAmbiguity->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() == 3);
     //sBARIter->setEnabled(ppp);
 
     ui->cBDynamicModel->setEnabled(ui->cBPositionMode->currentIndex() == PMODE_KINEMA ||
@@ -1699,18 +1702,18 @@ void OptDialog::updateEnable()
 
     ui->sBNumIteration->setEnabled(rel || ppp);
 
-    ui->sBValidThresAR->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() >= 1 && ui->cBAmbiguityResolutionGPS->currentIndex() < 4);
+    ui->sBValidThresAR->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() >= 1 && ui->cBAmbiguityResolution->currentIndex() < 4);
     ui->sBMaxPositionVarAR->setEnabled(ar && !ppp);
     ui->sBGlonassHwBias->setEnabled(ar && ui->cBAmbiguityResolutionGLO->currentIndex() == 2);
-    ui->sBValidThresARMin->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() >= 1 && ui->cBAmbiguityResolutionGPS->currentIndex() < 4);
-    ui->sBValidThresARMax->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() >= 1 && ui->cBAmbiguityResolutionGPS->currentIndex() < 4);
+    ui->sBValidThresARMin->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() >= 1 && ui->cBAmbiguityResolution->currentIndex() < 4);
+    ui->sBValidThresARMax->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() >= 1 && ui->cBAmbiguityResolution->currentIndex() < 4);
 
-    ui->sBElevationMaskAR->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() >= 1);
-    ui->sBElevationMaskHold->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() == 3);
+    ui->sBElevationMaskAR->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() >= 1);
+    ui->sBElevationMaskHold->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() == 3);
     ui->sBSlipThreshold->setEnabled(ar || ppp);
     ui->sBDopplerThreshold->setEnabled(ar || ppp);
-    ui->sBVarHoldAmb->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() == 3);
-    ui->sBGainHoldAmb->setEnabled(ar && ui->cBAmbiguityResolutionGPS->currentIndex() == 3);
+    ui->sBVarHoldAmb->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() == 3);
+    ui->sBGainHoldAmb->setEnabled(ar && ui->cBAmbiguityResolution->currentIndex() == 3);
     ui->sBMaxAgeDifferences->setEnabled(rel);
     ui->sBRejectCode->setEnabled(rel || ppp);
     ui->sBRejectPhase->setEnabled(rel || ppp);
@@ -1842,7 +1845,7 @@ int OptDialog::getPosition(int type, QLineEdit **edit, double *pos)
         auto lat = stripped(edit[0]->text(), "°");
         auto lon = stripped(edit[1]->text(), "°");
         auto height = stripped(edit[2]->text(), "m");
-        
+
         p[0] = QLocale().toDouble(lat, &okay) * D2R;
         if (!okay) {ret |= 0x1; p[0] = 0;}
         p[1] = QLocale().toDouble(lon, &okay) * D2R;
