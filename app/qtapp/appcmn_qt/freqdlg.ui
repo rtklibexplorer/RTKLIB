@@ -386,7 +386,7 @@
      </item>
      <item row="6" column="4">
       <property name="text">
-       <string>B2ab</string>
+       <string>B2a+b</string>
       </property>
       <property name="textAlignment">
        <set>AlignCenter</set>
