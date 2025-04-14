@@ -978,6 +978,7 @@ typedef struct {        /* RTCM control struct type */
     uint16_t loss[MAXSAT][NFREQ+NEXOBS]; /* loss of lock count */
     gtime_t lltime[MAXSAT][NFREQ+NEXOBS]; /* last lock time */
     int nbyte;          /* number of bytes in message buffer */
+    int nbyte_invalid;  /* number of bytes in invalid message, used to rewind buffer */
     int nbit;           /* number of bits in word buffer */
     int len;            /* message length (bytes) */
     uint8_t buff[1200]; /* message buffer */
