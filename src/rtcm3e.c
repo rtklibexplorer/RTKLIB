@@ -1918,7 +1918,7 @@ static int to_sigid(int sys, uint8_t code)
     return 0;
 }
 /* generate MSM satellite, signal and cell index -----------------------------*/
-static void gen_msm_index(rtcm_t *rtcm, int sys, int *nsat, int *nsig,
+static void gen_msm_index(const rtcm_t *rtcm, int sys, int *nsat, int *nsig,
                           int *ncell, uint8_t *sat_ind, uint8_t *sig_ind,
                           uint8_t *cell_ind)
 {

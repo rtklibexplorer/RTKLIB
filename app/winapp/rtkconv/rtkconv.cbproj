@@ -8,7 +8,7 @@
         <FrameworkType>VCL</FrameworkType>
         <ProjectVersion>20.1</ProjectVersion>
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
-        <TargetedPlatforms>3</TargetedPlatforms>
+        <TargetedPlatforms>2</TargetedPlatforms>
         <AppType>Application</AppType>
         <ProjectName Condition="'$(ProjectName)'==''">rtkconv</ProjectName>
     </PropertyGroup>
@@ -106,9 +106,11 @@
         <DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
         <BCC_IncludePath>..\appcmn;..\rtkpost;..\..\src;$(BDS)\include;$(BCC_IncludePath)</BCC_IncludePath>
         <SanitizedProjectName>rtkconv</SanitizedProjectName>
-        <BCC_Defines>WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=3;NEXOBS=3;$(BCC_Defines)</BCC_Defines>
+        <BCC_Defines>WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=4;NEXOBS=3;$(BCC_Defines)</BCC_Defines>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
+        <BRCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=4;$(BRCC_Defines)</BRCC_Defines>
+        <TASM_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=4;$(TASM_Defines)</TASM_Defines>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
@@ -116,17 +118,13 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <BRCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=3;$(BRCC_Defines)</BRCC_Defines>
-        <TASM_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=3;$(TASM_Defines)</TASM_Defines>
         <BCC_UserSuppliedOptions> -tWM</BCC_UserSuppliedOptions>
         <OutputExt>exe</OutputExt>
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
+        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
-        <BRCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=3;$(BRCC_Defines)</BRCC_Defines>
-        <TASM_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=3;$(TASM_Defines)</TASM_Defines>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
@@ -135,6 +133,7 @@
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64x)'!=''">
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
@@ -165,12 +164,10 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <BCC_Defines>_DEBUG;$(BCC_Defines);$(BCC_Defines)</BCC_Defines>
         <BCC_UserSuppliedOptions> -tWM -k</BCC_UserSuppliedOptions>
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <BT_BuildType>Debug</BT_BuildType>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <BCC_Defines>_DEBUG;$(BCC_Defines);$(BCC_Defines)</BCC_Defines>
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
@@ -191,12 +188,10 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <LinkPackageStatics>rtl.lib;vcl.lib;vclx.lib</LinkPackageStatics>
         <BCC_UserSuppliedOptions> -tWM -r</BCC_UserSuppliedOptions>
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <BT_BuildType>Debug</BT_BuildType>
         <BCC_Defines>NDEBUG;$(BCC_Defines);$(BCC_Defines)</BCC_Defines>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <LinkPackageStatics>rtl.lib;vcl.lib;vclx.lib</LinkPackageStatics>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
@@ -448,8 +443,8 @@
                     <Parameters Name="LoadUnspecifiedSymbols">False</Parameters>
                 </Parameters>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k260.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp260.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k290.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp290.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
                 </Excluded_Packages>
                 <ProjectProperties>
                     <ProjectProperties Name="AutoShowDeps">False</ProjectProperties>
@@ -462,7 +457,7 @@
                 </Source>
             </CPlusPlusBuilder.Personality>
             <Platforms>
-                <Platform value="Win32">True</Platform>
+                <Platform value="Win32">False</Platform>
                 <Platform value="Win64">True</Platform>
                 <Platform value="Win64x">False</Platform>
             </Platforms>

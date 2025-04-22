@@ -7,7 +7,7 @@
         <FrameworkType>None</FrameworkType>
         <ProjectVersion>20.1</ProjectVersion>
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
-        <TargetedPlatforms>3</TargetedPlatforms>
+        <TargetedPlatforms>2</TargetedPlatforms>
         <AppType>Console</AppType>
         <ProjectName Condition="'$(ProjectName)'==''">_convbin</ProjectName>
     </PropertyGroup>
@@ -85,26 +85,27 @@
         <DCC_ResourcePath>..\..\..\extlex;..\..\..\..\src\rcv;..\;..\..\..\..\src;..\..\pos2kml;G:\rtklib_2.2.0b\app\pos2kml;G:\rtklib_2.2.0b\app\pos2kml\bcc;$(DCC_ResourcePath)</DCC_ResourcePath>
         <ILINK_LibraryPath>..\..\..\..\src\rcv\;..\..\..\..\src\;..\..\..\extlex;..\..\..\..\src\rcv;..\;..\..\..\..\src;..\..\pos2kml;G:\rtklib_2.2.0b\app\pos2kml;G:\rtklib_2.2.0b\app\pos2kml\bcc;$(BDS)\lib;$(BDS)\lib\obj;$(BDS)\lib\psdk;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
+        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;TRACE;ENAQZS;ENAGAL;NFREQ=4;$(TASM_Defines)</TASM_Defines>
+        <BRCC_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;TRACE;ENAQZS;ENAGAL;NFREQ=4;$(BRCC_Defines)</BRCC_Defines>
+        <BCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAQZS;ENAGAL;ENACMP;NFREQ=4;NEXOBS=3;$(BCC_Defines)</BCC_Defines>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <OutputExt>exe</OutputExt>
-        <BCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAQZS;ENAGAL;ENACMP;NFREQ=6;NEXOBS=3;$(BCC_Defines)</BCC_Defines>
         <BCC_UserSuppliedOptions> -tWM -tWC</BCC_UserSuppliedOptions>
-        <BRCC_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;TRACE;ENAQZS;ENAGAL;NFREQ=3;$(BRCC_Defines)</BRCC_Defines>
-        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;TRACE;ENAQZS;ENAGAL;NFREQ=3;$(TASM_Defines)</TASM_Defines>
         <Debugger_RunParams>rtcm3_testglo.rtcm3 -tr 2009/12/18 23:20</Debugger_RunParams>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Debugger_UseLauncher>true</Debugger_UseLauncher>
+        <BT_BuildType>Debug</BT_BuildType>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
-        <BCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAQZS;ENAGAL;ENACMP;NFREQ=6;NEXOBS=3;$(BCC_Defines)</BCC_Defines>
-        <BRCC_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;TRACE;ENAQZS;ENAGAL;NFREQ=3;$(BRCC_Defines)</BRCC_Defines>
-        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;TRACE;ENAQZS;ENAGAL;NFREQ=3;$(TASM_Defines)</TASM_Defines>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <BT_BuildType>Debug</BT_BuildType>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
+        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64x)'!=''">
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
@@ -132,9 +133,13 @@
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <BCC_UserSuppliedOptions> -tWM -tWC -k</BCC_UserSuppliedOptions>
         <BCC_Defines>_DEBUG;$(BCC_Defines);$(BCC_Defines)</BCC_Defines>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <BCC_Defines>_DEBUG;$(BCC_Defines);$(BCC_Defines)</BCC_Defines>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_AdditionalSwitches> -$O+</DCC_AdditionalSwitches>
@@ -150,9 +155,12 @@
         <BCC_waus>false</BCC_waus>
         <BCC_wpia>false</BCC_wpia>
         <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <BCC_Defines>NDEBUG;$(BCC_Defines);$(BCC_Defines)</BCC_Defines>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <ItemGroup>
         <CppCompile Include="..\convbin.c">
@@ -318,7 +326,10 @@
                     <Parameters Name="LoadAllSymbols">True</Parameters>
                     <Parameters Name="LoadUnspecifiedSymbols">False</Parameters>
                 </Parameters>
-                <Excluded_Packages/>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k290.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp290.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+                </Excluded_Packages>
                 <ProjectProperties>
                     <ProjectProperties Name="AutoShowDeps">False</ProjectProperties>
                     <ProjectProperties Name="ManagePaths">True</ProjectProperties>
@@ -327,7 +338,7 @@
                 </ProjectProperties>
             </CPlusPlusBuilder.Personality>
             <Platforms>
-                <Platform value="Win32">True</Platform>
+                <Platform value="Win32">False</Platform>
                 <Platform value="Win64">True</Platform>
                 <Platform value="Win64x">False</Platform>
             </Platforms>

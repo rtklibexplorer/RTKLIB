@@ -387,7 +387,7 @@ static int decode_sbstype25(const sbsmsg_t *msg, sbssat_t *sbssat)
     
     return decode_longcorrh(msg,14,sbssat)&&decode_longcorrh(msg,120,sbssat);
 }
-/* decode type 26: ionospheric deley corrections -----------------------------*/
+/* decode type 26: ionospheric delay corrections -----------------------------*/
 static int decode_sbstype26(const sbsmsg_t *msg, sbsion_t *sbsion)
 {
     int i,j,block,delay,give,band=getbitu(msg->msg,14,4);
@@ -743,43 +743,44 @@ static void getmet(double lat, double *met)
         for (i=0;i<10;i++) met[i]=(1.0-a)*metprm[j-1][i]+a*metprm[j][i];
     }
 }
-/* tropospheric delay correction -----------------------------------------------
-* compute sbas tropospheric delay correction (mops model)
-* args   : gtime_t time     I   time
-*          double   *pos    I   receiver position {lat,lon,height} (rad/m)
-*          double   *azel   I   satellite azimuth/elavation (rad)
-*          double   *var    O   variance of troposphric error (m^2)
-* return : slant tropospheric delay (m)
-*-----------------------------------------------------------------------------*/
-extern double sbstropcorr(gtime_t time, const double *pos, const double *azel,
-                          double *var)
-{
-    const double k1=77.604,k2=382000.0,rd=287.054,gm=9.784,g=9.80665;
-    static double pos_[3]={0},zh=0.0,zw=0.0;
-    int i;
-    double c,met[10],sinel=sin(azel[1]),h=pos[2],m;
-    
-    trace(4,"sbstropcorr: pos=%.3f %.3f azel=%.3f %.3f\n",pos[0]*R2D,pos[1]*R2D,
-          azel[0]*R2D,azel[1]*R2D);
-    
-    if (pos[2]<-100.0||10000.0<pos[2]||azel[1]<=0) {
-        *var=0.0;
-        return 0.0;
-    }
-    if (zh==0.0||fabs(pos[0]-pos_[0])>1E-7||fabs(pos[1]-pos_[1])>1E-7||
-        fabs(pos[2]-pos_[2])>1.0) {
-        getmet(pos[0]*R2D,met);
-        c=cos(2.0*PI*(time2doy(time)-(pos[0]>=0.0?28.0:211.0))/365.25);
-        for (i=0;i<5;i++) met[i]-=met[i+5]*c;
-        zh=1E-6*k1*rd*met[0]/gm;
-        zw=1E-6*k2*rd/(gm*(met[4]+1.0)-met[3]*rd)*met[2]/met[1];
-        zh*=pow(1.0-met[3]*h/met[1],g/(rd*met[3]));
-        zw*=pow(1.0-met[3]*h/met[1],(met[4]+1.0)*g/(rd*met[3])-1.0);
-        for (i=0;i<3;i++) pos_[i]=pos[i];
-    }
-    m=1.001/sqrt(0.002001+sinel*sinel);
-    *var=0.12*0.12*m*m;
-    return (zh+zw)*m;
+/* Tropospheric delay correction -----------------------------------------------
+ * Compute SBAS tropospheric delay correction (mops model)
+ * Args   : gtime_t time     I   time
+ *          double   *pos    I   receiver position {lat,lon,height} (rad/m)
+ *          double   *azel   I   satellite azimuth/elavation (rad)
+ *          double   *var    O   variance of tropospheric error (m^2)
+ * Return : slant tropospheric delay (m)
+ *----------------------------------------------------------------------------*/
+extern double sbstropcorr(gtime_t time, const double *pos, const double *azel, double *var) {
+  const double k1 = 77.604, k2 = 382000.0, rd = 287.054, gm = 9.784, g = 9.80665;
+
+  trace(4, "sbstropcorr: pos=%.3f %.3f azel=%.3f %.3f\n", pos[0] * R2D, pos[1] * R2D, azel[0] * R2D,
+        azel[1] * R2D);
+
+  if (pos[2] < -100.0 || 10000.0 < pos[2] || azel[1] <= 0) {
+    *var = 0.0;
+    return 0.0;
+  }
+
+  static THREADLOCAL double pos_[3] = {0}, zh = 0.0, zw = 0.0;
+  if (zh == 0.0 || fabs(pos[0] - pos_[0]) > 1E-7 || fabs(pos[1] - pos_[1]) > 1E-7 ||
+      fabs(pos[2] - pos_[2]) > 1.0) {
+    double met[10];
+    getmet(pos[0] * R2D, met);
+    double c = cos(2.0 * PI * (time2doy(time) - (pos[0] >= 0.0 ? 28.0 : 211.0)) / 365.25);
+    for (int i = 0; i < 5; i++) met[i] -= met[i + 5] * c;
+    zh = 1E-6 * k1 * rd * met[0] / gm;
+    zw = 1E-6 * k2 * rd / (gm * (met[4] + 1.0) - met[3] * rd) * met[2] / met[1];
+    double h = pos[2];
+    zh *= pow(1.0 - met[3] * h / met[1], g / (rd * met[3]));
+    zw *= pow(1.0 - met[3] * h / met[1], (met[4] + 1.0) * g / (rd * met[3]) - 1.0);
+    for (int i = 0; i < 3; i++) pos_[i] = pos[i];
+  }
+
+  double sinel = sin(azel[1]);
+  double m = 1.001 / sqrt(0.002001 + sinel * sinel);
+  *var = 0.12 * 0.12 * m * m;
+  return (zh + zw) * m;
 }
 /* long term correction ------------------------------------------------------*/
 static int sbslongcorr(gtime_t time, int sat, const sbssat_t *sbssat,

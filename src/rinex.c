@@ -2173,13 +2173,13 @@ static char *igsanttype(const char *anttype, char buff[21]) {
 
   // Skip leading space.
   int i = 0;
-  while (anttype[i] != 0 && anttype[i] == ' ') i++;
+  while (anttype[i] == ' ') i++;
   if (anttype[i] == 0) return buff;
 
   // Fill antenna name
   int j = 0;
   for (; j < 15; j++, i++) {
-    if (anttype[i] == 0 || anttype[i] == ' ') break;
+    if (anttype[i] == '\0' || anttype[i] == ' ') break;
     buff[j] = anttype[i];
   }
   if (j == 15) {
@@ -2190,7 +2190,7 @@ static char *igsanttype(const char *anttype, char buff[21]) {
   }
 
   // Search for a radome name.
-  while (anttype[i] != 0 && anttype[i] == ' ') i++;
+  while (anttype[i] == ' ') i++;
   if (anttype[i] == 0) return buff;
 
   // Fill with the radome name.
