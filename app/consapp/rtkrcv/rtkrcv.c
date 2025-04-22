@@ -465,8 +465,6 @@ static int startsvr(vt_t *vt)
     stropt[4]=fswapmargin;
     strsetopt(stropt);
     
-    if (strfmt[2]==8) strfmt[2]=STRFMT_SP3;
-    
     /* set ftp/http directory and proxy */
     strsetdir(filopt.tempdir);
     strsetproxy(proxyaddr);

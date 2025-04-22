@@ -437,6 +437,10 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
     gtime_t time={0};
     sol_t sol={{0}},oldsol={{0}},newsol={{0}};
     obsd_t *obs_ptr = (obsd_t *)malloc(sizeof(obsd_t)*MAXOBS*2); /* for rover and base */
+    if (obs_ptr == NULL) {
+      trace(2, "procpos: memory allocation failure\n");
+      return;
+    }
     double rb[3]={0};
     int i,nobs,n,solstatic,num=0,pri[]={6,1,2,3,4,5,1,6};
 
@@ -1417,7 +1421,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
             closeses(&navs,&pcvss,&pcvsr);
             return 0;
         }
-        for (i=0;i<n+1&&i<MAXINFILE;i++) {
+        for (i=0;i<MAXINFILE;i++) {
             if (!(ifile[i]=(char *)malloc(1024))) {
                 for (;i>=0;i--) free(ifile[i]);
                 closeses(&navs,&pcvss,&pcvsr);
@@ -1478,7 +1482,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
 
             if (stat==1) break;
         }
-        for (i=0;i<n+1&&i<MAXINFILE;i++) free(ifile[i]);
+        for (i=0;i<MAXINFILE;i++) free(ifile[i]);
     }
     else if (ts.time!=0) {
         for (i=0;i<n&&i<MAXINFILE;i++) {

@@ -86,22 +86,23 @@
         <DCC_ResourcePath>..\..\..\extion;..\..\..\extlex;..\;..\..\sbspos;..\..\sbsdump;..\..\..\..\src\rcv;..\..\convbin;..\..\..\..\src;..\..\pos2kml;G:\rtklib_2.2.0b\app\pos2kml;G:\rtklib_2.2.0b\app\pos2kml\bcc;$(DCC_ResourcePath)</DCC_ResourcePath>
         <ILINK_LibraryPath>..\..\..\..\src\;..\;..\..\..\..\src\rcv;..\..\convbin;..\..\..\..\src;..\..\pos2kml;$(BDS)\lib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
+        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(TASM_Defines)</TASM_Defines>
+        <BCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NEXOBS=3;NFREQ=4;$(BCC_Defines)</BCC_Defines>
+        <BRCC_UserSuppliedOptions>_RTLDLL;_NO_VCL;WIN32;ENAGLO;TRACE;ENAQZS;ENAGAL;NFREQ=4;</BRCC_UserSuppliedOptions>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <OutputExt>exe</OutputExt>
-        <BCC_Defines>_RTLDLL;WIN32;ENAGLO;ENAGAL;ENAQZS;ENACMP;NFREQ=3;TRACE;$(BCC_Defines)</BCC_Defines>
         <BCC_UserSuppliedOptions> -tWM -tWC -wvoi</BCC_UserSuppliedOptions>
-        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(TASM_Defines)</TASM_Defines>
         <BRCC_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(BRCC_Defines)</BRCC_Defines>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <Debugger_UseLauncher>true</Debugger_UseLauncher>
         <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
+        <BT_BuildType>Debug</BT_BuildType>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
-        <BCC_Defines>WIN32;ENAGLO;ENAGAL;ENAQZS;ENACMP;NFREQ=3;NEXOBS=3;TRACE;$(BCC_Defines)</BCC_Defines>
         <BRCC_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(BRCC_Defines)</BRCC_Defines>
-        <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(TASM_Defines)</TASM_Defines>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <BT_BuildType>Debug</BT_BuildType>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
@@ -133,7 +134,7 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <BCC_UserSuppliedOptions> -tWM -tWC -wvoi -k</BCC_UserSuppliedOptions>
-        <BCC_Defines>_DEBUG;$(BCC_Defines);$(BCC_Defines)</BCC_Defines>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
@@ -147,21 +148,20 @@
         <TASM_Debugging>None</TASM_Debugging>
         <BCC_OptimizeForSpeed>true</BCC_OptimizeForSpeed>
         <ILINK_LibraryPath>$(BDS)\lib\release;$(ILINK_LibraryPath);$(ILINK_LibraryPath)</ILINK_LibraryPath>
+        <BCC_Defines>NDEBUG;$(BCC_Defines);$(BCC_Defines)</BCC_Defines>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <BCC_Defines>NDEBUG;$(BCC_Defines);$(BCC_Defines)</BCC_Defines>
         <BCC_UserSuppliedOptions> -tWM -tWC -wvoi -r</BCC_UserSuppliedOptions>
         <BCC_weff>false</BCC_weff>
         <BCC_waus>false</BCC_waus>
         <BCC_wpar>false</BCC_wpar>
         <BCC_wpia>false</BCC_wpia>
         <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-        <BCC_Defines>NDEBUG;$(BCC_Defines)</BCC_Defines>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NEXOBS=3;NFREQ=3;$(Defines)</Defines>
     </PropertyGroup>
     <ItemGroup>
         <CppCompile Include="..\rnx2rtkp.c">
@@ -462,6 +462,12 @@
                 <DeployFile LocalName="..\..\..\..\src\tides.c" Configuration="Release" Class="ProjectFile"/>
                 <DeployFile LocalName="..\rnx2rtkp.c" Configuration="Release" Class="ProjectFile"/>
                 <DeployFile LocalName="Release_Build\_rnx2rtkp.exe" Configuration="Release" Class="ProjectOutput"/>
+                <DeployFile LocalName="Release_Build\_rnx2rtkp.exe" Configuration="Release" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>_rnx2rtkp.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="Release_Build\_rnx2rtkp.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win64">
                         <RemoteName>_rnx2rtkp.exe</RemoteName>

@@ -71,7 +71,7 @@ static void saveoutbuf(rtksvr_t *svr, uint8_t *buff, int n, int index)
 static void writesol(rtksvr_t *svr, int index)
 {
     solopt_t solopt=solopt_default;
-    uint8_t buff[3*MAXSOLMSG+1];
+    uint8_t buff[MAXSOLMSG+1];
     int i,n;
     
     tracet(4,"writesol: index=%d\n",index);

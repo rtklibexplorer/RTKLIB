@@ -27,7 +27,7 @@ static void traceswap(void)
         rtklib_unlock(&lock_trace);
         return;
     }
-    if (fp_trace) fclose(fp_trace);
+    if (fp_trace && fp_trace != stderr) fclose(fp_trace);
 
     if (!(fp_trace = fopen(path, "w"))) {
         fp_trace = stderr;

@@ -356,7 +356,7 @@ static void outsolstat(rtk_t *rtk,const nav_t *nav)
     swapsolstat();
 
     /* write solution status */
-    char buff[3*MAXSOLMSG+1];
+    char buff[MAXSOLMSG+1];
     int n=rtkoutstat(rtk,statlevel,buff);
     buff[n]='\0';
 
