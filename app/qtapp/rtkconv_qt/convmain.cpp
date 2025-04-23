@@ -58,7 +58,7 @@ MainWindow *mainWindow;
 #define PRGNAME     "RtkConv Qt"        // program name
 #define MAXHIST     20                  // max number of histories
 #define TSTARTMARGIN 60.0               // time margin for file name replacement
-#define TRACEFILE   "rtkconv_qt.trace"     // trace file
+#define TRACEFILE   "rtkconv_qt.trace"  // trace file
 
 static int abortf = 0;
 
@@ -767,7 +767,7 @@ void MainWindow::convertFile()
 {
     QString inputFile_Text = ui->cBInputFile->currentText();
     int i;
-    double RNXVER[] = { 210, 211, 212, 300, 301, 302, 303, 304 };
+    double RNXVER[] = { 210, 211, 212, 300, 301, 302, 303, 304, 305, 400, 401, 402 };
 
     conversionThread = new ConversionThread(this);
 

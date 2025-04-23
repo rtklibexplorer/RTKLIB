@@ -1673,7 +1673,7 @@ static int decode_ssr3(rtcm_t *rtcm, int sys, int subtype)
             mode=getbitu(rtcm->buff,i, 5);      i+= 5;
             bias=getbits(rtcm->buff,i,14)*0.01; i+=14;
             if (sigs[mode]) {
-                cbias[sigs[mode]-1]=(float)bias;
+                cbias[sigs[mode]-1]=bias;
             }
             else {
                 trace(2,"rtcm3 %d not supported mode: mode=%d\n",type,mode);

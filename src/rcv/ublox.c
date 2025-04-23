@@ -170,6 +170,7 @@ static int ubx_sys(int gnssid)
         case 3: return SYS_CMP;
         case 5: return SYS_QZS;
         case 6: return SYS_GLO;
+        case 7: return SYS_IRN;
     }
     return 0;
 }
@@ -194,6 +195,9 @@ static int ubx_sig(int sys, int sigid)
         if (sigid==4) return CODE_L5Q; /* E5aQ */
         if (sigid==5) return CODE_L7I; /* E5bI */
         if (sigid==6) return CODE_L7Q; /* E5bQ */
+        if (sigid==8) return CODE_L6B; /* E6B */
+        if (sigid==9) return CODE_L6C; /* E6C */
+        if (sigid==10) return CODE_L6A; /* E6A */
     }
     else if (sys == SYS_QZS) {
         if (sigid==0) return CODE_L1C; /* L1C/A */
@@ -208,7 +212,15 @@ static int ubx_sig(int sys, int sigid)
         if (sigid==1) return CODE_L2I; /* B1I D2 */
         if (sigid == 2) return CODE_L7I; /* B2I D1 */
         if (sigid == 3) return CODE_L7I; /* B2I D2 */
-        if (sigid == 7) return CODE_L5X; /* B2a */
+        if (sigid == 4) return CODE_L6I; /* B3I D1 */
+        if (sigid == 5) return CODE_L1P; /* B1 Cp */
+        if (sigid == 6) return CODE_L1D; /* B1 Cd */
+        if (sigid == 7) return CODE_L5P; /* B2 ap */
+        if (sigid == 8) return CODE_L5D; /* B2 ad */
+        if (sigid == 10) return CODE_L6I; /* B3I D2 */
+    }
+    else if (sys == SYS_IRN) {
+        if (sigid==0) return CODE_L5A; /* L5A */
     }
     else if (sys == SYS_SBS) {
         if (sigid==0) return CODE_L1C; /* L1C/A */
@@ -236,6 +248,9 @@ static int ubx_sig_combined(int sys, int sigid)
         if (sigid==4) return CODE_L5X; /* E5aQ */
         if (sigid==5) return CODE_L7X; /* E5bI */
         if (sigid==6) return CODE_L7X; /* E5bQ */
+        if (sigid==8) return CODE_L6X; /* E6B */
+        if (sigid==9) return CODE_L6X; /* E6C */
+        if (sigid==10) return CODE_L6X; /* E6A */
         }
     else if (sys == SYS_QZS) {
         if (sigid == 0) return CODE_L1C; /* L1C/A */
@@ -250,7 +265,15 @@ static int ubx_sig_combined(int sys, int sigid)
         if (sigid==1) return CODE_L2I; /* B1I D2 */
         if (sigid == 2) return CODE_L7I; /* B2I D1 */
         if (sigid == 3) return CODE_L7I; /* B2I D2 */
-        if (sigid == 7) return CODE_L5X; /* B2a */
+        if (sigid == 4) return CODE_L6I; /* B3I D1 */
+        if (sigid == 5) return CODE_L1X; /* B1 Cp */
+        if (sigid == 6) return CODE_L1X; /* B1 Cd */
+        if (sigid == 7) return CODE_L5X; /* B2 ap */
+        if (sigid == 8) return CODE_L5X; /* B2 ad */
+        if (sigid == 10) return CODE_L6I; /* B3I D2 */
+    }
+        else if (sys == SYS_IRN) {
+        if (sigid==0) return CODE_L5A; /* L5A */
     }
     else if (sys == SYS_SBS) {
         if (sigid==0) return CODE_L1C; /* L1C/A */

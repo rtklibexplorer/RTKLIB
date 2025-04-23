@@ -71,7 +71,7 @@ static void saveoutbuf(rtksvr_t *svr, uint8_t *buff, int n, int index)
 static void writesol(rtksvr_t *svr, int index)
 {
     solopt_t solopt=solopt_default;
-    uint8_t buff[3*MAXSOLMSG+1];
+    uint8_t buff[MAXSOLMSG+1];
     int i,n;
     
     tracet(4,"writesol: index=%d\n",index);
@@ -358,6 +358,12 @@ static int decoderaw(rtksvr_t *svr, int index)
         }
         else if (svr->format[index]==STRFMT_RTCM3) {
             ret=input_rtcm3(svr->rtcm+index,svr->buff[index][i]);
+            if (svr->rtcm->nbyte_invalid!=0) {    /* if last message had error: */
+                i-=svr->rtcm->nbyte_invalid-1;      /* rewind to last preamble+1 */
+                i=i>=0?i:0;                         /* or beginning of buffer */
+                trace(4,"rewind buff %3d bytes, i=%d\n",svr->rtcm->nbyte_invalid-1,i);
+                svr->rtcm->nbyte_invalid=0;
+            }
             obs=&svr->rtcm[index].obs;
             nav=&svr->rtcm[index].nav;
             ephsat=svr->rtcm[index].ephsat;

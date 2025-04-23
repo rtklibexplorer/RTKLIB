@@ -763,13 +763,12 @@ static void decode_solopt(char *buff, solopt_t *opt)
 /* read solution option ------------------------------------------------------*/
 static void readsolopt(FILE *fp, solopt_t *opt)
 {
-    char buff[MAXSOLMSG+1];
+    char buff[MAXSOLLEN+1];
     int i;
     
     trace(3,"readsolopt:\n");
     
-    for (i=0;fgets(buff,sizeof(buff),fp)&&i<100;i++) { /* only 100 lines */
-        
+    for (i=0;fgets(buff,sizeof(buff),fp)&&i<100;i++) { /* Only 100 lines */
         /* decode solution options */
         decode_solopt(buff,opt);
     }
@@ -798,7 +797,7 @@ extern int inputsol(uint8_t data, gtime_t ts, gtime_t te, double tint,
     if (data!='\r'&&data!='\n') {
     solbuf->buff[solbuf->nb++]=data;
     }
-    if (data!='\n'&&solbuf->nb<MAXSOLMSG) return 0; /* sync trailer */
+    if (data!='\n'&&solbuf->nb<MAXSOLLEN) return 0; /* sync trailer */
     
     solbuf->buff[solbuf->nb]='\0';
     solbuf->nb=0;
@@ -1113,7 +1112,7 @@ static int readsolstatdata(FILE *fp, gtime_t ts, gtime_t te, double tint,
                            solstatbuf_t *statbuf)
 {
     solstat_t stat={{0}};
-    char buff[MAXSOLMSG+1];
+    char buff[MAXSOLLEN+1];
     
     trace(3,"readsolstatdata:\n");
     
@@ -1487,7 +1486,7 @@ extern int outprcopts(uint8_t *buff, const prcopt_t *opt)
     
     p+=sprintf(p,"%s pos mode  : %s\r\n",COMMENTH,s1[opt->mode]);
     
-    if (PMODE_DGPS<=opt->mode&&opt->mode<=PMODE_FIXED) {
+    if (PMODE_DGPS<=opt->mode) {
         p+=sprintf(p,"%s freqs     : %s\r\n",COMMENTH,s2[opt->nf-1]);
     }
     if (opt->mode>PMODE_SINGLE) {
@@ -1501,9 +1500,7 @@ extern int outprcopts(uint8_t *buff, const prcopt_t *opt)
     if (opt->tidecorr & 2) p += sprintf(p, " otl");
     if (opt->tidecorr & 4) p += sprintf(p, " spole");
     p+=sprintf(p,"\r\n");
-    if (opt->mode<=PMODE_FIXED) {
-        p+=sprintf(p,"%s ionos opt : %s\r\n",COMMENTH,s4[opt->ionoopt]);
-    }
+    p+=sprintf(p,"%s ionos opt : %s\r\n",COMMENTH,s4[opt->ionoopt]);
     p+=sprintf(p,"%s tropo opt : %s\r\n",COMMENTH,s5[opt->tropopt]);
     p+=sprintf(p,"%s ephemeris : %s\r\n",COMMENTH,s6[opt->sateph]);
         p+=sprintf(p,"%s navi sys  :",COMMENTH);

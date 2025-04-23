@@ -281,7 +281,8 @@ extern "C" {
 #define MAXSTRMSG   1024                /* max length of stream message */
 #define MAXSTRRTK   8                   /* max number of stream in RTK server */
 #define MAXSBSMSG   32                  /* max number of SBAS msg in RTK server */
-#define MAXSOLMSG   8191                /* max length of solution message */
+#define MAXSOLLEN   512                 /* max line length of solution message */
+#define MAXSOLMSG   32768               /* max length of solution messages */
 #define MAXRAWLEN   16384               /* max length of receiver raw message */
 #define MAXERRMSG   4096                /* max length of error/warning message */
 #define MAXANT      64                  /* max length of station name/antenna type */
@@ -926,7 +927,7 @@ typedef struct {        /* solution buffer type */
     gtime_t time;       /* current solution time */
     sol_t *data;        /* solution data */
     double rb[3];       /* reference position {x,y,z} (ecef) (m) */
-    uint8_t buff[MAXSOLMSG+1]; /* message buffer */
+    uint8_t buff[MAXSOLLEN+1]; /* message line buffer */
     int nb;             /* number of byte in message buffer */
 } solbuf_t;
 
@@ -973,6 +974,7 @@ typedef struct {        /* RTCM control struct type */
     uint16_t loss[MAXSAT][NFREQ+NEXOBS]; /* loss of lock count */
     gtime_t lltime[MAXSAT][NFREQ+NEXOBS]; /* last lock time */
     int nbyte;          /* number of bytes in message buffer */
+    int nbyte_invalid;  /* number of bytes in invalid message, used to rewind buffer */
     int nbit;           /* number of bits in word buffer */
     int len;            /* message length (bytes) */
     uint8_t buff[1200]; /* message buffer */
@@ -1320,7 +1322,7 @@ typedef struct {        /* RTK server type */
     uint8_t *buff[3];   /* input buffers {rov,base,corr} */
     uint8_t *sbuf[2];   /* output buffers {sol1,sol2} */
     uint8_t *pbuf[3];   /* peek buffers {rov,base,corr} */
-    sol_t solbuf[MAXSOLBUF]; /* solution buffer */
+    sol_t solbuf[MAXSOLBUF]; /* solution line buffer */
     uint32_t nmsg[3][10]; /* input message counts */
     raw_t  raw [3];     /* receiver raw control {rov,base,corr} */
     rtcm_t rtcm[3];     /* RTCM control {rov,base,corr} */

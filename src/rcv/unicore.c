@@ -726,7 +726,7 @@ static int decode_obsvmb(raw_t* raw)
     uint8_t* p = raw->buff + HLEN;
     char* q;
     double psr, adr, dop, snr, lockt, tt, freq, glo_bias = 0.0;
-    int i, index, nobs, prn, sat, sys, code, idx, track, plock, clock, lli;
+    int i, index, prn, sat, sys, code, idx, track, plock, clock, lli;
     int gfrq;
 
     if ((q = strstr(raw->opt, "-GLOBIAS="))) sscanf(q, "-GLOBIAS=%lf", &glo_bias);
@@ -734,8 +734,8 @@ static int decode_obsvmb(raw_t* raw)
     int rcvstds = 0;
     if (strstr(raw->opt, "-RCVSTDS")) rcvstds = 1;
 
-    nobs = U4(p);
-    if (nobs == 0)return 1;
+    int nobs = U4(p);
+    if (nobs == 0) return 0;
     if (raw->len < HLEN + 4 + nobs * 40) {
         trace(2, "unicore obsvmb length error: len=%d nobs=%d\n", raw->len, nobs);
         return -1;
