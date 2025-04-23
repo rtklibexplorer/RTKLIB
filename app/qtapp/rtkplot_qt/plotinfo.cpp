@@ -117,7 +117,7 @@ void Plot::updateTimeSolution()
 
         if (PLOT_SOLP <= plotType && plotType <= PLOT_SOLA) {
             TIMEPOS *p = solutionToPosition(solutionData + sel, solIndex, 0, plotType - PLOT_SOLP);
-            msg += QStringLiteral("E = %1%4, N = %2%4, U = %2%4, Q = ")
+            msg += QStringLiteral("E = %1%4, N = %2%4, U = %3%4, Q = ")
                        .arg(p->x[0], 7, 'f', 4)
                        .arg(p->y[0], 7, 'f', 4)
                        .arg(p->z[0], 7, 'f', 4)

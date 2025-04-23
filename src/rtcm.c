@@ -279,8 +279,11 @@ extern int input_rtcm3(rtcm_t *rtcm, uint8_t data)
     
     if (rtcm->nbyte==3) {
         rtcm->len=getbitu(rtcm->buff,14,10)+3; /* length without parity */
+        trace(4,"msg len=%d\n",rtcm->len);
     }
-    if (rtcm->nbyte<3||rtcm->nbyte<rtcm->len+3) return 0;
+    if (rtcm->nbyte<3||rtcm->nbyte<rtcm->len+3) return 0;   /* return if message not complete */
+    /* message complete, start parsing */
+    rtcm->nbyte_invalid=rtcm->nbyte;  /* length of potentially invalid bytes */
     rtcm->nbyte=0;
     
     /* check parity */
@@ -288,6 +291,7 @@ extern int input_rtcm3(rtcm_t *rtcm, uint8_t data)
         trace(2,"rtcm3 parity error: len=%d\n",rtcm->len);
         return 0;
     }
+    rtcm->nbyte_invalid=0; /* no error, so clear invalid_byte count */
     /* decode rtcm3 message */
     return decode_rtcm3(rtcm);
 }
@@ -325,7 +329,13 @@ extern int input_rtcm3f(rtcm_t *rtcm, FILE *fp)
     
     for (i=0;i<4096;i++) {
         if ((data=fgetc(fp))==EOF) return -2;
-        if ((ret=input_rtcm3(rtcm,(uint8_t)data))) return ret;
+        if ((ret=input_rtcm3(rtcm,(uint8_t)data))) return ret;   /* ret!=0 indicates message complete */
+        if (rtcm->nbyte_invalid!=0) {               /* if last message had error: */
+            fseek(fp,-rtcm->nbyte_invalid+1,SEEK_CUR);  /* rewind to last preamble+1 */
+            i -= rtcm->nbyte_invalid-1;
+            trace(4,"rewind buff %3d bytes, i=%d\n",rtcm->nbyte_invalid-1,i);
+            rtcm->nbyte_invalid=0;
+        }
     }
     return 0; /* return at every 4k bytes */
 }

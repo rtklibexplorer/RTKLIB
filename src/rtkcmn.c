@@ -678,8 +678,8 @@ static int code2freq_BDS(uint8_t code, double *freq)
     char *obs=code2obs(code);
 
     switch (obs[0]) {
-        case '1': *freq=FREQL1;    return 0; /* B1C */
-        case '2': *freq=FREQ1_CMP; return 0; /* B1I */
+        case '1': *freq=FREQL1;    return 5; /* B1C */
+        case '2': *freq=FREQ1_CMP; return 0; /* B2I */
         case '7': *freq=FREQ2_CMP; return 1; /* B2b */
         case '5': *freq=FREQL5;    return 2; /* B2a */
         case '6': *freq=FREQ3_CMP; return 3; /* B3 */
@@ -3912,9 +3912,19 @@ extern void antmodel_s(const pcv_t *pcv, double nadir, double *dant)
 /* Sun and moon position in ECI (ref [4] 5.1.1, 5.2.1) -----------------------*/
 int epv00(double date1, double date2, double pvh[2][3], double pvb[2][3]);
 void moon98(double date1, double date2, double pv[2][3]);
-static void sunmoonpos_eci(gtime_t tutc, double *rsun, double *rmoon) {
+static void sunpos_eci(gtime_t tutc, const double *erpv, double *rsun) {
   char tstr[40];
-  trace(4, "sunmoonpos_eci: tutc=%s\n", time2str(tutc, tstr, 3));
+  trace(4, "sunpos_eci: tutc=%s\n", time2str(tutc, tstr, 3));
+
+#ifdef SUNPOS_SOFA  /* use high accuracy functions in sofa.c */
+  static THREADLOCAL gtime_t tutc_ = {0, 0};
+  static THREADLOCAL double rsun_[3];
+
+  if (fabs(timediff(tutc, tutc_)) < 1e-6) {  // Check cache.
+    for (int i = 0; i < 3; i++) rsun[i] = rsun_[i];
+    return;
+  }
+  tutc_ = tutc;
 
   // J2000 Terrestrial time
   gtime_t tgps = utc2gpst(tutc);
@@ -3922,19 +3932,89 @@ static void sunmoonpos_eci(gtime_t tutc, double *rsun, double *rmoon) {
   double j2000 = (timediff(tgps, epoch2time(ep2000)) + 19.0 + 32.184) / 86400.0;
 
   // Sun position in ECI.
-  if (rsun) {
-    double pvh[2][3], pvb[2][3];
-    epv00(2451545.0, j2000, pvh, pvb);
-    for (int i = 0; i < 3; i++) rsun[i] = -pvh[0][i] * AU;
-    trace(5, "rsun =%.3f %.3f %.3f\n", rsun[0], rsun[1], rsun[2]);
+  double pvh[2][3], pvb[2][3];
+  epv00(2451545.0, j2000, pvh, pvb);
+  for (int i = 0; i < 3; i++) rsun[i] = rsun_[i] = -pvh[0][i] * AU;
+#else
+  // Original RTKLIB version
+  gtime_t tut = timeadd(tutc, erpv[2]);  // UTC -> UT1
+  const double ep2000[] = {2000, 1, 1, 12, 0, 0};
+  double t = timediff(tut, epoch2time(ep2000)) / 86400.0 / 36525.0;
+
+  // Astronomical arguments.
+  double f[5];
+  ast_args(t, f);
+
+  // Obliquity of the ecliptic.
+  double eps = 23.439291 - 0.0130042 * t;
+  double sine = sin(eps * D2R);
+  double cose = cos(eps * D2R);
+
+  /* Sun position in ECI */
+  double Ms = 357.5277233 + 35999.05034 * t;
+  double ls =
+      280.460 + 36000.770 * t + 1.914666471 * sin(Ms * D2R) + 0.019994643 * sin(2.0 * Ms * D2R);
+  double rs = AU * (1.000140612 - 0.016708617 * cos(Ms * D2R) - 0.000139589 * cos(2.0 * Ms * D2R));
+  double sinl = sin(ls * D2R);
+  double cosl = cos(ls * D2R);
+  rsun[0] = rs * cosl;
+  rsun[1] = rs * cose * sinl;
+  rsun[2] = rs * sine * sinl;
+#endif
+  trace(5, "rsun =%.3f %.3f %.3f\n", rsun[0], rsun[1], rsun[2]);
+}
+static void moonpos_eci(gtime_t tutc, const double *erpv, double *rmoon) {
+  char tstr[40];
+  trace(4, "moonpos_eci: tutc=%s\n", time2str(tutc, tstr, 3));
+
+#ifdef MOONPOS_SOFA   /* use high accuracy functions in sofa.c */
+  static THREADLOCAL gtime_t tutc_ = {0, 0};
+  static THREADLOCAL double rmoon_[3];
+
+  if (fabs(timediff(tutc, tutc_)) < 1e-6) {  // Check cache.
+    for (int i = 0; i < 3; i++) rmoon[i] = rmoon_[i];
+    return;
   }
-  // Moon position in ECI.
-  if (rmoon) {
-    double pv[2][3];
-    moon98(2451545.0, j2000, pv);
-    for (int i = 0; i < 3; i++) rmoon[i] = pv[0][i] * AU;
-    trace(5, "rmoon=%.3f %.3f %.3f\n", rmoon[0], rmoon[1], rmoon[2]);
-  }
+  tutc_ = tutc;
+
+  // J2000 Terrestrial time
+  gtime_t tgps = utc2gpst(tutc);
+  const double ep2000[] = {2000, 1, 1, 12, 0, 0};
+  double j2000 = (timediff(tgps, epoch2time(ep2000)) + 19.0 + 32.184) / 86400.0;
+  double pv[2][3];
+  moon98(2451545.0, j2000, pv);
+  for (int i = 0; i < 3; i++) rmoon[i] = rmoon_[i] = pv[0][i] * AU;
+#else
+  // Original RTKLIB version
+  gtime_t tut = timeadd(tutc, erpv[2]);  // UTC -> UT1
+  const double ep2000[] = {2000, 1, 1, 12, 0, 0};
+  double t = timediff(tut, epoch2time(ep2000)) / 86400.0 / 36525.0;
+
+  // Astronomical arguments.
+  double f[5];
+  ast_args(t, f);
+
+  // Obliquity of the ecliptic.
+  double eps = 23.439291 - 0.0130042 * t;
+  double sine = sin(eps * D2R);
+  double cose = cos(eps * D2R);
+  double lm = 218.32 + 481267.883 * t + 6.29 * sin(f[0]) - 1.27 * sin(f[0] - 2.0 * f[3]) +
+              0.66 * sin(2.0 * f[3]) + 0.21 * sin(2.0 * f[0]) - 0.19 * sin(f[1]) -
+              0.11 * sin(2.0 * f[2]);
+  double pm = 5.13 * sin(f[2]) + 0.28 * sin(f[0] + f[2]) - 0.28 * sin(f[2] - f[0]) -
+              0.17 * sin(f[2] - 2.0 * f[3]);
+  double rm = RE_WGS84 / sin((0.9508 + 0.0518 * cos(f[0]) + 0.0095 * cos(f[0] - 2.0 * f[3]) +
+                              0.0078 * cos(2.0 * f[3]) + 0.0028 * cos(2.0 * f[0])) *
+                             D2R);
+  double sinl = sin(lm * D2R);
+  double cosl = cos(lm * D2R);
+  double sinp = sin(pm * D2R);
+  double cosp = cos(pm * D2R);
+  rmoon[0] = rm * cosp * cosl;
+  rmoon[1] = rm * (cose * cosp * sinl - sine * sinp);
+  rmoon[2] = rm * (sine * cosp * sinl + cose * sinp);
+#endif
+  trace(5, "rmoon=%.3f %.3f %.3f\n", rmoon[0], rmoon[1], rmoon[2]);
 }
 
 /* Sun and moon position -------------------------------------------------------
@@ -3951,19 +4031,25 @@ extern void sunmoonpos(gtime_t tutc, const double *erpv, double *rsun, double *r
   char tstr[40];
   trace(4, "sunmoonpos: tutc=%s\n", time2str(tutc, tstr, 3));
 
-  // Sun and moon position in ECI.
-  double rs[3], rm[3];
-  sunmoonpos_eci(tutc, rsun ? rs : NULL, rmoon ? rm : NULL);
-
   // ECI to ECEF transformation matrix.
   double U[9], gmst_;
   eci2ecef(tutc, erpv, U, &gmst_);
-
-  // Sun and moon position in ECEF.
-  if (rsun) matmul("NN", 3, 1, 3, U, rs, rsun);
-  if (rmoon) matmul("NN", 3, 1, 3, U, rm, rmoon);
   if (gmst) *gmst = gmst_;
+
+  // Sun and moon position in ECI.
+  double rs[3], rm[3];
+  if (rsun) {
+    sunpos_eci(tutc, erpv, rs);
+    // Sun position in ECEF.
+    matmul("NN", 3, 1, 3, U, rs, rsun);
+  }
+  if (rmoon) {
+    moonpos_eci(tutc, erpv, rm);
+    // Moon position in ECEF.
+    matmul("NN", 3, 1, 3, U, rm, rmoon);
+  }
 }
+
 /* uncompress file -------------------------------------------------------------
 * uncompress (uncompress/unzip/uncompact hatanaka-compression/tar) file
 * args   : char   *file     I   input file
