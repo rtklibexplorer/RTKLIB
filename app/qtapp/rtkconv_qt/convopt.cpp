@@ -22,7 +22,7 @@ ConvOptDialog::ConvOptDialog(QWidget *parent)
     gloFcnDialog = new GloFcnDialog(this);
     freqDialog = new FreqDialog(this);
 
-    int glo = MAXPRNGLO, gal = MAXPRNGAL, qzs = MAXPRNQZS, cmp = MAXPRNCMP, irn = MAXPRNIRN;;
+    int glo = MAXPRNGLO, gal = MAXPRNGAL, qzs = MAXPRNQZS, cmp = MAXPRNCMP, irn = MAXPRNIRN;
     if (glo <= 0) ui->cBNavSys2->setEnabled(false);
     if (gal <= 0) ui->cBNavSys3->setEnabled(false);
     if (qzs <= 0) ui->cBNavSys4->setEnabled(false);
