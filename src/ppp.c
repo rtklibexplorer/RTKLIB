@@ -432,15 +432,8 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
         P[i]=obs->P[i]               -dants[i]-dantr[i];
 
         if (opt->sateph==EPHOPT_SSRAPC||opt->sateph==EPHOPT_SSRCOM) {
-            /* select SSR code correction based on code */
-            if (sys==SYS_GPS)
-                ix=(i==0?CODE_L1W-1:CODE_L2W-1);
-            else if (sys==SYS_GLO)
-                ix=(i==0?CODE_L1P-1:CODE_L2P-1);
-            else if (sys==SYS_GAL)
-                ix=(i==0?CODE_L1X-1:CODE_L7X-1);
-            /* apply SSR correction */
-            P[i]+=(nav->ssr[obs->sat-1].cbias[obs->code[i]-1]-nav->ssr[obs->sat-1].cbias[ix]);
+            P[i]+=nav->ssr[obs->sat-1].cbias[obs->code[i]-1];
+            L[i]+=nav->ssr[obs->sat-1].pbias[obs->code[i]-1];
         }
         else {   /* apply code bias corrections from file */
             bias_ix=code2bias_ix(sys,obs->code[i]); /* look up bias index in table */
