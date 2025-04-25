@@ -81,7 +81,7 @@ utest9 :
 	./t_gloeph  > utest9.out
 utest10 :
 	@if [ ! -f ../data/geoiddata/WW15MGH.DAC ]; then \
-		mkdir -p ../data/geoiddata \
+		mkdir -p ../data/geoiddata; \
 		wget -P ../data/geoiddata http://download.osgeo.org/proj/vdatum/egm96_15/outdated/WW15MGH.DAC; \
 	fi
 	./t_geoid   > utest10.out
