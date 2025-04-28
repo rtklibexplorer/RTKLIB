@@ -1,20 +1,20 @@
-A version of RTKLIB optimized for low cost GNSS receivers (single, dual, or triple frequency), especially u-blox receivers.  It is based on RTKLIB 2.4.3 and is kept reasonably closely synced to that branch.   This software is provided “AS IS” without any warranties of any kind so please be careful, especially if using it in any kind of real-time application. 
+A version of RTKLIB optimized for low cost GNSS receivers (single, dual, or triple frequency), especially u-blox receivers.  It is based on RTKLIB 2.4.3 and is kept reasonably closely synced to that branch.   This software is provided “AS IS” without any warranties of any kind so please be careful, especially if using it in any kind of real-time application.
 
-Releases with Windows executables are avaiable at https://github.com/rtklibexplorer/RTKLIB/releases 
+Releases with Windows executables are available at https://github.com/rtklibexplorer/RTKLIB/releases
 
-Tutorials for this code, and sample GPS data sets are available at http://rtkexplorer.com/  
+Tutorials for this code, and sample GPS data sets are available at http://rtkexplorer.com/
 
 The latest version of the user manual is at: https://rtkexplorer.com/pdfs/manual_demo5.pdf
 
-   
+
 WINDOWS: To build and install code for with Windows Embarcadero compiler:
 
-GUIs: 
-1) Build executables with app/winapp/rtklib_winapp.groupproj project file 
+GUIs:
+1) Build executables with app/winapp/rtklib_winapp.groupproj project file
 2) Install executables and DLLs to ../RTKLIB/bin by runnning app/winapp/install_winapp.bat
 
 CUIs:
-1) Build executables with app/consapp/rtklib_consapp.groupproj project file 
+1) Build executables with app/consapp/rtklib_consapp.groupproj project file
 2) Install executables to ../RTKLIB/bin by runnning app/consapp/install_consapp.bat
 
 
