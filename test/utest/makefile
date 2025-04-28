@@ -10,20 +10,20 @@ BIN    = t_matrix t_time t_coord t_rinex t_lambda t_atmos t_misc t_preceph t_glo
 t_geoid t_ppp t_ionex t_tle
 
 all        : $(BIN)
-t_matrix   : t_matrix.o rtkcmn.o trace.o preceph.o
-t_time     : t_time.o rtkcmn.o trace.o preceph.o
-t_coord    : t_coord.o rtkcmn.o trace.o geoid.o preceph.o
-t_rinex    : t_rinex.o rtkcmn.o trace.o rinex.o preceph.o
-t_lambda   : t_lambda.o rtkcmn.o trace.o lambda.o preceph.o
-t_atmos    : t_atmos.o rtkcmn.o trace.o preceph.o
-t_misc     : t_misc.o rtkcmn.o trace.o preceph.o
-t_preceph  : t_preceph.o rtkcmn.o trace.o preceph.o rinex.o ephemeris.o sbas.o
-t_gloeph   : t_gloeph.o rtkcmn.o trace.o rinex.o ephemeris.o sbas.o preceph.o
-t_geoid    : t_geoid.o rtkcmn.o trace.o preceph.o geoid.o
-t_ppp      : t_ppp.o rtkcmn.o trace.o ephemeris.o preceph.o sbas.o ionex.o pntpos.o ppp.o ppp_ar.o
+t_matrix   : t_matrix.o rtkcmn.o sofa.o trace.o preceph.o
+t_time     : t_time.o rtkcmn.o sofa.o trace.o preceph.o
+t_coord    : t_coord.o rtkcmn.o sofa.o trace.o geoid.o preceph.o
+t_rinex    : t_rinex.o rtkcmn.o sofa.o trace.o rinex.o preceph.o
+t_lambda   : t_lambda.o rtkcmn.o sofa.o trace.o lambda.o preceph.o
+t_atmos    : t_atmos.o rtkcmn.o sofa.o trace.o preceph.o
+t_misc     : t_misc.o rtkcmn.o sofa.o trace.o preceph.o
+t_preceph  : t_preceph.o rtkcmn.o sofa.o trace.o preceph.o rinex.o ephemeris.o sbas.o
+t_gloeph   : t_gloeph.o rtkcmn.o sofa.o trace.o rinex.o ephemeris.o sbas.o preceph.o
+t_geoid    : t_geoid.o rtkcmn.o sofa.o trace.o preceph.o geoid.o
+t_ppp      : t_ppp.o rtkcmn.o sofa.o trace.o ephemeris.o preceph.o sbas.o ionex.o pntpos.o ppp.o ppp_ar.o
 t_ppp      : lambda.o tides.o
-t_ionex    : t_ionex.o rtkcmn.o trace.o preceph.o ionex.o
-t_tle      : t_tle.o rtkcmn.o trace.o rinex.o ephemeris.o sbas.o preceph.o tle.o
+t_ionex    : t_ionex.o rtkcmn.o sofa.o trace.o preceph.o ionex.o sofa.o 
+t_tle      : t_tle.o rtkcmn.o sofa.o trace.o rinex.o ephemeris.o sbas.o preceph.o tle.o
 
 rtkcmn.o   : $(SRC)/rtklib.h $(SRC)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
@@ -51,6 +51,8 @@ pntpos.o   : $(SRC)/rtklib.h $(SRC)/pntpos.c
 	$(CC) -c $(CFLAGS) $(SRC)/pntpos.c
 ionex.o    : $(SRC)/rtklib.h $(SRC)/ionex.c
 	$(CC) -c $(CFLAGS) $(SRC)/ionex.c
+sofa.o     : $(SRC)/rtklib.h $(SRC)/sofa.c
+	$(CC) -c $(CFLAGS) $(SRC)/sofa.c
 tle.o      : $(SRC)/rtklib.h $(SRC)/tle.c
 	$(CC) -c $(CFLAGS) $(SRC)/tle.c
 tides.o   : $(SRC)/rtklib.h $(SRC)/tides.c
@@ -78,7 +80,11 @@ utest8 :
 utest9 :
 	./t_gloeph  > utest9.out
 utest10 :
-#	./t_geoid   > utest10.out
+	@if [ ! -f ../data/geoiddata/WW15MGH.DAC ]; then \
+		mkdir -p ../data/geoiddata \
+		wget -P ../data/geoiddata http://download.osgeo.org/proj/vdatum/egm96_15/outdated/WW15MGH.DAC; \
+	fi
+	./t_geoid   > utest10.out
 utest11 :
 	./t_ppp     > utest11.out
 utest12 :
