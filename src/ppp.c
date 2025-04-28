@@ -107,14 +107,14 @@
 #define NC(opt)     (NSYS)
 #define NT(opt)     ((opt)->tropopt<TROPOPT_EST?0:((opt)->tropopt==TROPOPT_EST?1:3))
 #define NI(opt)     ((opt)->ionoopt==IONOOPT_EST?MAXSAT:0)
-#define ND(opt)     ((opt)->nf>=3?1:0)
+#define ND(opt)     ((opt)->nf>=3?NSYS*((opt)->nf-2):0)
 #define NR(opt)     (NP(opt)+NC(opt)+NT(opt)+NI(opt)+ND(opt))
 #define NB(opt)     (NF(opt)*MAXSAT)
 #define NX(opt)     (NR(opt)+NB(opt))
 #define IC(s,opt)   (NP(opt)+(s))
 #define IT(opt)     (NP(opt)+NC(opt))
 #define II(s,opt)   (NP(opt)+NC(opt)+NT(opt)+(s)-1)
-#define ID(opt)     (NP(opt)+NC(opt)+NT(opt)+NI(opt))
+#define ID(k,f,opt) (NP(opt)+NC(opt)+NT(opt)+NI(opt)+(k*((opt)->nf-2))+(f-2))
 #define IB(s,f,opt) (NR(opt)+MAXSAT*(f)+(s)-1)
 
 /* standard deviation of state -----------------------------------------------*/
@@ -153,13 +153,22 @@ extern int pppoutstat(rtk_t *rtk, char *buff)
                    vel[2],acc[0],acc[1],acc[2],0.0,0.0,0.0,0.0,0.0,0.0);
     }
     /* receiver clocks */
+    /* FIXME: this requires NSYS>=4 !! */
     i=IC(0,&rtk->opt);
     p+=sprintf(p,"$CLK,%d,%.3f,%d,%d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
                week,tow,rtk->sol.stat,1,x[i]*1E9/CLIGHT,x[i+1]*1E9/CLIGHT,
                x[i+2]*1E9/CLIGHT,x[i+3]*1E9/CLIGHT,STD(rtk,i)*1E9/CLIGHT,
                STD(rtk,i+1)*1E9/CLIGHT,STD(rtk,i+2)*1E9/CLIGHT,
                STD(rtk,i+2)*1E9/CLIGHT);
-
+    /* receiver biases */
+    /* FIXME: this requires NSYS>=4 !! */
+    for(int f=2;f<rtk->opt.nf;f++) {
+        i=ID(0,f,&rtk->opt);
+        p+=sprintf(p,"$DCB,%d,%.3f,%d,%d,%.3f,%.3f,%.3f,%.3f,%.4f,%.4f,%.4f,%.4f\n",
+                   week,tow,rtk->sol.stat,f,
+                   x[i],x[i+1],x[i+2],x[i+3],
+                   STD(rtk,i),STD(rtk,i+1),STD(rtk,i+2),STD(rtk,i+3));
+      }
     /* tropospheric parameters */
     if (rtk->opt.tropopt==TROPOPT_EST||rtk->opt.tropopt==TROPOPT_ESTG) {
         i=IT(&rtk->opt);
@@ -423,15 +432,8 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
         P[i]=obs->P[i]               -dants[i]-dantr[i];
 
         if (opt->sateph==EPHOPT_SSRAPC||opt->sateph==EPHOPT_SSRCOM) {
-            /* select SSR code correction based on code */
-            if (sys==SYS_GPS)
-                ix=(i==0?CODE_L1W-1:CODE_L2W-1);
-            else if (sys==SYS_GLO)
-                ix=(i==0?CODE_L1P-1:CODE_L2P-1);
-            else if (sys==SYS_GAL)
-                ix=(i==0?CODE_L1X-1:CODE_L7X-1);
-            /* apply SSR correction */
-            P[i]+=(nav->ssr[obs->sat-1].cbias[obs->code[i]-1]-nav->ssr[obs->sat-1].cbias[ix]);
+            P[i]+=nav->ssr[obs->sat-1].cbias[obs->code[i]-1];
+            L[i]+=nav->ssr[obs->sat-1].pbias[obs->code[i]-1];
         }
         else {   /* apply code bias corrections from file */
             bias_ix=code2bias_ix(sys,obs->code[i]); /* look up bias index in table */
@@ -633,14 +635,7 @@ static void udclk_ppp(rtk_t *rtk)
 
     /* initialize every epoch for clock (white noise) */
     for (i=0;i<NSYS;i++) {
-        if (rtk->opt.sateph==EPHOPT_PREC) {
-            /* time of prec ephemeris is based gpst */
-            /* neglect receiver inter-system bias  */
-            dtr=rtk->sol.dtr[0];
-        }
-        else {
-            dtr=i==0?rtk->sol.dtr[0]:rtk->sol.dtr[0]+rtk->sol.dtr[i];
-        }
+        dtr=i==0?rtk->sol.dtr[0]:rtk->sol.dtr[0]+rtk->sol.dtr[i];
         initx(rtk,CLIGHT*dtr,VAR_CLK,IC(i,&rtk->opt));
     }
 }
@@ -717,15 +712,20 @@ static void udiono_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         }
     }
 }
-/* temporal update of L5-receiver-dcb parameters -----------------------------*/
+/* temporal update of receiver-dcb parameters --------------------------------*/
 static void uddcb_ppp(rtk_t *rtk)
 {
-    int i=ID(&rtk->opt);
 
-    trace(3,"uddcb_ppp:\n");
+    trace(3,"uddcb_ppp: nsys=%d nf=%d nd=%d\n",NSYS,rtk->opt.nf,ND(&rtk->opt));
 
-    if (rtk->x[i]==0.0) {
-        initx(rtk,1E-6,VAR_DCB,i);
+    for (int k=0;k<NSYS;k++) {
+        for(int f=2;f<rtk->opt.nf;f++) {
+            int i=ID(k,f,&rtk->opt);
+            trace(4,"uddcb_ppp: sys=%d f=%d id=%d\n",k,f,i);
+            if (rtk->x[i]==0.0) {
+                initx(rtk,1E-6,VAR_DCB,i);
+            }
+        }
     }
 }
 /* temporal update of phase biases -------------------------------------------*/
@@ -991,7 +991,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
         antmodel(opt->pcvr,opt->antdel[0],azel+i*2,opt->posopt[1],dantr);
 
         /* Compute satellite PCO corrections for orbits in CoM */
-        if (opt->sateph==EPHOPT_PREC) {
+        if (opt->sateph==EPHOPT_PREC||opt->sateph==EPHOPT_SSRCOM) {
             if (opt->ionoopt==IONOOPT_IFLC) {
                 double danto[3];
                 satantoff(obs[i].time,rs+i*6,sat,nav,danto);
@@ -1045,7 +1045,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                 case SYS_GLO: k=1; break;
                 case SYS_GAL: k=2; break;
                 case SYS_CMP: k=3; break;
-                case SYS_IRN: k=4; break;
+                case SYS_QZS: k=4; break;
                 default:      k=0; break;
             }
             cdtr=x[IC(k,opt)];
@@ -1065,9 +1065,9 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                  * mapping function. */
                 if (H) H[II(sat,opt)+nx*nv]=C*ionmapf(pos,azel+i*2);
             }
-            if (frq==2&&code==1) { /* L5-receiver-dcb */
-                dcb+=rtk->x[ID(opt)];
-                if (H) H[ID(opt)+nx*nv]=1.0;
+            if (frq>=2&&code==1) { /* receiver-dcb */
+                dcb+=rtk->x[ID(k,frq,opt)];
+                if (H) H[ID(k,frq,opt)+nx*nv]=1.0;
             }
             if (code==0) { /* phase bias */
                 if ((bias=x[IB(sat,frq,opt)])==0.0) continue;
