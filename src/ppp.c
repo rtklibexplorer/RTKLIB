@@ -411,6 +411,56 @@ static double mwmeas(const obsd_t *obs, const nav_t *nav)
     return (obs->L[0]-obs->L[1])*CLIGHT/(freq1-freq2)-
            (freq1*obs->P[0]+freq2*obs->P[1])/(freq1+freq2);
 }
+/* substitute mixed-mode signals -----------------------------------*/
+static uint8_t obsCode2biasCode(int sys, uint8_t obs_code) {
+  uint8_t bias_code;
+  if (sys==SYS_GPS) {
+    switch(obs_code) {
+      case(CODE_L1X): bias_code = CODE_L1L; break;
+      case(CODE_L2X): bias_code = CODE_L2L; break;
+      case(CODE_L5X): bias_code = CODE_L5Q; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else if (sys==SYS_GLO) {
+    switch(obs_code) {
+      case(CODE_L3X): bias_code = CODE_L3Q; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else if (sys==SYS_GAL) {
+    switch(obs_code) {
+      case(CODE_L1X): bias_code = CODE_L1C; break;
+      case(CODE_L6X): bias_code = CODE_L6C; break;
+      case(CODE_L7X): bias_code = CODE_L7Q; break;
+      case(CODE_L5X): bias_code = CODE_L5Q; break;
+      case(CODE_L8X): bias_code = CODE_L8Q; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else if (sys==SYS_CMP) {
+    switch(obs_code) {
+      case(CODE_L1X): bias_code = CODE_L1P; break;
+      case(CODE_L7Z): bias_code = CODE_L7D; break;
+      case(CODE_L5X): bias_code = CODE_L5P; break;
+      case(CODE_L8X): bias_code = CODE_L8P; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else if (sys==SYS_QZS) {
+    switch(obs_code) {
+      case(CODE_L1X): bias_code = CODE_L1L; break;
+      case(CODE_L2X): bias_code = CODE_L2L; break;
+      case(CODE_L5X): bias_code = CODE_L5Q; break;
+      case(CODE_L6Z): bias_code = CODE_L6S; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else {
+    bias_code = obs_code;
+  }
+  return bias_code;
+}
 /* antenna and bias corrected measurements -----------------------------------*/
 static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
                       const prcopt_t *opt, const double *dantr,
@@ -432,8 +482,10 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
         P[i]=obs->P[i]               -dants[i]-dantr[i];
 
         if (opt->sateph==EPHOPT_SSRAPC||opt->sateph==EPHOPT_SSRCOM) {
-            P[i]+=nav->ssr[obs->sat-1].cbias[obs->code[i]-1];
-            L[i]+=nav->ssr[obs->sat-1].pbias[obs->code[i]-1];
+            // Substitute combined tracking modes
+            uint8_t bias_code = obsCode2biasCode(sys,obs->code[i]);
+            P[i]+=nav->ssr[obs->sat-1].cbias[bias_code-1];
+            L[i]+=nav->ssr[obs->sat-1].pbias[bias_code-1];
         }
         else {   /* apply code bias corrections from file */
             bias_ix=code2bias_ix(sys,obs->code[i]); /* look up bias index in table */
