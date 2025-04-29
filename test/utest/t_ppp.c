@@ -18,9 +18,9 @@ void utest1(void)
     };
     double erpv[5]={0.06740*D2R/3600,0.24713*D2R/3600,0.649232};
     int i,j;
-    
+
     eci2ecef(epoch2time(ep1),erpv,U,&gmst);
-    
+
     for (i=0;i<3;i++) for (j=0;j<3;j++) {
         printf("U(%d,%d)=%15.12f %15.12f %15.12f\n",i,j,
                U[i+j*3],U1[j+i*3],U[i+j*3]-U1[j+i*3]);
@@ -36,7 +36,7 @@ void utest2(void)
     double rm[]={350588081.147922,29854134.6432052,-136870369.169738};
     double rsun[3],rmoon[3],erpv[5]={0};
     int i;
-    
+
     sunmoonpos(epoch2time(ep1),erpv,rsun,rmoon,NULL);
     printf("X_sun =%15.0f %15.0f %7.4f\n",rsun [0],rs[0],(rsun [0]-rs[0])/rsun [0]);
     printf("Y_sun =%15.0f %15.0f %7.4f\n",rsun [1],rs[1],(rsun [1]-rs[1])/rsun [1]);
@@ -44,7 +44,7 @@ void utest2(void)
     printf("X_moon=%15.0f %15.0f %7.4f\n",rmoon[0],rm[0],(rmoon[0]-rm[0])/rmoon[0]);
     printf("Y_moon=%15.0f %15.0f %7.4f\n",rmoon[1],rm[1],(rmoon[1]-rm[1])/rmoon[1]);
     printf("Z_moon=%15.0f %15.0f %7.4f\n",rmoon[2],rm[2],(rmoon[2]-rm[2])/rmoon[2]);
-    
+
     for (i=0;i<3;i++) {
         assert(fabs((rsun [i]-rs[i])/rsun [i])<0.03);
         assert(fabs((rmoon[i]-rm[i])/rmoon[i])<0.03);
@@ -56,16 +56,17 @@ void utest3(void)
 {
     double ep1[]={2010,6,7,1,2,3};
     double rr[]={-3957198.431,3310198.621,3737713.474}; /* TSKB */
-    double dp[]={-0.05294,0.075607,0.03644};
+  //double dp[]={-0.05294,0.075607,0.03644}; // old implementation
+    double dp[]={-0.05173,0.07432,0.03513};
     double dr[3]={0};
     int i;
-    
-    tidedisp(epoch2time(ep1),rr,1,NULL,NULL,dr);
-    
+
+    tidedisp(epoch2time(ep1),rr,5,NULL,NULL,dr);
+
     printf("X_disp=%8.5f %8.5f %8.5f\n",dr[0],dp[0],dr[0]-dp[0]);
     printf("Y_disp=%8.5f %8.5f %8.5f\n",dr[1],dp[1],dr[1]-dp[1]);
     printf("Z_disp=%8.5f %8.5f %8.5f\n",dr[2],dp[2],dr[2]-dp[2]);
-    
+
     for (i=0;i<3;i++) {
         assert(fabs(dr[i]-dp[i])<0.001);
     }
