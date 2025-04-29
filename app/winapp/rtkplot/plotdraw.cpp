@@ -1111,11 +1111,11 @@ void __fastcall TPlot::DrawObsEphem(double *yp)
             ps[0].y-=2;
             
             svh=Nav.eph[j].svh;
-            if (satsys(i+1,NULL)==SYS_QZS) svh&=0xFE; /* mask QZS LEX health */
+            // Mask QZS LEX health.
+            int health = satsys(i + 1, NULL) == SYS_QZS ? (svh & 0xfe) != 0 : svh != 0;
+            GraphR->DrawPoly(ps,3,health?MColor[0][5]:CColor[1],0);
             
-            GraphR->DrawPoly(ps,3,svh?MColor[0][5]:CColor[1],0);
-            
-            if (in) GraphR->DrawMark(ps[2],0,svh?MColor[0][5]:CColor[1],svh?4:3,0);
+            if (in) GraphR->DrawMark(ps[2],0,health?MColor[0][5]:CColor[1],health?4:3,0);
         }
         for (j=0;j<Nav.ng;j++) {
             if (Nav.geph[j].sat!=i+1) continue;
@@ -1126,7 +1126,9 @@ void __fastcall TPlot::DrawObsEphem(double *yp)
             for (k=0;k<3;k++) ps[k].y+=MarkSize+2+off[Nav.geph[j].sat-1];
             ps[0].y-=2;
             
-            GraphR->DrawPoly(ps,3,Nav.geph[j].svh?MColor[0][5]:CColor[1],0);
+            svh=Nav.geph[j].svh;
+            int health = (svh & 9) != 0 || (svh & 6) == 4;
+            GraphR->DrawPoly(ps,3,health?MColor[0][5]:CColor[1],0);
             
             if (in) GraphR->DrawMark(ps[2],0,Nav.geph[j].svh?MColor[0][5]:CColor[1],
                                      Nav.geph[j].svh?4:3,0);
@@ -1140,7 +1142,8 @@ void __fastcall TPlot::DrawObsEphem(double *yp)
             for (k=0;k<3;k++) ps[k].y+=MarkSize+2+off[Nav.seph[j].sat-1];
             ps[0].y-=2;
             
-            GraphR->DrawPoly(ps,3,Nav.seph[j].svh?MColor[0][5]:CColor[1],0);
+            svh=Nav.seph[j].svh;
+            GraphR->DrawPoly(ps,3,svh?MColor[0][5]:CColor[1],0);
             
             if (in) GraphR->DrawMark(ps[2],0,Nav.seph[j].svh?MColor[0][5]:CColor[1],
                                      Nav.seph[j].svh?4:3,0);

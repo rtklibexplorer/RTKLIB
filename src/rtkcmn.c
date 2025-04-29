@@ -268,13 +268,13 @@ static char *obscodes[MAXCODE + 1]={       /* observation code strings */
 };
 static char codepris[7][MAXFREQ][16]={  /* code priority for each freq-index */
     /* L1/E1/B1 L2/E5b/B2b L5/E5a/B2a E6/LEX/B3 E5(a+b)         */
-    {"CPYWMNSLX","CPYWMNDLSX","IQX"    ,""       ,""       ,""}, /* GPS */
-    {"CPABX"   ,"CPABX"     ,"IQX"     ,""       ,""       ,""}, /* GLO */
-    {"CABXZ"   ,"XIQ"       ,"XIQ"     ,"ABCXZ"  ,"IQX"    ,""}, /* GAL */
-    {"CLSXZBE" ,"LSX"       ,"IQXDPZ"  ,"LSXEZ"  ,""       ,""}, /* QZS */
-    {"C"       ,"IQX"       ,""        ,""       ,""       ,""}, /* SBS */
-    {"IQXDPSLZAN","IQXDPZ"  ,"DPX"     ,"IQXDPZA" ,"DPX"   ,""}, /* BDS */
-    {"ABCX"    ,"ABCX"      ,"DPX"     ,""       ,""       ,""}  /* IRN */
+    {"CPYWMNSLX","CPYWMNDLSX","IQX"    ,""       ,""        ,""}, /* GPS */
+    {"CPABX"   ,"CPABX"     ,"IQX"     ,""       ,""        ,""}, /* GLO */
+    {"CABXZ"   ,"XIQ"       ,"XIQ"     ,"ABCXZ"  ,"IQX"     ,""}, /* GAL */
+    {"CLSXZBE" ,"LSX"       ,"IQXDPZ"  ,"LSXEZ"  ,""        ,""}, /* QZS */
+    {"C"       ,"IQX"       ,""        ,""       ,""        ,""}, /* SBS */
+    {"IQX"     ,"IQXDPZ"    ,"DPX"     ,"IQXDPZA","DPXSLZAN","DPX"}, /* BDS */
+    {"ABCX"    ,"ABCX"      ,"DPX"     ,""       ,""        ,""}  /* IRN */
 };
 static fatalfunc_t *fatalfunc=NULL; /* fatal callback function */
 
@@ -540,7 +540,12 @@ extern int satexclude(int sat, double var, int svh, const prcopt_t *opt)
         if (!(sys&opt->navsys)) return 1; /* unselected sat sys */
     }
     if (sys==SYS_QZS) svh&=0xFE; /* mask QZSS LEX health */
-    if (svh) {
+    if (sys == SYS_GLO) {
+      if ((svh & 9) != 0 || (svh & 6) == 4) {
+        trace(3,"unhealthy GLO satellite: sat=%3d svh=%02X\n",sat,svh);
+        return 1;
+      }
+    } else if (svh) {
         trace(3,"unhealthy satellite: sat=%3d svh=%02X\n",sat,svh);
         return 1;
     }
@@ -678,12 +683,12 @@ static int code2freq_BDS(uint8_t code, double *freq)
     char *obs=code2obs(code);
 
     switch (obs[0]) {
-        case '1': *freq=FREQL1;    return 5; /* B1C */
-        case '2': *freq=FREQ1_CMP; return 0; /* B2I */
-        case '7': *freq=FREQ2_CMP; return 1; /* B2b */
+        case '2': *freq=FREQ1_CMP; return 0; /* B1I */
+        case '7': *freq=FREQ2_CMP; return 1; /* B2,B2b */
         case '5': *freq=FREQL5;    return 2; /* B2a */
         case '6': *freq=FREQ3_CMP; return 3; /* B3 */
-        case '8': *freq=FREQE5ab;  return 4; /* B2ab */
+        case '1': *freq=FREQL1;    return 4; /* B1C,B1A */
+        case '8': *freq=FREQE5ab;  return 5; /* B2ab */
     }
     return -1;
 }
@@ -704,15 +709,15 @@ static int code2freq_IRN(uint8_t code, double *freq)
 * args   : int    sys       I   satellite system (SYS_???)
 *          uint8_t code     I   obs code (CODE_???)
 * return : frequency index (-1: error)
-*                       0     1     2     3     4
-*           --------------------------------------
-*            GPS       L1    L2    L5     -     -
-*            GLONASS   G1    G2    G3     -     -  (G1=G1,G1a,G2=G2,G2a)
-*            Galileo   E1    E5b   E5a   E6   E5ab
-*            QZSS      L1    L2    L5    L6     -
-*            SBAS      L1     -    L5     -     -
-*            BDS       B1    B2b   B2a   B3   B2ab
-*            NavIC     L5     S    L1     -     -
+*                       0     1     2     3     4     5
+*           ---------------------------------------------
+*            GPS       L1    L2    L5     -     -     -
+*            GLONASS   G1    G2    G3     -     -     -  (G1=G1,G1a,G2=G2,G2a)
+*            Galileo   E1    E5b   E5a   E6   E5ab    -
+*            QZSS      L1    L2    L5    L6     -     -
+*            SBAS      L1     -    L5     -     -     -
+*            BDS       B1    B2b   B2a   B3   B1C   B2ab
+*            NavIC     L5     S    L1     -     -     -
 *-----------------------------------------------------------------------------*/
 extern int code2idx(int sys, uint8_t code)
 {
@@ -3141,10 +3146,10 @@ extern int readnav(const char *file, nav_t *nav)
             nav->geph[prn-1]=geph0;
             nav->geph[prn-1].sat=sat;
             toe_time=tof_time=0;
-            (void)sscanf(p+1,"%d,%d,%d,%d,%d,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
+            (void)sscanf(p+1,"%d,%d,%d,%d,%d,%d,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
                         "%lf,%lf,%lf,%lf",
                    &nav->geph[prn-1].iode,&nav->geph[prn-1].frq,&nav->geph[prn-1].svh,
-                   &nav->geph[prn-1].sva,&nav->geph[prn-1].age,
+                   &nav->geph[prn-1].flags,&nav->geph[prn-1].sva,&nav->geph[prn-1].age,
                    &toe_time,&tof_time,
                    &nav->geph[prn-1].pos[0],&nav->geph[prn-1].pos[1],&nav->geph[prn-1].pos[2],
                    &nav->geph[prn-1].vel[0],&nav->geph[prn-1].vel[1],&nav->geph[prn-1].vel[2],
@@ -3207,9 +3212,10 @@ extern int savenav(const char *file, const nav_t *nav)
     for (i=0;i<MAXPRNGLO;i++) {
         if (nav->geph[i].tof.time==0) continue;
         satno2id(nav->geph[i].sat,id);
-        fprintf(fp,"%s,%d,%d,%d,%d,%d,%d,%d,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,"
+        fprintf(fp,"%s,%d,%d,%d,%d,%d,%d,%d,%d,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,"
                    "%.14E,%.14E,%.14E,%.14E,%.14E,%.14E\n",
                 id,nav->geph[i].iode,nav->geph[i].frq,nav->geph[i].svh,
+                nav->geph[i].flags,
                 nav->geph[i].sva,nav->geph[i].age,(int)nav->geph[i].toe.time,
                 (int)nav->geph[i].tof.time,
                 nav->geph[i].pos[0],nav->geph[i].pos[1],nav->geph[i].pos[2],

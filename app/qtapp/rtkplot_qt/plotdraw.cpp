@@ -1250,12 +1250,11 @@ void Plot::drawObservationEphemeris(QPainter &c, double *yp)
             ps[0].ry() -= 2;
 
             svh = navigation.eph[i].svh;
-            if (satsys(sat + 1, NULL) == SYS_QZS)
-                svh &= 0xFE; /* mask QZS LEX health */
+            // Mask QZS LEX health.
+            int health = satsys(sat + 1, NULL) == SYS_QZS ? (svh & 0xfe) != 0 : svh != 0;
+            graphSingle->drawPoly(c, ps, 3, health ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), 0);
 
-            graphSingle->drawPoly(c, ps, 3, svh ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), 0);
-
-            if (in) graphSingle->drawMark(c, ps[2], Graph::MarkerTypes::Dot, svh ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), svh ? 4 : 3, 0);
+            if (in) graphSingle->drawMark(c, ps[2], Graph::MarkerTypes::Dot, health ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), health ? 4 : 3, 0);
         }
         // Glonass ephemeris
         for (i = 0; i < navigation.ng; i++) {
@@ -1272,9 +1271,10 @@ void Plot::drawObservationEphemeris(QPainter &c, double *yp)
             ps[0].ry() -= 2;
 
             svh = navigation.geph[i].svh;
-            graphSingle->drawPoly(c, ps, 3, svh ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), 0);
+            int health = (svh & 9) != 0 || (svh & 6) == 4;
+            graphSingle->drawPoly(c, ps, 3, health ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), 0);
 
-            if (in) graphSingle->drawMark(c, ps[2], Graph::MarkerTypes::Dot, svh ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), svh ? 4 : 3, 0);
+            if (in) graphSingle->drawMark(c, ps[2], Graph::MarkerTypes::Dot, health ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), health ? 4 : 3, 0);
         }
         // SBAS ephemeris
         for (i = 0; i < navigation.ns; i++) {

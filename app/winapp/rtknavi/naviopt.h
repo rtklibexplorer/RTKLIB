@@ -36,7 +36,6 @@ __published:
 	TComboBox *TropOpt;
 	TComboBox *PosMode;
 	TComboBox *Freq;
-	TComboBox *Solution;
 	TComboBox *SatEphem;
 	TEdit *ExSatsE;
 	TTabSheet *TabSheet2;

@@ -358,11 +358,11 @@ static int decoderaw(rtksvr_t *svr, int index)
         }
         else if (svr->format[index]==STRFMT_RTCM3) {
             ret=input_rtcm3(svr->rtcm+index,svr->buff[index][i]);
-            if (svr->rtcm->nbyte_invalid!=0) {    /* if last message had error: */
-                i-=svr->rtcm->nbyte_invalid-1;      /* rewind to last preamble+1 */
+            if (svr->rtcm[index].nbyte_invalid!=0) {    /* If last message had error: */
+                i-=svr->rtcm[index].nbyte_invalid-1;      /* rewind to last preamble+1 */
                 i=i>=0?i:0;                         /* or beginning of buffer */
-                trace(4,"rewind buff %3d bytes, i=%d\n",svr->rtcm->nbyte_invalid-1,i);
-                svr->rtcm->nbyte_invalid=0;
+                trace(4,"rewind buff %3d bytes, i=%d\n",svr->rtcm[index].nbyte_invalid-1,i);
+                svr->rtcm[index].nbyte_invalid=0;
             }
             obs=&svr->rtcm[index].obs;
             nav=&svr->rtcm[index].nav;

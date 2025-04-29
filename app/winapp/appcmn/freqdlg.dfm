@@ -11,9 +11,7 @@ object FreqDialog: TFreqDialog
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poMainFormCenter
-  PixelsPerInch = 96
   TextHeight = 13
   object BtnOk: TButton
     Left = 216
@@ -413,7 +411,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'B2a+b'
+      Caption = 'B1C'
       Color = clWhite
       ParentBackground = False
       TabOrder = 0
@@ -437,7 +435,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'B2I/b'
+      Caption = 'B2b'
       Color = clWhite
       ParentBackground = False
       TabOrder = 2
@@ -449,7 +447,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'B1I/C'
+      Caption = 'B1'
       Color = clWhite
       ParentBackground = False
       TabOrder = 3
@@ -536,7 +534,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = '-'
+      Caption = 'L1'
       Color = clWhite
       ParentBackground = False
       TabOrder = 4

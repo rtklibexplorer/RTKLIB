@@ -811,36 +811,45 @@ static int decode_type1019(rtcm_t *rtcm)
 static int decode_type1020(rtcm_t *rtcm)
 {
     geph_t geph={0};
-    double tk_h,tk_m,tk_s,toe,tow,tod,tof;
+    double toe,tow,tod,tof;
     char *msg;
-    int i=24+12,prn,sat,week,tb,bn,sys=SYS_GLO;
-    
-    if (i+348<=rtcm->len*8) {
-        prn        =getbitu(rtcm->buff,i, 6);           i+= 6;
-        geph.frq   =getbitu(rtcm->buff,i, 5)-7;         i+= 5+2+2;
-        tk_h       =getbitu(rtcm->buff,i, 5);           i+= 5;
-        tk_m       =getbitu(rtcm->buff,i, 6);           i+= 6;
-        tk_s       =getbitu(rtcm->buff,i, 1)*30.0;      i+= 1;
-        bn         =getbitu(rtcm->buff,i, 1);           i+= 1+1;
-        tb         =getbitu(rtcm->buff,i, 7);           i+= 7;
-        geph.vel[0]=getbitg(rtcm->buff,i,24)*P2_20*1E3; i+=24;
-        geph.pos[0]=getbitg(rtcm->buff,i,27)*P2_11*1E3; i+=27;
-        geph.acc[0]=getbitg(rtcm->buff,i, 5)*P2_30*1E3; i+= 5;
-        geph.vel[1]=getbitg(rtcm->buff,i,24)*P2_20*1E3; i+=24;
-        geph.pos[1]=getbitg(rtcm->buff,i,27)*P2_11*1E3; i+=27;
-        geph.acc[1]=getbitg(rtcm->buff,i, 5)*P2_30*1E3; i+= 5;
-        geph.vel[2]=getbitg(rtcm->buff,i,24)*P2_20*1E3; i+=24;
-        geph.pos[2]=getbitg(rtcm->buff,i,27)*P2_11*1E3; i+=27;
-        geph.acc[2]=getbitg(rtcm->buff,i, 5)*P2_30*1E3; i+= 5+1;
-        geph.gamn  =getbitg(rtcm->buff,i,11)*P2_40;     i+=11+3;
-        geph.taun  =getbitg(rtcm->buff,i,22)*P2_30;     i+=22;
-        geph.dtaun =getbitg(rtcm->buff,i, 5)*P2_30;     i+=5;
-        geph.age   =getbitu(rtcm->buff,i, 5);
-    }
-    else {
+    int i=24+12,sat,week,sys=SYS_GLO;
+
+    if (i+348 > rtcm->len*8) {
         trace(2,"rtcm3 1020 length error: len=%d\n",rtcm->len);
         return -1;
     }
+    int prn    =getbitu(rtcm->buff,i, 6);           i+= 6;
+    geph.frq   =getbitu(rtcm->buff,i, 5)-7;         i+= 5;
+    int Cn     =getbitu(rtcm->buff,i, 1);           i+= 1;
+    int Cn_a   =getbitu(rtcm->buff,i, 1);           i+= 1;
+    int P1     =getbitu(rtcm->buff,i, 2);           i+= 2;
+    double tk_h=getbitu(rtcm->buff,i, 5);           i+= 5;
+    double tk_m=getbitu(rtcm->buff,i, 6);           i+= 6;
+    double tk_s=getbitu(rtcm->buff,i, 1)*30.0;      i+= 1;
+    int Bn     =getbitu(rtcm->buff,i, 1);           i+= 1;
+    int P2     =getbitu(rtcm->buff,i, 1);           i+= 1;
+    int tb     =getbitu(rtcm->buff,i, 7);           i+= 7;
+    geph.vel[0]=getbitg(rtcm->buff,i,24)*P2_20*1E3; i+=24;
+    geph.pos[0]=getbitg(rtcm->buff,i,27)*P2_11*1E3; i+=27;
+    geph.acc[0]=getbitg(rtcm->buff,i, 5)*P2_30*1E3; i+= 5;
+    geph.vel[1]=getbitg(rtcm->buff,i,24)*P2_20*1E3; i+=24;
+    geph.pos[1]=getbitg(rtcm->buff,i,27)*P2_11*1E3; i+=27;
+    geph.acc[1]=getbitg(rtcm->buff,i, 5)*P2_30*1E3; i+= 5;
+    geph.vel[2]=getbitg(rtcm->buff,i,24)*P2_20*1E3; i+=24;
+    geph.pos[2]=getbitg(rtcm->buff,i,27)*P2_11*1E3; i+=27;
+    geph.acc[2]=getbitg(rtcm->buff,i, 5)*P2_30*1E3; i+= 5;
+    int P3     =getbitu(rtcm->buff,i, 1);           i+= 1;
+    geph.gamn  =getbitg(rtcm->buff,i,11)*P2_40;     i+=11;
+    int P      =getbitu(rtcm->buff,i, 2);           i+= 2;
+    int ln     =getbitu(rtcm->buff,i, 1);           i+= 1;
+    geph.taun  =getbitg(rtcm->buff,i,22)*P2_30;     i+=22;
+    geph.dtaun =getbitg(rtcm->buff,i, 5)*P2_30;     i+= 5;
+    geph.age   =getbitu(rtcm->buff,i, 5);           i+= 5;
+    int P4     =getbitu(rtcm->buff,i, 1);           i+= 1;
+    geph.sva   =getbitu(rtcm->buff,i, 4);           i+= 4;
+    int M      =getbitu(rtcm->buff,i, 2);
+
     if (!(sat=satno(sys,prn))) {
         trace(2,"rtcm3 1020 satellite number error: prn=%d\n",prn);
         return -1;
@@ -849,11 +858,12 @@ static int decode_type1020(rtcm_t *rtcm)
     
     if (rtcm->outtype) {
         msg=rtcm->msgtype+strlen(rtcm->msgtype);
-        sprintf(msg," prn=%2d tk=%02.0f:%02.0f:%02.0f frq=%2d bn=%d tb=%d",
-                prn,tk_h,tk_m,tk_s,geph.frq,bn,tb);
+        sprintf(msg," prn=%2d tk=%02.0f:%02.0f:%02.0f frq=%2d Bn=%d tb=%d",
+                prn,tk_h,tk_m,tk_s,geph.frq,Bn,tb);
     }
     geph.sat=sat;
-    geph.svh=bn;
+    geph.svh = (ln << 3) | (Cn_a << 2) | (Cn << 1) | Bn;
+    geph.flags = (M << 7) | (P4 << 6) | (P3 << 5) | (P2 << 4) | (P1 << 2) | P;
     geph.iode=tb&0x7F;
     if (rtcm->time.time==0) rtcm->time=utc2gpst(timeget());
     tow=time2gpst(gpst2utc(rtcm->time),&week);

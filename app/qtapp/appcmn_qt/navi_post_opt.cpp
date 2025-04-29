@@ -1758,7 +1758,7 @@ void OptDialog::updateEnable()
     ui->sBTimeDecimal->setEnabled(ui->cBSolutionFormat->currentIndex() < 3);
     ui->cBLatLonFormat->setEnabled(ui->cBSolutionFormat->currentIndex() == 0);
     ui->cBOutputHeader->setEnabled(ui->cBSolutionFormat->currentIndex() < 3);
-    ui->cBOutputOptions->setEnabled(options == PostOptions ? ui->cBSolutionFormat->currentIndex() < 3: false);
+    ui->cBOutputOptions->setEnabled(ui->cBSolutionFormat->currentIndex() < 3);
     ui->lEFieldSeperator->setEnabled(ui->cBSolutionFormat->currentIndex() < 3);
     ui->cBOutputDatum->setEnabled(ui->cBSolutionFormat->currentIndex() == 0);
     ui->cBOutputHeight->setEnabled(ui->cBSolutionFormat->currentIndex() == 0);

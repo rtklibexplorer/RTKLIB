@@ -1,7 +1,7 @@
 #include "labelstretcher.h"
 
 // https://github.com/KubaO/stackoverflown/tree/master/questions/label-text-size-vert-40861305
-// adapted by Jens Reimann to support vertical streching of widgets
+// adapted by Jens Reimann to support vertical stretching of widgets
 #include <QWidget>
 #include <QEvent>
 #include <QLayout>
@@ -9,6 +9,8 @@
 #include <QDebug>
 
 #include <math.h>
+
+#define DEBUG 0
 
 LabelStretcher::LabelStretcher(QObject *parent) : QObject(parent) {
     apply(qobject_cast<QWidget*>(parent));
@@ -84,7 +86,9 @@ qreal LabelStretcher::f(qreal fontSize, QWidget *widget) {
     font.setPointSizeF(fontSize);
     setFont(widget, font);
     auto d = dSize(widget->sizeHint(), widget->size());
+#if DEBUG > 0
     qDebug() << "f:" << fontSize << "d" << d;
+#endif
     return d;
 }
 
@@ -94,7 +98,9 @@ qreal LabelStretcher::df(qreal fontSize, qreal dStep, QWidget *widget) {
 }
 
 void LabelStretcher::resized(QWidget *widget) {
+#if DEBUG > 0
     qDebug() << "pre: " << widget->minimumSizeHint() << widget->sizeHint() << widget->size();
+#endif
     if (!widget->property(kMinimumsAcquired).toBool()) {
         onLayout(widget->layout(), [=](QWidget *widget){ setMinimumSize(widget); });
         widget->setProperty(kMinimumsAcquired, true);
@@ -118,12 +124,16 @@ void LabelStretcher::resized(QWidget *widget) {
         fontSize -= f(fontSize, widget)/d;
         fontSize = std::max(dStep + 1.0, fontSize);
         auto change = fabs(prevFontSize - fontSize)/fontSize;
+#if DEBUG > 0
         qDebug() << "d:" << d << " delta" << change;
+#endif
         if (change < 0.01) break; // we're within 1% of target
     }
     font.setPointSizeF(fontSize);  // use a font smaller than max
     setFont(widget, font);
+#if DEBUG > 0
     qDebug() << "post:" << i << widget->minimumSizeHint() << widget->sizeHint() << widget->size();
+#endif
 }
 
 constexpr const char LabelStretcher::kMinimumsAcquired[];

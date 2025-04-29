@@ -94,7 +94,7 @@ __fastcall TOptDialog::TOptDialog(TComponent* Owner)
 	: TForm(Owner)
 {
 	AnsiString label,s;
-	int freq[]={1,2,5,6,7,8,9},nglo=MAXPRNGLO,ngal=MAXPRNGAL,nqzs=MAXPRNQZS;
+	int freq[]={1,2,3,4,5,6},nglo=MAXPRNGLO,ngal=MAXPRNGAL,nqzs=MAXPRNQZS;
 	int ncmp=MAXPRNCMP,nirn=MAXPRNIRN;
 
 	PrcOpt=prcopt_default;
@@ -722,7 +722,6 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	
 	PosMode		 ->ItemIndex	=prcopt.mode;
 	Freq		 ->ItemIndex	=prcopt.nf>NFREQ-1?NFREQ-1:prcopt.nf-1;
-	Solution	 ->ItemIndex	=prcopt.soltype;
 	ElMask		 ->Text			=s.sprintf("%.0f",prcopt.elmin*R2D);
     PrcOpt.snrmask              =prcopt.snrmask;
 	DynamicModel ->ItemIndex	=prcopt.dynamics;
@@ -957,7 +956,6 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
 
 	prcopt.mode		=PosMode	 ->ItemIndex;
 	prcopt.nf		=Freq		 ->ItemIndex+1;
-	prcopt.soltype	=Solution	 ->ItemIndex;
 	prcopt.elmin	=str2dbl(ElMask	->Text)*D2R;
     prcopt.snrmask	=PrcOpt.snrmask;
 	prcopt.dynamics	=DynamicModel->ItemIndex;
@@ -1100,12 +1098,12 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	int rel=PMODE_DGPS<=PosMode->ItemIndex&&PosMode->ItemIndex<=PMODE_FIXED;
 	int rtk=PMODE_KINEMA<=PosMode->ItemIndex&&PosMode->ItemIndex<=PMODE_FIXED;
 	int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
-	int ar=rtk||ppp;
+	int prec=ppp||rtk;
+	int ar=rtk;
 	
-	Freq           ->Enabled=rel;
-	Solution       ->Enabled=false;
-	DynamicModel   ->Enabled=rel;
-	TideCorr       ->Enabled=rel||ppp;
+	Freq           ->Enabled=prec;
+	DynamicModel   ->Enabled=prec;
+	TideCorr       ->Enabled=prec;
 	PosOpt1        ->Enabled=ppp;
 	PosOpt2        ->Enabled=ppp;
 	PosOpt3        ->Enabled=ppp;
@@ -1118,27 +1116,27 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	ValidThresAR   ->Enabled=ar&&AmbRes->ItemIndex>=1&&AmbRes->ItemIndex<4;
 	ValidThresARMin->Enabled=ar&&AmbRes->ItemIndex>=1&&AmbRes->ItemIndex<4;
 	ValidThresARMax->Enabled=ar&&AmbRes->ItemIndex>=1&&AmbRes->ItemIndex<4;
-	MaxPosVarAR    ->Enabled=ar&&!ppp;
-	GloHwBias      ->Enabled=ar&&GloAmbRes->ItemIndex==2;
+	MaxPosVarAR    ->Enabled=ar;
+	GloHwBias      ->Enabled=rtk&&GloAmbRes->ItemIndex==2;
 	LockCntFixAmb  ->Enabled=ar&&AmbRes->ItemIndex>=1;
 	ElMaskAR       ->Enabled=ar&&AmbRes->ItemIndex>=1;
-	OutCntResetAmb ->Enabled=ar||ppp;
+	OutCntResetAmb ->Enabled=prec;
 	FixCntHoldAmb  ->Enabled=ar&&AmbRes->ItemIndex==3;
 	ElMaskHold     ->Enabled=ar&&AmbRes->ItemIndex==3;
-	SlipThres      ->Enabled=ar||ppp;
-	DopThres       ->Enabled=ar||ppp;
+	SlipThres      ->Enabled=prec;
+	DopThres       ->Enabled=rtk;
 	MaxAgeDiff     ->Enabled=rel;
 	RejectPhase    ->Enabled=rel||ppp;
 	RejectCode     ->Enabled=rel||ppp;
 	VarHoldAmb     ->Enabled=ar&&AmbRes->ItemIndex==3;
 	GainHoldAmb    ->Enabled=ar&&AmbRes->ItemIndex==3;
-	ARIter         ->Enabled=ppp;
-	MinFixSats     ->Enabled=ar||ppp;
-	MinHoldSats    ->Enabled=ar||ppp;
-	MinDropSats    ->Enabled=ar||ppp;
+	ARIter         ->Enabled=False;
+	MinFixSats     ->Enabled=ar;
+	MinHoldSats    ->Enabled=ar;
+	MinDropSats    ->Enabled=ar;
 	NumIter        ->Enabled=rel||ppp;
 	SyncSol        ->Enabled=rel||ppp;
-	ARFilter       ->Enabled=ar||ppp;
+	ARFilter       ->Enabled=ar;
 	BaselineConst  ->Enabled=PosMode->ItemIndex==PMODE_MOVEB;
 	BaselineLen    ->Enabled=BaselineConst->Checked&&PosMode->ItemIndex==PMODE_MOVEB;
 	BaselineSig    ->Enabled=BaselineConst->Checked&&PosMode->ItemIndex==PMODE_MOVEB;

@@ -753,8 +753,15 @@ static int readobsnav(gtime_t ts, gtime_t te, double ti, const char **infile,
             if (obs->n>nobs) rcv++;
             ind=index[i]; nobs=obs->n;
         }
+        gtime_t tsw = ts, tew = te;
+        if (rcv > 1) {
+          // Expand the time span a little for base observations to support
+          // interpolation at the extents of the rover observations.
+          if (tsw.time >= 60) tsw = timeadd(tsw, -60);
+          if (tew.time > 0) tew = timeadd(tew, 60);
+        }
         /* read rinex obs and nav file */
-        if (readrnxt(infile[i],rcv,ts,te,ti,prcopt->rnxopt[rcv<=1?0:1],obs,nav,
+        if (readrnxt(infile[i],rcv,tsw,tew,ti,prcopt->rnxopt[rcv<=1?0:1],obs,nav,
                      rcv<=2?sta+rcv-1:NULL)<0) {
             checkbrk("error : insufficient memory");
             trace(1,"insufficient memory\n");

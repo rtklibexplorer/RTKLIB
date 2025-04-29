@@ -304,12 +304,13 @@ extern "C" {
 #define OBSTYPE_SNR 0x08                /* observation type: SNR */
 #define OBSTYPE_ALL 0xFF                /* observation type: all */
 
-#define FREQTYPE_L1 0x01                /* frequency type: L1/E1/B1 */
-#define FREQTYPE_L2 0x02                /* frequency type: L2/E5b/B2 */
-#define FREQTYPE_L3 0x04                /* frequency type: L5/E5a/L3 */
-#define FREQTYPE_L4 0x08                /* frequency type: L6/E6/B3 */
-#define FREQTYPE_L5 0x10                /* frequency type: E5ab */
-#define FREQTYPE_ALL 0xFF               /* frequency type: all */
+#define FREQTYPE_L1 0x01                /* Frequency type: L1/G1/E1/B1 */
+#define FREQTYPE_L2 0x02                /* Frequency type: L2/G2/E5b/B2 */
+#define FREQTYPE_L3 0x04                /* Frequency type: L5/G3/E5a/B2a */
+#define FREQTYPE_L4 0x08                /* Frequency type: L6/E6/B3 */
+#define FREQTYPE_L5 0x10                /* Frequency type: E5ab/B1C/B1A */
+#define FREQTYPE_L6 0x20                /* Frequency type: B2ab */
+#define FREQTYPE_ALL 0xFF               /* Frequency type: all */
 
 #define CODE_NONE   0                   /* obs code: none or unknown */
 #define CODE_L1C    1                   /* obs code: L1C/A,G1C/A,E1C (GPS,GLO,GAL,QZS,SBS) */
@@ -674,7 +675,9 @@ typedef struct {        /* GLONASS broadcast ephemeris type */
     int sat;            /* satellite number */
     int iode;           /* IODE (0-6 bit of tb field) */
     int frq;            /* Satellite frequency number (-7 to 13) */
-    int svh,sva,age;    /* satellite health, accuracy, age of operation */
+    int svh;            // Extended SVH (bit 3:ln, bit 2:Cn_a, bit 1:Cn, bit 0:Bn)
+    int flags;          // Status flags (bits 7 8:M, bit 6:P4, bit 5:P3, bit 4:P2, bits 2 3:P1, bits 0 1:P)
+    int sva, age;       /* accuracy, age of operation */
     gtime_t toe;        /* epoch of ephemerides (gpst) */
     gtime_t tof;        /* message frame time (gpst) */
     double pos[3];      /* satellite position (ecef) (m) */

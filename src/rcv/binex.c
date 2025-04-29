@@ -325,7 +325,7 @@ static int decode_bnx_01_02(raw_t *raw, uint8_t *buff, int len)
         geph.pos[2]=R8(p)*1E3; p+=8;
         geph.vel[2]=R8(p)*1E3; p+=8;
         geph.acc[2]=R8(p)*1E3; p+=8;
-        geph.svh   =U1(p)&0x1; p+=1; /* MSB of Bn */
+        geph.svh   =U1(p)&0x7; p+=1; // Extended SVH (Cn_a, CN, Bn)
         geph.frq   =I1(p);     p+=1;
         geph.age   =U1(p);     p+=1;
         leap       =U1(p);     p+=1;

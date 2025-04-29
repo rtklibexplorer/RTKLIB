@@ -1151,8 +1151,11 @@ void MonitorDialog::showNavigationsGPS()
     rtksvrunlock(rtksvr);
 
     for (k = 0, nsat = 0; k < MAXSAT; k++) {
-        if (!(satsys(k + 1, &prn) & sys)) continue;
-        valid = eph[k].toe.time != 0 && !eph[k].svh && fabs(timediff(time, eph[k].toe)) <= MAXDTOE;
+        int ssys = satsys(k + 1, &prn);
+        if ((ssys & sys) == 0) continue;
+        // Mask QZS LEX health.
+        valid = eph[k].toe.time != 0 && fabs(timediff(time, eph[k].toe)) <= MAXDTOE &&
+            (ssys == SYS_QZS ? (eph[k].svh & 0xfe) == 0 : eph[k].svh == 0);
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         nsat++;
 	}
@@ -1169,8 +1172,11 @@ void MonitorDialog::showNavigationsGPS()
 
     for (k = 0, n = 0; k < MAXSAT; k++) {
         int j = 0;
-        if (!(satsys(k + 1, &prn) & sys)) continue;
-        valid = eph[k].toe.time != 0 && !eph[k].svh && fabs(timediff(time, eph[k].toe)) <= MAXDTOE;
+        int ssys = satsys(k + 1, &prn);
+        if ((ssys & sys) == 0) continue;
+        // Mask QZS LEX health.
+        valid = eph[k].toe.time != 0 && fabs(timediff(time, eph[k].toe)) <= MAXDTOE &&
+            (ssys == SYS_QZS ? (eph[k].svh & 0xfe) == 0 : eph[k].svh == 0);
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         satno2id(k + 1, id);
         ui->tWConsole->item(n, j++)->setText(id);
@@ -1263,8 +1269,8 @@ void MonitorDialog::showGlonassNavigations()
     rtksvrunlock(rtksvr);
 
     for (i = 0, nsat = 0; i < NSATGLO; i++) {
-        valid = geph[i].toe.time != 0 && !geph[i].svh &&
-            fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO;
+        valid = geph[i].toe.time != 0 && fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO &&
+            (geph[i].svh & 9) == 0 && (geph[i].svh & 6) != 4;
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         nsat++;
 	}
@@ -1282,8 +1288,8 @@ void MonitorDialog::showGlonassNavigations()
 
     for (i = 0, n = 0; i < NSATGLO; i++) {
         int j = 0;
-        valid = geph[i].toe.time != 0 && !geph[i].svh &&
-            fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO;
+        valid = geph[i].toe.time != 0 && fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO &&
+            (geph[i].svh & 9) == 0 && (geph[i].svh & 6) != 4;
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         prn = MINPRNGLO + i;
         satno2id(satno(SYS_GLO, prn), id);
@@ -1358,7 +1364,7 @@ void MonitorDialog::showSbsNavigations()
 
     for (i = 0, nsat = 0; i < NSATSBS; i++) {
         valid = fabs(timediff(time, seph[i].t0)) <= MAXDTOE_SBS &&
-            seph[i].t0.time && !seph[i].svh;
+            seph[i].t0.time && seph[i].svh == 0;
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         nsat++;
 	}
@@ -1376,7 +1382,7 @@ void MonitorDialog::showSbsNavigations()
     for (i = 0, n = 0; i < NSATSBS; i++) {
         int j = 0;
         valid = fabs(timediff(time, seph[i].t0)) <= MAXDTOE_SBS &&
-            seph[i].t0.time && !seph[i].svh;
+            seph[i].t0.time && seph[i].svh == 0;
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         prn = MINPRNSBS + i;
         satno2id(satno(SYS_SBS, prn), id);
