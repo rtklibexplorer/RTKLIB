@@ -86,6 +86,8 @@
 #define VAR_IONO    SQR(60.0)       /* init variance iono-delay */
 #define VAR_GLO_IFB SQR( 0.6)       /* variance of glonass ifb */
 
+#define PRN_DCB     0.001           /* process noise receiver dcb (m/s^1/2) */
+
 #define ERR_SAAS    0.3             /* saastamoinen model error std (m) */
 #define ERR_BRDCI   0.5             /* broadcast iono model error factor */
 #define ERR_CBIAS   0.3             /* code bias error std (m) */
@@ -777,6 +779,10 @@ static void uddcb_ppp(rtk_t *rtk)
             if (rtk->x[i]==0.0) {
                 initx(rtk,1E-6,VAR_DCB,i);
             }
+            else {
+                /* update variance of dcb state */
+                rtk->P[i+i*rtk->nx]+=SQR(PRN_DCB)*fabs(rtk->tt);
+            }
         }
     }
 }
@@ -891,7 +897,7 @@ static void udstate_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
     if (rtk->opt.ionoopt==IONOOPT_EST) {
         udiono_ppp(rtk,obs,n,nav);
     }
-    /* temporal update of L5-receiver-dcb parameters */
+    /* temporal update of receiver-dcb parameters */
     if (rtk->opt.nf>=3) {
         uddcb_ppp(rtk);
     }
