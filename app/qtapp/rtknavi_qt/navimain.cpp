@@ -799,7 +799,7 @@ void MainWindow::showOutputStreamDialog()
             continue;
         }
         optDialog->solutionOptions.posf = inputFormat[i];
-        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions);
+        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions, &optDialog->processingOptions);
     }
 }
 // callback on button-log-streams -------------------------------------------
@@ -867,7 +867,7 @@ void MainWindow::showLogStreamDialog()
             streamEnabled[i] = 0;
             continue;
         }
-        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions);
+        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions, &optDialog->processingOptions);
     }
 }
 // callback on button-solution-show -----------------------------------------

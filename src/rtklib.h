@@ -1893,7 +1893,7 @@ EXPORT int  rtksvrstart (rtksvr_t *svr, int cycle, int buffsize, int *strs,
                          solopt_t *solopt, stream_t *moni, char *errmsg);
 EXPORT void rtksvrstop  (rtksvr_t *svr, const char **cmds);
 EXPORT int  rtksvropenstr(rtksvr_t *svr, int index, int str, const char *path,
-                          const solopt_t *solopt);
+                          const solopt_t *solopt, const prcopt_t *prcopt);
 EXPORT void rtksvrclosestr(rtksvr_t *svr, int index);
 EXPORT void rtksvrlock  (rtksvr_t *svr);
 EXPORT void rtksvrunlock(rtksvr_t *svr);
