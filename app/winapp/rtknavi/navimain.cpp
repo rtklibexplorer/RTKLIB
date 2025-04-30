@@ -779,7 +779,7 @@ void __fastcall TMainForm::BtnOutputStrClick(TObject *Sender)
             continue;
         }
         SolOpt.posf=Format[i];
-        rtksvropenstr(&rtksvr,i,str,path,&SolOpt);
+        rtksvropenstr(&rtksvr,i,str,path,&SolOpt,&PrcOpt);
     }
 }
 // callback on button-log-streams -------------------------------------------
@@ -843,7 +843,7 @@ void __fastcall TMainForm::BtnLogStrClick(TObject *Sender)
             StreamC[i]=0;
             continue;
         }
-        rtksvropenstr(&rtksvr,i,str,path,&SolOpt);
+        rtksvropenstr(&rtksvr,i,str,path,&SolOpt,&PrcOpt);
     }
 }
 // callback on button-solution-show -----------------------------------------
