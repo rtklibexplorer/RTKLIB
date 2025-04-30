@@ -691,7 +691,10 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
         dts[0]-=2.0*dot3(rs,rs+3)/CLIGHT/CLIGHT;
     }
     /* radial-along-cross directions in ecef */
-    if (!normv3(rs+3,ea)) return 0;
+    if (!normv3(rs+3,ea)) {
+        *svh=-1;
+        return 0;
+    }
     cross3(rs,rs+3,rc);
     if (!normv3(rc,ec)) {
         *svh=-1;
@@ -700,7 +703,7 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
     cross3(ea,ec,er);
 
     for (i=0;i<3;i++) {
-        rs[i]+=-(er[i]*deph[0]+ea[i]*deph[1]+ec[i]*deph[2]);
+        rs[i]-=er[i]*deph[0]+ea[i]*deph[1]+ec[i]*deph[2];
     }
     /* t_corr = t_sv - (dts(brdc) + dclk(ssr) / CLIGHT) (ref [10] eq.3.12-7) */
     dts[0]+=dclk/CLIGHT;
