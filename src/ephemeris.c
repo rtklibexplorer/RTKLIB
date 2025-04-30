@@ -444,22 +444,17 @@ static eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
         case SYS_QZS: tmax=MAXDTOE_QZS+1.0; sel=eph_sel[3]; break;
         case SYS_CMP: tmax=MAXDTOE_CMP+1.0; sel=eph_sel[4]; break;
         case SYS_IRN: tmax=MAXDTOE_IRN+1.0; sel=eph_sel[5]; break;
-        default: tmax=MAXDTOE+1.0; break;
+        default     : tmax=MAXDTOE+1.0;
     }
     tmin=tmax+1.0;
 
     for (i=0;i<nav->n;i++) {
         if (nav->eph[i].sat!=sat) continue;
         if (iode>=0&&nav->eph[i].iode!=iode) continue;
+        /* TODO: also add selection switches here for other GNSS (e.g. BDS CNAV)! */
         if (sys==SYS_GAL) {
-            sel=getseleph(SYS_GAL);
-            /* this code is from 2.4.3 b34 but does not seem to be fully supported,
-               so for now I have dropped back to the b33 code */
-            /* if (sel==0&&!(nav->eph[i].code&(1<<9))) continue; */ /* I/NAV */
-            /*if (sel==1&&!(nav->eph[i].code&(1<<8))) continue; */ /* F/NAV */
-            if (sel==1&&!(nav->eph[i].code&(1<<9))) continue; /* I/NAV */
-            if (sel==2&&!(nav->eph[i].code&(1<<8))) continue; /* F/NAV */
-            if (timediff(nav->eph[i].toe,time)>=0.0) continue; /* AOD<=0 */
+            if (sel==0&&!(nav->eph[i].code&(1<<9))) continue; /* I/NAV */
+            if (sel==1&&!(nav->eph[i].code&(1<<8))) continue; /* F/NAV */
         }
         if ((t=fabs(timediff(nav->eph[i].toe,time)))>tmax) continue;
         if (iode>=0) return nav->eph+i;
@@ -838,9 +833,8 @@ extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
 * args   : int    sys       I   satellite system (SYS_???)
 *          int    sel       I   selection of ephemeris
 *                                 GPS,QZS : 0:LNAV ,1:CNAV  (default: LNAV)
-*  b33 and demo5 b34:             GAL: 0:any,1:I/NAV,2:F/NAV
-*  2.4.3 b34 but not functional?  GAL     : 0:I/NAV,1:F/NAV (default: I/NAV)
-*                                 others : undefined
+*                                 GAL     : 0:I/NAV,1:F/NAV (default: I/NAV)
+*                                 others  : undefined
 * return : none
 *-----------------------------------------------------------------------------*/
 extern void setseleph(int sys, int sel)
