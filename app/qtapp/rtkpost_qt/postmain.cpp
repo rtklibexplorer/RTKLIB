@@ -1027,14 +1027,14 @@ gtime_t MainForm::getTimeStop()
 // set time to time-1 -------------------------------------------------------
 void MainForm::setTimeStart(gtime_t time)
 {
-    QDateTime t = QDateTime::fromSecsSinceEpoch(time.time);
+    QDateTime t = QDateTime::fromSecsSinceEpoch(time.time, Qt::UTC);
     t = t.addMSecs(time.sec * 1000);
     ui->dtDateTimeStart->setDateTime(t);
 }
 // set time to time-2 -------------------------------------------------------
 void MainForm::setTimeStop(gtime_t time)
 {
-    QDateTime t = QDateTime::fromSecsSinceEpoch(time.time);
+    QDateTime t = QDateTime::fromSecsSinceEpoch(time.time, Qt::UTC);
     t = t.addMSecs(time.sec * 1000);
     ui->dtDateTimeStop->setDateTime(t);
 }
@@ -1131,7 +1131,7 @@ void MainForm::saveOptions()
     writeList(&ini,"hist/inputfile5", ui->cBInputFile5);
     writeList(&ini,"hist/inputfile6", ui->cBInputFile6);
     writeList(&ini,"hist/outputfile", ui->cBOutputFile);
-    
+
     optDialog->saveOptions(ini);
     textViewer->saveOptions(ini);
     convDialog->saveOptions(ini);

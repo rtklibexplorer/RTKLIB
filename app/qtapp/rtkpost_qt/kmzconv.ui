@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>657</width>
-    <height>484</height>
+    <height>468</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -73,11 +73,24 @@
       </item>
       <item row="2" column="2">
        <widget class="QDateTimeEdit" name="dateTimeStart">
+        <property name="dateTime">
+         <datetime>
+          <hour>0</hour>
+          <minute>0</minute>
+          <second>0</second>
+          <year>2020</year>
+          <month>1</month>
+          <day>1</day>
+         </datetime>
+        </property>
+        <property name="displayFormat">
+         <string>yyyy/MM/dd hh:mm:ss</string>
+        </property>
         <property name="calendarPopup">
          <bool>true</bool>
         </property>
         <property name="timeSpec">
-         <enum>Qt::LocalTime</enum>
+         <enum>Qt::UTC</enum>
         </property>
        </widget>
       </item>
@@ -106,11 +119,14 @@
       </item>
       <item row="2" column="4">
        <widget class="QDateTimeEdit" name="dateTimeStop">
+        <property name="displayFormat">
+         <string>yyyy/MM/dd hh:mm:ss</string>
+        </property>
         <property name="calendarPopup">
          <bool>true</bool>
         </property>
         <property name="timeSpec">
-         <enum>Qt::LocalTime</enum>
+         <enum>Qt::UTC</enum>
         </property>
        </widget>
       </item>

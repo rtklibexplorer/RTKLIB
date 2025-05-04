@@ -157,7 +157,7 @@ void MainForm::showEvent(QShowEvent *event)
            settings.value("pos/height", 79).toInt());
 }
 //---------------------------------------------------------------------------
-void MainForm::closeEvent(QCloseEvent *)
+void MainForm::closeEvent(QCloseEvent *ev)
 {
     QSettings settings(iniFile, QSettings::IniFormat);
 
@@ -167,6 +167,9 @@ void MainForm::closeEvent(QCloseEvent *)
     settings.setValue("pos/height", height());
     settings.setValue("pos/option", option);
     settings.setValue("pos/minimize", minimize);
+
+    ev->accept();
+    qApp->quit();
 }
 //---------------------------------------------------------------------------
 void MainForm::launchRTKPlot()
