@@ -94,6 +94,7 @@ void ConvOptDialog::updateUi()
     ui->cBFreq3->setChecked(frequencyType & FREQTYPE_L3);
     ui->cBFreq4->setChecked(frequencyType & FREQTYPE_L4);
     ui->cBFreq5->setChecked(frequencyType & FREQTYPE_L5);
+    ui->cBFreq6->setChecked(frequencyType & FREQTYPE_L6);
 
     ui->lEExcludedSatellites->setText(excludedSatellites);
     ui->cBTraceLevel->setCurrentIndex(traceLevel);
@@ -164,6 +165,7 @@ void ConvOptDialog::accept()
     if (ui->cBFreq3->isChecked()) frequencyType |= FREQTYPE_L3;
     if (ui->cBFreq4->isChecked()) frequencyType |= FREQTYPE_L4;
     if (ui->cBFreq5->isChecked()) frequencyType |= FREQTYPE_L5;
+    if (ui->cBFreq6->isChecked()) frequencyType |= FREQTYPE_L6;
 
     excludedSatellites = ui->lEExcludedSatellites->text();
     traceLevel = ui->cBTraceLevel->currentIndex();
@@ -198,6 +200,7 @@ void ConvOptDialog::showMaskDialog()
     if (ui->cBFreq3->isChecked()) frequencyType |= FREQTYPE_L3;
     if (ui->cBFreq4->isChecked()) frequencyType |= FREQTYPE_L4;
     if (ui->cBFreq5->isChecked()) frequencyType |= FREQTYPE_L5;
+    if (ui->cBFreq6->isChecked()) frequencyType |= FREQTYPE_L6;
 
     codeOptDialog->setFrequencyType(frequencyType);
 
@@ -230,6 +233,7 @@ void ConvOptDialog::updateEnable()
     ui->cBFreq3->setEnabled(ui->cBRinexVersion->currentIndex() >=1 );
     ui->cBFreq4->setEnabled(ui->cBRinexVersion->currentIndex() >=1 );
     ui->cBFreq5->setEnabled(ui->cBRinexVersion->currentIndex() >=1 );
+    ui->cBFreq6->setEnabled(ui->cBRinexVersion->currentIndex() >=1 );
     ui->cBPhaseShift->setEnabled(ui->cBRinexVersion->currentIndex() >=4 );
 }
 //---------------------------------------------------------------------------

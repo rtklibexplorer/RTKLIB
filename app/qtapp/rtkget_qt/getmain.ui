@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>755</width>
-    <height>518</height>
+    <height>423</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -373,6 +373,9 @@
          </item>
          <item row="1" column="1" colspan="4">
           <widget class="QDateTimeEdit" name="dateTimeStart">
+           <property name="displayFormat">
+            <string>yyyy/MM/dd hh:mm:ss</string>
+           </property>
            <property name="calendarPopup">
             <bool>true</bool>
            </property>
@@ -383,6 +386,9 @@
          </item>
          <item row="2" column="1" colspan="4">
           <widget class="QDateTimeEdit" name="dateTimeStop">
+           <property name="displayFormat">
+            <string>yyyy/MM/dd hh:mm:ss</string>
+           </property>
            <property name="calendarPopup">
             <bool>true</bool>
            </property>

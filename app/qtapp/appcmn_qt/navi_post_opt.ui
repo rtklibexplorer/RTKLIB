@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tWOptions">
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Minimum ambiguities required to enable exclusion of a single satellite from ambiguity resolution each epoch (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-mindropsats&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string/>
      </property>
      <property name="tabPosition">
       <enum>QTabWidget::TabPosition::North</enum>
@@ -240,6 +240,9 @@
          <property name="title">
           <string>Navigation Systems</string>
          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define used GNSSs (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos1-navsys&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <property name="leftMargin">
            <number>0</number>
@@ -682,7 +685,7 @@
        <item row="0" column="1">
         <widget class="QComboBox" name="cBAmbiguityResolution">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define integer ambiguity resolution strategy for GPS (option &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-armode&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define integer ambiguity resolution strategy (option &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-armode&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <item>
           <property name="text">
@@ -751,7 +754,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="Label25">
          <property name="text">
-          <string>Integer Ambiguity Res (GPS/GLO/BDS)</string>
+          <string>Integer Ambiguity Res (All/GLO/BDS)</string>
          </property>
          <property name="buddy">
           <cstring>cBAmbiguityResolution</cstring>
@@ -788,9 +791,6 @@
         <widget class="QSpinBox" name="sBMinFixSats">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Minimum ambiguities required for fix (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-minfixsats&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> epochs</string>
          </property>
         </widget>
        </item>
@@ -1083,9 +1083,6 @@
         <widget class="QSpinBox" name="sBMinHoldSats">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Minimum ambiguities required for hold (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-minholdsats&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> epochs</string>
          </property>
         </widget>
        </item>

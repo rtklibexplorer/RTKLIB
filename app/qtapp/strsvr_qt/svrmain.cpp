@@ -476,7 +476,7 @@ void MainForm::startServer()
         strncpy(logs[i], !pathEnabled[i] ? "" : qPrintable(pathLog[i]), 1023);
     }
 
-    // get start comannds and period commands
+    // get start commands and period commands
     for (int i = 0; i < MAXSTR; i++) {
         cmds[i] = cmds_periodic[i] = NULL;
         if (streamTypes[i] == STR_SERIAL) {
@@ -527,7 +527,7 @@ void MainForm::startServer()
     strsetdir(qPrintable(svrOptDialog->localDirectory));
     strsetproxy(qPrintable(svrOptDialog->proxyAddress));
 
-    // set up conversion if neccessary
+    // set up conversion if necessary
     for (int i = 0; i < MAXSTR - 1; i++) { // for each output stream
         if (ui->cBInput->currentIndex() == 2 || ui->cBInput->currentIndex() == 4) continue;  // TCP/UDP server
         if (!conversionEnabled[i]) continue;
@@ -552,7 +552,7 @@ void MainForm::startServer()
         matcpy(conv[i]->out.sta.del, svrOptDialog->antennaOffsets, 3, 1);
     }
 
-    // stream server start (if no error in preparation occured)
+    // stream server start (if no error in preparation occurred)
     if (!error && strsvrstart(&strsvr, opt, streamTypes, (const char **)pths, (const char **)logs, conv, (const char **)cmds, (const char **)cmds_periodic, svrOptDialog->antennaPosition)) {
         startTime = utc2gpst(timeget());
         ui->panelStreams->setEnabled(false);
@@ -877,7 +877,7 @@ void MainForm::loadOptions()
             commandsTcp[i][j] = commandsTcp[i][j].replace("@@", "\n");
         }
 
-    // histroy
+    // History
     for (int i = 0; i < MAXHIST; i++)
         tcpHistory[i] = settings.value(QString("tcpopt/history%1").arg(i), "").toString();
     for (int i = 0; i < MAXHIST; i++)

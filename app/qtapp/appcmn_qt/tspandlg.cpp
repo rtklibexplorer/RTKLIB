@@ -17,7 +17,7 @@ SpanDialog::SpanDialog(QWidget *parent)
 
     for (int i = 0; i < 3; i++) {
         timeValid[i] = true;
-	}
+    }
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SpanDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &SpanDialog::reject);
@@ -84,12 +84,10 @@ gtime_t SpanDialog::getStartTime()
 //---------------------------------------------------------------------------
 void SpanDialog::setStartTime(gtime_t timeStart)
 {
-    QDateTime start = QDateTime::fromSecsSinceEpoch(timeStart.time, QTimeZone::utc());
-
+    QDateTime start = QDateTime::fromSecsSinceEpoch(timeStart.time, Qt::UTC);
     start = start.addMSecs(timeStart.sec * 1000);
 
     ui->dTTimeStart->setDateTime(start);
-
     ui->cBTimeStartEnabled->setCheckState(Qt::Checked);
 }
 //---------------------------------------------------------------------------
@@ -108,7 +106,7 @@ gtime_t SpanDialog::getEndTime()
 //---------------------------------------------------------------------------
 void SpanDialog::setEndTime(gtime_t timeEnd)
 {
-    QDateTime end = QDateTime::fromSecsSinceEpoch(timeEnd.time, QTimeZone::utc());
+    QDateTime end = QDateTime::fromSecsSinceEpoch(timeEnd.time, Qt::UTC);
     end = end.addMSecs(timeEnd.sec * 1000);
 
     ui->dTTimeEnd->setDateTime(end);

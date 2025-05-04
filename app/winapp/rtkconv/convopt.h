@@ -53,6 +53,8 @@ __published:
 	TCheckBox *Freq2;
 	TCheckBox *Freq3;
 	TCheckBox *Freq4;
+	TCheckBox *Freq5;
+	TCheckBox *Freq6;
 	TCheckBox *Obs1;
 	TCheckBox *Nav5;
 	TComboBox *TraceLevel;

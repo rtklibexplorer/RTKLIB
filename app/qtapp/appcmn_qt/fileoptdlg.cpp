@@ -66,8 +66,6 @@ void FileOptDialog::setOptions(int options)
 void FileOptDialog::setPathEnabled(int pathEnabled)
 {
     this->pathEnabled = pathEnabled;
-
-    ui->cBPathEnable->setChecked(options != 2 || pathEnabled);
 }
 //---------------------------------------------------------------------------
 void FileOptDialog::setPath(const QString &path)
@@ -126,7 +124,7 @@ void FileOptDialog::setPath(const QString &path)
         ui->lEFilePath->setText(tokens.at(0));
         setPathEnabled(ui->cBPathEnable->isChecked());
 	}
-    updateEnable();
+  updateEnable();
 }
 //---------------------------------------------------------------------------
 QString FileOptDialog::getPath()
@@ -168,7 +166,6 @@ void FileOptDialog::keyDialogShow()
 //---------------------------------------------------------------------------
 void FileOptDialog::updateEnable()
 {
-
     ui->cBTimeSpeed->setEnabled(ui->cBTimeTag->isChecked());
     ui->sBTimeStart->setEnabled(ui->cBTimeTag->isChecked());
     ui->lbPlus->setEnabled(ui->cBTimeTag->isChecked());
@@ -180,4 +177,6 @@ void FileOptDialog::updateEnable()
     ui->lbFilePath->setEnabled(ui->cBPathEnable->isChecked());
     ui->cBTimeTag->setEnabled(ui->cBPathEnable->isChecked());
     ui->btnKey->setEnabled(ui->cBPathEnable->isChecked());
+
+    setPathEnabled(ui->cBPathEnable->isChecked());
 }

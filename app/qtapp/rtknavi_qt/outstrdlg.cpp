@@ -120,10 +120,9 @@ QString OutputStrDialog::setFilePath(const QString &p)
     bool okay;
 
     if (ui->cBTimeTag->isChecked()) path += "::T";
-    str = ui->cBSwapInterval->currentText();
+    str = ui->cBSwapInterval->currentText().split(' ').first();
     str.toDouble(&okay);
-    if (okay)
-        path += "::S=" + str;
+    if (okay) path += "::S=" + str;
     return path;
 }
 //---------------------------------------------------------------------------

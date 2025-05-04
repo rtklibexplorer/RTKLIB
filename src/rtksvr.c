@@ -48,13 +48,35 @@
 #define MIN_INT_RESET   30000   /* mininum interval of reset command (ms) */
 
 /* write solution header to output stream ------------------------------------*/
-static void writesolhead(stream_t *stream, const solopt_t *solopt)
+static void writesolhead(stream_t *stream, const solopt_t *solopt, const prcopt_t *prcopt)
 {
-    uint8_t buff[1024];
-    int n;
-    
-    n=outsolheads(buff,solopt);
-    strwrite(stream,buff,n);
+  if (solopt->posf == SOLF_NMEA || solopt->posf == SOLF_STAT || solopt->posf==SOLF_GSIF)
+    return;
+
+  uint8_t buff[MAXSOLMSG + 1];
+
+  if (solopt->outhead) {
+    if (!*solopt->prog) {
+      int n = snprintf((char *)buff, sizeof(buff), "%s program   : RTKLIB ver.%s %s\n", COMMENTH, VER_RTKLIB, PATCH_LEVEL);
+      if (n < sizeof(buff)) strwrite(stream, buff, n);
+    } else {
+      int n = snprintf((char *)buff, sizeof(buff), "%s program   : %s\n", COMMENTH, solopt->prog);
+      if (n < sizeof(buff)) strwrite(stream, buff, n);
+    }
+  }
+
+  if (solopt->outopt) {
+    int n = outprcopts(buff, prcopt);
+    strwrite(stream, buff, n);
+  }
+
+  if (solopt->outhead || solopt->outopt) {
+    int n = snprintf((char *)buff, sizeof(buff), "%s\n", COMMENTH);
+    if (n < sizeof(buff)) strwrite(stream, buff, n);
+  }
+
+  int n = outsolheads(buff, solopt);
+  strwrite(stream,buff,n);
 }
 /* save output buffer --------------------------------------------------------*/
 static void saveoutbuf(rtksvr_t *svr, uint8_t *buff, int n, int index)
@@ -358,11 +380,11 @@ static int decoderaw(rtksvr_t *svr, int index)
         }
         else if (svr->format[index]==STRFMT_RTCM3) {
             ret=input_rtcm3(svr->rtcm+index,svr->buff[index][i]);
-            if (svr->rtcm->nbyte_invalid!=0) {    /* if last message had error: */
-                i-=svr->rtcm->nbyte_invalid-1;      /* rewind to last preamble+1 */
+            if (svr->rtcm[index].nbyte_invalid!=0) {    /* If last message had error: */
+                i-=svr->rtcm[index].nbyte_invalid-1;      /* rewind to last preamble+1 */
                 i=i>=0?i:0;                         /* or beginning of buffer */
-                trace(4,"rewind buff %3d bytes, i=%d\n",svr->rtcm->nbyte_invalid-1,i);
-                svr->rtcm->nbyte_invalid=0;
+                trace(4,"rewind buff %3d bytes, i=%d\n",svr->rtcm[index].nbyte_invalid-1,i);
+                svr->rtcm[index].nbyte_invalid=0;
             }
             obs=&svr->rtcm[index].obs;
             nav=&svr->rtcm[index].nav;
@@ -954,7 +976,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     }
     /* write solution header to solution streams */
     for (i=3;i<5;i++) {
-        writesolhead(svr->stream+i,svr->solopt+i-3);
+        writesolhead(svr->stream+i,svr->solopt+(i-3), prcopt);
     }
     /* create rtk server thread */
 #ifdef WIN32
@@ -1013,7 +1035,7 @@ extern void rtksvrstop(rtksvr_t *svr, const char **cmds)
 * return : status (1:ok 0:error)
 *-----------------------------------------------------------------------------*/
 extern int rtksvropenstr(rtksvr_t *svr, int index, int str, const char *path,
-                         const solopt_t *solopt)
+                         const solopt_t *solopt, const prcopt_t *prcopt)
 {
     tracet(3,"rtksvropenstr: index=%d str=%d path=%s\n",index,str,path);
     
@@ -1034,7 +1056,7 @@ extern int rtksvropenstr(rtksvr_t *svr, int index, int str, const char *path,
         svr->solopt[index-3]=*solopt;
         
         /* write solution header to solution stream */
-        writesolhead(svr->stream+index,svr->solopt+index-3);
+        writesolhead(svr->stream+index,svr->solopt+(index-3),prcopt);
     }
     rtksvrunlock(svr);
     return 1;

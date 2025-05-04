@@ -1327,13 +1327,16 @@ static int decode_geph(double ver, int sat, gtime_t toc, double *data,
     geph->vel[0]=data[4]*1E3; geph->vel[1]=data[8]*1E3; geph->vel[2]=data[12]*1E3;
     geph->acc[0]=data[5]*1E3; geph->acc[1]=data[9]*1E3; geph->acc[2]=data[13]*1E3;
 
-    geph->svh=(int)data[ 6];
+    geph->svh=(int)data[ 6]; // MSB of 3 bit Bn
     geph->frq=(int)data[10];
-#if 0 /*  output dtaun instead of age */
-    geph->dtaun=data[14];
-#else
     geph->age=(int)data[14];
-#endif
+
+    if (ver >= 3.05) {
+      geph->flags = (int)data[15]; // Status flags
+      geph->dtaun = data[16];
+      geph->sva = data[17];
+      geph->svh |= ((int)data[18]) << 1; // Extended SVH
+    }
     /* some receiver output >128 for minus frequency number */
     if (geph->frq>128) geph->frq-=256;
 
@@ -2890,7 +2893,7 @@ extern int outrnxgnavb(FILE *fp, const rnxopt_t *opt, const geph_t *geph)
     outnavf(fp,geph->pos[0]/1E3);
     outnavf(fp,geph->vel[0]/1E3);
     outnavf(fp,geph->acc[0]/1E3);
-    outnavf(fp,geph->svh       );
+    outnavf(fp,geph->svh & 1   );
     fprintf(fp,"\n%s",sep      );
 
     outnavf(fp,geph->pos[1]/1E3);
@@ -2902,11 +2905,15 @@ extern int outrnxgnavb(FILE *fp, const rnxopt_t *opt, const geph_t *geph)
     outnavf(fp,geph->pos[2]/1E3);
     outnavf(fp,geph->vel[2]/1E3);
     outnavf(fp,geph->acc[2]/1E3);
-#if 0 /* input dtaun instead of age */
-    outnavf(fp,geph->dtaun     );
-#else
     outnavf(fp,geph->age       );
-#endif
+
+    if (opt->rnxver>=305) {
+      fprintf(fp,"\n%s",sep     );
+      outnavf(fp,geph->flags    );
+      outnavf(fp,geph->dtaun    );
+      outnavf(fp,geph->sva      );
+      outnavf(fp,(geph->svh >> 1) & 7);
+    }
     return fprintf(fp,"\n")!=EOF;
 }
 /* output RINEX GEO navigation data file header --------------------------------

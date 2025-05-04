@@ -85,6 +85,8 @@ void __fastcall TConvOptDialog::FormShow(TObject *Sender)
 	Freq2->Checked=MainWindow->FreqType&FREQTYPE_L2;
 	Freq3->Checked=MainWindow->FreqType&FREQTYPE_L3;
 	Freq4->Checked=MainWindow->FreqType&FREQTYPE_L4;
+	Freq5->Checked=MainWindow->FreqType&FREQTYPE_L5;
+	Freq6->Checked=MainWindow->FreqType&FREQTYPE_L6;
 	ExSats->Text=MainWindow->ExSats;
 	TraceLevel->ItemIndex=MainWindow->TraceLevel;
 	ChkSepNav->Checked=MainWindow->SepNav;
@@ -145,6 +147,8 @@ void __fastcall TConvOptDialog::BtnOkClick(TObject *Sender)
 	if (Freq2->Checked) freqtype|=FREQTYPE_L2;
 	if (Freq3->Checked) freqtype|=FREQTYPE_L3;
 	if (Freq4->Checked) freqtype|=FREQTYPE_L4;
+	if (Freq5->Checked) freqtype|=FREQTYPE_L5;
+	if (Freq6->Checked) freqtype|=FREQTYPE_L6;
 	MainWindow->NavSys=navsys;
 	MainWindow->ObsType=obstype;
 	MainWindow->FreqType=freqtype;
@@ -189,6 +193,8 @@ void __fastcall TConvOptDialog::BtnMaskClick(TObject *Sender)
 	if (Freq2->Checked) CodeOptDialog->FreqType|=FREQTYPE_L2;
 	if (Freq3->Checked) CodeOptDialog->FreqType|=FREQTYPE_L3;
 	if (Freq4->Checked) CodeOptDialog->FreqType|=FREQTYPE_L4;
+	if (Freq5->Checked) CodeOptDialog->FreqType|=FREQTYPE_L5;
+	if (Freq6->Checked) CodeOptDialog->FreqType|=FREQTYPE_L6;
 	CodeOptDialog->ShowModal();
 }
 //---------------------------------------------------------------------------
@@ -204,6 +210,8 @@ void __fastcall TConvOptDialog::UpdateEnable(void)
 	Nav7->Enabled=RnxVer->ItemIndex>=6;
 	Freq3->Enabled=RnxVer->ItemIndex>=1;
 	Freq4->Enabled=RnxVer->ItemIndex>=1;
+	Freq5->Enabled=RnxVer->ItemIndex>=1;
+	Freq6->Enabled=RnxVer->ItemIndex>=1;
 	PhaseShift->Enabled=RnxVer->ItemIndex>=4;
 }
 //---------------------------------------------------------------------------

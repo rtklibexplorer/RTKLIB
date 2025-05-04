@@ -799,7 +799,7 @@ void MainWindow::showOutputStreamDialog()
             continue;
         }
         optDialog->solutionOptions.posf = inputFormat[i];
-        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions);
+        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions, &optDialog->processingOptions);
     }
 }
 // callback on button-log-streams -------------------------------------------
@@ -867,7 +867,7 @@ void MainWindow::showLogStreamDialog()
             streamEnabled[i] = 0;
             continue;
         }
-        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions);
+        rtksvropenstr(rtksvr, i, str, qPrintable(path), &optDialog->solutionOptions, &optDialog->processingOptions);
     }
 }
 // callback on button-solution-show -----------------------------------------
@@ -1210,7 +1210,7 @@ void MainWindow::serverStart()
     }
     stropt[0] = optDialog->timeoutTime;
     stropt[1] = optDialog->reconnectTime;
-    stropt[2] = 1000;  // veraging time of data rate (ms)
+    stropt[2] = 1000;  // averaging time of data rate (ms)
     stropt[3] = optDialog->serverBufferSize;
     stropt[4] = optDialog->fileSwapMargin;
     strsetopt(stropt);
@@ -1266,7 +1266,7 @@ void MainWindow::serverStart()
 
     setTrayIcon(0);
 }
-// strop rtk server ---------------------------------------------------------
+// stop rtk server ---------------------------------------------------------
 void MainWindow::serverStop()
 {
     char *cmds[3] = { 0 };
@@ -2662,7 +2662,7 @@ void MainWindow::btnMarkClicked()
 
     if (!markerName.isEmpty())
         rtksvrmark(rtksvr, qPrintable(markerName), qPrintable(markerComment));
-    
+
     updatePosition();
 }
 // execute command ----------------------------------------------------------

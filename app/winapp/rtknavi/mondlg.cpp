@@ -360,7 +360,7 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	AnsiString sol[]={"-","Fix","Float","SBAS","DGPS","Single","PPP",""};
 	AnsiString mode[]={"Single","DGPS","Kinematic","Static","Static-Start","Moving-Base",
 					   "Fixed","PPP-Kinematic","PPP-Static",""};
-	AnsiString freq[]={"-","L1","L1+L2","L1+L2+L5","L1+L2+L5+L6","L1+L2+L5+L6+L7",""};
+	AnsiString freq[]={"-","L1","L1+L2","L1+L2+L3","L1+L2+L3+L4","L1+L2+L3+L4+L5",""};
 	double *del,*off,runtime,rt[3]={0},dop[4]={0};
 	double azel[MAXSAT*2],pos[3],vel[3],rr[3]={0},enu[3]={0};
 	int i,j,k,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,nave;
@@ -1078,8 +1078,11 @@ void __fastcall TMonitorDialog::ShowNav(void)
 	    Label->Caption="";
 	}
 	for (k=0,n=1;k<MAXSAT;k++) {
-		if (!(satsys(k+1,&prn)&sys)) continue;
-		valid=eph[k].toe.time!=0&&!eph[k].svh&&fabs(timediff(time,eph[k].toe))<=MAXDTOE;
+		int ssys = satsys(k+1,&prn);
+		if (!(ssys&sys)) continue;
+		// Mask QZS LEX health.
+		valid = eph[k].toe.time != 0 && fabs(timediff(time, eph[k].toe)) <= MAXDTOE &&
+			(ssys == SYS_QZS ? (eph[k].svh & 0xfe) == 0 : eph[k].svh == 0);
 		if (SelSat->ItemIndex==1&&!valid) continue;
 		n++;
 	}
@@ -1092,8 +1095,11 @@ void __fastcall TMonitorDialog::ShowNav(void)
 	
 	for (k=0,n=1;k<MAXSAT;k++) {
 		j=0;
-		if (!(satsys(k+1,&prn)&sys)) continue;
-		valid=eph[k].toe.time!=0&&!eph[k].svh&&fabs(timediff(time,eph[k].toe))<=MAXDTOE;
+		int ssys = satsys(k+1,&prn);
+		if (!(ssys&sys)) continue;
+		// Mask QZS LEX health.
+		valid = eph[k].toe.time != 0 && fabs(timediff(time, eph[k].toe)) <= MAXDTOE &&
+			(ssys == SYS_QZS ? (eph[k].svh & 0xfe) == 0 : eph[k].svh == 0);
 		if (SelSat->ItemIndex==1&&!valid) continue;
 		satno2id(k+1,id);
 		Tbl->Cells[j++][n]=id;
@@ -1174,8 +1180,8 @@ void __fastcall TMonitorDialog::ShowGnav(void)
 	Label->Caption="";
 	
 	for (i=0,n=1;i<NSATGLO;i++) {
-		valid=geph[i].toe.time!=0&&!geph[i].svh&&
-			  fabs(timediff(time,geph[i].toe))<=MAXDTOE_GLO;
+		valid = geph[i].toe.time != 0 && fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO &&
+			(geph[i].svh & 9) == 0 && (geph[i].svh & 6) != 4;
 		if (SelSat->ItemIndex==1&&!valid) continue;
 		n++;
 	}
@@ -1188,8 +1194,8 @@ void __fastcall TMonitorDialog::ShowGnav(void)
 	
 	for (i=0,n=1;i<NSATGLO;i++) {
 		j=0;
-		valid=geph[i].toe.time!=0&&!geph[i].svh&&
-			  fabs(timediff(time,geph[i].toe))<=MAXDTOE_GLO;
+		valid = geph[i].toe.time != 0 && fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO &&
+			(geph[i].svh & 9) == 0 && (geph[i].svh & 6) != 4;
 		if (SelSat->ItemIndex==1&&!valid) continue;
 		prn=MINPRNGLO+i;
 		satno2id(satno(SYS_GLO,prn),id);
@@ -1258,7 +1264,7 @@ void __fastcall TMonitorDialog::ShowSbsNav(void)
 	
 	for (i=0,n=1;i<NSATSBS;i++) {
 		valid=fabs(timediff(time,seph[i].t0))<=MAXDTOE_SBS&&
-			  seph[i].t0.time&&!seph[i].svh;
+			  seph[i].t0.time&&seph[i].svh==0;
 		if (SelSat->ItemIndex==1&&!valid) continue;
 		n++;
 	}
@@ -1272,7 +1278,7 @@ void __fastcall TMonitorDialog::ShowSbsNav(void)
 	for (i=0,n=1;i<NSATSBS;i++) {
 		j=0;
 		valid=fabs(timediff(time,seph[i].t0))<=MAXDTOE_SBS&&
-			  seph[i].t0.time&&!seph[i].svh;
+			  seph[i].t0.time&&seph[i].svh==0;
 		if (SelSat->ItemIndex==1&&!valid) continue;
 		prn=MINPRNSBS+i;
 		satno2id(satno(SYS_SBS,prn),id);

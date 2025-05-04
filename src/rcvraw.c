@@ -918,7 +918,7 @@ static int decode_glostr_eph(const uint8_t *buff, geph_t *geph)
     
     /* frame 2 */
     frn2        =getbitu(buff,i, 4);           i+= 4;
-    geph_glo.svh   =getbitu(buff,i, 1);           i+= 1+2; /* MSB of Bn */
+    int Bn      =getbitu(buff,i, 1);           i+= 1+2; /* MSB of Bn */
     P2          =getbitu(buff,i, 1);           i+= 1;
     tb          =getbitu(buff,i, 7);           i+= 7+5;
     geph_glo.vel[1]=getbitg(buff,i,24)*P2_20*1E3; i+=24;
@@ -956,6 +956,8 @@ static int decode_glostr_eph(const uint8_t *buff, geph_t *geph)
     }
     geph_glo.frq=0; /* set default */
     geph_glo.iode=tb;
+    geph_glo.svh = (ln << 3) | Bn; // Extended SVH
+    geph_glo.flags = (M << 7) | (P4 << 6) | (P3 << 5) | (P2 << 4) | (P1 << 2) | P; // Status flags
     tow=time2gpst(gpst2utc(geph->tof),&week);
     tod=fmod(tow,86400.0); tow-=tod;
     tof=tk_h*3600.0+tk_m*60.0+tk_s-10800.0; /* lt->utc */
