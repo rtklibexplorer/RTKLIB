@@ -82,7 +82,6 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     ui->cBTroposphereOption->setItemData(TROPOPT_SBAS, tr("Apply SBAS tropospheric model (MOPS)"), Qt::ToolTipRole);
     ui->cBTroposphereOption->setItemData(TROPOPT_EST, tr("Estimate ZTD (zenith total delay) parameters as EKF states"), Qt::ToolTipRole);
     ui->cBTroposphereOption->setItemData(TROPOPT_ESTG, tr("ZTD and horizontal gradient parameters as EKF states"), Qt::ToolTipRole);
-    ui->cBTroposphereOption->setItemData(TROPOPT_ESTG, tr("ZTD and horizontal gradient parameters as EKF states"), Qt::ToolTipRole);
 
     ui->cBSatelliteEphemeris->setItemData(EPHOPT_BRDC, tr("Use broadcast ephemeris"), Qt::ToolTipRole);
     ui->cBSatelliteEphemeris->setItemData(EPHOPT_PREC, tr("Use precise ephemeris"), Qt::ToolTipRole);
@@ -1695,7 +1694,8 @@ void OptDialog::updateEnable()
     if (options == NaviOptions)
         setComboBoxItemEnabled(ui->cBTideCorrection, 2, false);  // OTL option is not available in RtkNavi
 
-    setComboBoxItemEnabled(ui->cBIonosphereOption, IONOOPT_EST, rel);
+    setComboBoxItemEnabled(ui->cBIonosphereOption, IONOOPT_IFLC, (rel || ppp) && ui->cBFrequencies->currentIndex()!=0);
+    setComboBoxItemEnabled(ui->cBIonosphereOption, IONOOPT_EST,  (rel || ppp) && ui->cBFrequencies->currentIndex()!=0);
     setComboBoxItemEnabled(ui->cBTroposphereOption, TROPOPT_EST, ui->cBPositionMode->currentIndex() != PMODE_SINGLE);
     setComboBoxItemEnabled(ui->cBTroposphereOption, TROPOPT_ESTG, ui->cBPositionMode->currentIndex() != PMODE_SINGLE);
     setComboBoxItemEnabled(ui->cBSatelliteEphemeris, EPHOPT_PREC, options != NaviOptions);
@@ -1758,7 +1758,7 @@ void OptDialog::updateEnable()
     ui->sBTimeDecimal->setEnabled(ui->cBSolutionFormat->currentIndex() < 3);
     ui->cBLatLonFormat->setEnabled(ui->cBSolutionFormat->currentIndex() == 0);
     ui->cBOutputHeader->setEnabled(ui->cBSolutionFormat->currentIndex() < 3);
-    ui->cBOutputOptions->setEnabled(options == PostOptions ? ui->cBSolutionFormat->currentIndex() < 3: false);
+    ui->cBOutputOptions->setEnabled(ui->cBSolutionFormat->currentIndex() < 3);
     ui->lEFieldSeperator->setEnabled(ui->cBSolutionFormat->currentIndex() < 3);
     ui->cBOutputDatum->setEnabled(ui->cBSolutionFormat->currentIndex() == 0);
     ui->cBOutputHeight->setEnabled(ui->cBSolutionFormat->currentIndex() == 0);

@@ -34,13 +34,13 @@ InputStrDialog::InputStrDialog(QWidget *parent)
         ui->cBFormat2->addItem(formatstrs[i]);
         ui->cBFormat3->addItem(formatstrs[i]);
         noFormats++;
-	}
+    }
     ui->cBFormat3->addItem(tr("SP3"));
 
     cmdOptDialog = new CmdOptDialog(this);
     rcvOptDialog = new RcvOptDialog(this);
     refDialog = new RefDialog(this);
-    serialOptDialog = new SerialOptDialog(this);;
+    serialOptDialog = new SerialOptDialog(this);
     tcpOptDialog = new TcpOptDialog(this);
     ftpOptDialog = new FtpOptDialog(this);
 

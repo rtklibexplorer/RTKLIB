@@ -111,7 +111,7 @@ void LogStrDialog::showStreamOptions3()
         case 1: showTcpOptions(2, 1); break;
         case 2: showTcpOptions(2, 0); break;
         case 3: showTcpOptions(2, 2); break;
-    case 4: showTcpOptions(0, 4); break;
+        case 4: showTcpOptions(0, 4); break;
     }
 }
 //---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ QString LogStrDialog::setFilePath(const QString &p)
     str = ui->cBSwapInterval->currentText().split(' ').first();
     str.toDouble(&okay);
     if (okay) path += "::S=" + str;
-	return path;
+    return path;
 }
 //---------------------------------------------------------------------------
 void LogStrDialog::showSerialOptions(int index, int opt)
@@ -160,7 +160,7 @@ void LogStrDialog::showTcpOptions(int index, int opt)
     paths[index][1] = tcpOptDialog->getPath();
     for (int i = 0; i < 10; i++) {
         history[i] = tcpOptDialog->getHistory()[i];
-	}
+    }
 }
 //---------------------------------------------------------------------------
 void LogStrDialog::updateEnable()

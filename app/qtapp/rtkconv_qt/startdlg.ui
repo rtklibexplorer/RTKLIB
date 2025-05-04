@@ -32,6 +32,19 @@
      <property name="toolTip">
       <string>Start date and time</string>
      </property>
+     <property name="dateTime">
+      <datetime>
+       <hour>0</hour>
+       <minute>0</minute>
+       <second>0</second>
+       <year>2019</year>
+       <month>1</month>
+       <day>1</day>
+      </datetime>
+     </property>
+     <property name="displayFormat">
+      <string>yyyy/MM/dd hh:mm:ss</string>
+     </property>
      <property name="calendarPopup">
       <bool>true</bool>
      </property>

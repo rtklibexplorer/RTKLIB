@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>703</width>
-    <height>720</height>
+    <height>630</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -167,11 +167,34 @@
            <property name="toolTip">
             <string>Select end time</string>
            </property>
+           <property name="dateTime">
+            <datetime>
+             <hour>22</hour>
+             <minute>0</minute>
+             <second>0</second>
+             <year>2020</year>
+             <month>2</month>
+             <day>1</day>
+            </datetime>
+           </property>
+           <property name="maximumDateTime">
+            <datetime>
+             <hour>22</hour>
+             <minute>0</minute>
+             <second>0</second>
+             <year>9999</year>
+             <month>12</month>
+             <day>30</day>
+            </datetime>
+           </property>
+           <property name="displayFormat">
+            <string>yyyy/MM/dd hh:mm:ss</string>
+           </property>
            <property name="calendarPopup">
             <bool>true</bool>
            </property>
            <property name="timeSpec">
-            <enum>Qt::TimeSpec::UTC</enum>
+            <enum>Qt::UTC</enum>
            </property>
           </widget>
          </item>
@@ -196,11 +219,31 @@
            <property name="toolTip">
             <string>Select start time</string>
            </property>
+           <property name="dateTime">
+            <datetime>
+             <hour>23</hour>
+             <minute>0</minute>
+             <second>0</second>
+             <year>2019</year>
+             <month>12</month>
+             <day>31</day>
+            </datetime>
+           </property>
+           <property name="time">
+            <time>
+             <hour>23</hour>
+             <minute>0</minute>
+             <second>0</second>
+            </time>
+           </property>
+           <property name="displayFormat">
+            <string>yyyy/MM/dd hh:mm:ss</string>
+           </property>
            <property name="calendarPopup">
             <bool>true</bool>
            </property>
            <property name="timeSpec">
-            <enum>Qt::TimeSpec::UTC</enum>
+            <enum>Qt::UTC</enum>
            </property>
           </widget>
          </item>

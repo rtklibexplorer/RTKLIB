@@ -37,6 +37,7 @@ build/
 
 bin/*
 lib/libRTKLib.so*
+lib/librtklib.so
 app/consapp/convbin/gcc/convbin
 app/consapp/pos2kml/gcc/pos2kml
 app/consapp/rnx2rtkp/gcc/rnx2rtkp

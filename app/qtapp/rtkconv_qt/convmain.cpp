@@ -494,6 +494,7 @@ void MainWindow::selectOutputFile1()
 void MainWindow::selectOutputFile2()
 {
     QString selectedFilter = tr("RINEX NAV (*.nav *.*N *.*P)");
+
     QString filename = QFileDialog::getOpenFileName(this, tr("Output RINEX NAV File"), ui->lEOutputFile2->text(),
                                         tr("All (*.*);;RINEX OBS (*.obs *.*O);;RINEX NAV (*.nav *.*N *.*P);;RINEX GNAV (*.gnav *.*G);;RINEX HNAV (*.hnav *.*H);;"
                                            "RINEX QNAV (*.qnav *.*Q);;RINEX LNAV (*.lnav *.*L);;RINEX CNAV (*.cnav *.*C);;RINEX INAV (*.inav *.*I);;"
@@ -856,6 +857,12 @@ void MainWindow::convertFile()
 
     if (conversionThread->format == STRFMT_RTCM2 || conversionThread->format == STRFMT_RTCM3 || conversionThread->format == STRFMT_RT17) {
         // input start date/time for rtcm 2, rtcm 3, RT17 or CMR
+        if (ui->cBTimeStart->isChecked()) {
+            gtime_t ts,te;
+            double tint, tunit;
+            getTime(&ts, &te, &tint, &tunit);
+            startDialog->setTime(ts);
+        }
         startDialog->exec();
         if (startDialog->result() != QDialog::Accepted) {
             delete conversionThread;
@@ -995,7 +1002,7 @@ void MainWindow::loadOptions()
     ui->cBTimeInterval->setChecked(ini.value("set/timeintf", false).toBool());
     ui->dateTimeStart->setDate(ini.value("set/timey1", "2020/01/01").value<QDate>());
     ui->dateTimeStart->setTime(ini.value("set/timeh1", "00:00:00").value<QTime>());
-    ui->dateTimeStop->setDate(ini.value("set/timey2", "2020/01/01").value<QDate>());
+    ui->dateTimeStop->setDate(ini.value("set/timey2", "2020/01/02").value<QDate>());
     ui->dateTimeStop->setTime(ini.value("set/timeh2", "00:00:00").value<QTime>());
     ui->comboTimeInterval->setCurrentText(ini.value("set/timeint", "1").toString());
     ui->cBTimeUnit->setChecked(ini.value("set/timeunitf", false).toBool());

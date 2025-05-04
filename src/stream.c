@@ -1039,72 +1039,109 @@ static int setsock(socket_t sock, char *msg)
     return 1;
 }
 /* non-block accept ----------------------------------------------------------*/
-static socket_t accept_nb(socket_t sock, struct sockaddr *addr, socklen_t *len)
+static socket_t accept_nb(socket_t sock, struct sockaddr *addr, socklen_t *len, int *err)
 {
-    struct timeval tv={0};
     fd_set rs;
-    int ret;
-    
-    FD_ZERO(&rs); FD_SET(sock,&rs);
-    ret=select(sock+1,&rs,NULL,NULL,&tv);
-    if (ret<=0) return (socket_t)ret;
-    return accept(sock,addr,len);
+    FD_ZERO(&rs); FD_SET(sock, &rs);
+    struct timeval tv = {0};
+    int ret = select(sock + 1, &rs, NULL, NULL, &tv);
+    if (ret == 0) {
+      *err = 0;
+      return (socket_t)ret;
+    }
+    if (ret < 0) {
+      *err = errsock();
+      return (socket_t)ret;
+    }
+    socket_t nsock = accept(sock, addr, len);
+    if (nsock == (socket_t)-1) {
+      *err = errsock();
+      return nsock;
+    }
+    *err = 0;
+    return nsock;
 }
 /* non-block connect ---------------------------------------------------------*/
-static int connect_nb(socket_t sock, struct sockaddr *addr, socklen_t len)
+static int connect_nb(socket_t sock, struct sockaddr *addr, socklen_t len, int *err)
 {
 #ifdef WIN32
     u_long mode=1; 
-    int err;
-    
     ioctlsocket(sock,FIONBIO,&mode);
     if (connect(sock,addr,len)==-1) {
-        err=errsock();
-        if (err==WSAEWOULDBLOCK||err==WSAEINPROGRESS||
-            err==WSAEALREADY   ||err==WSAEINVAL) return 0;
-        if (err!=WSAEISCONN) return -1;
+        *err=errsock();
+        if (*err==WSAEWOULDBLOCK||*err==WSAEINPROGRESS||
+            *err==WSAEALREADY   ||*err==WSAEINVAL) return 0;
+        if (*err!=WSAEISCONN) return -1;
     }
 #else
-    struct timeval tv={0};
-    fd_set rs,ws;
-    int err,flag;
-    
-    flag=fcntl(sock,F_GETFL,0);
-    fcntl(sock,F_SETFL,flag|O_NONBLOCK);
-    if (connect(sock,addr,len)==-1) {
-        err=errsock();
-        if (err!=EISCONN&&err!=EINPROGRESS&&err!=EALREADY) return -1;
-        FD_ZERO(&rs); FD_SET(sock,&rs); ws=rs;
-        if (select(sock+1,&rs,&ws,NULL,&tv)==0) return 0;
+    int flag = fcntl(sock, F_GETFL, 0);
+    fcntl(sock, F_SETFL, flag | O_NONBLOCK);
+    if (connect(sock, addr, len) == -1) {
+        *err = errsock();
+        if (*err != EISCONN && *err != EINPROGRESS && *err != EALREADY) return -1;
+        fd_set rs, ws;
+        FD_ZERO(&rs); FD_SET(sock, &rs); ws = rs;
+        struct timeval tv = {0};
+        if (select(sock + 1, &rs, &ws, NULL, &tv) == 0) {
+          *err = 0;
+          return 0;
+        }
+        *err = 0;
+        return 1;
     }
 #endif
+    *err = 0;
     return 1;
 }
 /* non-block receive ---------------------------------------------------------*/
-static int recv_nb(socket_t sock, uint8_t *buff, int n)
+static int recv_nb(socket_t sock, uint8_t *buff, int n, int *err)
 {
-    struct timeval tv={0};
     fd_set rs;
-    int ret,nr;
-    
-    FD_ZERO(&rs); FD_SET(sock,&rs);
-    ret=select(sock+1,&rs,NULL,NULL,&tv);
-    if (ret<=0) return ret;
-    nr=recv(sock,(char *)buff,n,0);
-    return nr<=0?-1:nr;
+    FD_ZERO(&rs); FD_SET(sock, &rs);
+    struct timeval tv = {0};
+    int ret = select(sock + 1, &rs, NULL, NULL, &tv);
+    if (ret < 0) {
+      *err = errsock();
+      return ret;
+    }
+    if (ret == 0) {
+      *err = 0;
+      return ret;
+    }
+    int nr = recv(sock, (char *)buff, n, 0);
+    if (nr == 0) {
+      *err = 0;
+      return -1;
+    }
+    if (nr < 0) {
+      *err = errsock();
+      return -1;
+    }
+    *err = 0;
+    return nr;
 }
 /* non-block send ------------------------------------------------------------*/
-static int send_nb(socket_t sock, uint8_t *buff, int n)
+static int send_nb(socket_t sock, uint8_t *buff, int n, int *err)
 {
-    struct timeval tv={0};
     fd_set ws;
-    int ret,ns;
-    
-    FD_ZERO(&ws); FD_SET(sock,&ws);
-    ret=select(sock+1,NULL,&ws,NULL,&tv);
-    if (ret<=0) return ret;
-    ns=send(sock,(char *)buff,n,0);
-    return ns<n?-1:ns;
+    FD_ZERO(&ws); FD_SET(sock, &ws);
+    struct timeval tv = {0};
+    int ret = select(sock + 1, NULL, &ws, NULL, &tv);
+    if (ret < 0) {
+      *err = errsock();
+      return ret;
+    }
+    if (ret == 0) {
+      *err = 0;
+      return ret;
+    }
+    int ns = send(sock, (char *)buff, n, 0);
+    if (ns < 0) {
+      *err = errsock();
+      return -1;
+    }
+    *err = 0;
+    return ns;
 }
 /* generate tcp socket -------------------------------------------------------*/
 static int gentcp(tcp_t *tcp, int type, char *msg)
@@ -1150,6 +1187,7 @@ static int gentcp(tcp_t *tcp, int type, char *msg)
     else { /* client socket */
         if (!(hp=gethostbyname(tcp->saddr))) {
             sprintf(msg,"address error (%s)",tcp->saddr);
+            // h_errno ?
             tracet(1,"gentcp: gethostbyname error addr=%s err=%d\n",tcp->saddr,errsock());
             closesocket(tcp->sock);
             tcp->state=0;
@@ -1251,8 +1289,7 @@ static int accsock(tcpsvr_t *tcpsvr, char *msg)
         tracet(2,"accsock: too many clients sock=%d\n",tcpsvr->svr.sock);
         return 0;
     }
-    if ((sock=accept_nb(tcpsvr->svr.sock,(struct sockaddr *)&addr,&len))==(socket_t)-1) {
-        err=errsock();
+    if ((sock=accept_nb(tcpsvr->svr.sock,(struct sockaddr *)&addr,&len,&err))==(socket_t)-1) {
         sprintf(msg,"accept error (%d)",err);
         tracet(1,"accsock: accept error sock=%d err=%d\n",tcpsvr->svr.sock,err);
         closesocket(tcpsvr->svr.sock);
@@ -1296,8 +1333,8 @@ static int readtcpsvr(tcpsvr_t *tcpsvr, uint8_t *buff, int n, char *msg)
     for (i=0;i<MAXCLI;i++) {
         if (tcpsvr->cli[i].state!=2) continue;
         
-        if ((nr=recv_nb(tcpsvr->cli[i].sock,buff,n))==-1) {
-            if ((err=errsock())) {
+        if ((nr=recv_nb(tcpsvr->cli[i].sock,buff,n,&err))==-1) {
+            if (err) {
                 tracet(2,"readtcpsvr: recv error sock=%d err=%d\n",
                        tcpsvr->cli[i].sock,err);
             }
@@ -1323,8 +1360,8 @@ static int writetcpsvr(tcpsvr_t *tcpsvr, uint8_t *buff, int n, char *msg)
     for (i=0;i<MAXCLI;i++) {
         if (tcpsvr->cli[i].state!=2) continue;
         
-        if ((ns=send_nb(tcpsvr->cli[i].sock,buff,n))==-1) {
-            if ((err=errsock())) {
+        if ((ns=send_nb(tcpsvr->cli[i].sock,buff,n,&err))==-1) {
+            if (err) {
                 tracet(2,"writetcpsvr: send error i=%d sock=%d err=%d\n",i,
                        tcpsvr->cli[i].sock,err);
             }
@@ -1391,8 +1428,7 @@ static int consock(tcpcli_t *tcpcli, char *msg)
     }
     /* non-block connect */
     if ((stat=connect_nb(tcpcli->svr.sock,(struct sockaddr *)&tcpcli->svr.addr,
-                         sizeof(tcpcli->svr.addr)))==-1) {
-        err=errsock();
+                         sizeof(tcpcli->svr.addr),&err))==-1) {
         sprintf(msg,"connect error (%d)",err);
         tracet(2,"consock: connect error sock=%d err=%d\n",tcpcli->svr.sock,err);
         closesocket(tcpcli->svr.sock);
@@ -1472,8 +1508,8 @@ static int readtcpcli(tcpcli_t *tcpcli, uint8_t *buff, int n, char *msg)
     
     if (!waittcpcli(tcpcli,msg)) return 0;
     
-    if ((nr=recv_nb(tcpcli->svr.sock,buff,n))==-1) {
-        if ((err=errsock())) {
+    if ((nr=recv_nb(tcpcli->svr.sock,buff,n,&err))==-1) {
+        if (err) {
             tracet(2,"readtcpcli: recv error sock=%d err=%d\n",tcpcli->svr.sock,err);
             sprintf(msg,"recv error (%d)",err);
         }
@@ -1496,8 +1532,8 @@ static int writetcpcli(tcpcli_t *tcpcli, uint8_t *buff, int n, char *msg)
     
     if (!waittcpcli(tcpcli,msg)) return 0;
     
-    if ((ns=send_nb(tcpcli->svr.sock,buff,n))==-1) {
-        if ((err=errsock())) {
+    if ((ns=send_nb(tcpcli->svr.sock,buff,n,&err))==-1) {
+        if (err) {
             tracet(2,"writetcp: send error sock=%d err=%d\n",tcpcli->svr.sock,err);
             sprintf(msg,"send error (%d)",err);
         }
@@ -1894,8 +1930,9 @@ static void send_srctbl(ntripc_t *ntripc, socket_t sock)
     p+=sprintf(p,"Connection: close\r\n");
     p+=sprintf(p,"Content-Type: text/plain\r\n");
     p+=sprintf(p,"Content-Length: %d\r\n\r\n",(int)strlen(srctbl));
-    send_nb(sock,(uint8_t *)buff,(int)(p-buff));
-    send_nb(sock,(uint8_t *)srctbl,(int)strlen(srctbl));
+    int err;
+    send_nb(sock,(uint8_t *)buff,(int)(p-buff),&err);
+    send_nb(sock,(uint8_t *)srctbl,(int)strlen(srctbl),&err);
 }
 /* test ntrip client request -------------------------------------------------*/
 static void rsp_ntripc(ntripc_t *ntripc, int i)
@@ -1948,13 +1985,15 @@ static void rsp_ntripc(ntripc_t *ntripc, int i)
         if (!(p=strstr((char *)con->buff,"Authorization:"))||
             strncmp(p,user_pwd,strlen(user_pwd))) {
             tracet(2,"rsp_ntripc_c: authroziation error\n");
-            send_nb(ntripc->tcp->cli[i].sock,(uint8_t *)rsp1,strlen(rsp1));
+            int err;
+            send_nb(ntripc->tcp->cli[i].sock,(uint8_t *)rsp1,strlen(rsp1),&err);
             discon_ntripc(ntripc,i);
             return;
         }
     }
     /* send OK response */
-    send_nb(ntripc->tcp->cli[i].sock,(uint8_t *)rsp2,strlen(rsp2));
+    int err;
+    send_nb(ntripc->tcp->cli[i].sock,(uint8_t *)rsp2,strlen(rsp2),&err);
     
     con->state=1;
     strcpy(con->mntpnt,mntpnt);
@@ -1978,8 +2017,8 @@ static void wait_ntripc(ntripc_t *ntripc, char *msg)
         buff=ntripc->con[i].buff+ntripc->con[i].nb;
         nmax=NTRIP_MAXRSP-ntripc->con[i].nb-1;
         
-        if ((n=recv_nb(ntripc->tcp->cli[i].sock,buff,nmax))==-1) {
-            if ((err=errsock())) {
+        if ((n=recv_nb(ntripc->tcp->cli[i].sock,buff,nmax,&err))==-1) {
+            if (err) {
                 tracet(2,"wait_ntripc: recv error sock=%d err=%d\n",
                        ntripc->tcp->cli[i].sock,err);
             }
@@ -2005,10 +2044,10 @@ static int readntripc(ntripc_t *ntripc, uint8_t *buff, int n, char *msg)
     for (i=0;i<MAXCLI;i++) {
         if (!ntripc->con[i].state) continue;
         
-        nr=recv_nb(ntripc->tcp->cli[i].sock,buff,n);
+        nr=recv_nb(ntripc->tcp->cli[i].sock,buff,n,&err);
         
         if (nr<0) {
-            if ((err=errsock())) {
+            if (err) {
                 tracet(2,"readntripc: recv error i=%d sock=%d err=%d\n",i,
                        ntripc->tcp->cli[i].sock,err);
             }
@@ -2033,10 +2072,10 @@ static int writentripc(ntripc_t *ntripc, uint8_t *buff, int n, char *msg)
     for (i=0;i<MAXCLI;i++) {
         if (!ntripc->con[i].state) continue;
         
-        ns=send_nb(ntripc->tcp->cli[i].sock,buff,n);
+        ns=send_nb(ntripc->tcp->cli[i].sock,buff,n,&err);
         
         if (ns<n) {
-            if ((err=errsock())) {
+            if (err) {
                 tracet(2,"writentripc: send error i=%d sock=%d err=%d\n",i,
                        ntripc->tcp->cli[i].sock,err);
             }

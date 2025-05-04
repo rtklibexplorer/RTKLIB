@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>566</width>
-    <height>582</height>
+    <height>462</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -575,7 +575,7 @@
       <string/>
      </property>
      <property name="placeholderText">
-      <string>&lt;antenna description&gt;,&lt;antenna serial number&gt;,&lt;setup description&gt;</string>
+      <string>&lt;receiver description&gt;,&lt;receiver serial number&gt;,&lt;setup description&gt;</string>
      </property>
     </widget>
    </item>

@@ -895,10 +895,12 @@ static void prnavidata(vt_t *vt)
               ESC_BOLD,"SAT","S","IOD","IOC","FRQ","A/A","SVH","Toe","Toc",
               "Ttr/Tof","L2C","L2P",ESC_RESET);
     for (i=0;i<MAXSAT;i++) {
-        if (!(satsys(i+1,&prn)&(SYS_GPS|SYS_GAL|SYS_QZS|SYS_CMP))||
+        int sys = satsys(i+1,&prn);
+        if (!(sys&(SYS_GPS|SYS_GAL|SYS_QZS|SYS_CMP))||
             eph[i].sat!=i+1) continue;
-        valid=eph[i].toe.time!=0&&!eph[i].svh&&
-              fabs(timediff(time,eph[i].toe))<=MAXDTOE;
+        // Mask QZS LEX health.
+        valid=eph[i].toe.time!=0&&fabs(timediff(time,eph[i].toe))<=MAXDTOE &&
+            (sys == SYS_QZS ? (eph[i].svh & 0xfe) == 0 : eph[i].svh == 0);
         satno2id(i+1,id);
         if (eph[i].toe.time!=0) time2str(eph[i].toe,s1,0); else strcpy(s1,"-");
         if (eph[i].toc.time!=0) time2str(eph[i].toc,s2,0); else strcpy(s2,"-");
@@ -909,14 +911,14 @@ static void prnavidata(vt_t *vt)
     }
     for (i=0;i<MAXSAT;i++) {
         if (!(satsys(i+1,&prn)&SYS_GLO)||geph[prn-1].sat!=i+1) continue;
-        valid=geph[prn-1].toe.time!=0&&!geph[prn-1].svh&&
-              fabs(timediff(time,geph[prn-1].toe))<=MAXDTOE_GLO;
+        valid=geph[prn-1].toe.time!=0&&fabs(timediff(time,geph[prn-1].toe))<=MAXDTOE_GLO &&
+            (geph[prn-1].svh & 9) == 0 && (geph[prn-1].svh & 6) != 4;
         satno2id(i+1,id);
         if (geph[prn-1].toe.time!=0) time2str(geph[prn-1].toe,s1,0); else strcpy(s1,"-");
         if (geph[prn-1].tof.time!=0) time2str(geph[prn-1].tof,s2,0); else strcpy(s2,"-");
         vt_printf(vt,"%3s %3s %3d %3d %3d %3d  %02X %19s %19s %19s %3d %3d\n",
                 id,valid?"OK":"-",geph[prn-1].iode,0,geph[prn-1].frq,
-                geph[prn-1].age,geph[prn].svh,s1,"-",s2,0,0);
+                geph[prn-1].age,geph[prn-1].svh,s1,"-",s2,0,0);
     }
     vt_printf(vt,"ION: %9.2E %9.2E %9.2E %9.2E %9.2E %9.2E %9.2E %9.2E\n",
             ion[0],ion[1],ion[2],ion[3],ion[4],ion[5],ion[6],ion[7]);

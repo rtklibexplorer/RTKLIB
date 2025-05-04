@@ -415,9 +415,9 @@ void MonitorDialog::showRtk()
     unsigned int nmsg[3][10] = {{0}};
     char tstr[40], id[8], s1[40] = "-", s2[40] = "-", s3[40] = "-";
     char file[1024] = "";
-    const QString ionoopt[] = {tr("OFF"), tr("Broadcast"), tr("SBAS"), tr("Dual-Frequency"), tr("Estimate STEC"), tr("IONEX TEC"), tr("QZSS LEX"), tr("STEC model")};
+    const QString ionoopt[] = {tr("OFF"), tr("Broadcast"), tr("SBAS"), tr("Dual-Frequency"), tr("Estimate STEC"), tr("IONEX TEC"), tr("QZSS LEX")};
     const QString tropopt[] = {tr("OFF"), tr("Saastamoinen"), tr("SBAS"), tr("Estimate ZTD"), tr("Estimate ZTD+Grad")};
-    const QString ephopt [] = {tr("Broadcast"), tr("Precise"), tr("Broadcast+SBAS"), tr("Broadcat+SSR APC"), tr("Broadcast+SSR CoM"), tr("QZSS LEX")};
+    const QString ephopt [] = {tr("Broadcast"), tr("Precise"), tr("Broadcast+SBAS"), tr("Broadcast+SSR APC"), tr("Broadcast+SSR CoM"), tr("QZSS LEX")};
 
     rtksvrlock(rtksvr); // lock
 
@@ -518,7 +518,7 @@ void MonitorDialog::showRtk()
     ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1, %2").arg(rtk.opt.dynamics ? tr("ON") : tr("OFF"), rtk.opt.tidecorr ? tr("ON") : tr("OFF")));
 
     ui->tWConsole->item(row,   0)->setText(tr("Ionosphere/Troposphere Model"));
-    ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1, %2").arg(ionoopt[rtk.opt.ionoopt < 0 || rtk.opt.ionoopt > 7 ? 0 : rtk.opt.ionoopt],
+    ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1, %2").arg(ionoopt[rtk.opt.ionoopt < 0 || rtk.opt.ionoopt > 6 ? 0 : rtk.opt.ionoopt],
                                                                         tropopt[rtk.opt.tropopt < 0 || rtk.opt.tropopt > 4 ? 0 : rtk.opt.tropopt]));
 
     ui->tWConsole->item(row,   0)->setText(tr("Satellite Ephemeris"));
@@ -1151,8 +1151,11 @@ void MonitorDialog::showNavigationsGPS()
     rtksvrunlock(rtksvr);
 
     for (k = 0, nsat = 0; k < MAXSAT; k++) {
-        if (!(satsys(k + 1, &prn) & sys)) continue;
-        valid = eph[k].toe.time != 0 && !eph[k].svh && fabs(timediff(time, eph[k].toe)) <= MAXDTOE;
+        int ssys = satsys(k + 1, &prn);
+        if ((ssys & sys) == 0) continue;
+        // Mask QZS LEX health.
+        valid = eph[k].toe.time != 0 && fabs(timediff(time, eph[k].toe)) <= MAXDTOE &&
+            (ssys == SYS_QZS ? (eph[k].svh & 0xfe) == 0 : eph[k].svh == 0);
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         nsat++;
 	}
@@ -1169,8 +1172,11 @@ void MonitorDialog::showNavigationsGPS()
 
     for (k = 0, n = 0; k < MAXSAT; k++) {
         int j = 0;
-        if (!(satsys(k + 1, &prn) & sys)) continue;
-        valid = eph[k].toe.time != 0 && !eph[k].svh && fabs(timediff(time, eph[k].toe)) <= MAXDTOE;
+        int ssys = satsys(k + 1, &prn);
+        if ((ssys & sys) == 0) continue;
+        // Mask QZS LEX health.
+        valid = eph[k].toe.time != 0 && fabs(timediff(time, eph[k].toe)) <= MAXDTOE &&
+            (ssys == SYS_QZS ? (eph[k].svh & 0xfe) == 0 : eph[k].svh == 0);
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         satno2id(k + 1, id);
         ui->tWConsole->item(n, j++)->setText(id);
@@ -1263,8 +1269,8 @@ void MonitorDialog::showGlonassNavigations()
     rtksvrunlock(rtksvr);
 
     for (i = 0, nsat = 0; i < NSATGLO; i++) {
-        valid = geph[i].toe.time != 0 && !geph[i].svh &&
-            fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO;
+        valid = geph[i].toe.time != 0 && fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO &&
+            (geph[i].svh & 9) == 0 && (geph[i].svh & 6) != 4;
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         nsat++;
 	}
@@ -1282,8 +1288,8 @@ void MonitorDialog::showGlonassNavigations()
 
     for (i = 0, n = 0; i < NSATGLO; i++) {
         int j = 0;
-        valid = geph[i].toe.time != 0 && !geph[i].svh &&
-            fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO;
+        valid = geph[i].toe.time != 0 && fabs(timediff(time, geph[i].toe)) <= MAXDTOE_GLO &&
+            (geph[i].svh & 9) == 0 && (geph[i].svh & 6) != 4;
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         prn = MINPRNGLO + i;
         satno2id(satno(SYS_GLO, prn), id);
@@ -1358,7 +1364,7 @@ void MonitorDialog::showSbsNavigations()
 
     for (i = 0, nsat = 0; i < NSATSBS; i++) {
         valid = fabs(timediff(time, seph[i].t0)) <= MAXDTOE_SBS &&
-            seph[i].t0.time && !seph[i].svh;
+            seph[i].t0.time && seph[i].svh == 0;
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         nsat++;
 	}
@@ -1376,7 +1382,7 @@ void MonitorDialog::showSbsNavigations()
     for (i = 0, n = 0; i < NSATSBS; i++) {
         int j = 0;
         valid = fabs(timediff(time, seph[i].t0)) <= MAXDTOE_SBS &&
-            seph[i].t0.time && !seph[i].svh;
+            seph[i].t0.time && seph[i].svh == 0;
         if (ui->cBSelectSatellites->currentIndex() == 1 && !valid) continue;
         prn = MINPRNSBS + i;
         satno2id(satno(SYS_SBS, prn), id);

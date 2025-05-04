@@ -1776,6 +1776,7 @@ static int decode_glorawcanav(raw_t *raw){
 
     if (!strstr(raw->opt, "-EPHALL")) {
         if (geph.iode == raw->nav.geph[prn-1].iode &&
+            geph.svh == raw->nav.geph[prn - 1].svh &&
             timediff(geph.toe, raw->nav.geph[prn-1].toe) == 0.0) return 0;
     }
     raw->nav.geph[prn-1] = geph;
