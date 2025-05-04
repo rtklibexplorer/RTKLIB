@@ -86,7 +86,7 @@
 #define VAR_IONO    SQR(60.0)       /* init variance iono-delay */
 #define VAR_GLO_IFB SQR( 0.6)       /* variance of glonass ifb */
 
-#define PRN_DCB     0.001           /* process noise receiver dcb (m/s^1/2) */
+#define PRN_DCB     0.001           /* process noise dcb (m/s^1/2) */
 
 #define ERR_SAAS    0.3             /* saastamoinen model error std (m) */
 #define ERR_BRDCI   0.5             /* broadcast iono model error factor */
