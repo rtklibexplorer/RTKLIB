@@ -44,8 +44,8 @@ set(CMAKE_AUTOUIC TRUE)
 
 # translation
 if((${QT_VERSION_MAJOR} EQUAL 6) AND (${Qt6LinguistTools_FOUND}))
-   # add translation support
-   set(LANGUAGES en de)
+   # add translation support, zh_CN for Chinese
+   set(LANGUAGES en de zh_CN)
    message(STATUS "Qt: Adding translation: ${LANGUAGES}")
    qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES ${LANGUAGES})
 endif()

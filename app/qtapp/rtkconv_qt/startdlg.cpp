@@ -49,7 +49,7 @@ void StartDialog::setFileName(const QString &fn)
 //---------------------------------------------------------------------------
 void StartDialog::setTime(const gtime_t &time)
 {
-    QDateTime date = QDateTime::fromSecsSinceEpoch(time.time);
+    QDateTime date = QDateTime::fromSecsSinceEpoch(time.time, Qt::UTC);
     date = date.addMSecs(time.sec*1000);
 
     ui->tETime->setDateTime(date);
@@ -82,4 +82,3 @@ void StartDialog::setTimeFromFile()
     ui->tETime->setDateTime(d);
 }
 //---------------------------------------------------------------------------
-    
