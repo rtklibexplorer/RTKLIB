@@ -86,6 +86,8 @@
 #define VAR_IONO    SQR(60.0)       /* init variance iono-delay */
 #define VAR_GLO_IFB SQR( 0.6)       /* variance of glonass ifb */
 
+#define PRN_DCB     0.001           /* process noise dcb (m/s^1/2) */
+
 #define ERR_SAAS    0.3             /* saastamoinen model error std (m) */
 #define ERR_BRDCI   0.5             /* broadcast iono model error factor */
 #define ERR_CBIAS   0.3             /* code bias error std (m) */
@@ -411,6 +413,56 @@ static double mwmeas(const obsd_t *obs, const nav_t *nav)
     return (obs->L[0]-obs->L[1])*CLIGHT/(freq1-freq2)-
            (freq1*obs->P[0]+freq2*obs->P[1])/(freq1+freq2);
 }
+/* substitute mixed-mode signals -----------------------------------*/
+static uint8_t obsCode2biasCode(int sys, uint8_t obs_code) {
+  uint8_t bias_code;
+  if (sys==SYS_GPS) {
+    switch(obs_code) {
+      case(CODE_L1X): bias_code = CODE_L1L; break;
+      case(CODE_L2X): bias_code = CODE_L2L; break;
+      case(CODE_L5X): bias_code = CODE_L5Q; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else if (sys==SYS_GLO) {
+    switch(obs_code) {
+      case(CODE_L3X): bias_code = CODE_L3Q; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else if (sys==SYS_GAL) {
+    switch(obs_code) {
+      case(CODE_L1X): bias_code = CODE_L1C; break;
+      case(CODE_L6X): bias_code = CODE_L6C; break;
+      case(CODE_L7X): bias_code = CODE_L7Q; break;
+      case(CODE_L5X): bias_code = CODE_L5Q; break;
+      case(CODE_L8X): bias_code = CODE_L8Q; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else if (sys==SYS_CMP) {
+    switch(obs_code) {
+      case(CODE_L1X): bias_code = CODE_L1P; break;
+      case(CODE_L7Z): bias_code = CODE_L7D; break;
+      case(CODE_L5X): bias_code = CODE_L5P; break;
+      case(CODE_L8X): bias_code = CODE_L8P; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else if (sys==SYS_QZS) {
+    switch(obs_code) {
+      case(CODE_L1X): bias_code = CODE_L1L; break;
+      case(CODE_L2X): bias_code = CODE_L2L; break;
+      case(CODE_L5X): bias_code = CODE_L5Q; break;
+      case(CODE_L6Z): bias_code = CODE_L6S; break;
+      default:        bias_code = obs_code;
+    }
+  }
+  else {
+    bias_code = obs_code;
+  }
+  return bias_code;
+}
 /* antenna and bias corrected measurements -----------------------------------*/
 static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
                       const prcopt_t *opt, const double *dantr,
@@ -432,8 +484,10 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
         P[i]=obs->P[i]               -dants[i]-dantr[i];
 
         if (opt->sateph==EPHOPT_SSRAPC||opt->sateph==EPHOPT_SSRCOM) {
-            P[i]+=nav->ssr[obs->sat-1].cbias[obs->code[i]-1];
-            L[i]+=nav->ssr[obs->sat-1].pbias[obs->code[i]-1];
+            // Substitute combined tracking modes
+            uint8_t bias_code = obsCode2biasCode(sys,obs->code[i]);
+            P[i]+=nav->ssr[obs->sat-1].cbias[bias_code-1];
+            L[i]+=nav->ssr[obs->sat-1].pbias[bias_code-1];
         }
         else {   /* apply code bias corrections from file */
             bias_ix=code2bias_ix(sys,obs->code[i]); /* look up bias index in table */
@@ -725,6 +779,10 @@ static void uddcb_ppp(rtk_t *rtk)
             if (rtk->x[i]==0.0) {
                 initx(rtk,1E-6,VAR_DCB,i);
             }
+            else {
+                /* update variance of dcb state */
+                rtk->P[i+i*rtk->nx]+=SQR(PRN_DCB)*fabs(rtk->tt);
+            }
         }
     }
 }
@@ -839,7 +897,7 @@ static void udstate_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
     if (rtk->opt.ionoopt==IONOOPT_EST) {
         udiono_ppp(rtk,obs,n,nav);
     }
-    /* temporal update of L5-receiver-dcb parameters */
+    /* temporal update of receiver-dcb parameters */
     if (rtk->opt.nf>=3) {
         uddcb_ppp(rtk);
     }
@@ -991,6 +1049,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
         antmodel(opt->pcvr,opt->antdel[0],azel+i*2,opt->posopt[1],dantr);
 
         /* Compute satellite PCO corrections for orbits in CoM */
+        /* TODO: handle PCO for different frequencies for EPHOPT_SSRCOM */
         if (opt->sateph==EPHOPT_PREC||opt->sateph==EPHOPT_SSRCOM) {
             if (opt->ionoopt==IONOOPT_IFLC) {
                 double danto[3];
