@@ -744,7 +744,8 @@ static void udiono_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         j=II(sat,&rtk->opt);
         if (rtk->x[j]==0.0) {
             /* initialize ionosphere delay estimates if zero */
-            f2=seliflc(rtk->opt.nf,satsys(sat,NULL));
+            /* FIXME: why use E5a for Galileo if E5b is processed? */
+            f2=1; /*seliflc(rtk->opt.nf,satsys(sat,NULL));*/
             freq1=sat2freq(sat,obs[i].code[0],nav);
             freq2=sat2freq(sat,obs[i].code[f2],nav);
             if (obs[i].P[0]==0.0||obs[i].P[f2]==0.0||freq1==0.0||freq2==0.0) {
