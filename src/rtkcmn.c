@@ -2568,8 +2568,10 @@ static int readantex(const char *file, pcvs_t *pcvs)
             if (sscanf(buff+4,"%d",&f)<1) continue;
             for (i=0;freqs[i];i++) if (freqs[i]==f) break;
             if (freqs[i]) freq=i+1;
-            /* for Galileo E5b: save to E2, not E7  */
+            /* for Galileo E5b: save to slot 2, not 7  */
             if (satsys(pcv.sat,NULL)==SYS_GAL&&f==7) freq=2;
+            /* TODO: what about Galileo E6 and E5ab? */
+            /* TODO: what about BeiDou */
         }
         else if (strstr(buff+60,"END OF FREQUENCY")) {
             freq=0;
