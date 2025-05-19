@@ -79,15 +79,12 @@ static void writesolhead(stream_t *stream, const solopt_t *solopt, const prcopt_
   strwrite(stream,buff,n);
 }
 /* save output buffer --------------------------------------------------------*/
+// The caller is expected to hold the rtksvr lock.
 static void saveoutbuf(rtksvr_t *svr, uint8_t *buff, int n, int index)
 {
-    rtksvrlock(svr);
-    
     n=n<svr->buffsize-svr->nsb[index]?n:svr->buffsize-svr->nsb[index];
     memcpy(svr->sbuf[index]+svr->nsb[index],buff,n);
     svr->nsb[index]+=n;
-    
-    rtksvrunlock(svr);
 }
 /* write solution to output stream -------------------------------------------*/
 static void writesol(rtksvr_t *svr, int index)
@@ -111,16 +108,20 @@ static void writesol(rtksvr_t *svr, int index)
             n=outsols(buff,&svr->rtk.sol,svr->rtk.rb,svr->solopt+i);
         }
         strwrite(svr->stream+i+3,buff,n);
-        
+
         /* save output buffer */
+        rtksvrlock(svr);
         saveoutbuf(svr,buff,n,i);
-        
+        rtksvrunlock(svr);
+
         /* output extended solution */
         n=outsolexs(buff,&svr->rtk.sol,svr->rtk.ssat,svr->solopt+i);
         strwrite(svr->stream+i+3,buff,n);
         
         /* save output buffer */
+        rtksvrlock(svr);
         saveoutbuf(svr,buff,n,i);
+        rtksvrunlock(svr);
     }
     /* output solution to monitor port */
     if (svr->moni) {

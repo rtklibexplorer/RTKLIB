@@ -2450,7 +2450,7 @@ void MainWindow::saveNavigation(nav_t *nav)
     settings.setValue("navi/ion", str);
 
     str = "";
-    for (i = 0; i < 4; i++) str = str + QString("%1,").arg(nav->utc_gps[i], 0, 'E', 14);
+    for (i = 0; i < 8; i++) str = str + QString("%1,").arg(nav->utc_gps[i], 0, 'E', 14);
     settings.setValue("navi/utc", str);
 }
 // set tray icon ------------------------------------------------------------

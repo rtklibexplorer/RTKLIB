@@ -195,10 +195,11 @@ static int decode_type17(rtcm_t *rtcm)
 /* decode type 18: rtk uncorrected carrier-phase -----------------------------*/
 static int decode_type18(rtcm_t *rtcm)
 {
-    gtime_t time;
-    double usec,cp,tt;
+    double usec,cp;
     int i=48,index,freq,sync=1,code,sys,prn,sat,loss;
     
+    if (rtcm->obsflag) rtcm->obs.n = rtcm->obsflag = 0;
+
     trace(4,"decode_type18: len=%d\n",rtcm->len);
     
     if (i+24<=rtcm->len*8) {
@@ -215,7 +216,9 @@ static int decode_type18(rtcm_t *rtcm)
     }
     freq>>=1;
     
-    while (i+48<=rtcm->len*8&&rtcm->obs.n<MAXOBS) {
+    gtime_t rtime = timeadd(rtcm->time, usec * 1E-6);
+
+    while (i+48<=rtcm->len*8) {
         sync=getbitu(rtcm->buff,i, 1); i+= 1;
         code=getbitu(rtcm->buff,i, 1); i+= 1;
         sys =getbitu(rtcm->buff,i, 1); i+= 1;
@@ -227,16 +230,15 @@ static int decode_type18(rtcm_t *rtcm)
             trace(2,"rtcm2 18 satellite number error: sys=%d prn=%d\n",sys,prn);
             continue;
         }
-        time=timeadd(rtcm->time,usec*1E-6);
-        if (sys) time=utc2gpst(time); /* convert glonass time to gpst */
+        gtime_t time;
+        if (sys) time=utc2gpst(rtime); /* convert glonass time to gpst */
+        else time=rtime;
         
-        tt=timediff(rtcm->obs.data[0].time,time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
+        double tt=timediff(time,rtcm->obs.data[0].time);
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,time,sat))>=0) {
             rtcm->obs.data[index].L[freq]=-cp/256.0;
-            rtcm->obs.data[index].LLI[freq]=rtcm->loss[sat-1][freq]!=loss;
+            rtcm->obs.data[index].LLI[freq]=rtcm->loss[sat-1][freq]!=loss?LLI_SLIP:0;
             rtcm->obs.data[index].code[freq]=
                 !freq?(code?CODE_L1P:CODE_L1C):(code?CODE_L2P:CODE_L2C);
             rtcm->loss[sat-1][freq]=loss;
@@ -248,12 +250,13 @@ static int decode_type18(rtcm_t *rtcm)
 /* decode type 19: rtk uncorrected pseudorange -------------------------------*/
 static int decode_type19(rtcm_t *rtcm)
 {
-    gtime_t time;
-    double usec,pr,tt;
-    int i=48,index,freq,sync=1,code,sys,prn,sat;
+    double usec,pr;
+    int i=48,freq,sync=1,code,sys,prn,sat;
     
     trace(4,"decode_type19: len=%d\n",rtcm->len);
     
+    if (rtcm->obsflag) rtcm->obs.n = rtcm->obsflag = 0;
+
     if (i+24<=rtcm->len*8) {
         freq=getbitu(rtcm->buff,i, 2); i+= 2+2;
         usec=getbitu(rtcm->buff,i,20); i+=20;
@@ -268,7 +271,7 @@ static int decode_type19(rtcm_t *rtcm)
     }
     freq>>=1;
     
-    while (i+48<=rtcm->len*8&&rtcm->obs.n<MAXOBS) {
+    while (i+48<=rtcm->len*8) {
         sync=getbitu(rtcm->buff,i, 1); i+= 1;
         code=getbitu(rtcm->buff,i, 1); i+= 1;
         sys =getbitu(rtcm->buff,i, 1); i+= 1;
@@ -279,17 +282,25 @@ static int decode_type19(rtcm_t *rtcm)
             trace(2,"rtcm2 19 satellite number error: sys=%d prn=%d\n",sys,prn);
             continue;
         }
-        time=timeadd(rtcm->time,usec*1E-6);
+        gtime_t time=timeadd(rtcm->time,usec*1E-6);
         if (sys) time=utc2gpst(time); /* convert glonass time to gpst */
         
-        tt=timediff(rtcm->obs.data[0].time,time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
-        if ((index=obsindex(&rtcm->obs,time,sat))>=0) {
-            rtcm->obs.data[index].P[freq]=pr*0.02;
-            rtcm->obs.data[index].code[freq]=
-                !freq?(code?CODE_L1P:CODE_L1C):(code?CODE_L2P:CODE_L2C);
+        double tt=timediff(time, rtcm->obs.data[0].time);
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
+        int index=obsindex(&rtcm->obs,time,sat);
+        if (index>=0) {
+            double P = pr * 0.02;
+            rtcm->obs.data[index].P[freq] = P;
+            int lcode = rtcm->obs.data[index].code[freq];
+            int pcode = !freq ? (code ? CODE_L1P : CODE_L1C) : (code ? CODE_L2P : CODE_L2C);
+            rtcm->obs.data[index].code[freq] = pcode;
+            if (lcode > 0) {
+                if (pcode != lcode) trace(2, "rtcm2 19 code mismatch Lcode=%d Pcode=%d\n", lcode, pcode);
+                double L = rtcm->obs.data[index].L[freq];
+                double lam = freq ? CLIGHT / FREQL2 : CLIGHT / FREQL1;
+                double n = floor((P / lam - L) / pow(2, 23) + 0.5);
+                rtcm->obs.data[index].L[freq] = n * pow(2, 23) + L;
+            }
         }
     }
     rtcm->obsflag=!sync;

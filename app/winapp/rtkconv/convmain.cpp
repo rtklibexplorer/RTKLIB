@@ -1067,9 +1067,9 @@ void __fastcall TMainWindow::LoadOpt(void)
 	Comment[0]			=ini->ReadString ("opt","comment0",   "");
 	Comment[1]			=ini->ReadString ("opt","comment1",   "");
 	RcvOption			=ini->ReadString ("opt","rcvoption",  "");
-	NavSys				=ini->ReadInteger("opt","navsys",	 0xD);
+	NavSys				=ini->ReadInteger("opt","navsys",	 0x2D);
 	ObsType				=ini->ReadInteger("opt","obstype",	 0xF);
-	FreqType			=ini->ReadInteger("opt","freqtype",  0x3);
+	FreqType			=ini->ReadInteger("opt","freqtype",  0x7);
 	ExSats				=ini->ReadString ("opt","exsats",	  "");
 	TraceLevel			=ini->ReadInteger("opt","tracelevel",  0);
 	RnxTime.time		=ini->ReadInteger("opt","rnxtime",	   0);

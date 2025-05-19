@@ -156,6 +156,8 @@ static const char *helptxt[]={
     "error                 : show error/warning messages",
     "option [opt]          : show option(s)",
     "set opt [val]         : set option",
+    "mark [name] [comment] : log a marker",
+    "mode ['g'|'s'|'f'|n]  : set the processing mode",
     "load [file]           : load options from file",
     "save [file]           : save options to file",
     "log [file|off]        : start/stop log to file",
@@ -1247,6 +1249,83 @@ static void cmd_set(char **args, int narg, vt_t *vt)
     }
     vt_printf(vt,"\n");
 }
+/* Mark command ------------------------------------------------------------*/
+static void cmd_mark(char **args, int narg, vt_t *vt)
+{
+  trace(3,"cmd_mark:\n");
+
+  // Remember the marker name so that it can be repeated, and default
+  // to replacement by a counter.
+  static int nmarker = 1;
+  static char markername[128] = "%r";
+  char markercomment[256] = {0};
+
+  if (narg > 1)
+    snprintf(markername, sizeof(markername), "%s", args[1]);
+  if (narg > 2)
+    snprintf(markercomment, sizeof(markercomment), "%s", args[2]);
+
+  char nmarker_str[32];
+  snprintf(nmarker_str, sizeof(nmarker_str), "%03d", nmarker);
+  nmarker++;
+  char markername_rep[1024];
+  reppath(markername, markername_rep, utc2gpst(timeget()), nmarker_str, "");
+  rtksvrmark(&svr, markername_rep, markercomment);
+
+  vt_printf(vt, "%-28s: %s %s\n", "mark", markername_rep, markercomment);
+}
+/* Mode command --------------------------------------------------------------*/
+static void cmd_mode(char **args, int narg, vt_t *vt) {
+  const char *mode[] = {"single",      "DGPS",  "kinematic",  "static",    "static-start",
+                        "moving-base", "fixed", "PPP-kinematic", "PPP-static"};
+
+  trace(3, "cmd_mode:\n");
+
+  int current_pmode = svr.rtk.opt.mode;
+
+  if (narg < 2) {
+    vt_printf(vt, "%-28s: %s\n", "positioning mode", mode[current_pmode]);
+    return;
+  }
+
+  rtksvrlock(&svr);
+  int pmode = svr.rtk.opt.mode;
+  rtksvrunlock(&svr);
+
+  if (args[1][0] == 'G' || args[1][0] == 'g') {
+    // Go
+    if (pmode == PMODE_KINEMA || pmode == PMODE_STATIC || pmode == PMODE_STATIC_START || pmode == PMODE_FIXED)
+      pmode = PMODE_KINEMA;
+    else if (pmode == PMODE_PPP_KINEMA || pmode == PMODE_PPP_STATIC || pmode == PMODE_PPP_FIXED)
+      pmode = PMODE_PPP_KINEMA;
+  } else if (args[1][0] == 'S' || args[1][0] == 's') {
+    // Stop
+    if (pmode == PMODE_KINEMA || pmode == PMODE_STATIC || pmode == PMODE_STATIC_START || pmode == PMODE_FIXED)
+      pmode = PMODE_STATIC;
+    else if (pmode == PMODE_PPP_KINEMA || pmode == PMODE_PPP_STATIC || pmode == PMODE_PPP_FIXED)
+      pmode = PMODE_PPP_KINEMA;
+  } else if (args[1][0] == 'F' || args[1][0] == 'f') {
+    // Fixed
+    if (pmode == PMODE_KINEMA || pmode == PMODE_STATIC || pmode == PMODE_STATIC_START || pmode == PMODE_FIXED)
+      pmode = PMODE_FIXED;
+    else if (pmode == PMODE_PPP_KINEMA || pmode == PMODE_PPP_STATIC || pmode == PMODE_PPP_FIXED)
+      pmode = PMODE_PPP_FIXED;
+  } else if (sscanf(args[1], "%d", &pmode) < 1) {
+    vt_printf(vt, "invalid processing mode: %s\n", args[1]);
+    return;
+  }
+
+  if (pmode < PMODE_SINGLE || pmode > PMODE_PPP_FIXED) {
+    vt_printf(vt, "unexpected processing mode: %d\n", pmode);
+    return;
+  }
+
+  rtksvrlock(&svr);
+  svr.rtk.opt.mode = pmode;
+  rtksvrunlock(&svr);
+
+  vt_printf(vt, "%-28s: %s\n", "positioning mode", mode[pmode]);
+}
 /* load command --------------------------------------------------------------*/
 static void cmd_load(char **args, int narg, vt_t *vt)
 {
@@ -1341,8 +1420,8 @@ static void *con_thread(void *arg)
 {
     const char *cmds[]={
         "start","stop","restart","solution","status","satellite","observ",
-        "navidata","stream","ssr","error","option","set","load","save","log",
-        "help","?","exit","shutdown",""
+        "navidata","stream","ssr","error","option","set",
+        "mark","mode","load","save","log","help","?","exit","shutdown",""
     };
     con_t *con=(con_t *)arg;
     int i,j,narg;
@@ -1401,15 +1480,17 @@ static void *con_thread(void *arg)
             case 10: cmd_error    (args,narg,con->vt); break;
             case 11: cmd_option   (args,narg,con->vt); break;
             case 12: cmd_set      (args,narg,con->vt); break;
-            case 13: cmd_load     (args,narg,con->vt); break;
-            case 14: cmd_save     (args,narg,con->vt); break;
-            case 15: cmd_log      (args,narg,con->vt); break;
-            case 16: cmd_help     (args,narg,con->vt); break;
-            case 17: cmd_help     (args,narg,con->vt); break;
-            case 18: /* exit */
+            case 13: cmd_mark     (args,narg,con->vt); break;
+            case 14: cmd_mode     (args,narg,con->vt); break;
+            case 15: cmd_load     (args,narg,con->vt); break;
+            case 16: cmd_save     (args,narg,con->vt); break;
+            case 17: cmd_log      (args,narg,con->vt); break;
+            case 18: cmd_help     (args,narg,con->vt); break;
+            case 19: cmd_help     (args,narg,con->vt); break;
+            case 20: /* exit */
                 if (con->vt->type) con->state=0;
                 break;
-            case 19: /* shutdown */
+            case 21: /* shutdown */
                 if (!strcmp(args[0],"shutdown")) {
                     vt_printf(con->vt,"rtk server shutdown ...\n");
                     sleepms(1000);
@@ -1633,6 +1714,15 @@ static void deamonise(void)
 *       Set the value of a processing option to val. With out option val,
 *       prompt message is shown to input the value. The change of the 
 *       processing option is not enabled before RTK server is restarted.
+*
+*     mark [name] [comment]
+*       Log a marker.
+*
+*     mode ['g'|'s'|'f'|n]
+*       Set the processing mode. Either 'g' or 'go' for kinematic mode,
+*       's' or 'stop' for static mode or 'f' or 'fixed' for fixed mode.
+*       An internal mode number is also accepted but not all mode changes
+*       are smoothly handled.
 *
 *     load [file]
 *       Load processing options from file. Without option, default file

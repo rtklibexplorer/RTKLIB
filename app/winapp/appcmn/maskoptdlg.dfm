@@ -11,10 +11,8 @@ object MaskOptDialog: TMaskOptDialog
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poOwnerFormCenter
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object Label2: TLabel
     Left = 45
@@ -95,7 +93,7 @@ object MaskOptDialog: TMaskOptDialog
   end
   object BtnOk: TButton
     Left = 210
-    Top = 115
+    Top = 155
     Width = 73
     Height = 27
     Caption = '&OK'
@@ -105,7 +103,7 @@ object MaskOptDialog: TMaskOptDialog
   end
   object BtCcancel: TButton
     Left = 289
-    Top = 115
+    Top = 155
     Width = 73
     Height = 27
     Caption = '&Cancel'
@@ -390,5 +388,92 @@ object MaskOptDialog: TMaskOptDialog
     Caption = 'Base Station'
     TabOrder = 6
     OnClick = MaskEna1Click
+  end
+  object Panel4: TPanel
+    Left = 0
+    Top = 115
+    Width = 366
+    Height = 22
+    BevelOuter = bvNone
+    TabOrder = 7
+    object Label15: TLabel
+      Left = 2
+      Top = 2
+      Width = 11
+      Height = 13
+      Caption = 'L6'
+    end
+    object Mask_4_1: TEdit
+      Left = 35
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 0
+      Text = '0'
+    end
+    object Mask_4_2: TEdit
+      Left = 71
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 1
+      Text = '0'
+    end
+    object Mask_4_3: TEdit
+      Left = 107
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 2
+      Text = '0'
+    end
+    object Mask_4_4: TEdit
+      Left = 144
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 3
+      Text = '0'
+    end
+    object Mask_4_5: TEdit
+      Left = 180
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 4
+      Text = '0'
+    end
+    object Mask_4_6: TEdit
+      Left = 216
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 5
+      Text = '0'
+    end
+    object Mask_4_7: TEdit
+      Left = 253
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 6
+      Text = '0'
+    end
+    object Mask_4_8: TEdit
+      Left = 289
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 7
+      Text = '0'
+    end
+    object Mask_4_9: TEdit
+      Left = 325
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 8
+      Text = '0'
+    end
   end
 end

@@ -241,6 +241,7 @@ __published:
     TEdit *ValidThresARMax;
 	TEdit *DopThres;
 	TEdit *MeasErrR5;
+	TEdit *MeasErrR6;
 	TLabel *Label12;
 	TEdit *MeasErr6;
 	TEdit *MeasErr8;

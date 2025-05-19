@@ -271,6 +271,8 @@ static int decode_head1001(rtcm_t *rtcm, int *sync)
     char *msg,tstr[40];
     int i=24,staid,nsat,type;
     
+    if (rtcm->obsflag) rtcm->obs.n = rtcm->obsflag = 0;
+
     type=getbitu(rtcm->buff,i,12); i+=12;
     
     if (i+52<=rtcm->len*8) {
@@ -313,7 +315,7 @@ static int decode_type1002(rtcm_t *rtcm)
     
     if ((nsat=decode_head1001(rtcm,&sync))<0) return -1;
     
-    for (j=0;j<nsat&&rtcm->obs.n<MAXOBS&&i+74<=rtcm->len*8;j++) {
+    for (j=0;j<nsat&&i+74<=rtcm->len*8;j++) {
         prn  =getbitu(rtcm->buff,i, 6); i+= 6;
         code =getbitu(rtcm->buff,i, 1); i+= 1;
         pr1  =getbitu(rtcm->buff,i,24); i+=24;
@@ -332,9 +334,7 @@ static int decode_type1002(rtcm_t *rtcm)
             continue;
         }
         tt=timediff(rtcm->obs.data[0].time,rtcm->time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,rtcm->time,sat))<0) continue;
         pr1=pr1*0.02+amb*PRUNIT_GPS;
         rtcm->obs.data[index].P[0]=pr1;
@@ -367,7 +367,7 @@ static int decode_type1004(rtcm_t *rtcm)
     
     if ((nsat=decode_head1001(rtcm,&sync))<0) return -1;
     
-    for (j=0;j<nsat&&rtcm->obs.n<MAXOBS&&i+125<=rtcm->len*8;j++) {
+    for (j=0;j<nsat&&i+125<=rtcm->len*8;j++) {
         prn  =getbitu(rtcm->buff,i, 6); i+= 6;
         code1=getbitu(rtcm->buff,i, 1); i+= 1;
         pr1  =getbitu(rtcm->buff,i,24); i+=24;
@@ -391,9 +391,7 @@ static int decode_type1004(rtcm_t *rtcm)
             continue;
         }
         tt=timediff(rtcm->obs.data[0].time,rtcm->time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,rtcm->time,sat))<0) continue;
         pr1=pr1*0.02+amb*PRUNIT_GPS;
         rtcm->obs.data[index].P[0]=pr1;
@@ -579,6 +577,8 @@ static int decode_head1009(rtcm_t *rtcm, int *sync)
     char *msg,tstr[40];
     int i=24,staid,nsat,type;
     
+    if (rtcm->obsflag) rtcm->obs.n = rtcm->obsflag = 0;
+
     type=getbitu(rtcm->buff,i,12); i+=12;
     
     if (i+49<=rtcm->len*8) {
@@ -621,7 +621,7 @@ static int decode_type1010(rtcm_t *rtcm)
     
     if ((nsat=decode_head1009(rtcm,&sync))<0) return -1;
     
-    for (j=0;j<nsat&&rtcm->obs.n<MAXOBS&&i+79<=rtcm->len*8;j++) {
+    for (j=0;j<nsat&&i+79<=rtcm->len*8;j++) {
         prn  =getbitu(rtcm->buff,i, 6); i+= 6;
         code =getbitu(rtcm->buff,i, 1); i+= 1;
         fcn  =getbitu(rtcm->buff,i, 5); i+= 5; /* fcn+7 */
@@ -638,9 +638,7 @@ static int decode_type1010(rtcm_t *rtcm)
             rtcm->nav.glo_fcn[prn-1]=fcn-7+8; /* fcn+8 */
         }
         tt=timediff(rtcm->obs.data[0].time,rtcm->time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,rtcm->time,sat))<0) continue;
         pr1=pr1*0.02+amb*PRUNIT_GLO;
         rtcm->obs.data[index].P[0]=pr1;
@@ -673,7 +671,7 @@ static int decode_type1012(rtcm_t *rtcm)
     
     if ((nsat=decode_head1009(rtcm,&sync))<0) return -1;
     
-    for (j=0;j<nsat&&rtcm->obs.n<MAXOBS&&i+130<=rtcm->len*8;j++) {
+    for (j=0;j<nsat&&i+130<=rtcm->len*8;j++) {
         prn  =getbitu(rtcm->buff,i, 6); i+= 6;
         code1=getbitu(rtcm->buff,i, 1); i+= 1;
         fcn  =getbitu(rtcm->buff,i, 5); i+= 5; /* fcn+7 */
@@ -695,9 +693,7 @@ static int decode_type1012(rtcm_t *rtcm)
             rtcm->nav.glo_fcn[prn-1]=fcn-7+8; /* fcn+8 */
         }
         tt=timediff(rtcm->obs.data[0].time,rtcm->time);
-        if (rtcm->obsflag||fabs(tt)>1E-9) {
-            rtcm->obs.n=rtcm->obsflag=0;
-        }
+        if (fabs(tt)>1E-9) rtcm->obs.n=rtcm->obsflag=0;
         if ((index=obsindex(&rtcm->obs,rtcm->time,sat))<0) continue;
         pr1=pr1*0.02+amb*PRUNIT_GLO;
         rtcm->obs.data[index].P[0]=pr1;
@@ -1433,7 +1429,7 @@ static int decode_type1042(rtcm_t *rtcm)
     eph.ttr=rtcm->time;
     eph.A=sqrtA*sqrtA;
     if (!strstr(rtcm->opt,"-EPHALL")) {
-        if (timediff(eph.toe,rtcm->nav.eph[sat-1].toe)==0.0&&
+        if (fabs(timediff(eph.toe,rtcm->nav.eph[sat-1].toe)) < 1.0 &&
             eph.iode==rtcm->nav.eph[sat-1].iode&&
             eph.iodc==rtcm->nav.eph[sat-1].iodc) return 0; /* unchanged */
     }
@@ -2117,6 +2113,8 @@ static int decode_msm_head(rtcm_t *rtcm, int sys, int *sync, int *iod,
     char *msg,tstr[40];
     int i=24,j,dow,mask,staid,type,ncell=0;
     
+    if (rtcm->obsflag) rtcm->obs.n = rtcm->obsflag = 0;
+
     type=getbitu(rtcm->buff,i,12); i+=12;
     
     *h=h0;

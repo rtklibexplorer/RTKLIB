@@ -605,8 +605,11 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
     if (nf>=6) opt->freqtype|=FREQTYPE_L6;
     if (nf>=7) opt->freqtype|=FREQTYPE_ALL;
     
-    if (!opt->trtcm.time) {
-        get_filetime(*ifile,&opt->trtcm);
+    if (opt->trtcm.time == 0) {
+        // Use the start or end time if supplied. Otherwise use the file time.
+        if (opt->ts.time != 0) opt->trtcm = opt->ts;
+        else if (opt->te.time != 0) opt->trtcm = opt->te;
+        else get_filetime(*ifile, &opt->trtcm);
     }
     if (*fmt) {
         if      (!strcmp(fmt,"rtcm2")) format=STRFMT_RTCM2;

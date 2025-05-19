@@ -1368,7 +1368,7 @@
         </widget>
        </item>
        <item row="8" column="3">
-        <widget class="QCheckBox" name="C35">
+        <widget class="QCheckBox" name="C34">
          <property name="toolTip">
           <string>D+P</string>
          </property>

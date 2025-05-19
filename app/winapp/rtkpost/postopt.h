@@ -237,6 +237,7 @@ __published:
     TEdit *ValidThresARMin;
     TEdit *ValidThresARMax;
     TEdit *MeasErrR5;
+    TEdit *MeasErrR6;
     TEdit *MeasErr8;
     TLabel *Label51;
     TEdit *MeasErr7;

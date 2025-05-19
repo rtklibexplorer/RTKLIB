@@ -58,6 +58,7 @@ object OptDialog: TOptDialog
     ActivePage = TabSheet2
     Align = alTop
     TabOrder = 4
+    ExplicitWidth = 407
     object TabSheet1: TTabSheet
       Caption = 'Setting&1'
       object Label3: TLabel
@@ -1127,7 +1128,7 @@ object OptDialog: TOptDialog
         object MeasErrR1: TEdit
           Left = 242
           Top = 12
-          Width = 47
+          Width = 36
           Height = 21
           TabOrder = 0
           Text = '100.0'
@@ -1141,7 +1142,7 @@ object OptDialog: TOptDialog
           Text = '0.003'
         end
         object MeasErr3: TEdit
-          Left = 321
+          Left = 318
           Top = 35
           Width = 73
           Height = 21
@@ -1157,19 +1158,27 @@ object OptDialog: TOptDialog
           Text = '0.000'
         end
         object MeasErrR2: TEdit
-          Left = 295
+          Left = 279
           Top = 12
-          Width = 50
+          Width = 36
           Height = 21
           TabOrder = 1
           Text = '100.0'
         end
         object MeasErrR5: TEdit
-          Left = 349
+          Left = 318
           Top = 12
-          Width = 45
+          Width = 34
           Height = 21
           TabOrder = 5
+          Text = '100.0'
+        end
+        object MeasErrR6: TEdit
+          Left = 355
+          Top = 12
+          Width = 36
+          Height = 21
+          TabOrder = 6
           Text = '100.0'
         end
       end
@@ -1266,7 +1275,7 @@ object OptDialog: TOptDialog
         Text = '0'
       end
       object MeasErr6: TEdit
-        Left = 324
+        Left = 321
         Top = 79
         Width = 73
         Height = 21
@@ -1965,7 +1974,7 @@ object OptDialog: TOptDialog
         Caption = 'Solution Font'
       end
       object FontLabel2: TLabel
-        Left = 259
+        Left = 253
         Top = 188
         Width = 80
         Height = 18
@@ -2038,7 +2047,7 @@ object OptDialog: TOptDialog
         Caption = 'Panel Font'
       end
       object FontLabel1: TLabel
-        Left = 259
+        Left = 253
         Top = 164
         Width = 80
         Height = 18

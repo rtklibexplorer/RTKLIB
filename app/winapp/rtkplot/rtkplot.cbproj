@@ -113,11 +113,11 @@
         <DCC_ResourcePath>..\..\extlex;..\..\qzslex;..\..\src\qzsext;..\appcmn;..\..\src\rcv;..\..\src;..\rtkpost;..\src;C:\Documents and Settings\TTAKA\My Documents\Borland Studio Projects;D:\proj\rtklib_2.1\gui;$(DCC_ResourcePath)</DCC_ResourcePath>
         <DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
         <BCC_IncludePath>$(BDS)\include;..\..\src;..\appcmn;$(BCC_IncludePath)</BCC_IncludePath>
-        <BCC_Defines>WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=4;NEXOBS=3;$(BCC_Defines)</BCC_Defines>
+        <BCC_Defines>WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NFREQ=6;NEXOBS=3;$(BCC_Defines)</BCC_Defines>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
-        <TASM_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=4;$(TASM_Defines)</TASM_Defines>
-        <BRCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=4;$(BRCC_Defines)</BRCC_Defines>
+        <TASM_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=6;$(TASM_Defines)</TASM_Defines>
+        <BRCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;NFREQ=6;$(BRCC_Defines)</BRCC_Defines>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <OutputExt>exe</OutputExt>

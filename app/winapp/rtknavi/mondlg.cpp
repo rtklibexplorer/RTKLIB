@@ -463,7 +463,13 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 				  rtk.opt.snrmask.mask[2][0],rtk.opt.snrmask.mask[2][1],rtk.opt.snrmask.mask[2][2],
 				  rtk.opt.snrmask.mask[2][3],rtk.opt.snrmask.mask[2][4],rtk.opt.snrmask.mask[2][5],
 				  rtk.opt.snrmask.mask[2][6],rtk.opt.snrmask.mask[2][7],rtk.opt.snrmask.mask[2][8]);
-	
+
+	Tbl->Cells[0][i  ]="SNR Mask L6 (dBHz)";
+	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
+		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
+				  rtk.opt.snrmask.mask[3][0],rtk.opt.snrmask.mask[3][1],rtk.opt.snrmask.mask[3][2],
+				  rtk.opt.snrmask.mask[3][3],rtk.opt.snrmask.mask[3][4],rtk.opt.snrmask.mask[3][5],
+				  rtk.opt.snrmask.mask[3][6],rtk.opt.snrmask.mask[3][7],rtk.opt.snrmask.mask[3][8]);
 	Tbl->Cells[0][i  ]="Rec Dynamic/Earth Tides Correction";
 	Tbl->Cells[1][i++]=s.sprintf("%s, %s",rtk.opt.dynamics?"ON":"OFF",rtk.opt.tidecorr?"ON":"OFF");
 	

@@ -1119,7 +1119,7 @@ object OptDialog: TOptDialog
       end
       object GroupBox3: TGroupBox
         Left = 3
-        Top = 0
+        Top = 3
         Width = 397
         Height = 160
         Caption = 'Measurement Errors (1-sigma)'
@@ -1127,9 +1127,9 @@ object OptDialog: TOptDialog
         object Label6: TLabel
           Left = 35
           Top = 16
-          Width = 194
+          Width = 172
           Height = 13
-          Caption = 'Code/Carrier-Phase Error Ratio L1/L2/L5'
+          Caption = 'Code/Phase Error Ratio L1/L2/L5/L6'
         end
         object Label7: TLabel
           Left = 35
@@ -1168,8 +1168,8 @@ object OptDialog: TOptDialog
         end
         object MeasErrR1: TEdit
           Left = 246
-          Top = 14
-          Width = 50
+          Top = 13
+          Width = 36
           Height = 21
           TabOrder = 0
           Text = '100.0'
@@ -1199,17 +1199,17 @@ object OptDialog: TOptDialog
           Text = '0.000'
         end
         object MeasErrR2: TEdit
-          Left = 296
-          Top = 14
-          Width = 49
+          Left = 284
+          Top = 13
+          Width = 36
           Height = 21
           TabOrder = 4
           Text = '100.0'
         end
         object MeasErrR5: TEdit
-          Left = 344
-          Top = 14
-          Width = 50
+          Left = 321
+          Top = 13
+          Width = 36
           Height = 21
           TabOrder = 5
           Text = '100.0'
@@ -1245,6 +1245,14 @@ object OptDialog: TOptDialog
           Height = 21
           TabOrder = 9
           Text = '0.000'
+        end
+        object MeasErrR6: TEdit
+          Left = 358
+          Top = 13
+          Width = 36
+          Height = 21
+          TabOrder = 10
+          Text = '100.0'
         end
       end
       object GroupBox4: TGroupBox

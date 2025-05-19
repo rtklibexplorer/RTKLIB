@@ -2443,19 +2443,19 @@ void __fastcall TMainForm::LoadOpt(void)
         }
     }
     PrcOpt.mode     =ini->ReadInteger("prcopt", "mode",            2);
-    PrcOpt.nf       =ini->ReadInteger("prcopt", "nf",              2);
+    PrcOpt.nf       =ini->ReadInteger("prcopt", "nf",              3);
     PrcOpt.elmin    =ini->ReadFloat  ("prcopt", "elmin",    15.0*D2R);
     PrcOpt.snrmask.ena[0]=ini->ReadInteger("prcopt","snrmask_ena1",0);
     PrcOpt.snrmask.ena[1]=ini->ReadInteger("prcopt","snrmask_ena2",0);
     for (i=0;i<NFREQ;i++) for (j=0;j<9;j++) {
         PrcOpt.snrmask.mask[i][j]=
-            ini->ReadFloat("prcopt",s.sprintf("snrmask_%d_%d",i+1,j+1),0.0);
+            ini->ReadFloat("prcopt",s.sprintf("snrmask_%d_%d",i+1,j+1),35.0);
     }
     PrcOpt.dynamics =ini->ReadInteger("prcopt", "dynamics",        1);
     PrcOpt.tidecorr =ini->ReadInteger("prcopt", "tidecorr",        0);
     PrcOpt.modear   =ini->ReadInteger("prcopt", "modear",          3);
     PrcOpt.glomodear=ini->ReadInteger("prcopt", "glomodear",       3);
-    PrcOpt.bdsmodear=ini->ReadInteger("prcopt", "bdsmodear",       0);
+    PrcOpt.bdsmodear=ini->ReadInteger("prcopt", "bdsmodear",       1);
     PrcOpt.maxout   =ini->ReadInteger("prcopt", "maxout",         20);
     PrcOpt.minlock  =ini->ReadInteger("prcopt", "minlock",         0);
     PrcOpt.minfix   =ini->ReadInteger("prcopt", "minfix",         20);
@@ -2469,6 +2469,8 @@ void __fastcall TMainForm::LoadOpt(void)
     PrcOpt.niter    =ini->ReadInteger("prcopt", "niter",           1);
     PrcOpt.eratio[0]=ini->ReadFloat  ("prcopt", "eratio0",     300.0);
     PrcOpt.eratio[1]=ini->ReadFloat  ("prcopt", "eratio1",     300.0);
+    PrcOpt.eratio[2]=ini->ReadFloat  ("prcopt", "eratio2",     300.0);
+    PrcOpt.eratio[3]=ini->ReadFloat  ("prcopt", "eratio3",     300.0);
     PrcOpt.err[1]   =ini->ReadFloat  ("prcopt", "err1",        0.003);
     PrcOpt.err[2]   =ini->ReadFloat  ("prcopt", "err2",        0.003);
     PrcOpt.err[3]   =ini->ReadFloat  ("prcopt", "err3",          0.0);
@@ -2501,7 +2503,7 @@ void __fastcall TMainForm::LoadOpt(void)
     PrcOpt.syncsol  =ini->ReadInteger("prcopt", "syncsol",          0);
     PrcOpt.arfilter =ini->ReadInteger("prcopt", "arfilter",         1);
     ExSats          =ini->ReadString ("prcopt", "exsats",          "");
-    PrcOpt.navsys   =ini->ReadInteger("prcopt", "navsys",SYS_GPS|SYS_GLO);
+    PrcOpt.navsys   =ini->ReadInteger("prcopt", "navsys",SYS_GPS|SYS_GLO|SYS_GAL|SYS_CMP);
     PrcOpt.posopt[0]=ini->ReadInteger("prcopt", "posopt1",         0);
     PrcOpt.posopt[1]=ini->ReadInteger("prcopt", "posopt2",         0);
     PrcOpt.posopt[2]=ini->ReadInteger("prcopt", "posopt3",         0);
@@ -2733,6 +2735,8 @@ void __fastcall TMainForm::SaveOpt(void)
     ini->WriteInteger("prcopt", "niter",      PrcOpt.niter       );
     ini->WriteFloat  ("prcopt", "eratio0",    PrcOpt.eratio[0]   );
     ini->WriteFloat  ("prcopt", "eratio1",    PrcOpt.eratio[1]   );
+    ini->WriteFloat  ("prcopt", "eratio2",    PrcOpt.eratio[2]   );
+    ini->WriteFloat  ("prcopt", "eratio3",    PrcOpt.eratio[3]   );
     ini->WriteFloat  ("prcopt", "err1",       PrcOpt.err[1]      );
     ini->WriteFloat  ("prcopt", "err2",       PrcOpt.err[2]      );
     ini->WriteFloat  ("prcopt", "err3",       PrcOpt.err[3]      );

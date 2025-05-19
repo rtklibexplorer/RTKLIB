@@ -157,15 +157,6 @@ typedef struct {                        /* signal index type */
     double shift[MAXOBSTYPE];           /* phase shift (cycle) */
 } sigind_t;
 
-/* set string without tail space ---------------------------------------------*/
-static void setstr(char *dst, const char *src, int n)
-{
-    char *p=dst;
-    const char *q=src;
-    while (*q&&q<src+n) *p++=*q++;
-    *p--='\0';
-    while (p>=dst&&*p==' ') *p--='\0';
-}
 /* adjust time considering week handover -------------------------------------*/
 static gtime_t adjweek(gtime_t t, gtime_t t0)
 {
