@@ -98,15 +98,15 @@ static void ekf_pred(ekf_t *ekf, double *F, int ix, int nx)
     Q=mat(nx,ekf->nx);
     
     /* x(i)=F*x(i) */
-    matmul("NN",nx,1,nx,1.0,F,ekf->x+ix,0.0,Q);
+    matmul("NN",nx,1,nx,F,ekf->x+ix,Q);
     matcpy(ekf->x+ix,Q,nx,1);
     
     /* P(i,:)=F*P(i,:); P(:,i)=P(:,i)*F' */
     for (i=0;i<ekf->nx;i++) {
-        matmul("NN",nx,1,nx,1.0,F,ekf->P+ekf->nx*i+ix,0.0,Q);
+        matmul("NN",nx,1,nx,F,ekf->P+ekf->nx*i+ix,Q);
         matcpy(ekf->P+ekf->nx*i+ix,Q,nx,1);
     }
-    matmul("NT",ekf->nx,nx,nx,1.0,ekf->P+ekf->nx*ix,F,0.0,Q);
+    matmul("NT",ekf->nx,nx,nx,ekf->P+ekf->nx*ix,F,Q);
     matcpy(ekf->P+ekf->nx*ix,Q,ekf->nx,nx);
     
     free(Q);
