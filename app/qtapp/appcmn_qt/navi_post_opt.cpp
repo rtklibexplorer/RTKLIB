@@ -909,6 +909,17 @@ void OptDialog::load(const QString &file)
     getsysopts(&prcopt, &solopt, &filopt);
     proxyAddress = proxyaddr;
 
+    if (options == NaviOptions) {
+      ui->sBServerCycle->setValue(serverCycle);
+      ui->sBTimeoutTime->setValue(timeoutTime);
+      ui->sBReconnectTime->setValue(reconnectTime);
+      ui->sBNmeaCycle->setValue(nmeaCycle);
+      ui->sBServerBufferSize->setValue(serverBufferSize);
+      ui->cBNavSelect->setCurrentIndex(navSelect);
+      ui->lEProxyAddress->setText(proxyaddr);
+      ui->sBFileSwapMargin->setValue(fileSwapMargin);
+    }
+
     ui->sBSbasSatellite->setValue(prcopt.sbassatsel);
 
     ui->cBPositionMode->setCurrentIndex(prcopt.mode);

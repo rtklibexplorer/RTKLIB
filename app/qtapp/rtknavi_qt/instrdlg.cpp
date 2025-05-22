@@ -36,6 +36,7 @@ InputStrDialog::InputStrDialog(QWidget *parent)
         noFormats++;
     }
     ui->cBFormat3->addItem(tr("SP3"));
+    ui->cBFormat3->addItem(tr("CLK"));
 
     cmdOptDialog = new CmdOptDialog(this);
     rcvOptDialog = new RcvOptDialog(this);
