@@ -14,7 +14,7 @@ project(rtklib LANGUAGES C CXX VERSION 2.4.3)
 option(IERS_MODEL "Use Earth models from IERS" OFF)
 
 # configure rtklib
-add_definitions(-DENAGLO -DENAQZS -DENACMP -DENAGAL -DENAIRN -DNFREQ=3 -DNEXOBS=3 -DTRACE -DSVR_REUSEADDR)
+add_definitions(-DENAGLO -DENAQZS -DENACMP -DENAGAL -DENAIRN -DNFREQ=4 -DNEXOBS=3 -DTRACE -DSVR_REUSEADDR)
 
 
 # 3rd party libs
