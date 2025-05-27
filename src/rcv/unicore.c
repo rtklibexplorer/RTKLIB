@@ -497,14 +497,12 @@ static int decode_bdsephb(raw_t* raw)
 {
     eph_t eph = { 0 };
     uint8_t* p = raw->buff + HLEN;
-    double ura;
-    int prn, sat, toc;
 
     if (raw->len < HLEN + 232) {
         trace(2, "unicore bdsephb length error: len=%d\n", raw->len);
         return -1;
     }
-    prn = U4(p);   p += 4;
+    int prn = U4(p);   p += 4;
     double tow = R8(p); p += 8;
     (void)tow;
     eph.svh = U4(p); p += 4;
@@ -532,7 +530,7 @@ static int decode_bdsephb(raw_t* raw)
     eph.OMGd = R8(p);   p += 8;
 
     eph.iodc = U4(p); p += 4;
-    toc = R8(p);   p += 8;
+    double toc = R8(p);   p += 8;
 
     eph.tgd[0] = R8(p);   p += 8; /* TGD1 for B1 (s) */
     eph.tgd[1] = R8(p);   p += 8; /* TGD2 for B2 (s) */
@@ -545,10 +543,10 @@ static int decode_bdsephb(raw_t* raw)
     (void)as;
     double N = R8(p);   p += 8;
     (void)N;
-    ura = R8(p);   p += 8;
+    double ura = R8(p);   p += 8;
 
-
-    if (!(sat = satno(SYS_CMP, prn))) {
+    int sat = satno(SYS_CMP, prn);
+    if (!sat) {
         trace(2, "unicore bdsephb satellite error: prn=%d\n", prn);
         return -1;
     }
