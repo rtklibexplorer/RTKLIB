@@ -216,7 +216,7 @@ object OptDialog: TOptDialog
       object DynamicModel: TComboBox
         Left = 248
         Top = 92
-        Width = 75
+        Width = 45
         Height = 21
         Style = csDropDownList
         ItemIndex = 0
@@ -228,9 +228,9 @@ object OptDialog: TOptDialog
           'ON')
       end
       object TideCorr: TComboBox
-        Left = 325
+        Left = 295
         Top = 92
-        Width = 75
+        Width = 105
         Height = 21
         Style = csDropDownList
         ItemIndex = 0
@@ -238,8 +238,13 @@ object OptDialog: TOptDialog
         Text = 'OFF'
         Items.Strings = (
           'OFF'
-          'Solid'
-          'Solid/OTL')
+          'Solid Earth Tide'
+          'Ocean Tide Loading'
+          'Solid Earth + OTL'
+          'Solid Pole'
+          'Solid Earth + Pole'
+          'OTL + Solid Pole'
+          'Solid + OTL + Pole')
       end
       object IonoOpt: TComboBox
         Left = 248
