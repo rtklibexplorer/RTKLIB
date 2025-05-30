@@ -1647,6 +1647,17 @@ extern void matprint(const double A[], int n, int m, int p, int q)
 {
     matfprint(A,n,m,p,q,stdout);
 }
+
+/* Check that the index is within the buffer size, generating an error
+ * If not. See the macro RTKBOUNDSCHECK(). */
+extern void rtkboundscheck(const char *func, int line, const void *buff, size_t size,
+                           size_t index) {
+  if (index > size) {
+    fatalerr("rtk out of bound in %s line %d for buffer %p of size %zu at index %zu\n", func, line,
+             buff, size, index);
+  }
+}
+
 /* set string without tail space ---------------------------------------------*/
 extern void setstr(char *dst, const char *src, int n)
 {

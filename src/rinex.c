@@ -821,8 +821,8 @@ static int decode_obsdata(FILE *fp, const char *opt, char *buff, double ver, int
     for (i=0;i<NFREQ+NEXOBS;i++) {
         obs->P[i]=obs->L[i]=0.0;
         obs->D[i]=obs->SNR[i]=0.0;
-        obs->LLI[i]=obs->code[i]=0;
         obs->Lstd[i]=obs->Pstd[i]=0.0;
+        obs->LLI[i]=obs->code[i]=0;
     }
 
     /* save observation data */
