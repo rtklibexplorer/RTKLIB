@@ -67,6 +67,7 @@ void ConvOptDialog::updateUi()
     ui->cBAutoPosition->setChecked(autoPosition);
     ui->cBPhaseShift->setChecked(phaseShift);
     ui->cBHalfCycle->setChecked(halfCycle);
+    ui->cBSortSats->setChecked(sortSats);
     ui->cBOutputIonoCorr->setChecked(outputIonoCorr);
     ui->cBOutputTimeCorr->setChecked(outputTimeCorr);
     ui->cBOutputLeapSecs->setChecked(outputLeapSeconds);
@@ -132,6 +133,7 @@ void ConvOptDialog::accept()
     autoPosition = ui->cBAutoPosition->isChecked();
     phaseShift = ui->cBPhaseShift->isChecked();
     halfCycle = ui->cBHalfCycle->isChecked();
+    sortSats = ui->cBSortSats->isChecked();
     outputIonoCorr = ui->cBOutputIonoCorr->isChecked();
     outputTimeCorr = ui->cBOutputTimeCorr->isChecked();
     outputLeapSeconds = ui->cBOutputLeapSecs->isChecked();
@@ -286,6 +288,7 @@ void ConvOptDialog::loadOptions(QSettings &ini)
     autoPosition = ini.value("opt/autopos", 0).toInt();
     phaseShift = ini.value("opt/phaseShift", 0).toInt();
     halfCycle = ini.value("opt/halfcyc", 0).toInt();
+    sortSats = ini.value("opt/sortsats", 0).toInt();
     outputIonoCorr = ini.value("opt/outiono", 0).toInt();
     outputTimeCorr = ini.value("opt/outtime", 0).toInt();
     outputLeapSeconds = ini.value("opt/outleaps", 0).toInt();
@@ -340,6 +343,7 @@ void ConvOptDialog::saveOptions(QSettings &ini)
     ini.setValue("opt/autopos", autoPosition);
     ini.setValue("opt/phasewhift", phaseShift);
     ini.setValue("opt/halfcyc", halfCycle);
+    ini.setValue("opt/sortsats", sortSats);
     ini.setValue("opt/outiono", outputIonoCorr);
     ini.setValue("opt/outtime", outputTimeCorr);
     ini.setValue("opt/outleaps", outputLeapSeconds);

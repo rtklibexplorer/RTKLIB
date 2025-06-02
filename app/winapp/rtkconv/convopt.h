@@ -78,6 +78,7 @@ __published:
 	TButton *BtnMask;
 	TCheckBox *Nav7;
 	TCheckBox *HalfCyc;
+	TCheckBox *SortSats;
 	TCheckBox *ChkSepNav;
 	TLabel *Label13;
 	TEdit *TimeTol;

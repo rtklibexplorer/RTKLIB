@@ -490,6 +490,16 @@
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="cBSortSats">
+        <property name="toolTip">
+         <string>Sort observations by their internal satellite number</string>
+        </property>
+        <property name="text">
+         <string>Sort Satellites</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QCheckBox" name="cBPhaseShift">
         <property name="toolTip">
          <string>Output phase shift correction</string>

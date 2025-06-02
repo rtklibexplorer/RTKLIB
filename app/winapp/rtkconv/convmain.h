@@ -205,7 +205,7 @@ public:
 	AnsiString CodeMask[7];
 	double AppPos[3],AntDel[3],TimeTol;
 	int RnxVer,RnxFile,NavSys,ObsType,FreqType,TraceLevel,EventEna;
-	int AutoPos,PhaseShift,HalfCyc,OutIono,OutTime,OutLeaps,SepNav;
+	int AutoPos,PhaseShift,HalfCyc,SortSats,OutIono,OutTime,OutLeaps,SepNav;
 	int EnaGloFcn,GloFcn[27];
 	
 	__fastcall TMainWindow(TComponent* Owner);
