@@ -121,6 +121,9 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
     for (int i=0;i<8;i++) {
         StreamC[i]=Stream[i]=Format[i]=CmdEna[i][0]=CmdEna[i][1]=CmdEna[i][2]=0;
     }
+    for (int i=0;i<3;i++) {
+        CmdEna[i][0]=CmdEna[i][1]=CmdEna[i][2]=0;
+    }
     TimeSys=SolType=PlotType1=PlotType2=FreqType1=FreqType2=0;
     TrkType1=TrkType2=0;
     TrkScale1=TrkScale2=5;

@@ -916,6 +916,7 @@ void MainWindow::convertFile()
     conversionThread->rnxopt.autopos = convOptDialog->autoPosition;
     conversionThread->rnxopt.phshift = convOptDialog->phaseShift;
     conversionThread->rnxopt.halfcyc = convOptDialog->halfCycle;
+    conversionThread->rnxopt.sortsats = convOptDialog->sortSats;
     conversionThread->rnxopt.outiono = convOptDialog->outputIonoCorr;
     conversionThread->rnxopt.outtime = convOptDialog->outputTimeCorr;
     conversionThread->rnxopt.outleaps = convOptDialog->outputLeapSeconds;

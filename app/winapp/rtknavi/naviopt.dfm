@@ -55,7 +55,7 @@ object OptDialog: TOptDialog
     Top = 0
     Width = 413
     Height = 353
-    ActivePage = TabSheet2
+    ActivePage = TabSheet1
     Align = alTop
     TabOrder = 4
     ExplicitWidth = 407
@@ -1078,10 +1078,10 @@ object OptDialog: TOptDialog
         TabOrder = 0
         object Label6: TLabel
           Left = 33
-          Top = 19
-          Width = 194
+          Top = 15
+          Width = 172
           Height = 13
-          Caption = 'Code/Carrier-Phase Error Ratio L1/L2/L5'
+          Caption = 'Code/Phase Error Ratio L1/L2/L5/L6'
         end
         object Label7: TLabel
           Left = 33
@@ -1974,7 +1974,7 @@ object OptDialog: TOptDialog
         Caption = 'Solution Font'
       end
       object FontLabel2: TLabel
-        Left = 253
+        Left = 247
         Top = 188
         Width = 80
         Height = 18
@@ -2047,7 +2047,7 @@ object OptDialog: TOptDialog
         Caption = 'Panel Font'
       end
       object FontLabel1: TLabel
-        Left = 253
+        Left = 247
         Top = 164
         Width = 80
         Height = 18

@@ -849,7 +849,7 @@ void __fastcall TMainWindow::ConvertFile(void)
 	int i,format,sat;
 	char file[1024]="",*ofile[9],ofile_[9][1024]={""},msg[256],*p;
 	char buff[256],tstr[40];
-	int RNXVER[]={210,211,212,300,301,302,303,304};
+	const int RNXVER[]={210,211,212,300,301,302,303,304,305,400,401,402};
 	FILE *fp;
 	
 	for (i=0;i<9;i++) ofile[i]=ofile_[i];
@@ -962,6 +962,7 @@ void __fastcall TMainWindow::ConvertFile(void)
 	rnxopt.autopos=AutoPos;
 	rnxopt.phshift=PhaseShift;
 	rnxopt.halfcyc=HalfCyc;
+	rnxopt.sortsats=SortSats;
 	rnxopt.outiono=OutIono;
 	rnxopt.outtime=OutTime;
 	rnxopt.outleaps=OutLeaps;
@@ -1041,7 +1042,7 @@ void __fastcall TMainWindow::LoadOpt(void)
 {
 	TIniFile *ini=new TIniFile(IniFile);
 	AnsiString opt,mask=
-        "11111111111111111111111111111111111111111111111111111111111111111111";
+        "1111111111111111111111111111111111111111111111111111111111111111111111";
 	
 	RnxVer				=ini->ReadInteger("opt","rnxver",	   7);
 	RnxFile				=ini->ReadInteger("opt","rnxfile",	   0);
@@ -1083,6 +1084,7 @@ void __fastcall TMainWindow::LoadOpt(void)
 	AutoPos				=ini->ReadInteger("opt","autopos",	   0);
 	PhaseShift			=ini->ReadInteger("opt","phaseshift",  0);
 	HalfCyc				=ini->ReadInteger("opt","halfcyc",	   0);
+	SortSats			=ini->ReadInteger("opt","sortsats",	   0);
 	OutIono				=ini->ReadInteger("opt","outiono",	   0);
 	OutTime				=ini->ReadInteger("opt","outtime",	   0);
 	OutLeaps			=ini->ReadInteger("opt","outleaps",    0);
@@ -1187,6 +1189,7 @@ void __fastcall TMainWindow::SaveOpt(void)
 	ini->WriteInteger("opt","autopos",	  AutoPos);
 	ini->WriteInteger("opt","phaseshift", PhaseShift);
 	ini->WriteInteger("opt","halfcyc",	  HalfCyc);
+	ini->WriteInteger("opt","sortsats",	  SortSats);
 	ini->WriteInteger("opt","outiono",	  OutIono);
 	ini->WriteInteger("opt","outtime",	  OutTime);
 	ini->WriteInteger("opt","outleaps",   OutLeaps);
