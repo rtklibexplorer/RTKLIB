@@ -52,7 +52,7 @@ static const char *help[]={
 "                 5:moving-base,6:fixed,7:ppp-kinematic,8:ppp-static,9:ppp-fixed) [2]",
 " -m mask   elevation mask angle (deg) [15]",
 " -sys s[,s...] nav system(s) (s=G:GPS,R:GLO,E:GAL,J:QZS,C:BDS,I:IRN) [G|R]",
-" -f freq   number of frequencies for relative mode (1:L1,2:L1+L2,3:L1+L2+L5) [2]",
+" -f freq   number of frequencies for relative mode (1 to 6) [2]",
 " -v thres  validation threshold for integer ambiguity (0.0:no AR) [3.0]",
 " -b        backward solutions [off]",
 " -c        forward/backward combined solutions [off]",

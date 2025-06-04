@@ -1080,47 +1080,47 @@ object OptDialog: TOptDialog
         Left = 3
         Top = 0
         Width = 397
-        Height = 153
+        Height = 172
         Caption = 'Measurement Errors (1-sigma)'
         TabOrder = 0
         object Label6: TLabel
           Left = 33
           Top = 16
-          Width = 172
+          Width = 160
           Height = 13
-          Caption = 'Code/Phase Error Ratio L1/L2/L5/L6'
+          Caption = 'Code/Phase Error Ratio F1 to F6'
         end
         object Label7: TLabel
           Left = 33
-          Top = 38
+          Top = 60
           Width = 164
           Height = 13
           Caption = 'Carrier-Phase Error: a+b/sinEl (m)'
         end
         object Label16: TLabel
           Left = 33
-          Top = 60
+          Top = 82
           Width = 187
           Height = 13
           Caption = 'Carrier-Phase Error: Baseline (m/10km)'
         end
         object Label64: TLabel
           Left = 33
-          Top = 82
-          Width = 185
+          Top = 104
+          Width = 140
           Height = 13
           Caption = 'Carrier Phase Error: SNR / SNR maxDb'
         end
         object Label51: TLabel
           Left = 33
-          Top = 104
+          Top = 126
           Width = 139
           Height = 13
           Caption = 'Carrier Phase Error: Rcv Errs'
         end
         object Label52: TLabel
           Left = 33
-          Top = 126
+          Top = 148
           Width = 112
           Height = 13
           Caption = 'Doppler Freq Error (Hz)'
@@ -1128,76 +1128,76 @@ object OptDialog: TOptDialog
         object MeasErrR1: TEdit
           Left = 242
           Top = 13
-          Width = 35
+          Width = 47
           Height = 21
           TabOrder = 0
           Text = '100.0'
         end
         object MeasErrR2: TEdit
-          Left = 280
+          Left = 293
           Top = 13
-          Width = 35
+          Width = 47
           Height = 21
           TabOrder = 1
           Text = '100.0'
         end
-        object MeasErrR5: TEdit
-          Left = 318
+        object MeasErrR3: TEdit
+          Left = 344
           Top = 13
-          Width = 35
+          Width = 47
           Height = 21
           TabOrder = 2
           Text = '100.0'
         end
-        object MeasErrR6: TEdit
-          Left = 356
-          Top = 13
-          Width = 35
+        object MeasErrR4: TEdit
+          Left = 242
+          Top = 35
+          Width = 47
           Height = 21
           TabOrder = 3
           Text = '100.0'
         end
-        object MeasErr2: TEdit
-          Left = 242
+        object MeasErrR5: TEdit
+          Left = 293
           Top = 35
-          Width = 73
+          Width = 47
           Height = 21
           TabOrder = 4
-          Text = '0.003'
+          Text = '100.0'
         end
-        object MeasErr3: TEdit
-          Left = 318
+        object MeasErrR6: TEdit
+          Left = 344
           Top = 35
-          Width = 73
+          Width = 47
           Height = 21
           TabOrder = 5
-          Text = '0.003'
+          Text = '100.0'
         end
-        object MeasErr4: TEdit
+        object MeasErr2: TEdit
           Left = 242
           Top = 57
           Width = 73
           Height = 21
           TabOrder = 6
-          Text = '0.000'
+          Text = '0.003'
         end
-        object MeasErr7: TEdit
+        object MeasErr3: TEdit
+          Left = 318
+          Top = 57
+          Width = 73
+          Height = 21
+          TabOrder = 7
+          Text = '0.003'
+        end
+        object MeasErr4: TEdit
           Left = 242
           Top = 79
           Width = 73
           Height = 21
-          TabOrder = 7
+          TabOrder = 8
           Text = '0.000'
         end
-        object MeasErr6: TEdit
-          Left = 318
-          Top = 79
-          Width = 73
-          Height = 21
-          TabOrder = 8
-          Text = '52'
-        end
-        object MeasErr8: TEdit
+        object MeasErr7: TEdit
           Left = 242
           Top = 101
           Width = 73
@@ -1205,18 +1205,34 @@ object OptDialog: TOptDialog
           TabOrder = 9
           Text = '0.000'
         end
-        object MeasErr5: TEdit
+        object MeasErr6: TEdit
+          Left = 318
+          Top = 101
+          Width = 73
+          Height = 21
+          TabOrder = 10
+          Text = '52'
+        end
+        object MeasErr8: TEdit
           Left = 242
           Top = 123
           Width = 73
           Height = 21
-          TabOrder = 10
+          TabOrder = 11
+          Text = '0.000'
+        end
+        object MeasErr5: TEdit
+          Left = 242
+          Top = 145
+          Width = 73
+          Height = 21
+          TabOrder = 12
           Text = '0.000'
         end
       end
       object GroupBox4: TGroupBox
         Left = 3
-        Top = 156
+        Top = 175
         Width = 397
         Height = 105
         Caption = 'Process Noises (1-sigma/sqrt(s))'
@@ -1292,14 +1308,14 @@ object OptDialog: TOptDialog
       end
       object Label29: TLabel
         Left = 37
-        Top = 274
+        Top = 290
         Width = 132
         Height = 13
         Caption = 'Satellite Clock Stability (s/s)'
       end
       object SatClkStab: TEdit
         Left = 245
-        Top = 267
+        Top = 286
         Width = 149
         Height = 21
         TabOrder = 2

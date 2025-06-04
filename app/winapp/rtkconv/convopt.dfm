@@ -421,7 +421,7 @@ object ConvOptDialog: TConvOptDialog
       Top = 14
       Width = 81
       Height = 17
-      Caption = 'L1/G1/E1/B1'
+      Caption = 'F1'
       Checked = True
       State = cbChecked
       TabOrder = 0
@@ -431,7 +431,7 @@ object ConvOptDialog: TConvOptDialog
       Top = 13
       Width = 98
       Height = 17
-      Caption = 'L2/G2/E5b/B2b'
+      Caption = 'F2'
       Checked = True
       State = cbChecked
       TabOrder = 1
@@ -441,7 +441,7 @@ object ConvOptDialog: TConvOptDialog
       Top = 12
       Width = 104
       Height = 17
-      Caption = 'L5/G3/E5a/B2a'
+      Caption = 'F3'
       State = cbChecked
       TabOrder = 2
     end
@@ -450,7 +450,7 @@ object ConvOptDialog: TConvOptDialog
       Top = 32
       Width = 77
       Height = 17
-      Caption = 'L6/E6/B3'
+      Caption = 'F4'
       State = cbChecked
       TabOrder = 4
     end
@@ -459,7 +459,7 @@ object ConvOptDialog: TConvOptDialog
       Top = 32
       Width = 70
       Height = 17
-      Caption = 'E5ab/B1C'
+      Caption = 'F5'
       State = cbChecked
       TabOrder = 5
     end
@@ -468,7 +468,7 @@ object ConvOptDialog: TConvOptDialog
       Top = 32
       Width = 43
       Height = 17
-      Caption = 'B2ab'
+      Caption = 'F6'
       State = cbChecked
       TabOrder = 3
     end

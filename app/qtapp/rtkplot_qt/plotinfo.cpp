@@ -37,7 +37,7 @@ void Plot::updateStatusBarInformation()
 // update time-information for observation-data plot ------------------------
 void Plot::updateTimeObservation()
 {
-    static QStringList legend_freqs = {" #OBS = 5 ", " 4 ", " 3 ", " 2 ", " 1", "", ""};
+    static QStringList legend_freqs = {" #OBS = 6+ ", " 5 ", " 4 ", " 3 ", " 2 ", " 1", "", ""};
     static QStringList legend_snr = {" SNR = ...45.", "..40.", "..35.", "..30.", "..25 ", "", " <25 "};
     static QStringList legend_sys = {" SYS = GPS ", "GLO ", "GAL ", "QZS ", "BDS ", "IRN ", "SBS"};
     static QStringList legend_mp = {" MP = ..0.6", "..0.3", "..0.0..", "-0.3..", "-0.6..", "", ""};
@@ -147,7 +147,7 @@ void Plot::updateTimeSolution()
 void Plot::updateInfoObservation()
 {
     static QStringList legend_dop = {" NSAT", " GDOP", " PDOP", " HDOP", " VDOP", "", ""};
-    static QStringList legend_freqs = {" #OBS = 5 ", " 4 ", " 3 ", " 2 ", " 1 ", "", ""};
+    static QStringList legend_freqs = {" #OBS = 6+ ", " 5 ", " 4 ", " 3 ", " 2 ", " 1", "", ""};
     static QStringList legend_snr = {" SNR = ...45.", "..40.", "..35.", "..30.", "..25 ", "", " <25 "};
     static QStringList legend_sys = {" SYS = GPS ", "GLO ", "GAL ", "QZS ", "BDS ", "IRN ", "SBS"};
     static QStringList legend_mp = {" MP = ..0.6", "..0.3", "..0.0..", "-0.3..", "-0.6..", "", ""};
@@ -381,14 +381,21 @@ static int _strcmp(const void *str1, const void *str2)
 void Plot::updateObservationType()
 {
     char *codes[MAXCODE + 1], *obs;
-    int i, j, n = 0, codeMask[MAXCODE + 1] = { 0 };
+    int i, j, n = 0, codeMask[MAXCODE + 1] = { 0 }, freqMask[NFREQ + NEXOBS] = {0};
 
     trace(3, "updateObservationType\n");
 
     // populate codeMask
-    for (i = 0; i < observation.n; i++)
-        for (j = 0; j < NFREQ + NEXOBS; j++)
-            codeMask[observation.data[i].code[j]] = 1;
+    for (i = 0; i < observation.n; i++) {
+      int sat = observation.data[i].sat;
+      if (sat > 0 && satelliteSelection[sat - 1]) {
+        for (j = 0; j < NFREQ + NEXOBS; j++) {
+          int code = observation.data[i].code[j];
+          codeMask[code] = 1;
+          if (code != CODE_NONE) freqMask[j] = 1;
+        }
+      }
+    }
 
     // count codes
     for (uint8_t c = 1; c <= MAXCODE; c++) {
@@ -406,9 +413,11 @@ void Plot::updateObservationType()
     ui->cBObservationTypeSNR->clear();
     ui->cBObservationType->addItem(tr("ALL"));
 
-    for (i = 0; i < NFREQ; i++) {
-        ui->cBObservationType->addItem(QStringLiteral("L%1").arg(i+1), i+1);
-        ui->cBObservationTypeSNR->addItem(QStringLiteral("L%1").arg(i+1), i+1);
+    for (i = 0; i < NFREQ + NEXOBS; i++) {
+        if (freqMask[i]) {
+          ui->cBObservationType->addItem(QStringLiteral("F%1").arg(i+1), i+1);
+          ui->cBObservationTypeSNR->addItem(QStringLiteral("F%1").arg(i+1), i+1);
+        }
     }
     for (i = 0; i < n; i++) {
         ui->cBObservationType->addItem(QStringLiteral("L%1").arg(codes[i]), QString(codes[i]));

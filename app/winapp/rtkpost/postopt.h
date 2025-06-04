@@ -230,6 +230,8 @@ __published:
     TLabel *Label48;
     TEdit *ValidThresARMin;
     TEdit *ValidThresARMax;
+    TEdit *MeasErrR3;
+    TEdit *MeasErrR4;
     TEdit *MeasErrR5;
     TEdit *MeasErrR6;
     TEdit *MeasErr8;

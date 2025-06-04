@@ -38,7 +38,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     : QDialog(parent), options(opts), ui(new Ui::OptDialog)
 {
     QString label;
-    static int freq[] = {1, 2, 5, 6, 7, 8, 9};
+    static int freq[] = {1, 2, 3, 4, 5, 6};
 
     ui->setupUi(this);
 
@@ -190,7 +190,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
                                  tr("Seven-Frequency")};
 
     for (int i = 0; i < NFREQ; i++) {
-        label = label + (i > 0 ? "+" : "") + QString("L%1").arg(freq[i]);
+        label = label + (i > 0 ? "+" : "") + QString("F%1").arg(freq[i]);
         ui->cBFrequencies->addItem(label, i);
         ui->cBFrequencies->setItemData(i, freq_tooltips.at(i) , Qt::ToolTipRole);
 	}
@@ -687,6 +687,7 @@ void OptDialog::updateOptions()
     if (ui->cBNavSys7->isChecked()) processingOptions.navsys |= SYS_IRN;
     processingOptions.elmin = ui->cBElevationMask->currentText().toDouble() * D2R;
     // snrmask: already set by calling mask dialog
+    processingOptions.snrmask = snrmask;
     processingOptions.sateph = ui->cBSatelliteEphemeris->currentIndex();
     processingOptions.modear = ui->cBAmbiguityResolution->currentIndex();
     processingOptions.glomodear = ui->cBAmbiguityResolutionGLO->currentIndex();
@@ -715,7 +716,10 @@ void OptDialog::updateOptions()
 
     processingOptions.eratio[0] = ui->sBMeasurementErrorR1->value();
     processingOptions.eratio[1] = ui->sBMeasurementErrorR2->value();
-    processingOptions.eratio[2] = ui->sBMeasurementErrorR5->value();
+    processingOptions.eratio[2] = ui->sBMeasurementErrorR3->value();
+    processingOptions.eratio[3] = ui->sBMeasurementErrorR4->value();
+    processingOptions.eratio[4] = ui->sBMeasurementErrorR5->value();
+    processingOptions.eratio[5] = ui->sBMeasurementErrorR6->value();
     processingOptions.err[0] = 0;
     processingOptions.err[1] = ui->sBMeasurementError2->value();
     processingOptions.err[2] = ui->sBMeasurementError3->value();
@@ -972,7 +976,10 @@ void OptDialog::load(const QString &file)
     current_referencePositionType = ui->cBReferencePositionType->currentIndex();
     ui->sBMeasurementErrorR1->setValue(prcopt.eratio[0]);
     ui->sBMeasurementErrorR2->setValue(prcopt.eratio[1]);
-    ui->sBMeasurementErrorR5->setValue(prcopt.eratio[2]);
+    ui->sBMeasurementErrorR3->setValue(prcopt.eratio[2]);
+    ui->sBMeasurementErrorR4->setValue(prcopt.eratio[3]);
+    ui->sBMeasurementErrorR5->setValue(prcopt.eratio[4]);
+    ui->sBMeasurementErrorR6->setValue(prcopt.eratio[5]);
     ui->sBMeasurementError2->setValue(prcopt.err[1]);
     ui->sBMeasurementError3->setValue(prcopt.err[2]);
     ui->sBMeasurementError4->setValue(prcopt.err[3]);
@@ -1146,7 +1153,10 @@ void OptDialog::save(const QString &file)
     }
     procOpts.eratio[0] = ui->sBMeasurementErrorR1->value();
     procOpts.eratio[1] = ui->sBMeasurementErrorR2->value();
-    procOpts.eratio[2] = ui->sBMeasurementErrorR5->value();
+    procOpts.eratio[2] = ui->sBMeasurementErrorR3->value();
+    procOpts.eratio[3] = ui->sBMeasurementErrorR4->value();
+    procOpts.eratio[4] = ui->sBMeasurementErrorR5->value();
+    procOpts.eratio[5] = ui->sBMeasurementErrorR6->value();
     procOpts.err[0] = 0;
     procOpts.err[1] = ui->sBMeasurementError2->value();
     procOpts.err[2] = ui->sBMeasurementError3->value();
@@ -1319,7 +1329,10 @@ void OptDialog::saveOptions(QSettings &settings)
     }
     settings.setValue("prcopt/eratio0", ui->sBMeasurementErrorR1->value());
     settings.setValue("prcopt/eratio1", ui->sBMeasurementErrorR2->value());
-    settings.setValue("prcopt/eratio5", ui->sBMeasurementErrorR5->value());
+    settings.setValue("prcopt/eratio2", ui->sBMeasurementErrorR3->value());
+    settings.setValue("prcopt/eratio3", ui->sBMeasurementErrorR4->value());
+    settings.setValue("prcopt/eratio4", ui->sBMeasurementErrorR5->value());
+    settings.setValue("prcopt/eratio5", ui->sBMeasurementErrorR6->value());
     settings.setValue("prcopt/err1", ui->sBMeasurementError2->value());
     settings.setValue("prcopt/err2", ui->sBMeasurementError3->value());
     settings.setValue("prcopt/err3", ui->sBMeasurementError4->value());
@@ -1515,7 +1528,10 @@ void OptDialog::loadOptions(QSettings &settings)
     current_referencePositionType = settings.value("setting/refpostype", 0).toInt();
     ui->sBMeasurementErrorR1->setValue(settings.value("prcopt/eratio0", 100.0).toDouble());
     ui->sBMeasurementErrorR2->setValue(settings.value("prcopt/eratio1", 100.0).toDouble());
-    ui->sBMeasurementErrorR5->setValue(settings.value("prcopt/eratio5", 100.0).toDouble());
+    ui->sBMeasurementErrorR3->setValue(settings.value("prcopt/eratio2", 100.0).toDouble());
+    ui->sBMeasurementErrorR4->setValue(settings.value("prcopt/eratio3", 100.0).toDouble());
+    ui->sBMeasurementErrorR5->setValue(settings.value("prcopt/eratio4", 100.0).toDouble());
+    ui->sBMeasurementErrorR6->setValue(settings.value("prcopt/eratio5", 100.0).toDouble());
     ui->sBMeasurementError2->setValue(settings.value("prcopt/err1", 0.003).toDouble());
     ui->sBMeasurementError3->setValue(settings.value("prcopt/err2", 0.003).toDouble());
     ui->sBMeasurementError4->setValue(settings.value("prcopt/err3", 0.0).toDouble());

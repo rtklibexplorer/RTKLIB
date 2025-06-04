@@ -1891,10 +1891,90 @@
             </property>
            </widget>
           </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="sBMeasurementErrorR1">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the ratio of standard deviations of pseudorange errors to carrier-phase errors for F1 (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-eratio1&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>300.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QDoubleSpinBox" name="sBMeasurementErrorR2">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the ratio of standard deviations of pseudorange errors to carrier-phase errors for F2 (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-eratio2&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>300.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QDoubleSpinBox" name="sBMeasurementErrorR3">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the ratio of standard deviations of pseudorange errors to carrier-phase errors for F3 (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-eratio3&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>100.000000000000000</double>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="4">
+           <widget class="QDoubleSpinBox" name="sBMeasurementErrorR4">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the ratio of standard deviations of pseudorange errors to carrier-phase errors for F4 (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-eratio4&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>100.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
            <widget class="QDoubleSpinBox" name="sBMeasurementErrorR5">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the ratio of standard deviations of pseudorange errors to carrier-phase errors for L5 (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-eratio5&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the ratio of standard deviations of pseudorange errors to carrier-phase errors for F5 (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-eratio5&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>100.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="6">
+           <widget class="QDoubleSpinBox" name="sBMeasurementErrorR6">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the ratio of standard deviations of pseudorange errors to carrier-phase errors for F6 (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-eratio6&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
              <number>1</number>
@@ -1930,38 +2010,6 @@
             </property>
             <property name="buddy">
              <cstring>sBMeasurementError4</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2" colspan="2">
-           <widget class="QDoubleSpinBox" name="sBMeasurementErrorR2">
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the ratio of standard deviations of pseudorange errors to carrier-phase errors for L2 (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-eratio2&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="decimals">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>300.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="sBMeasurementErrorR1">
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the ratio of standard deviations of pseudorange errors to carrier-phase errors for L1 (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-eratio1&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="decimals">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>300.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -2038,7 +2086,7 @@
              <bool>true</bool>
             </property>
             <property name="text">
-             <string>Code/Carrier-Phase Error Ratio &amp;L1/L2/L5</string>
+             <string>Code/Carrier-Phase Error Ratios</string>
             </property>
             <property name="buddy">
              <cstring>sBMeasurementErrorR1</cstring>
@@ -3488,7 +3536,10 @@
   <tabstop>cBDebugTrace</tabstop>
   <tabstop>sBMeasurementErrorR1</tabstop>
   <tabstop>sBMeasurementErrorR2</tabstop>
+  <tabstop>sBMeasurementErrorR3</tabstop>
+  <tabstop>sBMeasurementErrorR4</tabstop>
   <tabstop>sBMeasurementErrorR5</tabstop>
+  <tabstop>sBMeasurementErrorR6</tabstop>
   <tabstop>sBMeasurementError2</tabstop>
   <tabstop>sBMeasurementError3</tabstop>
   <tabstop>sBMeasurementError4</tabstop>

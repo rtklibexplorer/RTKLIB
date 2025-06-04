@@ -185,12 +185,12 @@ __fastcall TPlot::TPlot(TComponent* Owner) : TForm(Owner)
     strinit(Stream+1);
     
     FrqType->Items->Clear();
-    FrqType->Items->Add("L1/LC");
-    if (NFREQ>=2) FrqType->Items->Add("L2/E5b");
-    if (NFREQ>=3) FrqType->Items->Add("L5/E5a");
-    if (NFREQ>=4) FrqType->Items->Add("L6");
-    if (NFREQ>=5) FrqType->Items->Add("L7");
-    if (NFREQ>=6) FrqType->Items->Add("L8");
+    FrqType->Items->Add("F1");
+    if (NFREQ>=2) FrqType->Items->Add("F2");
+    if (NFREQ>=3) FrqType->Items->Add("F3");
+    if (NFREQ>=4) FrqType->Items->Add("F4");
+    if (NFREQ>=5) FrqType->Items->Add("F5");
+    if (NFREQ>=6) FrqType->Items->Add("F6");
     FrqType->ItemIndex=0;
     
     TLEData.n=TLEData.nmax=0;
@@ -1356,6 +1356,7 @@ void __fastcall TPlot::SatListChange(TObject *Sender)
     trace(3,"SatListChange\n");
     
     UpdateSatSel();
+    UpdateObsType();
     UpdatePlot();
     UpdateEnable();
 }

@@ -1653,7 +1653,7 @@ void MainWindow::drawSolutionPlot(QLabel *plot, int type, int freq)
     trace(4, "drawSolutionPlot\n");
 
     for (i = 0; i < NFREQ; i++)
-        fstr[i + 1] = QStringLiteral("L%1").arg(i + 1);
+        fstr[i + 1] = QStringLiteral("F%1").arg(i + 1);
     fstr[i + 1] = " SYS";
 
     for (i = 0; i < MAXSAT; i++) {

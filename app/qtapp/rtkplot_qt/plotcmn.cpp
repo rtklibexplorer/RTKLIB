@@ -81,10 +81,10 @@ void Plot::showLegend(const QStringList &msgs)
     for (int i = 0; (i < 7) & (i < msgs.count()); i++) {
         lblQL[i]->setText(msgs[i] + " ");
         int col = i + 1; // Default coloring follows the marker color index
-        if (msgs[0] == " #OBS = 5 ") {
+        if (msgs[0] == " #OBS = 6+ ") {
             // Match the legend color to the observation color, see observationColor()
-            int n = i < 5 ? 5 - i : 0;
-            col = 3 - n + (n > 2 ? 5 : 0);
+            int n = i < 6 ? 6 - i : 0;
+            col = 3 - n + (n > 2 ? 6 : 0);
         }
         setWidgetTextColor(lblQL[i], plotOptDialog->getMarkerColor(sel, col));
         auto policy = lblQL[i]->sizePolicy();
@@ -332,15 +332,16 @@ QColor Plot::observationColor(const obsd_t *obs, double az, double el, QVariant 
     if (simulatedObservation) {
         color = sysColor(obs->sat);
     } else if (obstype.isNull()) {  // "ALL" selected
-        for (i = n = 0; i < NFREQ + NEXOBS && n < 5; i++) {
+        for (i = n = 0; i < NFREQ + NEXOBS && n < 6; i++) {
             if (obs->L[i] != 0.0 || obs->P[i] != 0.0) n++;
         }
         if (n == 0) {
             return Qt::black;
         }
-        color = plotOptDialog->getMarkerColor(0, 3 - n + (n > 2 ? 5 : 0));
+        color = plotOptDialog->getMarkerColor(0, 3 - n + (n > 2 ? 6 : 0));
     } else if (strcmp(obstype.typeName(), "int") == 0) {  // frequency
         freq = obstype.toInt();
+        if (freq < 1 || freq > NFREQ + NEXOBS) return Qt::black; // F1,F2,F3,...
         if (obs->L[freq-1] == 0.0 && obs->P[freq-1] == 0.0) {
             return Qt::black;
         }

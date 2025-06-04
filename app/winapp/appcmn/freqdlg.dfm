@@ -36,7 +36,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'L1'
+      Caption = 'F1'
       Color = clWhite
       ParentBackground = False
       TabOrder = 0
@@ -48,7 +48,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'L2'
+      Caption = 'F2'
       Color = clWhite
       ParentBackground = False
       TabOrder = 1
@@ -60,7 +60,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'L3'
+      Caption = 'F3'
       Color = clWhite
       ParentBackground = False
       TabOrder = 2
@@ -72,7 +72,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'L4'
+      Caption = 'F4'
       Color = clWhite
       ParentBackground = False
       TabOrder = 3
@@ -84,7 +84,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'L5'
+      Caption = 'F5'
       Color = clWhite
       ParentBackground = False
       TabOrder = 4
@@ -96,7 +96,7 @@ object FreqDialog: TFreqDialog
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'L6'
+      Caption = 'F6'
       Color = clWhite
       ParentBackground = False
       TabOrder = 5

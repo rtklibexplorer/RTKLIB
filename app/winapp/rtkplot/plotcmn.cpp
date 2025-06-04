@@ -96,7 +96,7 @@ void __fastcall TPlot::ShowObsLegend(UTF8String *msgs)
         }
         else {
             ql[i]->Caption=msgs[i];
-            ql[i]->Font->Color=MColor[sel][3+i-(i>2?5:0)];
+            ql[i]->Font->Color=MColor[sel][3+i-(i>2?6:0)];
         }
     }
 }
@@ -329,16 +329,16 @@ TColor __fastcall TPlot::ObsColor(const obsd_t *obs, double az, double el)
         color=SysColor(obs->sat);
     }
     else if (!strcmp(obstype,"ALL")) {
-        for (i=n=0;i<NFREQ+NEXOBS&&n<5;i++) {
+        for (i=n=0;i<NFREQ+NEXOBS&&n<6;i++) {
             if (obs->L[i]!=0.0||obs->P[i]!=0.0) n++;
         }
         if (n==0) {
             return clBlack;
         }
-        color=MColor[0][3-n+(n>2?5:0)];
+        color=MColor[0][3-n+(n>2?6:0)];
     }
-    else if (sscanf(obstype,"L%1d",&freq)==1) {
-        freq-=freq>2?2:0;  /* L1,L2,L5,L6 ... */
+    else if (sscanf(obstype,"F%1d",&freq)==1) {
+        if (freq<1 || freq>NFREQ+NEXOBS) return clBlack; /* F1,F2,F3,... */
         if (obs->L[freq-1]==0.0&&obs->P[freq-1]==0.0) {
             return clBlack;
         }

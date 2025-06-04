@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>601</width>
+    <width>700</width>
     <height>309</height>
    </rect>
   </property>
@@ -89,27 +89,32 @@
      </row>
      <column>
       <property name="text">
-       <string>L1</string>
+       <string>F1</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>L2</string>
+       <string>F2</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>L3</string>
+       <string>F3</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>L4</string>
+       <string>F4</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>L5</string>
+       <string>F5</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>F6</string>
       </property>
      </column>
      <item row="0" column="0">
@@ -145,6 +150,14 @@
       </property>
      </item>
      <item row="0" column="4">
+      <property name="text">
+       <string>-</string>
+      </property>
+      <property name="textAlignment">
+       <set>AlignCenter</set>
+      </property>
+     </item>
+     <item row="0" column="5">
       <property name="text">
        <string>-</string>
       </property>
@@ -192,6 +205,14 @@
        <set>AlignCenter</set>
       </property>
      </item>
+     <item row="1" column="5">
+      <property name="text">
+       <string>-</string>
+      </property>
+      <property name="textAlignment">
+       <set>AlignCenter</set>
+      </property>
+     </item>
      <item row="2" column="0">
       <property name="text">
        <string>E1</string>
@@ -232,6 +253,14 @@
        <set>AlignCenter</set>
       </property>
      </item>
+     <item row="2" column="5">
+      <property name="text">
+       <string>-</string>
+      </property>
+      <property name="textAlignment">
+       <set>AlignCenter</set>
+      </property>
+     </item>
      <item row="3" column="0">
       <property name="text">
        <string>L1</string>
@@ -265,6 +294,14 @@
       </property>
      </item>
      <item row="3" column="4">
+      <property name="text">
+       <string>-</string>
+      </property>
+      <property name="textAlignment">
+       <set>AlignCenter</set>
+      </property>
+     </item>
+     <item row="3" column="5">
       <property name="text">
        <string>-</string>
       </property>
@@ -312,6 +349,14 @@
        <set>AlignCenter</set>
       </property>
      </item>
+     <item row="4" column="5">
+      <property name="text">
+       <string>-</string>
+      </property>
+      <property name="textAlignment">
+       <set>AlignCenter</set>
+      </property>
+     </item>
      <item row="5" column="0">
       <property name="text">
        <string>L1</string>
@@ -352,6 +397,14 @@
        <set>AlignCenter</set>
       </property>
      </item>
+     <item row="5" column="5">
+      <property name="text">
+       <string>-</string>
+      </property>
+      <property name="textAlignment">
+       <set>AlignCenter</set>
+      </property>
+     </item>
      <item row="6" column="0">
       <property name="text">
        <string>B1</string>
@@ -385,6 +438,14 @@
       </property>
      </item>
      <item row="6" column="4">
+      <property name="text">
+       <string>B1C / B1A</string>
+      </property>
+      <property name="textAlignment">
+       <set>AlignCenter</set>
+      </property>
+     </item>
+     <item row="6" column="5">
       <property name="text">
        <string>B2ab</string>
       </property>

@@ -119,7 +119,7 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
     RovPosType=RefPosType=0;
     OutCntResetAmb=5; LockCntFixAmb=5; FixCntHoldAmb=10;
     MaxAgeDiff=30.0; RejectPhase=30.0; RejectCode=30.0;
-    MeasErrR1=MeasErrR2=MeasErrR5=MeasErrR6=100.0;
+    MeasErrR1=MeasErrR2=MeasErrR3=MeasErrR4=MeasErrR5=MeasErrR6=100.0;
     MeasErr2=0.004;MeasErr3=0.003; MeasErr4=1.0;
     SatClkStab=1E-11; ValidThresAR=3.0; ValidThresARMin=3.0; ValidThresARMax=3.0;
     RovAntE=RovAntN=RovAntU=RefAntE=RefAntN=RefAntU=0.0;
@@ -990,8 +990,10 @@ int __fastcall TMainForm::GetOption(prcopt_t &prcopt, solopt_t &solopt,
     prcopt.sbassatsel=SbasSat;
     prcopt.eratio[0]=MeasErrR1;
     prcopt.eratio[1]=MeasErrR2;
-    prcopt.eratio[2]=MeasErrR5;
-    prcopt.eratio[3]=MeasErrR6;
+    prcopt.eratio[2]=MeasErrR3;
+    prcopt.eratio[3]=MeasErrR4;
+    prcopt.eratio[4]=MeasErrR5;
+    prcopt.eratio[5]=MeasErrR6;
     prcopt.err[1]   =MeasErr2;
     prcopt.err[2]   =MeasErr3;
     prcopt.err[3]   =MeasErr4;
@@ -1410,6 +1412,8 @@ void __fastcall TMainForm::LoadOpt(void)
     
     MeasErrR1          =ini->ReadFloat  ("opt","measeratio1",300.0);
     MeasErrR2          =ini->ReadFloat  ("opt","measeratio2",300.0);
+    MeasErrR3          =ini->ReadFloat  ("opt","measeratio3",300.0);
+    MeasErrR4          =ini->ReadFloat  ("opt","measeratio4",300.0);
     MeasErrR5          =ini->ReadFloat  ("opt","measeratio5",300.0);
     MeasErrR6          =ini->ReadFloat  ("opt","measeratio6",300.0);
     MeasErr2           =ini->ReadFloat  ("opt","measerr2",   0.003);
@@ -1647,6 +1651,8 @@ void __fastcall TMainForm::SaveOpt(void)
     
     ini->WriteFloat  ("opt","measeratio1", MeasErrR1   );
     ini->WriteFloat  ("opt","measeratio2", MeasErrR2   );
+    ini->WriteFloat  ("opt","measeratio3", MeasErrR3   );
+    ini->WriteFloat  ("opt","measeratio4", MeasErrR4   );
     ini->WriteFloat  ("opt","measeratio5", MeasErrR5   );
     ini->WriteFloat  ("opt","measeratio6", MeasErrR6   );
     ini->WriteFloat  ("opt","measerr2",    MeasErr2    );

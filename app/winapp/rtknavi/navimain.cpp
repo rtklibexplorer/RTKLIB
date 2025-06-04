@@ -1629,7 +1629,7 @@ void __fastcall TMainForm::DrawPlot(TImage *plot, int type, int freq)
     trace(4,"DrawPlot\n");
     
     for (i=0;i<NFREQ;i++) {
-        fstr[i+1]=s1.sprintf("L%d",i+1);
+        fstr[i+1]=s1.sprintf("F%d",i+1);
     }
     fstr[i+1]=" SYS";
     

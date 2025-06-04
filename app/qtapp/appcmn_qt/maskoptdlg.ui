@@ -31,7 +31,7 @@
     </widget>
    </item>
    <item row="4" column="0">
-    <widget class="QLabel" name="labelL2">
+    <widget class="QLabel" name="labelF2">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
        <horstretch>0</horstretch>
@@ -39,7 +39,7 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string>L2</string>
+      <string>F2</string>
      </property>
     </widget>
    </item>
@@ -618,7 +618,7 @@
     </widget>
    </item>
    <item row="5" column="0">
-    <widget class="QLabel" name="labelL3">
+    <widget class="QLabel" name="labelF3">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
        <horstretch>0</horstretch>
@@ -629,7 +629,7 @@
       <string/>
      </property>
      <property name="text">
-      <string>L3</string>
+      <string>F3</string>
      </property>
     </widget>
    </item>
@@ -650,7 +650,7 @@
     </widget>
    </item>
    <item row="3" column="0">
-    <widget class="QLabel" name="labelL1">
+    <widget class="QLabel" name="labelF1">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
        <horstretch>0</horstretch>
@@ -658,17 +658,502 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string>L1</string>
+      <string>F1</string>
      </property>
     </widget>
    </item>
-   <item row="6" column="0" colspan="10">
+
+   <item row="6" column="0">
+    <widget class="QLabel" name="labelF4">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text">
+      <string>F4</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QDoubleSpinBox" name="sBMask_4_1">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="2">
+    <widget class="QDoubleSpinBox" name="sBMask_4_2">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="3">
+    <widget class="QDoubleSpinBox" name="sBMask_4_3">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="4">
+    <widget class="QDoubleSpinBox" name="sBMask_4_4">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="5">
+    <widget class="QDoubleSpinBox" name="sBMask_4_5">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="6">
+    <widget class="QDoubleSpinBox" name="sBMask_4_6">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="7">
+    <widget class="QDoubleSpinBox" name="sBMask_4_7">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="8">
+    <widget class="QDoubleSpinBox" name="sBMask_4_8">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="9">
+    <widget class="QDoubleSpinBox" name="sBMask_4_9">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+
+   <item row="7" column="0">
+    <widget class="QLabel" name="labelF5">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text">
+      <string>F5</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QDoubleSpinBox" name="sBMask_5_1">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="2">
+    <widget class="QDoubleSpinBox" name="sBMask_5_2">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="3">
+    <widget class="QDoubleSpinBox" name="sBMask_5_3">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="4">
+    <widget class="QDoubleSpinBox" name="sBMask_5_4">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="5">
+    <widget class="QDoubleSpinBox" name="sBMask_5_5">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="6">
+    <widget class="QDoubleSpinBox" name="sBMask_5_6">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="7">
+    <widget class="QDoubleSpinBox" name="sBMask_5_7">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="8">
+    <widget class="QDoubleSpinBox" name="sBMask_5_8">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="9">
+    <widget class="QDoubleSpinBox" name="sBMask_5_9">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+
+   <item row="8" column="0">
+    <widget class="QLabel" name="labelF6">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text">
+      <string>F6</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="QDoubleSpinBox" name="sBMask_6_1">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="2">
+    <widget class="QDoubleSpinBox" name="sBMask_6_2">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="3">
+    <widget class="QDoubleSpinBox" name="sBMask_6_3">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="4">
+    <widget class="QDoubleSpinBox" name="sBMask_6_4">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="5">
+    <widget class="QDoubleSpinBox" name="sBMask_6_5">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="6">
+    <widget class="QDoubleSpinBox" name="sBMask_6_6">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="7">
+    <widget class="QDoubleSpinBox" name="sBMask_6_7">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="8">
+    <widget class="QDoubleSpinBox" name="sBMask_6_8">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="9">
+    <widget class="QDoubleSpinBox" name="sBMask_6_9">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="text" stdset="0">
+      <string>0,00 dBHz</string>
+     </property>
+     <property name="suffix">
+      <string> dBHz</string>
+     </property>
+     <property name="maximum">
+      <double>90.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+
+   <item row="9" column="0" colspan="10">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
+
   </layout>
  </widget>
  <tabstops>
@@ -701,6 +1186,33 @@
   <tabstop>sBMask_3_7</tabstop>
   <tabstop>sBMask_3_8</tabstop>
   <tabstop>sBMask_3_9</tabstop>
+  <tabstop>sBMask_4_1</tabstop>
+  <tabstop>sBMask_4_2</tabstop>
+  <tabstop>sBMask_4_3</tabstop>
+  <tabstop>sBMask_4_4</tabstop>
+  <tabstop>sBMask_4_5</tabstop>
+  <tabstop>sBMask_4_6</tabstop>
+  <tabstop>sBMask_4_7</tabstop>
+  <tabstop>sBMask_4_8</tabstop>
+  <tabstop>sBMask_4_9</tabstop>
+  <tabstop>sBMask_5_1</tabstop>
+  <tabstop>sBMask_5_2</tabstop>
+  <tabstop>sBMask_5_3</tabstop>
+  <tabstop>sBMask_5_4</tabstop>
+  <tabstop>sBMask_5_5</tabstop>
+  <tabstop>sBMask_5_6</tabstop>
+  <tabstop>sBMask_5_7</tabstop>
+  <tabstop>sBMask_5_8</tabstop>
+  <tabstop>sBMask_5_9</tabstop>
+  <tabstop>sBMask_6_1</tabstop>
+  <tabstop>sBMask_6_2</tabstop>
+  <tabstop>sBMask_6_3</tabstop>
+  <tabstop>sBMask_6_4</tabstop>
+  <tabstop>sBMask_6_5</tabstop>
+  <tabstop>sBMask_6_6</tabstop>
+  <tabstop>sBMask_6_7</tabstop>
+  <tabstop>sBMask_6_8</tabstop>
+  <tabstop>sBMask_6_9</tabstop>
  </tabstops>
  <resources/>
  <connections/>

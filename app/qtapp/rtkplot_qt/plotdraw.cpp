@@ -1152,7 +1152,8 @@ void Plot::generateObservationSlips(int *LLI)
             } else {
                 if (strcmp(obstype.typeName(), "int") == 0) {  // frequency selected
                     k = obstype.toInt();
-                    j = k > 2 ? k - 3 : k - 1;  /* L1,L2,L5,L6 ... */
+                    if (k < 1 || k > NFREQ+NEXOBS) continue;
+                    j = k - 1; // F1,F2,F3,...
                 } else {  // code selected
                     for (j = 0; j < NFREQ + NEXOBS; j++) {
                         if (!strcmp(code2obs(obs->code[j]), qPrintable(obstype.toString()))) break;
@@ -1179,7 +1180,8 @@ void Plot::generateObservationSlips(int *LLI)
             } else {
                 if (strcmp(obstype.typeName(), "int") == 0) {  // frequency selected
                     k = obstype.toInt();
-                    j = k > 2 ? k - 3 : k - 1;  /* L1,L2,L5,L6 ... */
+                    if (k < 1 || k > NFREQ+NEXOBS) continue;
+                    j = k - 1; // F1,F2,F3,...
                 } else {  // code selected
                     for (j = 0; j < NFREQ + NEXOBS; j++)
                         if (!strcmp(code2obs(obs->code[j]), qPrintable(obstype.toString()))) break;
@@ -1397,8 +1399,7 @@ void Plot::drawSky(QPainter &c, int level)
                 }
             } else if (strcmp(obstype.typeName(), "int") == 0) {  // frequency
                 freq = obstype.toInt();
-                freq -= freq > 2 ? 2 : 0;  /* L1,L2,L5,L6 ... */
-
+                if (freq < 1 || freq > NFREQ+NEXOBS) continue; // F1,F2,F3,...
                 if (!obs->code[freq-1]) continue;
 
                 s += QStringLiteral("%1  %2 %3 %4  ").arg(code2obs(obs->code[freq - 1]), 3).arg(
@@ -1638,8 +1639,7 @@ void Plot::drawSky(QPainter &c, int level)
                 }
             } else if (strcmp(obstype.typeName(), "int") == 0) {  // frequency
                 freq = obstype.toInt();
-                freq -= freq > 2 ? 2 : 0;  /* L1,L2,L5,L6 ... */
-
+                if (freq < 1 || freq > NFREQ+NEXOBS) continue; // F1,F2,F3,...
                 if (!obs->code[freq-1]) continue;
 
                 s += QStringLiteral("%1  %2 %3 %4  ").arg(code2obs(obs->code[freq - 1]), 3).arg(
@@ -1973,7 +1973,8 @@ void Plot::drawSnr(QPainter &c, int level)
                     // find array index corresponding to the selected data
                     if (strcmp(obstype.typeName(), "int") == 0) {
                         int freq = obstype.toInt();
-                        idx = freq > 2 ? freq - 3 : freq - 1;
+                        if (freq < 1 || freq > NFREQ+NEXOBS) continue;
+                        idx = freq - 1; // F1,F2,F3,...
                     } else {
                         for (idx = 0; idx < NFREQ + NEXOBS; idx++) {
                             if (!strcmp(code2obs(obs->code[idx]), qPrintable(obstype.toString()))) break;
@@ -2171,7 +2172,8 @@ void Plot::drawSnrE(QPainter &c, int level)
 
                 if (strcmp(obstype.typeName(), "int") == 0) {
                     int freq = obstype.toInt();
-                    idx = freq > 2 ? freq-3 : freq-1;  /* L1,L2,L5,L6 ... */
+                    if (freq < 1 || freq > NFREQ+NEXOBS) continue;
+                    idx = freq - 1; // F1,F2,F3,...
                 } else {
                     for (idx = 0; idx < NFREQ + NEXOBS; idx++) {
                         if (!strcmp(code2obs(obs->code[idx]), qPrintable(obstype.toString()))) break;
@@ -2327,7 +2329,8 @@ void Plot::drawMpSky(QPainter &c, int level)
 
             if (strcmp(obstype.typeName(), "int") == 0) {
                 int freq = obstype.toInt();
-                idx = freq > 2 ? freq - 3 : freq - 1;  /* L1, L2, L5, L6 ... */
+                if (freq < 1 || freq > NFREQ+NEXOBS) continue;
+                idx = freq - 1; // F1,F2,F3,...
             } else {
                 for (idx = 0; idx < NFREQ + NEXOBS; idx++) {
                     if (!strcmp(code2obs(obs->code[idx]), qPrintable(obstype.toString()))) break;
@@ -2362,7 +2365,8 @@ void Plot::drawMpSky(QPainter &c, int level)
 
             if (strcmp(obstype.typeName(), "int") == 0) {
                 int freq = obstype.toInt();
-                idx = freq > 2 ? freq - 3 : freq - 1;  /* L1,L2,L5,L6 ... */
+                if (freq < 1 || freq > NFREQ+NEXOBS) continue;
+                idx = freq - 1; // F1,F2,F3,...
             } else {
                 for (idx = 0; idx < NFREQ + NEXOBS; idx++) {
                     if (!strcmp(code2obs(obs->code[idx]), qPrintable(obstype.toString()))) break;

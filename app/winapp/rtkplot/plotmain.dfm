@@ -1380,11 +1380,11 @@ object Plot: TPlot
           ParentShowHint = False
           ShowHint = True
           TabOrder = 1
-          Text = 'L1'
+          Text = 'F1'
           OnChange = ObsTypeChange
           Items.Strings = (
-            'L1'
-            'L2')
+            'F1'
+            'F2')
         end
         object ObsType: TComboBox
           AlignWithMargins = True
@@ -1436,12 +1436,12 @@ object Plot: TPlot
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
-          Text = 'L1'
+          Text = 'F1'
           Visible = False
           OnChange = ObsTypeChange
           Items.Strings = (
-            'L1'
-            'L2')
+            'F1'
+            'F2')
         end
         object QFlag: TComboBox
           AlignWithMargins = True

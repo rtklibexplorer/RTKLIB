@@ -87,8 +87,8 @@
         <ILINK_LibraryPath>..\..\..\..\src\;..\;..\..\..\..\src\rcv;..\..\convbin;..\..\..\..\src;..\..\pos2kml;$(BDS)\lib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
         <TASM_Defines>_RTLDLL;_NO_VCL;WIN32;ENAGLO;ENAQZS;TRACE;$(TASM_Defines)</TASM_Defines>
-        <BCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NEXOBS=3;NFREQ=4;$(BCC_Defines)</BCC_Defines>
-        <BRCC_UserSuppliedOptions>_RTLDLL;_NO_VCL;WIN32;ENAGLO;TRACE;ENAQZS;ENAGAL;NFREQ=4;</BRCC_UserSuppliedOptions>
+        <BCC_Defines>_RTLDLL;WIN32;TRACE;ENAGLO;ENAGAL;ENAQZS;ENACMP;ENAIRN;NEXOBS=3;NFREQ=6;$(BCC_Defines)</BCC_Defines>
+        <BRCC_UserSuppliedOptions>_RTLDLL;_NO_VCL;WIN32;ENAGLO;TRACE;ENAQZS;ENAGAL;NFREQ=6;</BRCC_UserSuppliedOptions>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <OutputExt>exe</OutputExt>

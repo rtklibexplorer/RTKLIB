@@ -360,7 +360,7 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	AnsiString sol[]={"-","Fix","Float","SBAS","DGPS","Single","PPP",""};
 	AnsiString mode[]={"Single","DGPS","Kinematic","Static","Static-Start","Moving-Base",
 					   "Fixed","PPP-Kinematic","PPP-Static",""};
-	AnsiString freq[]={"-","L1","L1+L2","L1+L2+L3","L1+L2+L3+L4","L1+L2+L3+L4+L5",""};
+	AnsiString freq[]={"-","1","2","3","4","5","6",""};
 	double *del,*off,runtime,rt[3]={0},dop[4]={0};
 	double azel[MAXSAT*2],pos[3],vel[3],rr[3]={0},enu[3]={0};
 	int i,j,k,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,nave;
@@ -419,7 +419,7 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	if (rtk.opt.navsys&SYS_SBS) navsys=navsys+"SBAS ";
 	
 	Label->Caption="";
-	Tbl->RowCount=55+NFREQ*2;
+	Tbl->RowCount=57+NFREQ*2;
 	
 	i=1;
 	Tbl->Cells[0][i  ]="RTKLIB Version";
@@ -443,33 +443,48 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	Tbl->Cells[0][i  ]="Elevation Mask (deg)";
 	Tbl->Cells[1][i++]=s.sprintf("%.0f",rtk.opt.elmin*R2D);
 	
-	Tbl->Cells[0][i  ]="SNR Mask L1 (dBHz)";
+	Tbl->Cells[0][i  ]="SNR Mask F1 (dBHz)";
 	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
 		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
 				  rtk.opt.snrmask.mask[0][0],rtk.opt.snrmask.mask[0][1],rtk.opt.snrmask.mask[0][2],
 				  rtk.opt.snrmask.mask[0][3],rtk.opt.snrmask.mask[0][4],rtk.opt.snrmask.mask[0][5],
 				  rtk.opt.snrmask.mask[0][6],rtk.opt.snrmask.mask[0][7],rtk.opt.snrmask.mask[0][8]);
 	
-	Tbl->Cells[0][i  ]="SNR Mask L2 (dBHz)";
+	Tbl->Cells[0][i  ]="SNR Mask F2 (dBHz)";
 	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
 		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
 				  rtk.opt.snrmask.mask[1][0],rtk.opt.snrmask.mask[1][1],rtk.opt.snrmask.mask[1][2],
 				  rtk.opt.snrmask.mask[1][3],rtk.opt.snrmask.mask[1][4],rtk.opt.snrmask.mask[1][5],
 				  rtk.opt.snrmask.mask[1][6],rtk.opt.snrmask.mask[1][7],rtk.opt.snrmask.mask[1][8]);
 
-	Tbl->Cells[0][i  ]="SNR Mask L5 (dBHz)";
+	Tbl->Cells[0][i  ]="SNR Mask F3 (dBHz)";
 	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
 		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
 				  rtk.opt.snrmask.mask[2][0],rtk.opt.snrmask.mask[2][1],rtk.opt.snrmask.mask[2][2],
 				  rtk.opt.snrmask.mask[2][3],rtk.opt.snrmask.mask[2][4],rtk.opt.snrmask.mask[2][5],
 				  rtk.opt.snrmask.mask[2][6],rtk.opt.snrmask.mask[2][7],rtk.opt.snrmask.mask[2][8]);
 
-	Tbl->Cells[0][i  ]="SNR Mask L6 (dBHz)";
+	Tbl->Cells[0][i  ]="SNR Mask F4 (dBHz)";
 	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
 		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
 				  rtk.opt.snrmask.mask[3][0],rtk.opt.snrmask.mask[3][1],rtk.opt.snrmask.mask[3][2],
 				  rtk.opt.snrmask.mask[3][3],rtk.opt.snrmask.mask[3][4],rtk.opt.snrmask.mask[3][5],
 				  rtk.opt.snrmask.mask[3][6],rtk.opt.snrmask.mask[3][7],rtk.opt.snrmask.mask[3][8]);
+
+	Tbl->Cells[0][i  ]="SNR Mask F5 (dBHz)";
+	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
+		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
+				  rtk.opt.snrmask.mask[4][0],rtk.opt.snrmask.mask[4][1],rtk.opt.snrmask.mask[4][2],
+				  rtk.opt.snrmask.mask[4][3],rtk.opt.snrmask.mask[4][4],rtk.opt.snrmask.mask[4][5],
+				  rtk.opt.snrmask.mask[4][6],rtk.opt.snrmask.mask[4][7],rtk.opt.snrmask.mask[4][8]);
+
+	Tbl->Cells[0][i  ]="SNR Mask F6 (dBHz)";
+	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
+		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
+				  rtk.opt.snrmask.mask[5][0],rtk.opt.snrmask.mask[5][1],rtk.opt.snrmask.mask[5][2],
+				  rtk.opt.snrmask.mask[5][3],rtk.opt.snrmask.mask[5][4],rtk.opt.snrmask.mask[5][5],
+				  rtk.opt.snrmask.mask[5][6],rtk.opt.snrmask.mask[5][7],rtk.opt.snrmask.mask[5][8]);
+
 	Tbl->Cells[0][i  ]="Rec Dynamic/Earth Tides Correction";
 	Tbl->Cells[1][i++]=s.sprintf("%s, %s",rtk.opt.dynamics?"ON":"OFF",rtk.opt.tidecorr?"ON":"OFF");
 	
@@ -660,7 +675,7 @@ void __fastcall TMonitorDialog::SetSat(void)
 	}
 	for (i=0;i<nfreq;i++) {
 		Tbl->ColWidths [j]=30*FontScale/96;
-		Tbl->Cells[j  ][0]=s.sprintf("L%d",i+1);
+		Tbl->Cells[j  ][0]=s.sprintf("F%d",i+1);
 		Tbl->Cells[j++][1]="";
 	}
 	for (i=0;i<nfreq;i++) {

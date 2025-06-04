@@ -105,7 +105,7 @@ __fastcall TOptDialog::TOptDialog(TComponent* Owner)
 	
 	Freq->Items->Clear();
 	for (int i=0;i<NFREQ;i++) {
-		label=label+(i>0?"+":"")+s.sprintf("L%d",i + 1);
+		label=label+(i>0?"+":"")+s.sprintf("F%d",i + 1);
 		Freq->Items->Add(label);
 	}
 	if (nglo<=0) NavSys2->Enabled=false;
@@ -490,8 +490,10 @@ void __fastcall TOptDialog::GetOpt(void)
 	
 	MeasErrR1	 ->Text     =s.sprintf("%.1f",PrcOpt.eratio[0]);
 	MeasErrR2	 ->Text     =s.sprintf("%.1f",PrcOpt.eratio[1]);
-	MeasErrR5	 ->Text     =s.sprintf("%.1f",PrcOpt.eratio[2]);
-	MeasErrR6	 ->Text     =s.sprintf("%.1f",PrcOpt.eratio[3]);
+	MeasErrR3	 ->Text     =s.sprintf("%.1f",PrcOpt.eratio[2]);
+	MeasErrR4	 ->Text     =s.sprintf("%.1f",PrcOpt.eratio[3]);
+	MeasErrR5	 ->Text     =s.sprintf("%.1f",PrcOpt.eratio[4]);
+	MeasErrR6	 ->Text     =s.sprintf("%.1f",PrcOpt.eratio[5]);
 	MeasErr2	 ->Text     =s.sprintf("%.3f",PrcOpt.err[1]);
 	MeasErr3	 ->Text     =s.sprintf("%.3f",PrcOpt.err[2]);
 	MeasErr4	 ->Text     =s.sprintf("%.3f",PrcOpt.err[3]);
@@ -638,8 +640,10 @@ void __fastcall TOptDialog::SetOpt(void)
 	
 	PrcOpt.eratio[0] =str2dbl(MeasErrR1 ->Text);
 	PrcOpt.eratio[1] =str2dbl(MeasErrR2 ->Text);
-	PrcOpt.eratio[2] =str2dbl(MeasErrR5 ->Text);
-	PrcOpt.eratio[3] =str2dbl(MeasErrR6 ->Text);
+	PrcOpt.eratio[2] =str2dbl(MeasErrR3 ->Text);
+	PrcOpt.eratio[3] =str2dbl(MeasErrR4 ->Text);
+	PrcOpt.eratio[4] =str2dbl(MeasErrR5 ->Text);
+	PrcOpt.eratio[5] =str2dbl(MeasErrR6 ->Text);
 	PrcOpt.err[1]    =str2dbl(MeasErr2  ->Text);
 	PrcOpt.err[2]    =str2dbl(MeasErr3  ->Text);
 	PrcOpt.err[3]    =str2dbl(MeasErr4  ->Text);
@@ -828,8 +832,10 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	
 	MeasErrR1	 ->Text			=s.sprintf("%.1f",prcopt.eratio[0]);
 	MeasErrR2	 ->Text			=s.sprintf("%.1f",prcopt.eratio[1]);
-	MeasErrR5	 ->Text			=s.sprintf("%.1f",prcopt.eratio[2]);
-	MeasErrR6	 ->Text			=s.sprintf("%.1f",prcopt.eratio[3]);
+	MeasErrR3	 ->Text			=s.sprintf("%.1f",prcopt.eratio[2]);
+	MeasErrR4	 ->Text			=s.sprintf("%.1f",prcopt.eratio[3]);
+	MeasErrR5	 ->Text			=s.sprintf("%.1f",prcopt.eratio[4]);
+	MeasErrR6	 ->Text			=s.sprintf("%.1f",prcopt.eratio[5]);
 	MeasErr2	 ->Text			=s.sprintf("%.3f",prcopt.err[1]);
 	MeasErr3	 ->Text			=s.sprintf("%.3f",prcopt.err[2]);
 	MeasErr4	 ->Text			=s.sprintf("%.3f",prcopt.err[3]);
@@ -1072,8 +1078,10 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
 	
 	prcopt.eratio[0]=str2dbl(MeasErrR1->Text);
 	prcopt.eratio[1]=str2dbl(MeasErrR2->Text);
-	prcopt.eratio[2]=str2dbl(MeasErrR5->Text);
-	prcopt.eratio[3]=str2dbl(MeasErrR6->Text);
+	prcopt.eratio[2]=str2dbl(MeasErrR3->Text);
+	prcopt.eratio[3]=str2dbl(MeasErrR4->Text);
+	prcopt.eratio[4]=str2dbl(MeasErrR5->Text);
+	prcopt.eratio[5]=str2dbl(MeasErrR6->Text);
 	prcopt.err[1]	=str2dbl(MeasErr2->Text);
 	prcopt.err[2]	=str2dbl(MeasErr3->Text);
 	prcopt.err[3]	=str2dbl(MeasErr4->Text);

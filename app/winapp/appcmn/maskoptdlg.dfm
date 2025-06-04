@@ -3,8 +3,8 @@ object MaskOptDialog: TMaskOptDialog
   Top = 0
   BorderStyle = bsDialog
   Caption = 'SNR Mask'
-  ClientHeight = 145
-  ClientWidth = 369
+  ClientHeight = 245
+  ClientWidth = 372
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -93,7 +93,7 @@ object MaskOptDialog: TMaskOptDialog
   end
   object BtnOk: TButton
     Left = 210
-    Top = 155
+    Top = 205
     Width = 73
     Height = 27
     Caption = '&OK'
@@ -103,7 +103,7 @@ object MaskOptDialog: TMaskOptDialog
   end
   object BtCcancel: TButton
     Left = 289
-    Top = 155
+    Top = 205
     Width = 73
     Height = 27
     Caption = '&Cancel'
@@ -125,13 +125,13 @@ object MaskOptDialog: TMaskOptDialog
     Width = 366
     Height = 22
     BevelOuter = bvNone
-    TabOrder = 3
+    TabOrder = 4
     object Label1: TLabel
-      Left = 10
-      Top = 3
-      Width = 11
+      Left = 2
+      Top = 2
+      Width = 33
       Height = 13
-      Caption = 'L1'
+      Caption = 'F1'
     end
     object Mask_1_1: TEdit
       Left = 35
@@ -212,13 +212,13 @@ object MaskOptDialog: TMaskOptDialog
     Width = 366
     Height = 22
     BevelOuter = bvNone
-    TabOrder = 4
+    TabOrder = 5
     object Label13: TLabel
-      Left = 1
+      Left = 2
       Top = 2
       Width = 33
       Height = 13
-      Caption = 'L2/E5b'
+      Caption = 'F2'
     end
     object Mask_2_1: TEdit
       Left = 35
@@ -299,13 +299,13 @@ object MaskOptDialog: TMaskOptDialog
     Width = 366
     Height = 22
     BevelOuter = bvNone
-    TabOrder = 5
+    TabOrder = 6
     object Label14: TLabel
       Left = 2
       Top = 2
       Width = 33
       Height = 13
-      Caption = 'L5/E5a'
+      Caption = 'F3'
     end
     object Mask_3_1: TEdit
       Left = 35
@@ -386,7 +386,7 @@ object MaskOptDialog: TMaskOptDialog
     Width = 87
     Height = 17
     Caption = 'Base Station'
-    TabOrder = 6
+    TabOrder = 3
     OnClick = MaskEna1Click
   end
   object Panel4: TPanel
@@ -399,9 +399,9 @@ object MaskOptDialog: TMaskOptDialog
     object Label15: TLabel
       Left = 2
       Top = 2
-      Width = 11
+      Width = 33
       Height = 13
-      Caption = 'L6'
+      Caption = 'F4'
     end
     object Mask_4_1: TEdit
       Left = 35
@@ -468,6 +468,180 @@ object MaskOptDialog: TMaskOptDialog
       Text = '0'
     end
     object Mask_4_9: TEdit
+      Left = 325
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 8
+      Text = '0'
+    end
+  end
+  object Panel5: TPanel
+    Left = 0
+    Top = 140
+    Width = 366
+    Height = 22
+    BevelOuter = bvNone
+    TabOrder = 8
+    object Label16: TLabel
+      Left = 2
+      Top = 2
+      Width = 33
+      Height = 13
+      Caption = 'F5'
+    end
+    object Mask_5_1: TEdit
+      Left = 35
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 0
+      Text = '0'
+    end
+    object Mask_5_2: TEdit
+      Left = 71
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 1
+      Text = '0'
+    end
+    object Mask_5_3: TEdit
+      Left = 107
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 2
+      Text = '0'
+    end
+    object Mask_5_4: TEdit
+      Left = 144
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 3
+      Text = '0'
+    end
+    object Mask_5_5: TEdit
+      Left = 180
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 4
+      Text = '0'
+    end
+    object Mask_5_6: TEdit
+      Left = 216
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 5
+      Text = '0'
+    end
+    object Mask_5_7: TEdit
+      Left = 253
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 6
+      Text = '0'
+    end
+    object Mask_5_8: TEdit
+      Left = 289
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 7
+      Text = '0'
+    end
+    object Mask_5_9: TEdit
+      Left = 325
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 8
+      Text = '0'
+    end
+  end
+  object Panel6: TPanel
+    Left = 0
+    Top = 165
+    Width = 366
+    Height = 22
+    BevelOuter = bvNone
+    TabOrder = 9
+    object Label17: TLabel
+      Left = 2
+      Top = 2
+      Width = 33
+      Height = 13
+      Caption = 'F6'
+    end
+    object Mask_6_1: TEdit
+      Left = 35
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 0
+      Text = '0'
+    end
+    object Mask_6_2: TEdit
+      Left = 71
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 1
+      Text = '0'
+    end
+    object Mask_6_3: TEdit
+      Left = 107
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 2
+      Text = '0'
+    end
+    object Mask_6_4: TEdit
+      Left = 144
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 3
+      Text = '0'
+    end
+    object Mask_6_5: TEdit
+      Left = 180
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 4
+      Text = '0'
+    end
+    object Mask_6_6: TEdit
+      Left = 216
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 5
+      Text = '0'
+    end
+    object Mask_6_7: TEdit
+      Left = 253
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 6
+      Text = '0'
+    end
+    object Mask_6_8: TEdit
+      Left = 289
+      Top = 0
+      Width = 36
+      Height = 21
+      TabOrder = 7
+      Text = '0'
+    end
+    object Mask_6_9: TEdit
       Left = 325
       Top = 0
       Width = 36

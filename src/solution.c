@@ -1453,9 +1453,6 @@ extern int outprcopts(uint8_t *buff, const prcopt_t *opt)
         "Single","DGPS","Kinematic","Static","Static-Start","Moving-Base","Fixed",
         "PPP Kinematic","PPP Static","PPP Fixed","","",""
     };
-    const char *s2[]={
-        "L1","L1+L2/E5b","L1+L2/E5b+L5","L1+L2/E5b+L5+L6","L1+2+3+4+5","L1+2+3+4+5+6","","",""
-    };
     const char *s3[]={
         "Forward","Backward","Combined-Phase Reset","Combined-No Phase Reset","",""
     };
@@ -1487,7 +1484,7 @@ extern int outprcopts(uint8_t *buff, const prcopt_t *opt)
     p+=sprintf(p,"%s pos mode  : %s\r\n",COMMENTH,s1[opt->mode]);
     
     if (PMODE_DGPS<=opt->mode) {
-        p+=sprintf(p,"%s freqs     : %s\r\n",COMMENTH,s2[opt->nf-1]);
+        p+=sprintf(p,"%s freqs     : %d\r\n",COMMENTH,opt->nf);
     }
     if (opt->mode>PMODE_SINGLE) {
         p+=sprintf(p,"%s solution  : %s\r\n",COMMENTH,s3[opt->soltype]);

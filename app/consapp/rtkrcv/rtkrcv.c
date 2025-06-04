@@ -649,7 +649,6 @@ static void prstatus(vt_t *vt)
          "PPP-kinema","PPP-static"
     };
     gtime_t eventime={0};
-    const char *freq[]={"-","L1","L1+L2","L1+L2+E5b","L1+L2+E5b+L5","5","6","7"};
     rtcm_t rtcm[3];
     pthread_t thread;
     int i,j,n,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
@@ -705,7 +704,7 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %s\n","rtk server state",svrstate[state]);
     vt_printf(vt,"%-28s: %d\n","processing cycle (ms)",cycle);
     vt_printf(vt,"%-28s: %s\n","positioning mode",mode[rtk.opt.mode]);
-    vt_printf(vt,"%-28s: %s\n","frequencies",freq[rtk.opt.nf]);
+    vt_printf(vt,"%-28s: %d\n","frequencies",rtk.opt.nf);
     vt_printf(vt,"%-28s: %02.0f:%02.0f:%04.1f\n","accumulated time to run",rt[0],rt[1],rt[2]);
     vt_printf(vt,"%-28s: %d\n","cpu time for a cycle (ms)",cputime);
     vt_printf(vt,"%-28s: %d\n","missing obs data count",prcout);
@@ -798,7 +797,7 @@ static void prsatellite(vt_t *vt, int nf)
     rtk_t rtk;
     double az,el;
     char id[8];
-    int i,j,fix,frq[]={1,2,5,7,8,6};
+    int i,j,fix;
     
     trace(4,"prsatellite:\n");
     
@@ -807,13 +806,13 @@ static void prsatellite(vt_t *vt, int nf)
     rtksvrunlock(&svr);
     if (nf<=0||nf>NFREQ) nf=NFREQ;
     vt_printf(vt,"\n%s%3s %2s %5s %4s",ESC_BOLD,"SAT","C1","Az","El");
-    for (j=0;j<nf;j++) vt_printf(vt," L%d"    ,frq[j]);
-    for (j=0;j<nf;j++) vt_printf(vt,"  Fix%d" ,frq[j]);
-    for (j=0;j<nf;j++) vt_printf(vt,"  P%dRes",frq[j]);
-    for (j=0;j<nf;j++) vt_printf(vt,"   L%dRes",frq[j]);
-    for (j=0;j<nf;j++) vt_printf(vt,"  Sl%d"  ,frq[j]);
-    for (j=0;j<nf;j++) vt_printf(vt,"  Lock%d",frq[j]);
-    for (j=0;j<nf;j++) vt_printf(vt," Rj%d"   ,frq[j]);
+    for (j=0;j<nf;j++) vt_printf(vt," F%d"    , j + 1);
+    for (j=0;j<nf;j++) vt_printf(vt,"  Fix%d" , j + 1);
+    for (j=0;j<nf;j++) vt_printf(vt,"  P%dRes", j + 1);
+    for (j=0;j<nf;j++) vt_printf(vt,"   L%dRes", j + 1);
+    for (j=0;j<nf;j++) vt_printf(vt,"  Sl%d"  , j + 1);
+    for (j=0;j<nf;j++) vt_printf(vt,"  Lock%d", j + 1);
+    for (j=0;j<nf;j++) vt_printf(vt," Rj%d"   , j + 1);
     vt_printf(vt,"%s\n",ESC_RESET);
     
     for (i=0;i<MAXSAT;i++) {
@@ -841,7 +840,7 @@ static void probserv(vt_t *vt, int nf)
 {
     obsd_t obs[MAXOBS*2];
     char tstr[40],id[8];
-    int i,j,n=0,frq[]={1,2,5,7,8,6,9};
+    int i,j,n=0;
     
     trace(4,"probserv:\n");
     
@@ -856,10 +855,10 @@ static void probserv(vt_t *vt, int nf)
     
     if (nf<=0||nf>NFREQ) nf=NFREQ;
     vt_printf(vt,"\n%s%-22s %3s %s",ESC_BOLD,"      TIME(GPST)","SAT","R");
-    for (i=0;i<nf;i++) vt_printf(vt,"        P%d(m)" ,frq[i]);
-    for (i=0;i<nf;i++) vt_printf(vt,"       L%d(cyc)",frq[i]);
-    for (i=0;i<nf;i++) vt_printf(vt,"  D%d(Hz)"      ,frq[i]);
-    for (i=0;i<nf;i++) vt_printf(vt," S%d"           ,frq[i]);
+    for (i=0;i<nf;i++) vt_printf(vt,"        P%d(m)" , i + 1);
+    for (i=0;i<nf;i++) vt_printf(vt,"       L%d(cyc)", i + 1);
+    for (i=0;i<nf;i++) vt_printf(vt,"  D%d(Hz)"      , i + 1);
+    for (i=0;i<nf;i++) vt_printf(vt," S%d"           , i + 1);
     vt_printf(vt," LLI%s\n",ESC_RESET);
     for (i=0;i<n;i++) {
         time2str(obs[i].time,tstr,2);

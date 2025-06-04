@@ -30,7 +30,7 @@ __fastcall TOptDialog::TOptDialog(TComponent* Owner)
     
     Freq->Items->Clear();
     for (int i=0;i<NFREQ;i++) {
-      label=label+(i>0?"+":"")+s.sprintf("L%d",i + 1);
+      label=label+(i>0?"+":"")+s.sprintf("F%d",i + 1);
       Freq->Items->Add(label);
     }
 
@@ -425,6 +425,8 @@ void __fastcall TOptDialog::GetOpt(void)
 	
 	MeasErrR1	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR1);
 	MeasErrR2	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR2);
+	MeasErrR3	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR3);
+	MeasErrR4	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR4);
 	MeasErrR5	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR5);
 	MeasErrR6	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR6);
 	MeasErr2	 ->Text			=s.sprintf("%.3f",MainForm->MeasErr2);
@@ -560,6 +562,8 @@ void __fastcall TOptDialog::SetOpt(void)
 	
 	MainForm->MeasErrR1	  =str2dbl(MeasErrR1  ->Text);
 	MainForm->MeasErrR2	  =str2dbl(MeasErrR2  ->Text);
+	MainForm->MeasErrR3	  =str2dbl(MeasErrR3  ->Text);
+	MainForm->MeasErrR4	  =str2dbl(MeasErrR4  ->Text);
 	MainForm->MeasErrR5	  =str2dbl(MeasErrR5  ->Text);
 	MainForm->MeasErrR6	  =str2dbl(MeasErrR6  ->Text);
 	MainForm->MeasErr2	  =str2dbl(MeasErr2   ->Text);
@@ -712,8 +716,10 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	
 	MeasErrR1	 ->Text			=s.sprintf("%.1f",prcopt.eratio[0]);
 	MeasErrR2	 ->Text			=s.sprintf("%.1f",prcopt.eratio[1]);
-	MeasErrR5	 ->Text			=s.sprintf("%.1f",prcopt.eratio[2]);
-	MeasErrR6	 ->Text			=s.sprintf("%.1f",prcopt.eratio[3]);
+	MeasErrR3	 ->Text			=s.sprintf("%.1f",prcopt.eratio[2]);
+	MeasErrR4	 ->Text			=s.sprintf("%.1f",prcopt.eratio[3]);
+	MeasErrR5	 ->Text			=s.sprintf("%.1f",prcopt.eratio[4]);
+	MeasErrR6	 ->Text			=s.sprintf("%.1f",prcopt.eratio[5]);
 	MeasErr2	 ->Text			=s.sprintf("%.3f",prcopt.err[1]);
 	MeasErr3	 ->Text			=s.sprintf("%.3f",prcopt.err[2]);
 	MeasErr4	 ->Text			=s.sprintf("%.3f",prcopt.err[3]);
@@ -877,8 +883,10 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	
 	prcopt.eratio[0]=str2dbl(MeasErrR1->Text);
 	prcopt.eratio[1]=str2dbl(MeasErrR2->Text);
-	prcopt.eratio[2]=str2dbl(MeasErrR5->Text);
-	prcopt.eratio[3]=str2dbl(MeasErrR6->Text);
+	prcopt.eratio[2]=str2dbl(MeasErrR3->Text);
+	prcopt.eratio[3]=str2dbl(MeasErrR4->Text);
+	prcopt.eratio[4]=str2dbl(MeasErrR5->Text);
+	prcopt.eratio[5]=str2dbl(MeasErrR6->Text);
 	prcopt.err[1]	=str2dbl(MeasErr2->Text);
 	prcopt.err[2]	=str2dbl(MeasErr3->Text);
 	prcopt.err[3]	=str2dbl(MeasErr4->Text);

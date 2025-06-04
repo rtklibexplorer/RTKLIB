@@ -25,7 +25,7 @@ void __fastcall TPlot::UpdateInfo(void)
 // update time-information for observation-data plot ------------------------
 void __fastcall TPlot::UpdateTimeObs(void)
 {
-    UTF8String msgs1[]={" #FRQ=5 "," 4 "," 3 "," 2 "," 1 ","",""};
+    UTF8String msgs1[]={" #OBS= 6+ "," 5 ", " 4 "," 3 "," 2 "," 1 ","",""};
     UTF8String msgs2[]={" SNR=...45.","..40.","..35.","..30.","..25 ",""," <25 "};
     UTF8String msgs3[]={" SYS=GPS ","GLO ","GAL ","QZS ","BDS ","IRN ","SBS "};
     UTF8String msgs4[]={" MP=..0.6","..0.3","..0.0..","-0.3..","-0.6..","",""};
@@ -132,7 +132,7 @@ void __fastcall TPlot::UpdateTimeSol(void)
 void __fastcall TPlot::UpdateInfoObs(void)
 {
     UTF8String msgs0[]={"  NSAT"," GDOP"," PDOP"," HDOP"," VDOP","",""};
-    UTF8String msgs1[]={" #FRQ= 5 "," 4 "," 3 "," 2 "," 1 ","",""};
+    UTF8String msgs1[]={" #OBS= 6+ "," 5 "," 4 "," 3 "," 2 "," 1 ","",""};
     UTF8String msgs2[]={" SNR=...45.","..40.","..35.","..30.","..25 ",""," <25 "};
     UTF8String msgs3[]={" SYS=GPS ","GLO ","GAL ","QZS ","BDS ","IRN ","SBS "};
     UTF8String msgs4[]={" MP=..0.6","..0.3","..0.0..","-0.3..","-0.6..","",""};
@@ -332,13 +332,20 @@ void __fastcall TPlot::UpdateObsType(void)
 {
     UTF8String s;
     char *obs,*codes[MAXCODE+1];
-    int i,j,n=0,cmask[MAXCODE+1]={0},fmask[10]={0};
-    const char *obstypes[] =  {"L1/LC","L2/E5b","L5/E5a","L6","L7","L8"};
+    int i,j,n=0,cmask[MAXCODE+1]={0},fmask[NFREQ+NEXOBS]={0};
+    const char *obstypes[] = {"F1","F2","F3","F4","F5","F6","F7","F8","F9","F10"};
 
     trace(3,"UpdateObsType\n");
     
-    for (i=0;i<Obs.n;i++) for (j=0;j<NFREQ+NEXOBS;j++) {
-        cmask[Obs.data[i].code[j]]=1;
+    for (i=0;i<Obs.n;i++) {
+      int sat = Obs.data[i].sat;
+      if (sat > 0 && SatSel[sat - 1]) {
+        for (j=0;j<NFREQ+NEXOBS;j++) {
+          int code=Obs.data[i].code[j];
+          cmask[code]=1;
+          if (code!=CODE_NONE) fmask[j]=1;
+        }
+      }
     }
     for (i=1;i<=MAXCODE;i++) {
         if (!cmask[i]) continue;
@@ -351,9 +358,11 @@ void __fastcall TPlot::UpdateObsType(void)
     ObsType2->Items->Clear();
     ObsType ->Items->Add("ALL");
     
-    for (i=0;i<NFREQ;i++) {
-        ObsType ->Items->Add(s.sprintf("%s",obstypes[i]));
-        ObsType2 ->Items->Add(s.sprintf("%s",obstypes[i]));
+    for (i=0;i<NFREQ+NEXOBS;i++) {
+        if (fmask[i]) {
+            ObsType ->Items->Add(s.sprintf("%s",obstypes[i]));
+            ObsType2 ->Items->Add(s.sprintf("%s",obstypes[i]));
+        }
     }
     for (i=0;i<n;i++) {
         ObsType ->Items->Add(s.sprintf("%s",codes[i]));
