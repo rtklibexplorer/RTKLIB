@@ -1738,7 +1738,6 @@ void OptDialog::updateEnable()
     ui->btnRoverPosition->setEnabled(ui->cBRoverPositionType->isEnabled() && ui->cBRoverPositionType->currentIndex() <= 2);
 
     ui->cBReferencePositionType->setEnabled(rel && ui->cBPositionMode->currentIndex() != PMODE_MOVEB);
-    setComboBoxItemEnabled(ui->cBReferencePositionType, 3, options == NaviOptions);
     setComboBoxItemEnabled(ui->cBReferencePositionType, 4, options == PostOptions);
     setComboBoxItemEnabled(ui->cBReferencePositionType, 5, options == PostOptions);
     setComboBoxItemEnabled(ui->cBReferencePositionType, 6, options == NaviOptions);
@@ -1758,9 +1757,15 @@ void OptDialog::updateEnable()
     ui->sBReferenceAntennaN->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
     ui->sBReferenceAntennaU->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
     ui->lblReferenceAntennaD->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
-    ui->lblMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
-    ui->sBMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
-    ui->cBInitRestart->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
+    if (options == NaviOptions) {
+      ui->lblMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
+      ui->sBMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
+      ui->cBInitRestart->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
+    } else {
+      ui->lblMaxAveEp->setVisible(false);
+      ui->sBMaxAveEp->setVisible(false);
+      ui->cBInitRestart->setVisible(false);
+    }
     ui->cBOutputSingle->setEnabled(ui->cBPositionMode->currentIndex() != 0);
     ui->cBSyncSolution->setEnabled(options == NaviOptions ? rel || ppp : false);
 
