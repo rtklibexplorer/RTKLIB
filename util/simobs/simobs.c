@@ -561,7 +561,7 @@ int main(int argc, char **argv) {
 
   if (nErp>0) {
     fprintf(stdout,"Reading %s\n",erpFileName);
-    if (!readerp(erpFileName,&nav.erp)) {
+    if (readerp(erpFileName,&nav.erp) == 0) {
       fprintf(stdout,"ERROR: cannot read ERP file %s\n",erpFileName);
       return -1;
     };
