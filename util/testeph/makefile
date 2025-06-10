@@ -1,14 +1,19 @@
 # makefile for diffeph dumpssr
 
+BINDIR = ../../bin
 SRC    = ../../src
-CFLAGS = -std=c99 -Wall -O3 -pedantic -I$(SRC) -DTRACE -DENAQZS -DENAGLO -DEXTLEX
+CFLAGS = -std=c99 -Wall -O3 -pedantic -I$(SRC) -DTRACE -DENAGLO -DENAQZS -DENAGAL -DENACMP -DENAIRN
 LDFLAGS = -lm
 
-all        : diffeph dumpssr
+all        : dumpssr # diffeph dumpssr
 
-diffeph    : rtkcmn.o trace.o ephemeris.o sbas.o rinex.o preceph.o rtcm.o rtcm2.o rtcm3.o
-diffeph    : ionex.o pntpos.o ppp.o ppp_ar.o stec.o qzslex.o
-dumpssr    : rtkcmn.o trace.o preceph.o rtcm.o rtcm2.o rtcm3.o
+diffeph    : diffeph.o rtkcmn.o trace.o ephemeris.o sbas.o rinex.o preceph.o rtcm.o rtcm2.o rtcm3.o ionex.o pntpos.o ppp.o ppp_ar.o
+dumpssr    : dumpssr.o rtkcmn.o trace.o preceph.o rtcm.o rtcm2.o rtcm3.o rinex.o rtcm.o rtcm2.o rtcm3.o
+
+diffeph.o   : diffeph.c
+	$(CC) -c $(CFLAGS) diffeph.c
+dumpssr.o   : dumpssr.c
+	$(CC) -c $(CFLAGS) dumpssr.c
 
 rtkcmn.o   : $(SRC)/rtklib.h $(SRC)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
@@ -36,15 +41,10 @@ ppp.o      : $(SRC)/rtklib.h $(SRC)/ppp.c
 	$(CC) -c $(CFLAGS) $(SRC)/ppp.c
 ppp_ar.o   : $(SRC)/rtklib.h $(SRC)/ppp_ar.c
 	$(CC) -c $(CFLAGS) $(SRC)/ppp_ar.c
-stec.o     : $(SRC)/rtklib.h $(SRC)/stec.c
-	$(CC) -c $(CFLAGS) $(SRC)/stec.c
-qzslex.o   : $(SRC)/rtklib.h $(SRC)/qzslex.c
-	$(CC) -c $(CFLAGS) $(SRC)/qzslex.c
 
 install:
-	cp -f diffeph.exe /usr/local/bin
-	cp -f dumpssr.exe /usr/local/bin
+	cp diffeph $(BINDIR)
+	cp dumpssr $(BINDIR)
 
 clean:
-	rm -f *.o *.stackdump *.trace *.out *.exe
-
+	rm -f diffeph dumpssr *.o
