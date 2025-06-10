@@ -11,7 +11,11 @@ message("RTKLIB version: ${VERSION}-${PATCH_LEVEL}")
 
 project(rtklib LANGUAGES C CXX VERSION 2.4.3)
 
+include(CTest)
+
 option(IERS_MODEL "Use Earth models from IERS" OFF)
+
+set(TEST_DATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test/data)
 
 # configure rtklib
 add_definitions(-DENAGLO -DENAQZS -DENACMP -DENAGAL -DENAIRN -DNFREQ=3 -DNEXOBS=3 -DTRACE -DSVR_REUSEADDR)

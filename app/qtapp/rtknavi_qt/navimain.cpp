@@ -1253,6 +1253,7 @@ void MainWindow::serverStart()
     updatePlot();
 
     ui->btnStart->setVisible(false);
+    ui->btnStart->setEnabled(false);
     ui->btnOptions->setEnabled(false);
     ui->btnExit->setEnabled(false);
     ui->btnInputStream->setEnabled(false);
@@ -1293,6 +1294,7 @@ void MainWindow::serverStop()
     for (i = 0; i < 3; i++) delete[] cmds[i];
 
     ui->btnStart->setVisible(true);
+    ui->btnStart->setEnabled(true);
     ui->btnOptions->setEnabled(true);
     ui->btnExit->setEnabled(true);
     ui->btnInputStream->setEnabled(true);

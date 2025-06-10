@@ -1302,6 +1302,7 @@ void __fastcall TMainForm::SvrStart(void)
     UpdatePos();
     UpdatePlot();
     BtnStart    ->Visible=false;
+    BtnStart    ->Enabled=false;
     BtnOpt      ->Enabled=false;
     BtnExit     ->Enabled=false;
     BtnInputStr ->Enabled=false;
@@ -1334,6 +1335,7 @@ void __fastcall TMainForm::SvrStop(void)
     rtksvrstop(&rtksvr,(const char **)cmds);
     
     BtnStart    ->Visible=true;
+    BtnStart    ->Enabled=true;
     BtnOpt      ->Enabled=true;
     BtnExit     ->Enabled=true;
     BtnInputStr ->Enabled=true;
