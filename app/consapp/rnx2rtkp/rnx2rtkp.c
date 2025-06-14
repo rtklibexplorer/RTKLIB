@@ -75,7 +75,7 @@ static const char *help[]={
 " -x level  debug trace level (0:off) [0]",
 " --rover list rover names for processing, separated by a space",
 " --base list  base names for processing, separated by a space",
-" --version display release version",
+" --version display release version"
 };
 /* show message --------------------------------------------------------------*/
 extern int showmsg(const char *format, ...)
