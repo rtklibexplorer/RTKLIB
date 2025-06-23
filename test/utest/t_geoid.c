@@ -33,7 +33,7 @@ static double poss[][3]={
     { 30.000*D2R, 135.000*D2R, 36.017}, /* taiheiyo */
     {0,0,0}
 };
-#define DATADIR "../../../../data/geoiddata/"
+#define DATADIR "../data/geoiddata/"
 static char *file1=DATADIR "WW15MGH.DAC";
 static char *file2=DATADIR "Und_min1x1_egm2008_isw=82_WGS84_TideFree_SE";
 static char *file3=DATADIR "Und_min2.5x2.5_egm2008_isw=82_WGS84_TideFree_SE";
@@ -43,7 +43,7 @@ static char *file4=DATADIR "gsigeome.ver4";
 void utest1(void)
 {
     int ret;
-    
+
     ret=opengeoid(10,file1);
         assert(ret==0); /* no model */
     ret=opengeoid(GEOID_EGM96_M150, "../../../geoiddata/WW15MGH.DAA");
@@ -51,10 +51,10 @@ void utest1(void)
     ret=opengeoid(GEOID_EMBEDDED, "");
         assert(ret==1);
     closegeoid();
-#if 0  // geoid files are not included in the rtklib distribution
     ret=opengeoid(GEOID_EGM96_M150,file1);
         assert(ret==1);
     closegeoid();
+#if 0
     ret=opengeoid(GEOID_EGM2008_M10,file2);
         assert(ret==1);
     closegeoid();
@@ -65,7 +65,8 @@ void utest1(void)
         assert(ret==1);
     closegeoid();
 #endif
-    
+
+		 
     printf("%s utset1 : OK\n",__FILE__);
 }
 /* print difference */
@@ -104,14 +105,14 @@ void utest2(void)
     }
     j++;
     closegeoid();
-    
+
     opengeoid(GEOID_EGM2008_M25,file3);
     for (i=0;poss[i][0]!=0.0;i++) {
         h[i][j]=geoidh(poss[i]);
     }
     j++;
     closegeoid();
-    
+
     opengeoid(GEOID_GSI2000_M15,file4);
     for (i=0;poss[i][0]!=0.0;i++) {
         h[i][j]=geoidh(poss[i]);
@@ -122,8 +123,7 @@ void utest2(void)
     for (i=0;poss[i][0]!=0.0;i++) {
         printgeoid(poss[i],h[i],5);
         
-      printf("%d %f %f \n", i, h[i][0], poss[i][2]);
-        assert(fabs(h[i][0]-poss[i][2])<2.5);
+        assert(fabs(h[i][0]-poss[i][2])<1.0);
     }
     printf("%s utset2 : OK\n",__FILE__);
 }
@@ -132,7 +132,7 @@ void utest3(void)
 {
     double pos[3],h[6],dhmax[6]={0},dh;
     int i,j,k,nlat=113,nlon=237;
-    
+
     for (i=0;i<=nlat;i++) for (j=0;j<=nlon;j++) {
         pos[0]=(90.0-i*180.0/nlat)*D2R;
         pos[1]=j*360.0/nlon*D2R;

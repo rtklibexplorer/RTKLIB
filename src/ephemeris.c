@@ -444,22 +444,17 @@ static eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
         case SYS_QZS: tmax=MAXDTOE_QZS+1.0; sel=eph_sel[3]; break;
         case SYS_CMP: tmax=MAXDTOE_CMP+1.0; sel=eph_sel[4]; break;
         case SYS_IRN: tmax=MAXDTOE_IRN+1.0; sel=eph_sel[5]; break;
-        default: tmax=MAXDTOE+1.0; break;
+        default     : tmax=MAXDTOE+1.0;
     }
     tmin=tmax+1.0;
 
     for (i=0;i<nav->n;i++) {
         if (nav->eph[i].sat!=sat) continue;
         if (iode>=0&&nav->eph[i].iode!=iode) continue;
+        /* TODO: also add selection switches here for other GNSS (e.g. BDS CNAV)! */
         if (sys==SYS_GAL) {
-            sel=getseleph(SYS_GAL);
-            /* this code is from 2.4.3 b34 but does not seem to be fully supported,
-               so for now I have dropped back to the b33 code */
-            /* if (sel==0&&!(nav->eph[i].code&(1<<9))) continue; */ /* I/NAV */
-            /*if (sel==1&&!(nav->eph[i].code&(1<<8))) continue; */ /* F/NAV */
-            if (sel==1&&!(nav->eph[i].code&(1<<9))) continue; /* I/NAV */
-            if (sel==2&&!(nav->eph[i].code&(1<<8))) continue; /* F/NAV */
-            if (timediff(nav->eph[i].toe,time)>=0.0) continue; /* AOD<=0 */
+            if (sel==0&&!(nav->eph[i].code&(1<<9))) continue; /* I/NAV */
+            if (sel==1&&!(nav->eph[i].code&(1<<8))) continue; /* F/NAV */
         }
         if ((t=fabs(timediff(nav->eph[i].toe,time)))>tmax) continue;
         if (iode>=0) return nav->eph+i;
@@ -625,11 +620,11 @@ static int satpos_sbas(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
 }
 /* satellite position and clock with ssr correction --------------------------*/
 static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
-                      int opt, double *rs, double *dts, double *var, int *svh)
+                      double *rs, double *dts, double *var, int *svh)
 {
     const ssr_t *ssr;
     eph_t *eph;
-    double t1,t2,t3,er[3],ea[3],ec[3],rc[3],deph[3],dclk,dant[3]={0},tk;
+    double t1,t2,t3,er[3],ea[3],ec[3],rc[3],deph[3],dclk,tk;
     int i,sys;
 
     char tstr[40];
@@ -647,7 +642,7 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
     }
     /* inconsistency between orbit and clock correction */
     if (ssr->iod[0]!=ssr->iod[1]) {
-        trace(2,"inconsist ssr correction: %s sat=%2d iod=%d %d\n",
+        trace(2,"inconsistent ssr correction: %s sat=%2d iod=%d %d\n",
               time2str(time,tstr,0),sat,ssr->iod[0],ssr->iod[1]);
         *svh=-1;
         return 0;
@@ -696,7 +691,10 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
         dts[0]-=2.0*dot3(rs,rs+3)/CLIGHT/CLIGHT;
     }
     /* radial-along-cross directions in ecef */
-    if (!normv3(rs+3,ea)) return 0;
+    if (!normv3(rs+3,ea)) {
+        *svh=-1;
+        return 0;
+    }
     cross3(rs,rs+3,rc);
     if (!normv3(rc,ec)) {
         *svh=-1;
@@ -704,12 +702,8 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
     }
     cross3(ea,ec,er);
 
-    /* satellite antenna offset correction */
-    if (opt) {
-        satantoff(time,rs,sat,nav,dant);
-    }
     for (i=0;i<3;i++) {
-        rs[i]+=-(er[i]*deph[0]+ea[i]*deph[1]+ec[i]*deph[2])+dant[i];
+        rs[i]-=er[i]*deph[0]+ea[i]*deph[1]+ec[i]*deph[2];
     }
     /* t_corr = t_sv - (dts(brdc) + dclk(ssr) / CLIGHT) (ref [10] eq.3.12-7) */
     dts[0]+=dclk/CLIGHT;
@@ -735,7 +729,7 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
 *          double *var      O   sat position and clock error variance (m^2)
 *          int    *svh      O   sat health flag (-1:correction not available)
 * return : status (1:ok,0:error)
-* notes  : satellite position is referenced to antenna phase center
+* notes  : satellite position is referenced to center of mass
 *          satellite clock does not include code bias correction (tgd or bgd)
 *-----------------------------------------------------------------------------*/
 extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
@@ -750,10 +744,10 @@ extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
     switch (ephopt) {
         case EPHOPT_BRDC  : return ephpos     (time,teph,sat,nav,-1,rs,dts,var,svh);
         case EPHOPT_SBAS  : return satpos_sbas(time,teph,sat,nav,   rs,dts,var,svh);
-        case EPHOPT_SSRAPC: return satpos_ssr (time,teph,sat,nav, 0,rs,dts,var,svh);
-        case EPHOPT_SSRCOM: return satpos_ssr (time,teph,sat,nav, 1,rs,dts,var,svh);
+        case EPHOPT_SSRAPC: 
+        case EPHOPT_SSRCOM: return satpos_ssr (time,teph,sat,nav,   rs,dts,var,svh);
         case EPHOPT_PREC  :
-            if (!peph2pos(time,sat,nav,1,rs,dts,var)) break; else return 1;
+            if (!peph2pos(time,sat,nav,rs,dts,var)) break; else return 1;
     }
     *svh=-1;
     return 0;
@@ -775,12 +769,12 @@ extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
 *          dts[(0:1)+i*2]= obs[i] sat clock {bias,drift} (s|s/s)
 *          var[i]        = obs[i] sat position and clock error variance (m^2)
 *          svh[i]        = obs[i] sat health flag
-*          if no navigation data, set 0 to rs[], dts[], var[] and svh[]
-*          satellite position and clock are values at signal transmission time
-*          satellite position is referenced to antenna phase center
-*          satellite clock does not include code bias correction (tgd or bgd)
-*          any pseudorange and broadcast ephemeris are always needed to get
-*          signal transmission time
+*          Satellite position and clock are values at signal transmission time.
+*          Precise satellite position is referenced to center of mass
+*          Satellite clock does not include code bias correction (tgd or bgd).
+*          At least one pseudorange and satellite clock offsets from precise
+*          products or broadcast ephemeris always needed to get signal
+*          transmission time.
 *-----------------------------------------------------------------------------*/
 extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
                     int ephopt, double *rs, double *dts, double *var, int *svh)
@@ -807,10 +801,18 @@ extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
         /* transmission time by satellite clock */
         time[i]=timeadd(obs[i].time,-pr/CLIGHT);
 
-        /* satellite clock bias by broadcast ephemeris */
-        if (!ephclk(time[i],teph,obs[i].sat,nav,&dt)) {
+        /* satellite clock offset from precise products or broadcast ephemeris */
+        if (ephopt==EPHOPT_PREC&&nav->nc>0) {
+          if(!pephclk(time[i],obs[i].sat,nav,&dt,NULL)) {
+            trace(3,"no precise clock %s sat=%2d\n",time2str(time[i],tstr,3),obs[i].sat);
+            continue;
+          }
+        }
+        else {
+          if(!ephclk(time[i],teph,obs[i].sat,nav,&dt)) {
             trace(3,"no broadcast clock %s sat=%2d\n",time2str(time[i],tstr,3),obs[i].sat);
             continue;
+          }
         }
         time[i]=timeadd(time[i],-dt);
 
@@ -821,10 +823,13 @@ extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
             continue;
         }
         /* if no precise clock available, use broadcast clock instead */
+        /* NOTE: broadcast clock from ephclk() does NOT include relativistic
+         *       correction for GPS, GAL and BDS! */
         if (dts[i*2]==0.0) {
             if (!ephclk(time[i],teph,obs[i].sat,nav,dts+i*2)) continue;
             dts[1+i*2]=0.0;
             *var=SQR(STD_BRDCCLK);
+            trace(3,"no precise clock, use broadcast %s sat=%2d\n",time2str(time[i],tstr,3),obs[i].sat);
         }
         trace(4,"satposs: %d,time=%.9f dt=%.9f pr=%.3f rs=%13.3f %13.3f %13.3f dts=%12.3f var=%7.3f\n",
             obs[i].sat,time[i].sec,dt,pr,rs[i*6],rs[1+i*6],rs[2+i*6],dts[i*2]*1E9,
@@ -843,9 +848,8 @@ extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
 * args   : int    sys       I   satellite system (SYS_???)
 *          int    sel       I   selection of ephemeris
 *                                 GPS,QZS : 0:LNAV ,1:CNAV  (default: LNAV)
-*  b33 and demo5 b34:             GAL: 0:any,1:I/NAV,2:F/NAV
-*  2.4.3 b34 but not functional?  GAL     : 0:I/NAV,1:F/NAV (default: I/NAV)
-*                                 others : undefined
+*                                 GAL     : 0:I/NAV,1:F/NAV (default: I/NAV)
+*                                 others  : undefined
 * return : none
 *-----------------------------------------------------------------------------*/
 extern void setseleph(int sys, int sel)
