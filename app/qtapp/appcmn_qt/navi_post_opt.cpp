@@ -20,6 +20,7 @@
 #include "keydlg.h"
 #include "helper.h"
 #include "doubleunitvalidator.h"
+#include "excludedsatellitevalidator.h"
 
 #include "ui_navi_post_opt.h"
 
@@ -215,6 +216,8 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     dirCompleter->setModel(dirModel);
     ui->lELocalDirectory->setCompleter(dirCompleter);
 
+    ui->lEExcludedSatellites->setValidator(new ExcludedSatelliteValidator(this));
+
     // station position file line edit actions
     QAction *acStationPositionFileSelect = ui->lEStationPositionFile->addAction(QIcon(":/buttons/folder"), QLineEdit::TrailingPosition);
     acStationPositionFileSelect->setToolTip(tr("Select File"));
@@ -315,6 +318,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     connect(ui->lERoverPosition1, &QLineEdit::textChanged, this, &OptDialog::checkLineEditValidator);
     connect(ui->lERoverPosition2, &QLineEdit::textChanged, this, &OptDialog::checkLineEditValidator);
     connect(ui->lERoverPosition3, &QLineEdit::textChanged, this, &OptDialog::checkLineEditValidator);
+    connect(ui->lEExcludedSatellites, &QLineEdit::textChanged, this, &OptDialog::checkLineEditValidator);
     connect(ui->cBAmbiguityResolution, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &OptDialog::updateEnable);
     connect(ui->cBRoverAntennaPcv, &QCheckBox::clicked, this, &OptDialog::updateEnable);
     connect(ui->cBReferenceAntennaPcv, &QCheckBox::clicked, this, &OptDialog::updateEnable);
@@ -366,7 +370,7 @@ void OptDialog::showEvent(QShowEvent *event)
 
     ui->tWOptions->setCurrentIndex(0);
 
-    updateEnable();
+    updateUi(processingOptions, solutionOptions, fileOptions);
 }
 //---------------------------------------------------------------------------
 void OptDialog::loadSettings()
@@ -883,41 +887,22 @@ void OptDialog::updateOptions()
         baseList = ui->tEBaseList->toPlainText();
     }
 }
-
-//---------------------------------------------------------------------------
-void OptDialog::accept()
-{
-    updateOptions();
-
-    QDialog::accept();
-}
-//---------------------------------------------------------------------------
-void OptDialog::load(const QString &file)
+void OptDialog::updateUi(const prcopt_t &prcopt, const solopt_t &solopt, const filopt_t &filopt)
 {
     QLineEdit *editu[] = {ui->lERoverPosition1, ui->lERoverPosition2, ui->lERoverPosition3};
     QLineEdit *editr[] = {ui->lEReferencePosition1, ui->lEReferencePosition2, ui->lEReferencePosition3};
-    prcopt_t prcopt = prcopt_default;
-    solopt_t solopt = solopt_default;
-    filopt_t filopt;
 
-    memset(&filopt, 0, sizeof(filopt_t));
-
-	resetsysopts();
-    if (!loadopts(qPrintable(file), sysopts)) return;
-    if (appOptions && !loadopts(qPrintable(file), appOptions)) return;
-    if (!loadopts(qPrintable(file), naviopts)) return;
-    getsysopts(&prcopt, &solopt, &filopt);
     proxyAddress = proxyaddr;
 
     if (options == NaviOptions) {
-      ui->sBServerCycle->setValue(serverCycle);
-      ui->sBTimeoutTime->setValue(timeoutTime);
-      ui->sBReconnectTime->setValue(reconnectTime);
-      ui->sBNmeaCycle->setValue(nmeaCycle);
-      ui->sBServerBufferSize->setValue(serverBufferSize);
-      ui->cBNavSelect->setCurrentIndex(navSelect);
-      ui->lEProxyAddress->setText(proxyaddr);
-      ui->sBFileSwapMargin->setValue(fileSwapMargin);
+        ui->sBServerCycle->setValue(serverCycle);
+        ui->sBTimeoutTime->setValue(timeoutTime);
+        ui->sBReconnectTime->setValue(reconnectTime);
+        ui->sBNmeaCycle->setValue(nmeaCycle);
+        ui->sBServerBufferSize->setValue(serverBufferSize);
+        ui->cBNavSelect->setCurrentIndex(navSelect);
+        ui->lEProxyAddress->setText(proxyaddr);
+        ui->sBFileSwapMargin->setValue(fileSwapMargin);
     }
 
     ui->sBSbasSatellite->setValue(prcopt.sbassatsel);
@@ -1071,7 +1056,31 @@ void OptDialog::load(const QString &file)
     // filopt.trace
 
     readAntennaList();
-	updateEnable();
+    updateEnable();
+}
+//---------------------------------------------------------------------------
+void OptDialog::accept()
+{
+    updateOptions();
+
+    QDialog::accept();
+}
+//---------------------------------------------------------------------------
+void OptDialog::load(const QString &file)
+{
+    prcopt_t prcopt = prcopt_default;
+    solopt_t solopt = solopt_default;
+    filopt_t filopt;
+
+    memset(&filopt, 0, sizeof(filopt_t));
+
+	resetsysopts();
+    if (!loadopts(qPrintable(file), sysopts)) return;
+    if (appOptions && !loadopts(qPrintable(file), appOptions)) return;
+    if (!loadopts(qPrintable(file), naviopts)) return;
+    getsysopts(&prcopt, &solopt, &filopt);
+
+    updateUi(prcopt, solopt, filopt);
 }
 //---------------------------------------------------------------------------
 void OptDialog::save(const QString &file)
@@ -1875,7 +1884,7 @@ int OptDialog::getPosition(int type, QLineEdit **edit, double *pos)
     return ret;
 }
 //---------------------------------------------------------------------------
-void OptDialog::setPosition(int type, QLineEdit **edit, double *pos)
+void OptDialog::setPosition(int type, QLineEdit **edit, const double *pos)
 {
     double p[3], dms1[3], dms2[3], s1, s2;
 
@@ -1977,7 +1986,7 @@ void OptDialog::showFrequenciesDialog()
     delete freqDialog;
 }
 //---------------------------------------------------------------------------
-QString OptDialog::excludedSatellitesString(prcopt_t *prcopt)
+QString OptDialog::excludedSatellitesString(const prcopt_t *prcopt)
 {
     QString buff;
     char id[32];
@@ -1999,6 +2008,7 @@ bool OptDialog::fillExcludedSatellites(prcopt_t *prcopt, const QString &excluded
         foreach (QString sat, excludedSatellites.split(' ')) {
             unsigned char ex;
             int satNo;
+            if (sat.length() == 0) continue;
             if (sat[0] == '+')
             {
                 ex = 2;

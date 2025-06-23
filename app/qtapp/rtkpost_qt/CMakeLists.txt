@@ -19,6 +19,7 @@ add_executable(rtkpost_qt
 
     ../widgets_qt/doubleunitvalidator.cpp
     ../widgets_qt/scientificspinbox.cpp
+    ../widgets_qt/excludedsatellitevalidator.cpp
 
     ../appcmn_qt/navi_post_opt.ui
     ../appcmn_qt/keydlg.ui

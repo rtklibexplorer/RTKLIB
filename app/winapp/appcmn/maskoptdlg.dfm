@@ -3,7 +3,7 @@ object MaskOptDialog: TMaskOptDialog
   Top = 0
   BorderStyle = bsDialog
   Caption = 'SNR Mask'
-  ClientHeight = 145
+  ClientHeight = 193
   ClientWidth = 369
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET

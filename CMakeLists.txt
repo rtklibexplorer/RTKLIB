@@ -46,6 +46,9 @@ if(QT_FOUND)
     add_subdirectory(app/qtapp)
 endif()
 
+# tests
+add_subdirectory(test)
+
 #CPACK: General Settings
 set(CPACK_GENERATOR "TBZ2" "RPM" "DEB")
 set(CPACK_PACKAGE_NAME "rtklib")

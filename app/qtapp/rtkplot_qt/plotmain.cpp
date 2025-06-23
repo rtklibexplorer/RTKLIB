@@ -386,7 +386,7 @@ Plot::~Plot()
     delete [] azimuth;
     delete [] elevation;
 
-    for (int i = 0; i < NFREQ + NEXOBS; i++) delete multipath[i];
+    for (int i = 0; i < NFREQ + NEXOBS; i++) delete [] multipath[i];
 
     delete graphTrack;
     delete graphSingle;
