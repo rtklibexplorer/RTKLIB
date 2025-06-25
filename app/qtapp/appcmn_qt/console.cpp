@@ -64,22 +64,27 @@ void Console::addMessage(uint8_t *msg, int n)
     p += sprintf(p, "%s", qPrintable(consoleBuffer.last()));
 
     for (int i = 0; i < n; i++) {
-            if (mode) {
-                    if (msg[i] == '\r') continue;
-                    p += sprintf(p, "%c", msg[i] == '\n' || isprint(msg[i]) ? msg[i] : '.');
-            }
+        int add = 0;
+        if (mode) {
+            if (msg[i] == '\r') continue;
+            if (msg[i] == '\n') add = 1;
             else {
-                    p += sprintf(p, "%s%02X", (p - buff) % 17 == 16 ? " " : "", msg[i]);
-                    if (p - buff >= 67) p += sprintf(p,"\n");
+              p += sprintf(p, "%c", isprint(msg[i]) ? msg[i] : '.');
+              if (p - buff >= MAXLEN) add = 1;
             }
-            if (p-buff >= MAXLEN) p += sprintf(p,"\n");
+        } else {
+            if (strlen(buff) % 17 == 16) strcat(p++, " ");
+            p += sprintf(p, "%02X", msg[i]);
+            if (p - buff >= 67) add = 1;
+        }
 
-            if (*(p-1) == '\n') {
-                    consoleBuffer.last() = buff;
-                    consoleBuffer.append("");
-                    *(p=buff) = 0;
-                    if (consoleBuffer.count() >= MAXLINE) consoleBuffer.removeFirst();
-            }
+        if (add) {
+            strcat(p, "\n");
+            consoleBuffer.last() = buff;
+            consoleBuffer.append("");
+            *(p = buff) = 0;
+            if (consoleBuffer.count() >= MAXLINE) consoleBuffer.removeFirst();
+        }
     }
     consoleBuffer.last() = buff;
 

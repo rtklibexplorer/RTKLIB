@@ -1001,9 +1001,9 @@ void MainWindow::loadOptions()
     ui->cBTimeStart->setChecked(ini.value("set/timestartf", false).toBool());
     ui->cBTimeEnd->setChecked(ini.value("set/timeendf", false).toBool());
     ui->cBTimeInterval->setChecked(ini.value("set/timeintf", false).toBool());
-    ui->dateTimeStart->setDate(ini.value("set/timey1", "2020/01/01").value<QDate>());
+    ui->dateTimeStart->setDate(ini.value("set/timey1", "2025/01/01").value<QDate>());
     ui->dateTimeStart->setTime(ini.value("set/timeh1", "00:00:00").value<QTime>());
-    ui->dateTimeStop->setDate(ini.value("set/timey2", "2020/01/02").value<QDate>());
+    ui->dateTimeStop->setDate(ini.value("set/timey2", "2025/01/01").value<QDate>());
     ui->dateTimeStop->setTime(ini.value("set/timeh2", "00:00:00").value<QTime>());
     ui->comboTimeInterval->setCurrentText(ini.value("set/timeint", "1").toString());
     ui->cBTimeUnit->setChecked(ini.value("set/timeunitf", false).toBool());

@@ -774,7 +774,7 @@ object MainWindow: TMainWindow
     ParentBackground = False
     TabOrder = 0
     object Panel5: TPanel
-      Left = 337
+      Left = 327
       Top = 2
       Width = 131
       Height = 39
@@ -782,7 +782,7 @@ object MainWindow: TMainWindow
       BevelOuter = bvNone
       TabOrder = 2
       object LabelTimeUnit: TLabel
-        Left = 117
+        Left = 127
         Top = 19
         Width = 7
         Height = 13
@@ -828,7 +828,7 @@ object MainWindow: TMainWindow
           '60')
       end
       object TimeUnitF: TCheckBox
-        Left = 68
+        Left = 78
         Top = 0
         Width = 51
         Height = 17
@@ -838,7 +838,7 @@ object MainWindow: TMainWindow
         OnClick = TimeIntFClick
       end
       object TimeUnit: TEdit
-        Left = 68
+        Left = 78
         Top = 16
         Width = 45
         Height = 21
@@ -919,7 +919,7 @@ object MainWindow: TMainWindow
       end
     end
     object Panel7: TPanel
-      Left = 170
+      Left = 190
       Top = 2
       Width = 167
       Height = 39

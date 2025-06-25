@@ -238,7 +238,7 @@ void __fastcall TMainWindow::SetOutFiles(AnsiString infile)
 // callback on file drag and drop -------------------------------------------
 void __fastcall TMainWindow::DropFiles(TWMDropFiles msg)
 {
-	char *p,str[1024];
+	char str[1024];
 	
 	if (DragQueryFile((HDROP)msg.Drop,0xFFFFFFFF,NULL,0)<=0) return;
 	DragQueryFile((HDROP)msg.Drop,0,str,sizeof(str));
@@ -847,7 +847,7 @@ void __fastcall TMainWindow::ConvertFile(void)
 	AnsiString OutFile7_Text=OutFile7->Text,OutFile8_Text=OutFile8->Text;
 	AnsiString OutFile9_Text=OutFile9->Text;
 	int i,format,sat;
-	char file[1024]="",*ofile[9],ofile_[9][1024]={""},msg[256],*p;
+	char file[1024]="",*ofile[9],ofile_[9][1024]={""},*p;
 	char buff[256],tstr[40];
 	const int RNXVER[]={210,211,212,300,301,302,303,304,305,400,401,402};
 	FILE *fp;
@@ -1068,9 +1068,9 @@ void __fastcall TMainWindow::LoadOpt(void)
 	Comment[0]			=ini->ReadString ("opt","comment0",   "");
 	Comment[1]			=ini->ReadString ("opt","comment1",   "");
 	RcvOption			=ini->ReadString ("opt","rcvoption",  "");
-	NavSys				=ini->ReadInteger("opt","navsys",	 0x2D);
-	ObsType				=ini->ReadInteger("opt","obstype",	 0xF);
-	FreqType			=ini->ReadInteger("opt","freqtype",  0x7);
+	NavSys				=ini->ReadInteger("opt","navsys", 0x7F);
+	ObsType				=ini->ReadInteger("opt","obstype", OBSTYPE_ALL);
+	FreqType			=ini->ReadInteger("opt","freqtype", FREQTYPE_ALL);
 	ExSats				=ini->ReadString ("opt","exsats",	  "");
 	TraceLevel			=ini->ReadInteger("opt","tracelevel",  0);
 	RnxTime.time		=ini->ReadInteger("opt","rnxtime",	   0);
@@ -1098,9 +1098,9 @@ void __fastcall TMainWindow::LoadOpt(void)
 	TimeStartF ->Checked=ini->ReadInteger("set","timestartf",  0);
 	TimeEndF   ->Checked=ini->ReadInteger("set","timeendf",    0);
 	TimeIntF   ->Checked=ini->ReadInteger("set","timeintf",    0);
-	TimeY1	   ->Text	=ini->ReadString ("set","timey1",	  "2020/01/01");
+	TimeY1	   ->Text	=ini->ReadString ("set","timey1",	  "2025/01/01");
 	TimeH1	   ->Text	=ini->ReadString ("set","timeh1",	  "00:00:00"  );
-	TimeY2	   ->Text	=ini->ReadString ("set","timey2",	  "2020/01/01");
+	TimeY2	   ->Text	=ini->ReadString ("set","timey2",	  "2025/01/01");
 	TimeH2	   ->Text	=ini->ReadString ("set","timeh2",	  "00:00:00"  );
 	TimeInt    ->Text	=ini->ReadString ("set","timeint",	 "1");
 	TimeUnitF  ->Checked=ini->ReadInteger("set","timeunitf",   0);

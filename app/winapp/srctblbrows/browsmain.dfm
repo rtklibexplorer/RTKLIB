@@ -48,7 +48,7 @@ object MainForm: TMainForm
       OnClick = BtnListClick
     end
     object BtnUpdate: TSpeedButton
-      Left = 211
+      Left = 281
       Top = 1
       Width = 21
       Height = 21
@@ -68,8 +68,8 @@ object MainForm: TMainForm
       OnClick = BtnUpdateClick
     end
     object TypeStr: TSpeedButton
-      Left = 251
-      Top = 1
+      Left = 321
+      Top = 0
       Width = 25
       Height = 22
       Hint = 'Data Streams'
@@ -83,7 +83,7 @@ object MainForm: TMainForm
       OnClick = TypeStrClick
     end
     object TypeCas: TSpeedButton
-      Left = 276
+      Left = 346
       Top = 0
       Width = 27
       Height = 22
@@ -97,7 +97,7 @@ object MainForm: TMainForm
       OnClick = TypeCasClick
     end
     object TypeNet: TSpeedButton
-      Left = 304
+      Left = 374
       Top = 0
       Width = 25
       Height = 22
@@ -111,7 +111,7 @@ object MainForm: TMainForm
       OnClick = TypeNetClick
     end
     object TypeSrc: TSpeedButton
-      Left = 330
+      Left = 400
       Top = 0
       Width = 25
       Height = 22
@@ -125,7 +125,7 @@ object MainForm: TMainForm
       OnClick = TypeSrcClick
     end
     object BtnMap: TSpeedButton
-      Left = 357
+      Left = 427
       Top = 0
       Width = 25
       Height = 22
@@ -139,7 +139,7 @@ object MainForm: TMainForm
     object Address: TComboBox
       Left = 25
       Top = 1
-      Width = 184
+      Width = 254
       Height = 21
       Hint = 'Caster Address:Port'
       DropDownCount = 40
@@ -151,7 +151,7 @@ object MainForm: TMainForm
       OnKeyPress = AddressKeyPress
     end
     object StaMask: TCheckBox
-      Left = 463
+      Left = 533
       Top = 3
       Width = 71
       Height = 17
@@ -161,7 +161,7 @@ object MainForm: TMainForm
       OnClick = StaMaskClick
     end
     object BtnSta: TButton
-      Left = 501
+      Left = 571
       Top = 1
       Width = 22
       Height = 21
@@ -177,7 +177,7 @@ object MainForm: TMainForm
       OnClick = BtnStaClick
     end
     object FiltFmt: TComboBox
-      Left = 390
+      Left = 440
       Top = 0
       Width = 66
       Height = 21
@@ -205,7 +205,7 @@ object MainForm: TMainForm
     ColCount = 19
     DefaultRowHeight = 15
     FixedCols = 0
-    RowCount = 100
+    RowCount = 200
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goColSizing, goEditing]
     TabOrder = 3
     OnMouseDown = Table2MouseDown
@@ -266,7 +266,7 @@ object MainForm: TMainForm
     ColCount = 19
     DefaultRowHeight = 15
     FixedCols = 0
-    RowCount = 100
+    RowCount = 200
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goColSizing, goEditing]
     TabOrder = 2
     OnMouseDown = Table1MouseDown
@@ -306,7 +306,7 @@ object MainForm: TMainForm
     ColCount = 19
     DefaultRowHeight = 15
     FixedCols = 0
-    RowCount = 100
+    RowCount = 200
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goColSizing, goEditing]
     TabOrder = 1
     OnMouseDown = Table0MouseDown

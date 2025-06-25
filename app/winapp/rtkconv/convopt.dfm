@@ -442,6 +442,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 104
       Height = 17
       Caption = 'L5/G3/E5a/B2a'
+      State = cbChecked
       TabOrder = 2
     end
     object Freq4: TCheckBox
@@ -450,6 +451,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 77
       Height = 17
       Caption = 'L6/E6/B3'
+      State = cbChecked
       TabOrder = 4
     end
     object Freq5: TCheckBox
@@ -458,6 +460,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 70
       Height = 17
       Caption = 'E5ab/B1C'
+      State = cbChecked
       TabOrder = 5
     end
     object Freq6: TCheckBox
@@ -466,6 +469,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 43
       Height = 17
       Caption = 'B2ab'
+      State = cbChecked
       TabOrder = 3
     end
   end
@@ -560,6 +564,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 40
       Height = 15
       Caption = 'QZS'
+      State = cbChecked
       TabOrder = 3
     end
     object Nav5: TCheckBox
@@ -568,6 +573,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 48
       Height = 15
       Caption = 'SBS'
+      State = cbChecked
       TabOrder = 6
     end
     object Nav6: TCheckBox

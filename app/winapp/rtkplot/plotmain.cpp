@@ -2592,12 +2592,13 @@ void __fastcall TPlot::FitRange(int all)
         delete pos2;
         delete pos;
     }
-    xl[0]-=0.05;
-    xl[1]+=0.05;
-    yl[0]-=0.05;
-    yl[1]+=0.05;
-    zl[0]-=0.05;
-    zl[1]+=0.05;
+    // add margins
+    xl[0]-=0.015;
+    xl[1]+=0.015;
+    yl[0]-=0.015;
+    yl[1]+=0.015;
+    zl[0]-=0.015;
+    zl[1]+=0.015;
     
     if (all||PlotType==PLOT_TRK) {
         GraphT->SetLim(xl,yl);

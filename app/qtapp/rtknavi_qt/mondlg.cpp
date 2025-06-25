@@ -33,7 +33,8 @@ MonitorDialog::MonitorDialog(QWidget *parent, rtksvr_t *server, stream_t* stream
 
     fontScale = QFontMetrics(ui->tWConsole->font()).height() * 4;
 
-    consoleFormat = -1;
+    consoleFormat = 1;
+    ui->cBSelectFormat->setCurrentIndex(consoleFormat);
     inputStream = solutionStream = 0;
 
     for (int i = 0; i <= MAXRCVFMT; i++) ui->cBSelectFormat->addItem(formatstrs[i]);
@@ -330,24 +331,30 @@ void MonitorDialog::addConsole(const uint8_t *msg, int n, int mode, bool newline
     p += sprintf(p, "%s", qPrintable(consoleBuffer.at(consoleBuffer.count() - 1)));
 
     for (int i = 0; i < n; i++) {
+        int add = 0;
         if (mode) {
             if (msg[i] == '\r') continue;
-            p += sprintf(p, "%c", msg[i] == '\n' || isprint(msg[i]) ? msg[i] : '.');
-        } else { // add a space after 16 and a line break after 67 characters
-            p += sprintf(p, "%s%02X", (p - buff) % 17 == 16 ? " " : "", msg[i]);
-            if (p - buff >= 67) p += sprintf(p, "\n");
+            if (msg[i] == '\n') add = 1;
+            else {
+              p += sprintf(p, "%c", isprint(msg[i]) ? msg[i] : '.');
+              if (p - buff >= MAXLEN) add = 1;
+            }
+        } else {
+            // Add a space after 16 and a line break after 67 characters.
+            if (strlen(buff) % 17 == 16) strcat(p++, " ");
+            p += sprintf(p, "%02X", msg[i]);
+            if (p - buff >= 67) add = 1;
         }
-        if (p - buff >= MAXLEN) p += sprintf(p, "\n");
 
-        if (*(p - 1) == '\n') {
-            consoleBuffer[consoleBuffer.count() - 1] = QString(buff).remove(QString(buff).size()-1, 1);
+        if (add) {
+            consoleBuffer[consoleBuffer.count() - 1] = QString(buff);
             consoleBuffer.append("");
             *(p = buff) = 0;
             while (consoleBuffer.count() >= MAXLINE) consoleBuffer.removeFirst();
         }
     }
     // store last (incomplete) line
-    consoleBuffer[consoleBuffer.count() - 1] = QString(buff).remove(QString(buff).size()-1, 1);
+    consoleBuffer[consoleBuffer.count() - 1] = QString(buff);
 
     // write consoleBuffer to table widget
     ui->tWConsole->setColumnCount(1);

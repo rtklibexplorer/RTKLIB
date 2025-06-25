@@ -56,10 +56,10 @@ double __fastcall TPlot::TimePos(gtime_t time)
     if (TimeLabel<=1) { // www/ssss or gpst
         tow=time2gpst(time,&week);
     }
-    else if (TimeLabel==2) { // utc
+    else if (TimeLabel==2) { // UTC
         tow=time2gpst(gpst2utc(time),&week);
     }
-    else { // jst
+    else { // JST
         tow=time2gpst(timeadd(gpst2utc(time),9*3600.0),&week);
     }
     return tow+(week-Week)*86400.0*7;
@@ -450,11 +450,11 @@ void __fastcall TPlot::TimeStr(gtime_t time, int n, int tsys, char str[48])
         tow=time2gpst(time,&week);
         snprintf(tstr,sizeof(tstr),"%4d/%*.*fs",week,(n>0?6:5)+n,n,tow);
     }
-    else if (TimeLabel==1) { // gpst
+    else if (TimeLabel==1) { // GPST
         time2str(time,tstr,n);
         label=" GPST";
     }
-    else if (TimeLabel==2) { // utc
+    else if (TimeLabel==2) { // UTC
         time2str(gpst2utc(time),tstr,n);
         label=" UTC";
     }
