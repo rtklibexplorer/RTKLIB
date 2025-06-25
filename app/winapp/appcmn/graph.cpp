@@ -516,6 +516,9 @@ void TGraph::DrawCircle(TPoint p, TColor color, int rx, int ry, int style)
 	TPenStyle ps[]={psSolid,psDot,psDash,psDashDot,psDashDotDot};
 	int x1=p.x-rx,x2=p.x+rx,y1=p.y-ry,y2=p.y+ry;
 	c->Pen->Color=color; c->Pen->Style=ps[style]; c->Brush->Style=bsClear;
+        // Guard against a large radius which for which this implementation
+        // appears to be very slow and to invoke memory corruption.
+        if (x2 - x1 >= 32768 || y2 - y1 >= 32768) return;
 	c->Ellipse(x1,y1,x2,y2);
 }
 //---------------------------------------------------------------------------

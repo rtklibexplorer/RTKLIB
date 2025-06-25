@@ -25,17 +25,15 @@ __fastcall TOptDialog::TOptDialog(TComponent* Owner)
     : TForm(Owner)
 {
     AnsiString label,s;
-    const char *freqs[]={"L1","L2","E5b","L5","E6","E5ab"};
     int nglo=MAXPRNGLO,ngal=MAXPRNGAL,nqzs=MAXPRNQZS,ncmp=MAXPRNCMP;
     int nirn=MAXPRNIRN;
     
-#if 0
     Freq->Items->Clear();
     for (int i=0;i<NFREQ;i++) {
-        label=label+(i>0?"+":"")+s.sprintf("%s",freqs[i]);
-        Freq->Items->Add(label);
+      label=label+(i>0?"+":"")+s.sprintf("L%d",i + 1);
+      Freq->Items->Add(label);
     }
-#endif
+
     if (nglo<=0) NavSys2->Enabled=false;
     if (ngal<=0) NavSys3->Enabled=false;
     if (nqzs<=0) NavSys4->Enabled=false;
@@ -617,7 +615,7 @@ void __fastcall TOptDialog::SetOpt(void)
 void __fastcall TOptDialog::LoadOpt(AnsiString file)
 {
 
-int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
+        int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 
 	TEdit *editu[]={RovPos1,RovPos2,RovPos3};
 	TEdit *editr[]={RefPos1,RefPos2,RefPos3};
@@ -1123,7 +1121,7 @@ void __fastcall TOptDialog::ExtEna2Click(TObject *Sender)
 	UpdateEnable();
 }
 //---------------------------------------------------------------------------
-void __fastcall TOptDialog::BtnMaskClick(TObject *Sender)
+void __fastcall TOptDialog::BtnSnrMaskClick(TObject *Sender)
 {
 	MaskOptDialog->Mask=SnrMask;
 	if (MaskOptDialog->ShowModal()!=mrOk) return;

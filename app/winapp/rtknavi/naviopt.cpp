@@ -94,7 +94,7 @@ __fastcall TOptDialog::TOptDialog(TComponent* Owner)
 	: TForm(Owner)
 {
 	AnsiString label,s;
-	int freq[]={1,2,3,4,5,6},nglo=MAXPRNGLO,ngal=MAXPRNGAL,nqzs=MAXPRNQZS;
+	int nglo=MAXPRNGLO,ngal=MAXPRNGAL,nqzs=MAXPRNQZS;
 	int ncmp=MAXPRNCMP,nirn=MAXPRNIRN;
 
 	PrcOpt=prcopt_default;
@@ -105,7 +105,7 @@ __fastcall TOptDialog::TOptDialog(TComponent* Owner)
 	
 	Freq->Items->Clear();
 	for (int i=0;i<NFREQ;i++) {
-		label=label+(i>0?"+":"")+s.sprintf("L%d",freq[i]);
+		label=label+(i>0?"+":"")+s.sprintf("L%d",i + 1);
 		Freq->Items->Add(label);
 	}
 	if (nglo<=0) NavSys2->Enabled=false;
@@ -271,7 +271,7 @@ void __fastcall TOptDialog::BtnGeoidDataFileClick(TObject *Sender)
 void __fastcall TOptDialog::BtnDCBFileClick(TObject *Sender)
 {
 	OpenDialog->Title="DCB Data File";
-	OpenDialog->FilterIndex=1;
+	OpenDialog->FilterIndex=5;
 	if (!OpenDialog->Execute()) return;
 	DCBFile->Text=OpenDialog->FileName;
 }
@@ -279,9 +279,17 @@ void __fastcall TOptDialog::BtnDCBFileClick(TObject *Sender)
 void __fastcall TOptDialog::BtnEOPFileClick(TObject *Sender)
 {
 	OpenDialog->Title="EOP Data File";
-	OpenDialog->FilterIndex=1;
+	OpenDialog->FilterIndex=6;
 	if (!OpenDialog->Execute()) return;
 	EOPFile->Text=OpenDialog->FileName;
+}
+//---------------------------------------------------------------------------
+void __fastcall TOptDialog::BtnDCBViewClick(TObject *Sender)
+{
+	if (DCBFile->Text=="") return;
+	TTextViewer *viewer=new TTextViewer(Application);
+	viewer->Show();
+	viewer->Read(DCBFile->Text);
 }
 //---------------------------------------------------------------------------
 void __fastcall TOptDialog::BtnEOPViewClick(TObject *Sender)
@@ -292,6 +300,21 @@ void __fastcall TOptDialog::BtnEOPViewClick(TObject *Sender)
 	viewer->Read(EOPFile->Text);
 }
 //---------------------------------------------------------------------------
+void __fastcall TOptDialog::BtnBLQFileClick(TObject *Sender)
+{
+	OpenDialog->Title="Ocean Tide Loading BLQ File";
+	OpenDialog->FilterIndex=7;
+	if (!OpenDialog->Execute()) return;
+	BLQFile->Text=OpenDialog->FileName;
+}
+//---------------------------------------------------------------------------
+void __fastcall TOptDialog::BtnBLQViewClick(TObject *Sender)
+{
+	if (BLQFile->Text=="") return;
+	TTextViewer *viewer=new TTextViewer(Application);
+	viewer->Show();
+	viewer->Read(BLQFile->Text);
+}
 void __fastcall TOptDialog::BtnLocalDirClick(TObject *Sender)
 {
     UnicodeString dir=LocalDir->Text;
@@ -458,8 +481,8 @@ void __fastcall TOptDialog::GetOpt(void)
 	OutputGeoid  ->ItemIndex=SolOpt.geoid;
 	NmeaIntv1    ->Text     =s.sprintf("%.2g",SolOpt.nmeaintv[0]);
 	NmeaIntv2    ->Text     =s.sprintf("%.2g",SolOpt.nmeaintv[1]);
-	DebugStatus	 ->ItemIndex=DebugStatusF;
-	DebugTrace	 ->ItemIndex=DebugTraceF;
+	DebugStatus	 ->ItemIndex=SolOpt.sstat;
+	DebugTrace	 ->ItemIndex=SolOpt.trace;
 	
 	BaselineConst->Checked  =BaselineC;
 	BaselineLen->Text       =s.sprintf("%.3f",Baseline[0]);
@@ -506,6 +529,7 @@ void __fastcall TOptDialog::GetOpt(void)
 	GeoidDataFile->Text     =GeoidDataFileF;
 	DCBFile      ->Text     =DCBFileF;
 	EOPFile      ->Text     =EOPFileF;
+	BLQFile      ->Text     =BLQFileF;
 	LocalDir	 ->Text     =LocalDirectory;
 	ReadAntList();
 	
@@ -605,8 +629,8 @@ void __fastcall TOptDialog::SetOpt(void)
 	SolOpt.geoid     =OutputGeoid ->ItemIndex;
 	SolOpt.nmeaintv[0]=str2dbl(NmeaIntv1->Text);
 	SolOpt.nmeaintv[1]=str2dbl(NmeaIntv2->Text);
-	DebugStatusF     =DebugStatus ->ItemIndex;
-	DebugTraceF      =DebugTrace  ->ItemIndex;
+	SolOpt.sstat     =DebugStatus ->ItemIndex;
+	SolOpt.trace     =DebugTrace  ->ItemIndex;
 	
 	BaselineC        =BaselineConst->Checked;
 	Baseline[0]      =str2dbl(BaselineLen->Text);
@@ -653,6 +677,7 @@ void __fastcall TOptDialog::SetOpt(void)
 	GeoidDataFileF   =GeoidDataFile->Text;
 	DCBFileF         =DCBFile     ->Text;
 	EOPFileF         =EOPFile     ->Text;
+	BLQFileF         =BLQFile     ->Text;
 	LocalDirectory   =LocalDir    ->Text;
 	
 	SvrCycle	     =SvrCycleE   ->Text.ToInt();
@@ -802,9 +827,9 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	DebugStatus	 ->ItemIndex	=solopt.sstat;
 	
 	MeasErrR1	 ->Text			=s.sprintf("%.1f",prcopt.eratio[0]);
-	MeasErrR2	 ->Text			=s.sprintf("%.3f",prcopt.eratio[1]);
-	MeasErrR5	 ->Text			=s.sprintf("%.3f",prcopt.eratio[2]);
-	MeasErrR6	 ->Text			=s.sprintf("%.3f",prcopt.eratio[3]);
+	MeasErrR2	 ->Text			=s.sprintf("%.1f",prcopt.eratio[1]);
+	MeasErrR5	 ->Text			=s.sprintf("%.1f",prcopt.eratio[2]);
+	MeasErrR6	 ->Text			=s.sprintf("%.1f",prcopt.eratio[3]);
 	MeasErr2	 ->Text			=s.sprintf("%.3f",prcopt.err[1]);
 	MeasErr3	 ->Text			=s.sprintf("%.3f",prcopt.err[2]);
 	MeasErr4	 ->Text			=s.sprintf("%.3f",prcopt.err[3]);
@@ -852,7 +877,11 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	StaPosFile ->Text			=filopt.stapos;
 	GeoidDataFile->Text			=filopt.geoid;
 	DCBFile    ->Text			=filopt.dcb;
+	EOPFile    ->Text			=filopt.eop;
+	BLQFile    ->Text			=filopt.blq;
 	LocalDir   ->Text			=filopt.tempdir;
+
+	ProxyAddrE ->Text                       =proxyaddr;
 
 	ReadAntList();
 	UpdateEnable();
@@ -869,6 +898,8 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
 	AnsiString StaPosFile_Text=StaPosFile->Text;
 	AnsiString GeoidDataFile_Text=GeoidDataFile->Text;
 	AnsiString DCBFile_Text=DCBFile->Text;
+	AnsiString EOPFile_Text=EOPFile->Text;
+	AnsiString BLQFile_Text=BLQFile->Text;
 	AnsiString LocalDir_Text=LocalDir->Text;
     int itype[]={STR_SERIAL,STR_TCPCLI,STR_TCPSVR,STR_NTRIPCLI,STR_FILE,STR_FTP,STR_HTTP};
     int otype[]={STR_SERIAL,STR_TCPCLI,STR_TCPSVR,STR_NTRIPSVR,STR_NTRIPCAS,STR_FILE};
@@ -1082,12 +1113,14 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
           GetPos(RovPosTypeP->ItemIndex, editu, prcopt.ru);
         if (prcopt.refpos == POSOPT_POS_LLH || prcopt.refpos == POSOPT_POS_XYZ)
           GetPos(RefPosTypeP->ItemIndex, editr, prcopt.rb);
-	
+
 	strcpy(filopt.satantp,SatPcvFile_Text.c_str());
 	strcpy(filopt.rcvantp,AntPcvFile_Text.c_str());
 	strcpy(filopt.stapos, StaPosFile_Text.c_str());
 	strcpy(filopt.geoid,  GeoidDataFile_Text.c_str());
 	strcpy(filopt.dcb,    DCBFile_Text.c_str());
+	strcpy(filopt.eop,    EOPFile_Text.c_str());
+	strcpy(filopt.blq,    BLQFile_Text.c_str());
 	strcpy(filopt.tempdir,LocalDir_Text.c_str());
 	
 	time2str(utc2gpst(timeget()),s,0);
@@ -1145,12 +1178,12 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	BaselineLen    ->Enabled=BaselineConst->Checked&&PosMode->ItemIndex==PMODE_MOVEB;
 	BaselineSig    ->Enabled=BaselineConst->Checked&&PosMode->ItemIndex==PMODE_MOVEB;
 	
-	OutputHead     ->Enabled=SolFormat->ItemIndex!=3;
-	OutputOpt      ->Enabled=false;
-	TimeFormat     ->Enabled=SolFormat->ItemIndex!=3;
-	TimeDecimal    ->Enabled=SolFormat->ItemIndex!=3;
+	OutputHead     ->Enabled=SolFormat->ItemIndex<3;
+	OutputOpt      ->Enabled=SolFormat->ItemIndex<3;
+	TimeFormat     ->Enabled=SolFormat->ItemIndex<3;
+	TimeDecimal    ->Enabled=SolFormat->ItemIndex<3;
 	LatLonFormat   ->Enabled=SolFormat->ItemIndex==0;
-	FieldSep       ->Enabled=SolFormat->ItemIndex!=3;
+	FieldSep       ->Enabled=SolFormat->ItemIndex<3;
 	OutputSingle   ->Enabled=PosMode->ItemIndex!=0;
 	OutputDatum    ->Enabled=SolFormat->ItemIndex==0;
 	OutputHeight   ->Enabled=SolFormat->ItemIndex==0;
@@ -1181,9 +1214,9 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	RefPos3        ->Enabled=RefPosTypeP->Enabled&&RefPosTypeP->ItemIndex<=2;
 	BtnRefPos      ->Enabled=RefPosTypeP->Enabled&&RefPosTypeP->ItemIndex<=2;
 	
-	LabelMaxAveEp  ->Visible=RefPosTypeP->ItemIndex==4;
-	MaxAveEp       ->Visible=RefPosTypeP->ItemIndex==4;
-	ChkInitRestart ->Visible=RefPosTypeP->ItemIndex==4;
+	LabelMaxAveEp  ->Enabled=RefPosTypeP->ItemIndex==4;
+	MaxAveEp       ->Enabled=RefPosTypeP->ItemIndex==4;
+	ChkInitRestart ->Enabled=RefPosTypeP->ItemIndex==4;
 	
 //	SbasSatE       ->Enabled=PosMode->ItemIndex==0;
 }

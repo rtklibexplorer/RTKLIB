@@ -41,7 +41,7 @@ void __fastcall TFtpOptDialog::FormShow(TObject *Sender)
         if ((q=strchr(buff,':'))) {
              *q='\0'; passwd=q+1;
         }
-        *q='\0'; user=buff;
+        user=buff;
     }
     else p=buff;
     addr=p;	

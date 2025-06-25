@@ -703,7 +703,7 @@ static int decode_measepoch(raw_t *raw)
     int i, j, idx, n, n1, n2, len1, len2, sig, ant, svid, info, sat, sys, lock, fcn, LLI, chn, ret=0;
     int ant_sel = 0; /* antenna selection (0:main) */
 
-    if (timediff(raw->time, sbf->current_time) != 0) {
+    if (timediff(raw->time, sbf->current_time) > 0) {
         sbf->current_time = raw->time;
         ret = flushobuf(raw);
     }

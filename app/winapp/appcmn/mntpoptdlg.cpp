@@ -28,7 +28,6 @@ void __fastcall TMntpOptDialog::FormShow(TObject *Sender)
 	};
 	AnsiString str=MntpStr;
 	char buff[2048],*p=buff,*q;
-	int i;
     
 	MntPntE->Text=MntPnt;
 

@@ -248,7 +248,7 @@ void ConvOptDialog::loadOptions(QSettings &ini)
 {
     QString mask = "1111111111111111111111111111111111111111111111111111111111111111111111";
 
-    rinexVersion = ini.value("opt/rnxver", 6).toInt();
+    rinexVersion = ini.value("opt/rnxver", 7).toInt();
     rinexFile = ini.value("opt/rnxfile", 0).toInt();
     rinexStationCode = ini.value("opt/rnxcode", "0000").toString();
     runBy = ini.value("opt/runby", "").toString();
@@ -273,8 +273,8 @@ void ConvOptDialog::loadOptions(QSettings &ini)
     comment[1] = ini.value("opt/comment1", "").toString();
     receiverOptions = ini.value("opt/rcvoption", "").toString();
     navSys = ini.value("opt/navsys", 0xff).toInt();
-    observationType = ini.value("opt/obstype", 0xF).toInt();
-    frequencyType = ini.value("opt/freqtype", 0x7).toInt();
+    observationType = ini.value("opt/obstype", OBSTYPE_ALL).toInt();
+    frequencyType = ini.value("opt/freqtype", FREQTYPE_ALL).toInt();
     excludedSatellites = ini.value("opt/exsats", "").toString();
     traceLevel = ini.value("opt/tracelevel", 0).toInt();
     rinexTime.time = ini.value("opt/rnxtime", 0).toInt();

@@ -30,7 +30,6 @@ __fastcall TRefDialog::TRefDialog(TComponent* Owner)
 //---------------------------------------------------------------------------
 void __fastcall TRefDialog::FormShow(TObject *Sender)
 {
-	FILE *fp;
 	UTF8String s;
 	double scale;
 	int width[]={30,80,90,65,50,80,55};
@@ -163,7 +162,7 @@ void __fastcall TRefDialog::LoadList(void)
 void __fastcall TRefDialog::LoadSinex(void)
 {
 	FILE *fp;
-	char buff[256],code[256],*p;
+	char buff[256],code[256];
 	double rr[3],pos[3];
 	int n=0,sol=0;
 	
