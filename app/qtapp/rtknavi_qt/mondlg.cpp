@@ -1065,7 +1065,7 @@ void MonitorDialog::setObservations()
 //---------------------------------------------------------------------------
 void MonitorDialog::showObservations()
 {
-    char tstr[40], id[8], *code;
+    char tstr[40], id[8];
     int i, k, n = 0, nex = ui->cBSelectObservation->currentIndex() ? NEXOBS : 0;
     int sys = sys_tbl[ui->cBSelectNavigationSystems->currentIndex()];
     int std = ui->cBSelectObservation->currentIndex();
@@ -1107,7 +1107,7 @@ void MonitorDialog::showObservations()
         ui->tWConsole->item(i, j++)->setText(id);
         ui->tWConsole->item(i, j++)->setText(QString("(%1)").arg(obs[i].rcv));
         for (k = 0; k < NFREQ + nex; k++) {
-            code = code2obs(obs[i].code[k]);
+            const char *code = code2obs(obs[i].code[k]);
             if (*code) ui->tWConsole->item(i, j++)->setText(code);
             else ui->tWConsole->item(i, j++)->setText("-");
         }

@@ -991,7 +991,7 @@ void __fastcall TMonitorDialog::SetObs(void)
 void __fastcall TMonitorDialog::ShowObs(void)
 {
 	AnsiString s;
-	char tstr[40],id[8],*code;
+	char tstr[40],id[8];
 	int i,j,k,n=0,nex=ObsMode?NEXOBS:0,sys=sys_tbl[SelSys->ItemIndex];
 	
         obsd_t *obs = static_cast<obsd_t *>(calloc(MAXOBS * 2, sizeof(obsd_t)));
@@ -1023,7 +1023,7 @@ void __fastcall TMonitorDialog::ShowObs(void)
 		Tbl->Cells[j++][i+1]=id;
 		Tbl->Cells[j++][i+1]=s.sprintf("(%d)",obs[i].rcv);
 		for (k=0;k<NFREQ+nex;k++) {
-			code=code2obs(obs[i].code[k]);
+                        const char *code=code2obs(obs[i].code[k]);
 			if (*code) Tbl->Cells[j++][i+1]=s.sprintf("%s",code);
 			else       Tbl->Cells[j++][i+1]="-";
 		}

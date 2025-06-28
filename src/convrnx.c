@@ -395,7 +395,8 @@ static void setopt_obstype(const uint8_t *codes, const uint8_t *types, int sys,
                            rnxopt_t *opt)
 {
     const char type_str[]="CLDS";
-    char type[16],*id,ver;
+    const char *id;
+    char type[16],ver;
     int i,j,k,idx;
     
     trace(3,"setopt_obstype: sys=%d\n",sys);

@@ -1392,7 +1392,7 @@ EXPORT int  satsys  (int sat, int *prn);
 EXPORT int  satid2no(const char *id);
 EXPORT void satno2id(int sat, char id[8]);
 EXPORT uint8_t obs2code(const char *obs);
-EXPORT char *code2obs(uint8_t code);
+EXPORT const char *code2obs(uint8_t code);
 EXPORT double code2freq(int sys, uint8_t code, int fcn);
 EXPORT double sat2freq(int sat, uint8_t code, const nav_t *nav);
 EXPORT int  code2idx(int sys, uint8_t code);
