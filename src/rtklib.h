@@ -292,6 +292,9 @@ extern "C" {
 #define MAXRCVCMD   4096                /* max length of receiver commands */
 #define MAX_CODE_BIASES 3               /* max # of different code biases per freq */
 #define MAX_CODE_BIAS_FREQS 2           /* max # of freqs supported for code biases  */
+#define MAX_ION_LAYERS 4                /* max number of ionosphere layers */
+#define MAX_SPH_HARM_COS_COEFF  156     /* max number of cos spherical harmonics coeffs ((n + 1) * (n + 2) / 2 - (n - m) * (n - m + 1) / 2) n=16, m=16 */
+#define MAX_SPH_HARM_SIN_COEFF  136     /* max number of sin spherical harmonics coeffs ((n + 1) * (n + 2) / 2 - (n - m) * (n - m + 1) / 2) - (n+1) n=16, m=16*/
 
 #define RNX2VER     2.10                /* RINEX ver.2 default output version */
 #define RNX3VER     3.00                /* RINEX ver.3 default output version */
@@ -551,6 +554,27 @@ extern "C" {
 #define P2_48       3.552713678800501E-15 /* 2^-48 */
 #define P2_50       8.881784197001252E-16 /* 2^-50 */
 #define P2_55       2.775557561562891E-17 /* 2^-55 */
+
+#define IDF036_SCALE  10.0f  /* SSR IONO Height scale factor */
+#define IDF039_SCALE  0.005f /* Scale factor for the sph. harmonic cosine coefficients */
+#define IDF040_SCALE  0.005f /* Scale factor for the sph. harmonic sine coefficients */
+
+#define IDF001_NBITS 3
+#define IDF002_NBITS 8
+#define IDF003_NBITS 20
+#define IDF004_NBITS 4
+#define IDF005_NBITS 1
+#define IDF007_NBITS 4
+#define IDF008_NBITS 16
+#define IDF009_NBITS 4
+#define IDF041_NBITS 9
+#define IDF035_NBITS 2
+#define IDF036_NBITS 8
+#define IDF037_NBITS 4
+#define IDF038_NBITS 4
+#define IDF039_NBITS 16
+#define IDF040_NBITS 16
+
 
 #ifdef WIN32
 #define rtklib_thread_t    HANDLE
@@ -821,6 +845,20 @@ typedef struct {        /* DGPS/GNSS correction type */
     double udre;        /* UDRE */
 } dgps_t;
 
+typedef struct {        /* ionosphere spherical harmonics type */
+    float height_km;             /* height of spherical harmonics */
+    int n_degree;              /* degree of spherical harmonics */
+    int m_order;              /* order of spherical harmonics */
+    double cos_coeff[MAX_SPH_HARM_COS_COEFF];  /* cosine coefficients, ordered as C00,C10,C20,C30;C11,C21,C31;C22,C32 for N=3 and M=2*/
+    double sin_coeff[MAX_SPH_HARM_SIN_COEFF];  /* sine coefficients, ordered as S11,S21,S31;S22,S32 for N=3 and M=2*/
+} ionlayer_sphharm_t;
+
+typedef struct {
+    int update_interval_s; /* update interval*/
+    int n_layers; /* number of layers */
+    ionlayer_sphharm_t ionlayers_sph_harm[MAX_ION_LAYERS]; /* ionosphere spherical harmonics */
+} ssr_ion_t;
+
 typedef struct {        /* SSR correction type */
     gtime_t t0[6];      /* epoch time (GPST) {eph,clk,hrclk,ura,bias,pbias} */
     double udi[6];      /* SSR update interval (s) */
@@ -963,6 +1001,7 @@ typedef struct {        /* RTCM control struct type */
     sta_t sta;          /* station parameters */
     dgps_t *dgps;       /* output of dgps corrections */
     ssr_t ssr[MAXSAT];  /* output of ssr corrections */
+    ssr_ion_t ssr_ion;  /* ionosphere SSR correction */
     char msg[128];      /* special message */
     char msgtype[256];  /* last message type */
     char msmtype[7][128]; /* msm signal types */

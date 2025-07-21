@@ -1884,6 +1884,75 @@ static int encode_ssr7(rtcm_t *rtcm, int sys, int subtype, int sync)
     rtcm->nbit=i;
     return 1;
 }
+
+static int encode_ssr_iono_sph_harmonics(rtcm_t *rtcm, int sys, int subtype, int sync) {
+
+    static const int TYPE = 4076; /* IGS SSR Proprietary message type */
+    static const int SUBTYPE = 201; /* Spherical harmonics subtype */
+    double tow;
+    int offset=24, week, epoch;
+    int ret = 0;  // if error, return 0
+
+    trace(4,"encode_head: type=%d subtype=%d sync=%d\n", TYPE, SUBTYPE);
+
+    const ssr_ion_t* ion = &rtcm->ssr_ion;
+
+    /* Table 24 of ICD*/
+
+    setbitu(rtcm->buff, offset, 12, TYPE); offset+=12; /* DF002 */
+    setbitu(rtcm->buff, offset, IDF001_NBITS, 1); offset+=IDF001_NBITS; /* IDF001 IGS SSR Version */
+    setbitu(rtcm->buff, offset, IDF002_NBITS, SUBTYPE); offset+=IDF002_NBITS; /* IDF002 Subtype */
+
+    /* IDF003 SSR Epoch Time */
+    tow=time2gpst(rtcm->time,&week);
+    epoch=ROUND(tow/0.001);
+    setbitu(rtcm->buff, offset, IDF003_NBITS, epoch); offset+=IDF003_NBITS;
+
+    setbitu(rtcm->buff, offset, IDF004_NBITS, ion->update_interval_s); offset+=IDF004_NBITS; /* IDF004 SSR Update interval */
+    setbitu(rtcm->buff, offset, IDF005_NBITS, 0); offset+=IDF005_NBITS; /* IDF005 Multiple message indicator */
+    setbitu(rtcm->buff, offset, IDF007_NBITS, 0); offset+=IDF007_NBITS; /* IDF007 IOD SSR */
+    setbitu(rtcm->buff, offset, IDF008_NBITS, 0); offset+=IDF008_NBITS; /* IDF008 SSR Provider ID */
+    setbitu(rtcm->buff, offset, IDF009_NBITS, 0); offset+=IDF009_NBITS; /* IDF009 SSR Solution ID */
+    setbitu(rtcm->buff, offset, IDF041_NBITS, 0); offset+=IDF041_NBITS; /* IDF041 VTEC Quality Indicator */
+
+    setbitu(rtcm->buff, offset, IDF035_NBITS, ion->n_layers - 1); offset+=IDF035_NBITS; /* IDF035 Number of ionospheric layers */
+
+    for (int i = 0; i < ion->n_layers; i++) {
+
+        const ionlayer_sphharm_t *layer = &ion->ionlayers_sph_harm[i];
+
+        /* Table 25 of ICD */
+        setbitu(rtcm->buff, offset, IDF036_NBITS, (uint8_t)(layer->height_km / IDF036_SCALE)); offset+=IDF036_NBITS; /* IDF036 Layer height */
+        setbitu(rtcm->buff, offset, IDF037_NBITS, layer->n_degree - 1); offset+=IDF037_NBITS; /* IDF037 Degree */
+        setbitu(rtcm->buff, offset, IDF038_NBITS, layer->m_order - 1); offset+=4; /* IDF037 Order */
+
+        /* Table 26 cosine terms */
+        int n = layer->n_degree;
+        int m = layer->m_order;
+        int n_cos_coeffs = (n + 1) * (n + 2) / 2 - (n - m) * (n - m + 1) / 2;
+        for (int j = 0; j < n_cos_coeffs; j++) {
+            float coeff = layer->cos_coeff[j];
+            setbits(rtcm->buff, offset, IDF039_NBITS, (int16_t)(coeff / IDF039_SCALE)); offset+=IDF039_NBITS; /* IDF039 cos coeff */
+        }
+
+        /* Table 27 sine terms */
+        int n_sin_coeffs = n_cos_coeffs - (n + 1);
+        for (int j = 0; j < n_sin_coeffs; j++) {
+            float coeff = layer->sin_coeff[j];
+            setbits(rtcm->buff, offset, IDF040_NBITS, (int16_t)(coeff / IDF040_SCALE)); offset+=IDF040_NBITS; /* IDF040 sin coeff */
+        }
+    }
+
+    rtcm->nbit=offset;
+
+    trace(3,"encode_ssr_iono_sph_harmonics: sys=%d subtype=%d sync=%d\n",sys,subtype,sync);
+
+    ret = 1;  // if successful, return 1
+end:
+    return ret;
+
+}
+
 /* satellite no to MSM satellite ID ------------------------------------------*/
 static int to_satid(int sys, int sat)
 {
@@ -2637,6 +2706,7 @@ static int encode_type4076(rtcm_t *rtcm, int subtype, int sync)
         case 125: return encode_ssr3(rtcm,SYS_SBS,subtype,sync);
         case 126: return encode_ssr7(rtcm,SYS_SBS,subtype,sync);
         case 127: return encode_ssr5(rtcm,SYS_SBS,subtype,sync);
+        case 201: return encode_ssr_iono_sph_harmonics(rtcm,SYS_NONE,subtype,sync);
     }
     trace(2,"rtcm3 4076: unsupported message subtype=%d\n",subtype);
     return 0;

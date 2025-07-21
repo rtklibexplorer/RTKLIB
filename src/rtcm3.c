@@ -1953,6 +1953,86 @@ static int decode_ssr7(rtcm_t *rtcm, int sys, int subtype)
     }
     return 20;
 }
+
+/* decode IGS SSR message subtype 201: ionospheric spherical harmonics -------*/
+/* Follows ICD description found in https://files.igs.org/pub/data/format/igs_ssr_v1.pdf */
+static int decode_ssr_iono_sph_harmonics(rtcm_t *rtcm, int sys, int subtype) {
+
+    int ret = -1;
+    int pos = 24; /* Start position after header */
+    int DF002, IDF001, IDF002, IDF003, IDF004, IDF005, IDF007, IDF008, IDF009;
+    int IDF041, IDF035;
+
+    /* header, Table 24*/
+
+    /* RTCM Message Number  ust be 4076 */
+    DF002 = getbitu(rtcm->buff, pos, 12); pos += 12;
+    if (DF002 != 4076) {
+        trace(2, "rtcm3 %d: invalid message number: %d\n", DF002, 4076);
+        goto end;
+    }
+
+    IDF001 = getbitu(rtcm->buff, pos, IDF001_NBITS); pos += IDF001_NBITS;
+
+    IDF002 = getbitu(rtcm->buff, pos, IDF002_NBITS); pos += IDF002_NBITS;
+    if (IDF002 != subtype) {
+        trace(2, "rtcm3 %d: invalid IDF002, got: %d, expected: %d\n", DF002, IDF002, 201);
+        goto end;
+    }
+
+    IDF003 = getbitu(rtcm->buff, pos, IDF003_NBITS); pos += IDF003_NBITS; /* SSR Epoch Time 1s */
+    IDF004 = getbitu(rtcm->buff, pos, IDF004_NBITS); pos += IDF004_NBITS; /* SSR Update Interval */
+    IDF005 = getbitu(rtcm->buff, pos, IDF005_NBITS); pos += IDF005_NBITS; /* SSR Multiple Message Indicator */
+    IDF007 = getbitu(rtcm->buff, pos, IDF007_NBITS); pos += IDF007_NBITS; /* IOD SSR */
+    IDF008 = getbitu(rtcm->buff, pos, IDF008_NBITS); pos += IDF008_NBITS; /* SSR Provider ID */
+    IDF009 = getbitu(rtcm->buff, pos, IDF009_NBITS); pos += IDF009_NBITS; /* SSR Solution ID */
+    IDF041 = getbitu(rtcm->buff, pos, IDF041_NBITS); pos += IDF041_NBITS; /* VTEC Quality Indicator */
+    IDF035 = getbitu(rtcm->buff, pos, IDF035_NBITS); pos += IDF035_NBITS; /* Number of Ionospheric Layers */
+
+    adjweek(rtcm, IDF003);
+    rtcm->ssr_ion.update_interval_s = IDF004;
+
+    rtcm->ssr_ion.n_layers = IDF035 + 1;
+
+    for (int i = 0; i < rtcm->ssr_ion.n_layers; i++) {
+
+        ionlayer_sphharm_t* layer = &rtcm->ssr_ion.ionlayers_sph_harm[i];
+
+        /* Table 25: Header Part for an Ionospheric Layer IM201*/
+
+        int IDF036 = getbitu(rtcm->buff, pos, IDF036_NBITS); pos += IDF036_NBITS; /* Ionospheric Layer Height */
+        int IDF037 = getbitu(rtcm->buff, pos, IDF037_NBITS); pos += IDF037_NBITS; /* Ionospheric Layer degree (N) */
+        int IDF038 = getbitu(rtcm->buff, pos, IDF038_NBITS); pos += IDF038_NBITS; /* Ionospheric Layer order (M) */
+        int n = IDF037 + 1;
+        int m = IDF038 + 1;
+        layer->height_km = IDF036 * IDF036_SCALE;
+        layer->n_degree = n;
+        layer->m_order = m;
+
+        trace(3, "Layer %d: Height=%d Degree=%d Order=%d\n",
+            i+1, layer->height_km, layer->n_degree, layer->m_order);
+
+        /* Table 26: Spherical Harmonics Cosine Coefficients */
+        int n_cos_coeffs = (n + 1) * (n + 2) / 2 - (n - m) * (n - m + 1) / 2;
+        for (int j = 0; j < n_cos_coeffs; j++) {
+            int IDF039 = getbits(rtcm->buff, pos, IDF039_NBITS); pos += IDF039_NBITS; /* Ionospheric Layer order (M) */
+            layer->cos_coeff[j] = IDF039 * IDF039_SCALE;
+        }
+
+        /* Table 27: Spherical Harmonics Sine Coefficients */
+        int n_sin_coeffs = n_cos_coeffs - (n + 1);
+        for (int j = 0; j < n_sin_coeffs; j++) {
+            int IDF040 = getbits(rtcm->buff, pos, IDF040_NBITS); pos += IDF040_NBITS; /* Ionospheric Layer order (M) */
+            layer->sin_coeff[j] = IDF040 * IDF040_SCALE;
+        }
+    }
+
+    ret = 10; /* default return value for SSR message  */
+end:
+    return ret;
+}
+
+
 /* get signal index ----------------------------------------------------------*/
 static void sigindex(int sys, const uint8_t *code, int n, const char *opt,
                      int *idx)
@@ -2549,6 +2629,7 @@ static int decode_type4076(rtcm_t *rtcm)
         case 125: return decode_ssr3(rtcm,SYS_SBS,subtype);
         case 126: return decode_ssr7(rtcm,SYS_SBS,subtype);
         case 127: return decode_ssr5(rtcm,SYS_SBS,subtype);
+        case 201: return decode_ssr_iono_sph_harmonics(rtcm,SYS_NONE,subtype);
     }
     trace(2,"rtcm3 4076: unsupported message subtype=%d\n",subtype);
     return 0;
