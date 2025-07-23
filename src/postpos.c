@@ -467,7 +467,7 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
         if (!rtkpos(rtk, obs_ptr,n,&navs)) {
             if (rtk->sol.eventime.time != 0) {
                 if (mode == SOLMODE_SINGLE_DIR) {
-                    outinvalidtm(fptm, sopt, rtk->sol.eventime);
+                    if (fptm) outinvalidtm(fptm, sopt, rtk->sol.eventime);
                 } else if (!reverse&&nitm<MAXINVALIDTM) {
                     invalidtm[nitm++] = rtk->sol.eventime;
                 }
@@ -492,7 +492,7 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
                 newsol = fillsoltm(oldsol,rtk->sol,rtk->sol.eventime);
                 num++;
                 if (!solstatic&&mode==SOLMODE_SINGLE_DIR) {
-                    outsol(fptm,&newsol,rb,sopt);
+                    if (fptm) outsol(fptm,&newsol,rb,sopt);
                 }
             }
             oldsol = rtk->sol;
