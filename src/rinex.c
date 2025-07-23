@@ -437,14 +437,16 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
         if (i==RNX_SYS_CMP&&fabs(ver-3.02)<1e-3) {
             for (j=0;j<nt;j++) if (tobs[i][j][1]=='1') tobs[i][j][1]='2';
         }
+#ifdef RTK_DISABLED
         /* uncomment this code to convert unknown codes to defaults */
-        /* for (j=0;j<nt;j++) {
+        for (j=0;j<nt;j++) {
             if (tobs[i][j][2]) continue;
             if (!(p=strchr(frqcodes,tobs[i][j][1]))) continue;
             tobs[i][j][2]=defcodes[i][(int)(p-frqcodes)];
             trace(2,"set default for unknown code: sys=%c code=%s\n",buff[0],
                   tobs[i][j]);
-        }  */
+        }
+#endif
     }
     else if (strstr(label,"WAVELENGTH FACT L1/2")) ; /* opt ver.2 */
     else if (strstr(label,"# / TYPES OF OBSERV" )) { /* ver.2 */
@@ -1027,9 +1029,9 @@ static void set_index(double ver, int sys, const char *opt,
         trace(4,"reject obs type: sys=%2d, obs=%s\n",sys,tobs[i]);
     }
     ind->n=n;
-
-#if 0 /* for debug */
-    for (i=0;i<n;i++) {
+    
+#ifdef RTK_DISABLED /* for debug */
+    for (int i=0;i<n;i++) {
         trace(2,"set_index: sys=%2d,tobs=%s code=%2d pri=%2d idx=%d pos=%d shift=%5.2f\n",
               sys,tobs[i],ind->code[i],ind->pri[i],ind->idx[i],ind->pos[i],
               ind->shift[i]);

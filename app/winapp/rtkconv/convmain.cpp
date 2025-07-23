@@ -892,8 +892,10 @@ void __fastcall TMainWindow::ConvertFile(void)
 		else if (!strcmp(p,".rt17" )) format=STRFMT_RT17;
 		else if (!strcmp(p,".sbf"  )) format=STRFMT_SEPT;
 		else if (!strcmp(p,".unc"  )) format=STRFMT_UNICORE;
-		/* else if (!strcmp(p,".trs"  )) format=STRFMT_TERSUS; */
-		/* else if (!strcmp(p,".cnb"  )) format=STRFMT_CNAV; */
+#ifdef RTK_DISABLED
+		else if (!strcmp(p,".trs"  )) format=STRFMT_TERSUS;
+		else if (!strcmp(p,".cnb"  )) format=STRFMT_CNAV;
+#endif
 		else if (!strcmp(p,".obs"  )) format=STRFMT_RINEX;
 		else if (!strcmp(p,".OBS"  )) format=STRFMT_RINEX;
 		else if (!strcmp(p,".nav"  )) format=STRFMT_RINEX;
@@ -1040,7 +1042,7 @@ void __fastcall TMainWindow::ConvertFile(void)
 	LabelOutFile->Enabled=true;
 	LabelFormat ->Enabled=true;
 	
-#if 0
+#ifdef RTK_DISABLED
 	// set time-start/end if time not specified
 	if (!TimeStartF->Checked&&rnxopt.tstart.time!=0) {
 		time2str(rnxopt.tstart,tstr,0);

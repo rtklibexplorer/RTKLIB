@@ -24,7 +24,9 @@
 //                           fix bug on unable deselecting antenna PCV
 //                           fix bug on unable saving TGD2 of ephemeris
 //---------------------------------------------------------------------------
+// clang-format off
 #include <vcl.h>
+// clang-format on
 #include <inifiles.hpp>
 #include <mmsystem.h>
 #include <stdio.h>

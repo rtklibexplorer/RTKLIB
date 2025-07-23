@@ -322,7 +322,7 @@ void TGraph::DrawMark(TPoint p, int mark, TColor color, int size, int rot)
 	// rot  = rotation angle (deg)
 	
 	// if the same mark already drawn, skip it
-#if 0
+#ifdef RTK_DISABLED
 	if (p.x==p_.x&&p.y==p_.y&&mark==mark_&&color==color_&&size==size_&&
 		rot==rot_) {
 		return;

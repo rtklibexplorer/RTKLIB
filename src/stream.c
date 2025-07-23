@@ -1400,7 +1400,7 @@ static int statextcp(tcp_t *tcp, char *msg)
     p+=sprintf(p,"    saddr = %s\n",tcp->saddr);
     p+=sprintf(p,"    port  = %d\n",tcp->port);
     p+=sprintf(p,"    sock  = %d\n",(int)tcp->sock);
-#if 0 /* for debug */
+#ifdef RTK_DISABLED /* for debug */
     p+=sprintf(p,"    tcon  = %d\n",tcp->tcon);
     p+=sprintf(p,"    tact  = %u\n",tcp->tact);
     p+=sprintf(p,"    tdis  = %u\n",tcp->tdis);

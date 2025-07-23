@@ -1194,7 +1194,7 @@ void Plot::arrangePlotMapViewHorizontally()
     mapView->setVisible(true);
 }
 //---------------------------------------------------------------------------
-#if 0
+#ifdef RTK_DISABLED
 void Plot::DispGesture()
 {
     AnsiString s;

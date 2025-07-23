@@ -419,7 +419,7 @@ static int decoderaw(rtksvr_t *svr, int index)
             ephset=svr->raw[index].ephset;
             sbsmsg=&svr->raw[index].sbsmsg;
         }
-#if 0 /* record for receiving tick for debug */
+#ifdef RTK_DISABLED /* record for receiving tick for debug */
         if (ret==1) {
             char tstr[40];
             trace(0,"%d %10d T=%s NS=%2d\n",index,tickget(),

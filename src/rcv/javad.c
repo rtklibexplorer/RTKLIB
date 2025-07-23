@@ -1625,7 +1625,7 @@ static int decode_Fx(raw_t *raw, char sig)
         
         if ((idx=checkpri(sys,code,raw->opt,idx))>=0) {
             if (!settag(raw->obuf.data+i,raw->time)) continue;
-#if 0 /* disable to suppress overdetection of cycle-slips */
+#ifdef RTK_DISABLED /* disable to suppress overdetection of cycle-slips */
             if (flags&0x20) { /* loss-of-lock potential */
                 raw->obuf.data[i].LLI[idx]|=1;
             }

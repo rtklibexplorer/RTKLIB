@@ -4088,7 +4088,7 @@ static int decode_sbf(raw_t *raw)
 
             return 0;
         default:
-#if 0 /* debug output */
+#ifdef RTK_DISABLED /* debug output */
             if (raw->outtype) {
                 sprintf(raw->msgtype,"SBF 0x%04X (%4d):",type, raw->len);
             }

@@ -1032,7 +1032,7 @@ void __fastcall TPlot::MenuPlotMapViewClick(TObject *Sender)
 void __fastcall TPlot::DispGesture(TObject *Sender, const TGestureEventInfo &EventInfo,
           bool &Handled)
 {
-#if 0
+#ifdef RTK_DISABLED
     AnsiString s;
     int b,e;
     

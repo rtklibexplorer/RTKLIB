@@ -280,15 +280,15 @@ static int decode_gloephem(int sat, raw_t *raw)
     geph.iode=(tb/900)&0x7F;
     geph.toe=utc2gpst(adjday(raw->time,tb-10800.0));
     geph.tof=utc2gpst(adjday(raw->time,tk-10800.0));
-#if 0
+#ifdef RTK_DISABLED
     /* check illegal ephemeris by toe */
-    tt=timediff(raw->time,geph.toe);
+    double tt=timediff(raw->time,geph.toe);
     if (fabs(tt)>3600.0) {
         trace(3,"nvs NE illegal toe: prn=%2d tt=%6.0f\n",prn,tt);
         return 0;
     }
 #endif
-#if 0
+#ifdef RTK_DISABLED
     /* check illegal ephemeris by frequency number consistency */
     if (raw->nav.geph[prn-MINPRNGLO].toe.time&&
         geph.frq!=raw->nav.geph[prn-MINPRNGLO].frq) {

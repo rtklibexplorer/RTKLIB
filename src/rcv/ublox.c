@@ -675,7 +675,7 @@ static int decode_trkmeas(raw_t *raw)
         if (lock2==0||lock2<raw->lockt[sat-1][0]) raw->lockt[sat-1][1]=1.0;
         raw->lockt[sat-1][0]=lock2;
         
-#if 0 /* for debug */
+#ifdef RTK_DISABLED /* for debug */
         trace(2,"[%2d] qi=%d sys=%d prn=%3d frq=%2d flag=%02X ?=%02X %02X "
               "%02X %02X %02X %02X %02X lock=%3d %3d ts=%10.3f snr=%4.1f "
               "dop=%9.3f adr=%13.3f %6.3f\n",U1(p),qi,U1(p+4),prn,frq,flag,
@@ -804,7 +804,7 @@ static int decode_trkd5(raw_t *raw)
         
         if (snr<=10.0) raw->lockt[sat-1][1]=1.0;
         
-#if 0 /* for debug */
+#ifdef RTK_DISABLED /* for debug */
         trace(2,"[%2d] qi=%d sys=%d prn=%3d frq=%2d flag=%02X ts=%1.3f "
               "snr=%4.1f dop=%9.3f adr=%13.3f %6.3f\n",U1(p+35),qi,U1(p+56),
               prn,frq,flag,ts,snr,dop,adr,

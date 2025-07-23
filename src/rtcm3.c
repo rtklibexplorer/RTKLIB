@@ -1986,7 +1986,7 @@ static void sigindex(int sys, const uint8_t *code, int n, const char *opt,
             trace(2,"rtcm msm: no space in obs data sys=%d code=%d\n",sys,code[i]);
             idx[i]=-1;
         }
-#if 0 /* for debug */
+#ifdef RTK_DISABLED /* for debug */
         trace(2,"sig pos: sys=%d code=%d ex=%d idx=%d\n",sys,code[i],ex[i],idx[i]);
 #endif
     }

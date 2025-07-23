@@ -350,7 +350,7 @@ static int decode_rangecmpb(raw_t *raw)
             raw->obs.data[index].LLI[pos]=(unsigned char)lli;
             raw->obs.data[index].code[pos]=code;
         }
-#if 0 /* for debug */
+#ifdef RTK_DISABLED /* for debug */
         char tstr[40];
         trace(3,"sys=%d prn=%3d cp=%12.5f lli=%2d plock=%2d clock=%2d lockt=%4.2f halfc=%2d parity=%2d ts=%s\n",
               sys,prn,adr,lli,plock,clock,lockt,halfc,parity,time2str(raw->tobs,tstr,3));

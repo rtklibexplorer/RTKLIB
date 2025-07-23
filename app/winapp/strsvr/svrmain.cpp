@@ -19,7 +19,9 @@
 //						 add option -auto and -tray
 //			 2020/11/30  1.5 number of output channels 3 -> 5
 //---------------------------------------------------------------------------
+// clang-format off
 #include <vcl.h>
+// clang-format on
 #include <inifiles.hpp>
 #include <mmsystem.h>
 #include <stdio.h>

@@ -51,7 +51,7 @@ void utest1(void)
     ret=opengeoid(GEOID_EMBEDDED, "");
         assert(ret==1);
     closegeoid();
-#if 0  // geoid files are not included in the rtklib distribution
+#ifdef RTK_DISABLED  // geoid files are not included in the rtklib distribution
     ret=opengeoid(GEOID_EGM96_M150,file1);
         assert(ret==1);
     closegeoid();

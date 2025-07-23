@@ -969,16 +969,14 @@ extern sol_t *getsol(solbuf_t *solbuf, int index)
 *-----------------------------------------------------------------------------*/
 extern void initsolbuf(solbuf_t *solbuf, int cyclic, int nmax)
 {
-#if 0
-    gtime_t time0={0};
-#endif
     int i;
     
     trace(3,"initsolbuf: cyclic=%d nmax=%d\n",cyclic,nmax);
     
     solbuf->n=solbuf->nmax=solbuf->start=solbuf->end=solbuf->nb=0;
     solbuf->cyclic=cyclic;
-#if 0
+#ifdef RTK_DISABLED
+    gtime_t time0={0};
     solbuf->time=time0;
 #endif
     solbuf->data=NULL;

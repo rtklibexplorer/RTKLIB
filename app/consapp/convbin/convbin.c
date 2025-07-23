@@ -617,7 +617,9 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         if      (!strcmp(fmt,"rtcm2")) format=STRFMT_RTCM2;
         else if (!strcmp(fmt,"rtcm3")) format=STRFMT_RTCM3;
         else if (!strcmp(fmt,"nov"  )) format=STRFMT_OEM4;
-        /* else if (!strcmp(fmt,"cnav" )) format=STRFMT_CNAV; */
+#ifdef RTK_DISABLED
+        else if (!strcmp(fmt,"cnav" )) format=STRFMT_CNAV;
+#endif
         else if (!strcmp(fmt,"ubx"  )) format=STRFMT_UBX;
         else if (!strcmp(fmt,"sbp"  )) format=STRFMT_SBP;
         else if (!strcmp(fmt,"hemis")) format=STRFMT_CRES;
@@ -628,7 +630,9 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         else if (!strcmp(fmt,"rt17" )) format=STRFMT_RT17;
         else if (!strcmp(fmt,"sbf"  )) format=STRFMT_SEPT;
         else if (!strcmp(fmt,"unicore")) format=STRFMT_UNICORE;
-        /* else if (!strcmp(fmt,"tersus")) format=STRFMT_TERSUS; */
+#ifdef RTK_DISABLED
+        else if (!strcmp(fmt,"tersus")) format=STRFMT_TERSUS;
+#endif
         else if (!strcmp(fmt,"rinex")) format=STRFMT_RINEX;
     }
     else {
@@ -637,7 +641,9 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         if      (!strcmp(p,".rtcm2"))  format=STRFMT_RTCM2;
         else if (!strcmp(p,".rtcm3"))  format=STRFMT_RTCM3;
         else if (!strcmp(p,".gps"  ))  format=STRFMT_OEM4;
-        /* else if (!strcmp(p,"cnav" )) format=STRFMT_CNAV; */
+#ifdef RTK_DISABLED
+        else if (!strcmp(p,"cnav" )) format=STRFMT_CNAV
+#endif
         else if (!strcmp(p,".ubx"  ))  format=STRFMT_UBX;
         else if (!strcmp(p,".sbp"  ))  format=STRFMT_SBP;
         else if (!strcmp(p,".bin"  ))  format=STRFMT_CRES;
@@ -648,7 +654,9 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         else if (!strcmp(p,".rt17" ))  format=STRFMT_RT17;
         else if (!strcmp(p,".sbf"  ))  format=STRFMT_SEPT;
         else if (!strcmp(p,".unc"  ))  format=STRFMT_UNICORE;
-        /* else if (!strcmp(p,".trs"  ))  format=STRFMT_TERSUS; */
+#ifdef RTK_DISABLED
+        else if (!strcmp(p,".trs"  ))  format=STRFMT_TERSUS;
+#endif
         else if (!strcmp(p,".obs"  ))  format=STRFMT_RINEX;
         else if (!strcmp(p+3,"o"   ))  format=STRFMT_RINEX;
         else if (!strcmp(p+3,"O"   ))  format=STRFMT_RINEX;

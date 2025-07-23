@@ -118,7 +118,7 @@ static double geoidh_egm08(const double *pos, int model)
     /* http://earth-info.nga.mil/GandG/wgs84/gravitymod/egm2008/egm08_wgs84.html */
     /* (1) Und_min1x1_egm2008_isw=82_WGS84_TideFree_SE.gz */
     /* (2) Und_min2.5x2.5_egm2008_isw=82_WGS84_TideFree_SE.gz */
-#if 0
+#ifdef RTK_DISABLED
     /* not zero-inserted */
     y[0]=fget4f(fp_geoid,4L*(i1+j1*(nlon)));
     y[1]=fget4f(fp_geoid,4L*(i2+j1*(nlon)));

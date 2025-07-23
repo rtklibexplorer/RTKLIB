@@ -520,7 +520,7 @@ extern int tle_pos(gtime_t time, const char *name, const char *satno,
     gtime_t tutc;
     double tsince,rs_tle[6],rs_pef[6],gmst;
     double R1[9]={0},R2[9]={0},R3[9]={0},W[9],erpv[5]={0};
-    int i=0,j,k,stat=1;
+    int i=0,stat=1;
 
     /* serial search by satellite name or alias if name is empty */
     if (*name) {
@@ -530,16 +530,17 @@ extern int tle_pos(gtime_t time, const char *name, const char *satno,
                !(stat=strcmp(name,tle->data[i].alias)))) break;
         }
         if (i<tle->n) stat=0;
-	    /* binary search by satellite name or alias if name is empty */        
-        /*
-        for (i=j=0,k=tle->n-1;j<=k;) {
+#ifdef RTK_DISABLED
+        // Binary search by satellite name or alias if name is empty.
+        i = 0;
+        for (int j=0,k=tle->n-1;j<=k;) {
             i=(j+k)/2;
             if (!(stat=strcmp(name,tle->data[i].name)) ||
                 ( (tle->data[i].name[0]=='\0') &&
                  !(stat=strcmp(name,tle->data[i].alias)))) break;
             if (stat<0) k=i-1; else j=i+1;
         }
-         */
+#endif
     }
     /* serial search by catalog no or international designator */
     if (stat&&(*satno||*desig)) {
