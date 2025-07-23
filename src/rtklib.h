@@ -1473,6 +1473,9 @@ EXPORT void matfprint(const double *A, int n, int m, int p, int q, FILE *fp);
 
 EXPORT void add_fatal(fatalfunc_t *func);
 
+/* math functions ------------------------------------------------------------*/
+EXPORT int compute_legendre_polynomial(const int n, const int m, const double u, double* p);
+
 /* time and string functions -------------------------------------------------*/
 EXPORT void    setstr(char *dst, const char *src, int n);
 EXPORT double  str2num(const char *s, int i, int n);
