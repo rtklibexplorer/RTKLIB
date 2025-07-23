@@ -353,16 +353,16 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
                         char tobs[][MAXOBSTYPE][4], nav_t *nav, sta_t *sta)
 {
     /* default codes for unknown code */
-    const char frqcodes[]="1256789";
-    const char *defcodes[]={
-        "CWX    ",  /* GPS: L125____ */
-        "CCXX X ",  /* GLO: L1234_6_ */
-        "CXXXXX ",  /* GAL: L125678_ */ /* FIXME: Galileo should not have L2! */
-        "CXXX   ",  /* QZS: L1256___ */
-        "C X    ",  /* SBS: L1_5____ */
-        "XIXIIX ",  /* BDS: L125678_ */
-        "  A   A"   /* IRN: L__5___9 */
-    };
+    //const char frqcodes[]="1256789";
+    //const char *defcodes[]={
+    //    "CWX    ",  /* GPS: L125____ */
+    //    "CCXX X ",  /* GLO: L1234_6_ */
+    //    "CXXXXX ",  /* GAL: L125678_ */ /* FIXME: Galileo should not have L2! */
+    //    "CXXX   ",  /* QZS: L1256___ */
+    //    "C X    ",  /* SBS: L1_5____ */
+    //    "XIXIIX ",  /* BDS: L125678_ */
+    //    "  A   A"   /* IRN: L__5___9 */
+    //};
     double del[3];
     int i,j,k,n,nt,prn,fcn;
     const char *p;

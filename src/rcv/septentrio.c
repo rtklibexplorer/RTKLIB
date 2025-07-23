@@ -1674,13 +1674,13 @@ static int decode_gpsrawcnav(raw_t *raw, int sys) {
     return -1;
   }
   offset += 8;
-  uint8_t prn2 = getbitu(buff, offset, 6);
+  //uint8_t prn2 = getbitu(buff, offset, 6);
   offset += 6;
   uint8_t type = getbitu(buff, offset, 6);
   offset += 8;
-  uint32_t tow = getbitu(buff, offset, 17);
+  //uint32_t tow = getbitu(buff, offset, 17);
   offset += 17;
-  uint8_t alert = getbitu(buff, offset, 1);
+  //uint8_t alert = getbitu(buff, offset, 1);
   offset += 1;
 
   switch (type) {
@@ -1968,7 +1968,7 @@ static int decode_cmpraw(raw_t *raw){
     eph_t eph = {0};
     double ion[8], utc[8];
     uint8_t *p = raw->buff+14, buff[40];
-    int i, id, svid, sat, prn, pgn;
+    int i, id, svid, sat, prn;
 
     if (raw->len < 52) {
         trace(2, "sbf cmpraw length error: len=%d\n", raw->len);
