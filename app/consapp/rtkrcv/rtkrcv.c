@@ -1320,7 +1320,7 @@ static void cmd_mark(char **args, int narg, vt_t *vt)
 /* Mode command --------------------------------------------------------------*/
 static void cmd_mode(char **args, int narg, vt_t *vt) {
   const char *mode[] = {"single",      "DGPS",  "kinematic",  "static",    "static-start",
-                        "moving-base", "fixed", "PPP-kinematic", "PPP-static"};
+                        "moving-base", "fixed", "PPP-kinematic", "PPP-static", "PPP-fixed"};
 
   trace(3, "cmd_mode:\n");
 
