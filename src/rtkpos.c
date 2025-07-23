@@ -2309,7 +2309,7 @@ extern void rtkfree(rtk_t *rtk)
 *                .vs   [r]  O   data valid single     (r=0:rover,1:base)
 *                .resp [f]  O   freq(f+1) pseudorange residual (m)
 *                .resc [f]  O   freq(f+1) carrier-phase residual (m)
-*                .vsat [f]  O   freq(f+1) data vaild (0:invalid,1:valid)
+*                .vsat [f]  O   freq(f+1) data valid (0:invalid,1:valid)
 *                .fix  [f]  O   freq(f+1) ambiguity flag
 *                               (0:nodata,1:float,2:fix,3:hold)
 *                .slip [f]  O   freq(f+1) cycle slip flag

@@ -1867,7 +1867,7 @@ EXPORT int getstapos(const char *file, const char *name, double *r);
 EXPORT void strsvrinit (strsvr_t *svr, int nout);
 EXPORT int  strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
                         const char **logs, strconv_t **conv, const char **cmds,
-                        const char **cmds_priodic, const double *nmeapos);
+                        const char **cmds_periodic, const double *nmeapos);
 EXPORT void strsvrstop (strsvr_t *svr, const char **cmds);
 EXPORT void strsvrstat (strsvr_t *svr, int *stat, int *log_stat, int *byte,
                         int *bps, char *msg);

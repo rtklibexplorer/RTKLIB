@@ -812,7 +812,7 @@ static int decode_bds_d2_eph(const uint8_t *buff, eph_t *eph)
 /* decode BDS D2 UTC parameters ----------------------------------------------*/
 static int decode_bds_d2_utc(const uint8_t *buff, double *utc)
 {
-    int i=8*38*10; /* subframe 5 pase 102 */
+    int i=8*38*10; /* subframe 5 page 102 */
     
     trace(4,"decode_bds_d2_utc:\n");
     
