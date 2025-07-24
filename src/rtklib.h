@@ -1615,6 +1615,8 @@ EXPORT int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
 EXPORT int tropcorr(gtime_t time, const nav_t *nav, const double *pos,
                     const double *azel, int tropopt, double *trp, double *var);
 EXPORT int seliflc(int optnf, int sys);
+EXPORT int compute_stec_from_spherical_harmonics( const ssr_ion_t* ssr_ion, const int epoch_s,
+                    const double* pos, const double* azel, double re_km, double* stec);
 
 /* antenna models ------------------------------------------------------------*/
 EXPORT int  readpcv(const char *file, pcvs_t *pcvs);
