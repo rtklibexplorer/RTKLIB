@@ -701,6 +701,7 @@ static void update_halfc(strfile_t *str, obsd_t *obs)
 /* dump half-cycle ambiguity list --------------------------------------------*/
 static void dump_halfc(const strfile_t *str)
 {
+    (void)str;
 #if 0 /* for debug */
     halfc_t *p;
     char s0[8],s1[40],s2[40],*stats[]={"ADD","SUB","NON"};

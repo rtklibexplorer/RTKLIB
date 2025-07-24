@@ -245,6 +245,7 @@ static gtime_t adjday(gtime_t time, double tod)
 /* decode gloephem -----------------------------------------------------------*/
 static int decode_gloephem(int sat, raw_t *raw)
 {
+    (void)sat;
     geph_t geph={0};
     uint8_t *p=(raw->buff)+2;
     int prn,tk,tb;

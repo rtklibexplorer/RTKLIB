@@ -809,6 +809,7 @@ static void ClearPacketBuffer(rt17_t *rt17)
 */
 static int DecodeBeidouEphemeris(raw_t *Raw)
 {
+    (void)Raw;
     tracet(3, "DecodeBeidouEphemeris(); not yet implemented.\n");
     return 0;
 
@@ -941,6 +942,7 @@ static int DecodeBeidouEphemeris(raw_t *Raw)
 */
 static int DecodeGalileoEphemeris(raw_t *Raw)
 {
+    (void)Raw;
     tracet(3, "DecodeGalileoEphemeris(); not yet implemented.\n");
     return 0;
 
@@ -1046,6 +1048,7 @@ static int DecodeGalileoEphemeris(raw_t *Raw)
 */
 static int DecodeGLONASSEphemeris(raw_t *Raw)
 {
+    (void)Raw;
     tracet(3, "DecodeGLONASSEphemeris(); not yet implemented.\n");
     return 0;
 }
@@ -1418,6 +1421,7 @@ static int DecodeIONAndUTCData(raw_t *Raw)
 */
 static int DecodeQZSSEphemeris(raw_t *Raw)
 {
+    (void)Raw;
     tracet(3, "DecodeQZSSEphemeris(); not yet implemented.\n");
     return 0;
 

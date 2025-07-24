@@ -229,6 +229,7 @@ static int decode_bnx_00(raw_t *raw, uint8_t *buff, int len)
 /* decode BINEX mesaage 0x01-00: coded (raw bytes) GNSS ephemeris ------------*/
 static int decode_bnx_01_00(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x01-00: unsupported message\n");
     return 0;
 }
@@ -786,54 +787,63 @@ static int decode_bnx_01(raw_t *raw, uint8_t *buff, int len)
 /* decode BINEX mesaage 0x02: generalized GNSS data --------------------------*/
 static int decode_bnx_02(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x02: unsupported message\n");
     return 0;
 }
 /* decode BINEX mesaage 0x03: generalized ancillary site data ----------------*/
 static int decode_bnx_03(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x03: unsupported message\n");
     return 0;
 }
 /* decode BINEX mesaage 0x7d: receiver internal state prototyping ------------*/
 static int decode_bnx_7d(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x7d: unsupported message\n");
     return 0;
 }
 /* decode BINEX mesaage 0x7e: ancillary site data prototyping ----------------*/
 static int decode_bnx_7e(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x7e: unsupported message\n");
     return 0;
 }
 /* decode BINEX mesaage 0x7f-00: JPL fiducial site ---------------------------*/
 static int decode_bnx_7f_00(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x7f-00: unsupported message\n");
     return 0;
 }
 /* decode BINEX mesaage 0x7f-01: UCAR COSMIC ---------------------------------*/
 static int decode_bnx_7f_01(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x7f-01: unsupported message\n");
     return 0;
 }
 /* decode BINEX mesaage 0x7f-02: Trimble 4700 --------------------------------*/
 static int decode_bnx_7f_02(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x7f-02: unsupported message\n");
     return 0;
 }
 /* decode BINEX mesaage 0x7f-03: Trimble NetRS -------------------------------*/
 static int decode_bnx_7f_03(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x7f-03: unsupported message\n");
     return 0;
 }
 /* decode BINEX mesaage 0x7f-04: Trimble NetRS -------------------------------*/
 static int decode_bnx_7f_04(raw_t *raw, uint8_t *buff, int len)
 {
+    (void)raw; (void)buff; (void)len;
     trace(2,"BINEX 0x7f-04: unsupported message\n");
     return 0;
 }

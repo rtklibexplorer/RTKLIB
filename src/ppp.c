@@ -243,6 +243,9 @@ static double yaw_nominal(double beta, double mu)
 extern int yaw_angle(int sat, const char *type, int opt, double beta, double mu,
                      double *yaw)
 {
+    (void)sat;
+    (void)type;
+    (void)opt;
     *yaw=yaw_nominal(beta,mu);
     return 1;
 }
@@ -327,6 +330,7 @@ static int model_phw(gtime_t time, int sat, const char *type, int opt,
 static double varerr(int sat, int sys, double el, double snr_rover,
                      int f, const prcopt_t *opt, const obsd_t *obs)
 {
+    (void)sat;
     double a,b,e;
     double snr_max=opt->err[5];
     double fact=1.0;
@@ -459,6 +463,7 @@ static void detslp_ll(rtk_t *rtk, const obsd_t *obs, int n)
 
     trace(3,"detslp_ll: n=%d\n",n);
 
+    if (nf > NFREQ) nf = NFREQ; // Quieten compiler warnings on slip[] write.
     for (i=0;i<n&&i<MAXOBS;i++) for (j=0;j<nf;j++) {
         if (obs[i].L[j]==0.0||!(obs[i].LLI[j]&(LLI_SLIP|LLI_HALFC))) continue;
 
@@ -880,6 +885,7 @@ static int model_trop(gtime_t time, const double *pos, const double *azel,
                       const prcopt_t *opt, const double *x, double *dtdx,
                       const nav_t *nav, double *dtrp, double *var)
 {
+    (void)nav;
     double trp[3]={0};
 
     if (opt->tropopt==TROPOPT_SAAS) {

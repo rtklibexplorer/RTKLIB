@@ -35,6 +35,7 @@ static const char *mark="http://maps.google.com/mapfiles/kml/pal2/icon18.png";
 static void outtrack(FILE *f, const solbuf_t *solbuf, const char *color,
                      int outalt, int outtime)
 {
+    (void)outtime;
     double pos[3];
     int i;
     

@@ -2864,6 +2864,7 @@ extern int readerp(const char *file, erp_t *erp) {
       erp->data[erp->n].xp = v[1] * 1E-6 * AS2R;
       erp->data[erp->n].yp = v[2] * 1E-6 * AS2R;
       erp->data[erp->n].ut1_utc = v[3] * 1E-7;
+      (void)utcp;
       if (taip) {
         // Convert UT1-TAI to UT1-UTC.
         const double ep[] = {2000, 1, 1, 12, 0, 0};
@@ -3753,6 +3754,7 @@ extern int seliflc(int optnf,int sys)
 extern double tropmodel(gtime_t time, const double *pos, const double *azel,
                         double humi)
 {
+    (void)time;
     const double temp0=15.0; /* temperature at sea level */
     double hgt,pres,temp,e,z,trph,trpw;
 
@@ -3942,6 +3944,7 @@ static void sunpos_eci(gtime_t tutc, const double *erpv, double *rsun) {
   trace(4, "sunpos_eci: tutc=%s\n", time2str(tutc, tstr, 3));
 
 #ifdef SUNPOS_SOFA  /* use high accuracy functions in sofa.c */
+  (void)erpv;
   static THREADLOCAL gtime_t tutc_ = {0, 0};
   static THREADLOCAL double rsun_[3];
 
@@ -3993,6 +3996,7 @@ static void moonpos_eci(gtime_t tutc, const double *erpv, double *rmoon) {
   trace(4, "moonpos_eci: tutc=%s\n", time2str(tutc, tstr, 3));
 
 #ifdef MOONPOS_SOFA   /* use high accuracy functions in sofa.c */
+  (void)erpv;
   static THREADLOCAL gtime_t tutc_ = {0, 0};
   static THREADLOCAL double rmoon_[3];
 
