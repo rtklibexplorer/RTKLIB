@@ -2799,7 +2799,7 @@ extern int readerp(const char *file, erp_t *erp) {
   }
   char buff[256];
   int state = 0;
-  int utcp = 0, taip = 0;
+  int /*utcp = 0,*/ taip = 0;
   while (fgets(buff, sizeof(buff), fp)) {
     // Detect the IGS format, and support concatenated files.
     if (strstr(buff, "version 2") || strstr(buff, "VERSION 2")) {
@@ -2820,7 +2820,7 @@ extern int readerp(const char *file, erp_t *erp) {
           strstr(buff, "utc") || strstr(buff, "TAI") || strstr(buff, "tai") ||
           strstr(buff, "LOD") || strstr(buff, "lod")) {
         // Note UTC vs TAI.
-        utcp = !!(strstr(buff, "UTC") || strstr(buff, "utc"));
+        /*utcp = !!(strstr(buff, "UTC") || strstr(buff, "utc"));*/
         taip = !!(strstr(buff, "TAI") || strstr(buff, "tai"));
         state = 2;
       }
