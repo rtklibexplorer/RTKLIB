@@ -517,6 +517,7 @@ static void closeserial(serial_t *serial)
 /* read serial ---------------------------------------------------------------*/
 static int readserial(serial_t *serial, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     char msg_tcp[128];
 #ifdef WIN32
     DWORD nr;
@@ -542,6 +543,7 @@ static int readserial(serial_t *serial, uint8_t *buff, int n, char *msg)
 /* write serial --------------------------------------------------------------*/
 static int writeserial(serial_t *serial, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     int ns=0;
     
     tracet(3,"writeserial: dev=%d n=%d\n",serial->dev,n);
@@ -1563,6 +1565,7 @@ static int statetcpcli(tcpcli_t *tcpcli)
 /* get extended state tcp client ---------------------------------------------*/
 static int statextcpcli(tcpcli_t *tcpcli, char *msg)
 {
+    (void)msg;
     return tcpcli?tcpcli->svr.state:0;
 }
 /* base64 encoder ------------------------------------------------------------*/
@@ -2215,6 +2218,7 @@ static void closeudpsvr(udp_t *udpsvr)
 /* read udp server -----------------------------------------------------------*/
 static int readudpsvr(udp_t *udpsvr, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     struct timeval tv={0};
     fd_set rs;
     int ret,nr;
@@ -2274,6 +2278,7 @@ static void closeudpcli(udp_t *udpcli)
 /* write udp client -----------------------------------------------------------*/
 static int writeudpcli(udp_t *udpcli, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     tracet(4,"writeudpcli: sock=%d n=%d\n",udpcli->sock,n);
     
     return (int)sendto(udpcli->sock,(char *)buff,n,0,
@@ -2552,6 +2557,7 @@ static int stateftp(ftp_t *ftp)
 /* get extended state ftp ----------------------------------------------------*/
 static int statexftp(ftp_t *ftp, char *msg)
 {
+    (void)msg;
     return !ftp?0:(ftp->state==0?2:(ftp->state<=2?3:-1));
 }
 /* open memory buffer --------------------------------------------------------*/
@@ -2592,6 +2598,7 @@ static void closemembuf(membuf_t *membuf)
 /* read memory buffer --------------------------------------------------------*/
 static int readmembuf(membuf_t *membuf, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     tracet(4,"readmembuf: n=%d\n",n);
     
     if (!membuf) return 0;

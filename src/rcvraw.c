@@ -1214,19 +1214,18 @@ static int decode_frame_alm(const uint8_t *buff, alm_t *alm)
 /* decode GPS/QZSS iono parameters -------------------------------------------*/
 static int decode_frame_ion(const uint8_t *buff, double *ion)
 {
-    int i,frm;
-    
     trace(4,"decode_frame_ion:\n");
         
     /* subframe 4/5 and svid=56 (page18) (wide area for QZSS) */
-    for (frm=4,buff+=90;frm<=5;frm++,buff+=30) {
+    buff += 90;
+    for (unsigned frm=4;frm<=5;frm++,buff+=30) {
         if (frm==5&&getbitu(buff,48,2)==1) continue;
         if (getbitu(buff,43,3)!=frm||getbitu(buff,50,6)!=56) continue;
-            i=56;
-            ion[0]=getbits(buff,i, 8)*P2_30;     i+= 8;
-            ion[1]=getbits(buff,i, 8)*P2_27;     i+= 8;
-            ion[2]=getbits(buff,i, 8)*P2_24;     i+= 8;
-            ion[3]=getbits(buff,i, 8)*P2_24;     i+= 8;
+        int i=56;
+        ion[0]=getbits(buff,i, 8)*P2_30;     i+= 8;
+        ion[1]=getbits(buff,i, 8)*P2_27;     i+= 8;
+        ion[2]=getbits(buff,i, 8)*P2_24;     i+= 8;
+        ion[3]=getbits(buff,i, 8)*P2_24;     i+= 8;
         ion[4]=getbits(buff,i,8)*P2P11; i+=8;
         ion[5]=getbits(buff,i,8)*P2P14; i+=8;
         ion[6]=getbits(buff,i,8)*P2P16; i+=8;
@@ -1238,15 +1237,14 @@ static int decode_frame_ion(const uint8_t *buff, double *ion)
 /* decode GPS/QZSS UTC parameters --------------------------------------------*/
 static int decode_frame_utc(const uint8_t *buff, double *utc)
 {
-    int i,frm;
-    
     trace(4,"decode_frame_utc:\n");
     
     /* subframe 4/5 and svid=56 (page18) */
-    for (frm=4,buff+=90;frm<=5;frm++,buff+=30) {
+    buff += 90;
+    for (unsigned frm=4;frm<=5;frm++,buff+=30) {
         if (frm==5&&getbitu(buff,48,2)==1) continue;
         if (getbitu(buff,43,3)!=frm||getbitu(buff,50,6)!=56) continue;
-        i=120;
+        int i=120;
         utc[1]=getbits(buff,i,24)*P2_50; i+=24; /* A1 (s) */
         utc[0]=getbits(buff,i,32)*P2_30; i+=32; /* A0 (s) */
         utc[2]=getbitu(buff,i, 8)*P2P12; i+= 8; /* tot (s) */

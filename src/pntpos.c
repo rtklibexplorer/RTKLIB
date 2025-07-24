@@ -259,6 +259,7 @@ extern int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
 extern int tropcorr(gtime_t time, const nav_t *nav, const double *pos,
                     const double *azel, int tropopt, double *trp, double *var)
 {
+    (void)nav;
     char tstr[40];
     trace(4,"tropcorr: time=%s opt=%d pos=%.3f %.3f azel=%.3f %.3f\n",
           time2str(time,tstr,3),tropopt,pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,

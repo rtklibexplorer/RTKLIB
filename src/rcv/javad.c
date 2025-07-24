@@ -406,6 +406,7 @@ static int decode_NN(raw_t *raw)
 /* decode [GA] GPS almanac ---------------------------------------------------*/
 static int decode_GA(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad GA unsupported\n");
     
     return 0;
@@ -413,6 +414,7 @@ static int decode_GA(raw_t *raw)
 /* decode [NA] GLONASS almanac -----------------------------------------------*/
 static int decode_NA(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad NA unsupported\n");
     
     return 0;
@@ -420,6 +422,7 @@ static int decode_NA(raw_t *raw)
 /* decode [EA] Galileo almanac -----------------------------------------------*/
 static int decode_EA(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad EA unsupported\n");
     
     return 0;
@@ -427,6 +430,7 @@ static int decode_EA(raw_t *raw)
 /* decode [WA] WAAS almanac --------------------------------------------------*/
 static int decode_WA(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad WA unsupported\n");
     
     return 0;
@@ -434,6 +438,7 @@ static int decode_WA(raw_t *raw)
 /* decode [QA] QZSS almanac --------------------------------------------------*/
 static int decode_QA(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad QA unsupported\n");
     
     return 0;
@@ -441,6 +446,7 @@ static int decode_QA(raw_t *raw)
 /* decode [CA] Beidou almanac ------------------------------------------------*/
 static int decode_CA(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad CA unsupported\n");
     
     return 0;
@@ -448,6 +454,7 @@ static int decode_CA(raw_t *raw)
 /* decode [IA] IRNSS almanac -------------------------------------------------*/
 static int decode_IA(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad IA unsupported\n");
     
     return 0;
@@ -785,6 +792,7 @@ static int decode_UO(raw_t *raw)
 /* decode [NU] GLONASS UTC and GPS time parameters ---------------------------*/
 static int decode_NU(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad NU unsupported\n");
     
     return 0;
@@ -792,6 +800,7 @@ static int decode_NU(raw_t *raw)
 /* decode [EU] Galileo UTC and GPS time parameters ---------------------------*/
 static int decode_EU(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad EU unsupported\n");
     
     return 0;
@@ -799,6 +808,7 @@ static int decode_EU(raw_t *raw)
 /* decode [WU] WAAS UTC time parameters --------------------------------------*/
 static int decode_WU(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad WU unsupported\n");
     
     return 0;
@@ -806,6 +816,7 @@ static int decode_WU(raw_t *raw)
 /* decode [QU] QZSS UTC and GPS time parameters ------------------------------*/
 static int decode_QU(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad QU unsupported\n");
     
     return 0;
@@ -915,6 +926,7 @@ static int decode_L1nav(uint8_t *buff, int len, int sat, raw_t *raw)
 /* decode raw L2C CNAV data --------------------------------------------------*/
 static int decode_L2nav(uint8_t *buff, int len, int sat, raw_t *raw)
 {
+    (void)raw;
     uint8_t msg[1024]={0};
     int i,j,preamb,prn,msgid,tow,alert;
     
@@ -942,6 +954,7 @@ static int decode_L2nav(uint8_t *buff, int len, int sat, raw_t *raw)
 /* decode raw L5 CNAV data ---------------------------------------------------*/
 static int decode_L5nav(uint8_t *buff, int len, int sat, raw_t *raw)
 {
+    (void)raw;
     uint8_t msg[1024]={0};
     int i,j,preamb,prn,msgid,tow,alert;
     
@@ -969,6 +982,8 @@ static int decode_L5nav(uint8_t *buff, int len, int sat, raw_t *raw)
 /* decode raw L1C CNAV2 data -------------------------------------------------*/
 static int decode_L1Cnav(uint8_t *buff, int len, int sat, raw_t *raw)
 {
+    (void)buff;
+    (void)raw;
     trace(3,"javad *d len=%2d sat=%2d L1C CNAV2 unsupported\n",len,sat);
     
     return 0;
@@ -1044,6 +1059,7 @@ static int decode_nd(raw_t *raw, int sys)
 /* decode [LD] GLONASS raw navigation data -----------------------------------*/
 static int decode_LD(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad LD unsupported\n");
     
     return 0;
@@ -1108,6 +1124,7 @@ static int decode_lD(raw_t *raw)
 /* decode [ED] Galileo raw navigation data -----------------------------------*/
 static int decode_ED(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad ED unsupported\n");
     
     return 0;
@@ -1115,6 +1132,7 @@ static int decode_ED(raw_t *raw)
 /* decode [cd] Beidou raw navigation data ------------------------------------*/
 static int decode_cd(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad cd unsupported\n");
     
     return 0;
@@ -1122,6 +1140,7 @@ static int decode_cd(raw_t *raw)
 /* decode [id] IRNSS raw navigation data -------------------------------------*/
 static int decode_id(raw_t *raw)
 {
+    (void)raw;
     trace(3,"javad id unsupported\n");
     
     return 0;

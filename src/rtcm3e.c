@@ -1974,6 +1974,7 @@ static void gen_msm_index(const rtcm_t *rtcm, int sys, int *nsat, int *nsig,
 static void gen_msm_sat(rtcm_t *rtcm, int sys, int nsat, const uint8_t *sat_ind,
                         double *rrng, double *rrate, uint8_t *info)
 {
+    (void)nsat;
     obsd_t *data;
     double freq;
     int i,j,k,sat,sig,fcn;
@@ -2010,6 +2011,7 @@ static void gen_msm_sig(rtcm_t *rtcm, int sys, int nsat, int nsig, int ncell,
                         const double *rrate, double *psrng, double *phrng,
                         double *rate, double *lock, uint8_t *half, float *cnr)
 {
+    (void)nsat;
     obsd_t *data;
     double freq,lambda,psrng_s,phrng_s,rate_s,lt;
     int i,j,k,sat,sig,fcn,cell,LLI;
@@ -2588,6 +2590,8 @@ static int encode_type1230(rtcm_t *rtcm, int sync)
 /* encode type 4073: proprietary message Mitsubishi Electric -----------------*/
 static int encode_type4073(rtcm_t *rtcm, int subtype, int sync)
 {
+    (void)rtcm;
+    (void)sync;
     trace(2,"rtcm3 4073: unsupported message subtype=%d\n",subtype);
     return 0;
 }

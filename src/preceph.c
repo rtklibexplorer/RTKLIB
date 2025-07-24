@@ -171,6 +171,7 @@ static int addpeph(nav_t *nav, peph_t *peph)
 static void readsp3b(FILE *fp, char type, int *sats, int ns, double *bfact,
                      char *tsys, int index, int opt, nav_t *nav)
 {
+    (void)sats;
     peph_t peph;
     gtime_t time;
     double val,std,base;
