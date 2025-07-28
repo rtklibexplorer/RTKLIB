@@ -1990,6 +1990,7 @@ static int decode_ssr_iono_sph_harmonics(rtcm_t *rtcm, int sys, int subtype) {
     IDF035 = getbitu(rtcm->buff, pos, IDF035_NBITS); pos += IDF035_NBITS; /* Number of Ionospheric Layers */
 
     adjweek(rtcm, IDF003);
+    rtcm->ssr_ion.ref_epoch_s = IDF003;
     rtcm->ssr_ion.update_interval_s = IDF004;
 
     rtcm->ssr_ion.n_layers = IDF035 + 1;
@@ -2027,7 +2028,7 @@ static int decode_ssr_iono_sph_harmonics(rtcm_t *rtcm, int sys, int subtype) {
         }
     }
 
-    ret = 10; /* default return value for SSR message  */
+    ret = RETURN_CODE_DECODE_RTCM_SSR_ION;
 end:
     return ret;
 }

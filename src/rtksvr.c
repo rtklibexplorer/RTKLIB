@@ -343,6 +343,12 @@ static void update_ssr(rtksvr_t *svr, int index)
         }
         svr->nmsg[index][7]++;
     }
+
+/* update ssr corrections ----------------------------------------------------*/
+static void update_ssr_ion(rtksvr_t *svr, int index) {
+    svr->nav.ssr_ion = svr->rtcm[index].ssr_ion;
+}
+
 /* update rtk server struct --------------------------------------------------*/
 static void update_svr(rtksvr_t *svr, int ret, obs_t *obs, nav_t *nav,
                        int ephsat, int ephset, sbsmsg_t *sbsmsg, int index,
@@ -371,6 +377,9 @@ static void update_svr(rtksvr_t *svr, int ret, obs_t *obs, nav_t *nav,
     }
     else if (ret==10) { /* ssr message */
         update_ssr(svr,index);
+    }
+    else if (ret == RETURN_CODE_DECODE_RTCM_SSR_ION) {
+        update_ssr_ion(svr, index);
     }
     else if (ret==-1) { /* error */
         svr->nmsg[index][9]++;

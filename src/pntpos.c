@@ -235,6 +235,11 @@ extern int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
         *var=SQR(*ion*ERR_BRDCI);
         return 1;
     }
+    /* SSR ionospheric model (spherical harmonics) */
+    if (ionoopt==IONOOPT_SSR) {
+        if (ionssr(time,nav,pos,azel,ion,var)) return 1;
+        err=1;
+    }
     /* GPS broadcast ionosphere model */
     if (ionoopt==IONOOPT_BRDC||err==1) {
         *ion=ionmodel(time,nav->ion_gps,pos,azel);

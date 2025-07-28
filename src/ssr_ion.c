@@ -10,6 +10,11 @@
 #include "rtklib.h"
 
 #define MIN(x,y)    ((x)<(y)?(x):(y))
+#define SQR(x)      ((x)*(x))
+#define VAR_NOTEC   SQR(30.0)   /* variance of no tec */
+#define MIN_EL      0.0         /* min elevation angle (rad) */
+#define MIN_HGT     -1000.0     /* min user height (m) */
+#define ERR_SSRION  0.5        /* error scaling of SSR ionosphere corrections (m) */
 
 /* Compute the index for spherical harmonics coefficients */
 extern int compute_index_ssr_iono_coeff_arrays(const int n, const int m, const int n_degree) {
@@ -197,5 +202,56 @@ extern int compute_stec_from_spherical_harmonics(
 
     ret = 0;
 end:
+    return ret;
+}
+
+/* ionosphere model by SSR spherical harmonics data ----------------------------
+*
+* args   : gtime_t time     I   time (gpst)
+*          nav_t  *nav      I   navigation data
+*          double *pos      I   receiver position {lat,lon,h} (rad,m)
+*          double *azel     I   azimuth/elevation angle {az,el} (rad)
+*          double *delay    O   ionospheric delay (L1) (m)
+*          double *var      O   ionospheric delay (L1) variance (m^2)
+*
+* return : status (1:ok,0:error)
+* notes  : return ok with delay = 0 and var = VAR_NOTEC if el < MIN_EL or h < MIN_HGT
+*-----------------------------------------------------------------------------*/
+extern int ionssr(gtime_t time, const nav_t *nav, const double *pos,
+                  const double *azel, double *delay, double *var)
+{
+    static const double ALPHA = 40.30E16 / FREQL1 / FREQL1; /* tecu->L1 iono (m) */
+
+    int ret = 0; // Default return value, assume failure
+    int epoch_s, ref_epoch_s;
+    double stec_tecu;
+    double stec_var_tecu;
+
+    char tstr[40];
+    trace(3,"ionssr  : time=%s pos=%.1f %.1f azel=%.1f %.1f\n",time2str(time, tstr, 0),
+          pos[0] * R2D, pos[1] * R2D, azel[0] * R2D, azel[1] * R2D);
+
+    *delay = 0.0;
+    *var = VAR_NOTEC;
+
+    epoch_s = (int)time2gpst(time, NULL);
+    ref_epoch_s = nav->ssr_ion.ref_epoch_s;
+
+    if (azel[1] < MIN_EL || pos[2] < MIN_HGT || abs(epoch_s - ref_epoch_s) > 7200) {
+        goto end;
+    }
+
+    if (compute_stec_from_spherical_harmonics(
+        &nav->ssr_ion, epoch_s, pos, azel, RE_WGS84 / 1000.0, &stec_tecu) < 0) {
+            goto end;
+    }
+
+    // Variance of the STEC, unknown, but set to half the square of the STEC, as done with the BRDC corrections
+    *delay = ALPHA * stec_tecu;
+    *var = SQR((*delay) * ERR_SSRION);
+
+    ret = 1; // Successful completion
+end:
+    trace(3,"ionssr  : delay=%5.2f std=%5.2f\n", *delay, sqrt(*var));
     return ret;
 }

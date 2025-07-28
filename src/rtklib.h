@@ -432,6 +432,7 @@ extern "C" {
 #define IONOOPT_EST 4                   /* ionosphere option: estimation */
 #define IONOOPT_TEC 5                   /* ionosphere option: IONEX TEC model */
 #define IONOOPT_QZS 6                   /* ionosphere option: QZSS broadcast model */
+#define IONOOPT_SSR 9                   /* ionosphere option: SSR model */
 
 #define TROPOPT_OFF 0                   /* troposphere option: correction off */
 #define TROPOPT_SAAS 1                  /* troposphere option: Saastamoinen model */
@@ -575,6 +576,7 @@ extern "C" {
 #define IDF039_NBITS 16
 #define IDF040_NBITS 16
 
+#define RETURN_CODE_DECODE_RTCM_SSR_ION 11
 
 #ifdef WIN32
 #define rtklib_thread_t    HANDLE
@@ -854,6 +856,7 @@ typedef struct {        /* ionosphere spherical harmonics type */
 } ionlayer_sphharm_t;
 
 typedef struct {
+    int ref_epoch_s; /* reference epoch time (s) */
     int update_interval_s; /* update interval*/
     int n_layers; /* number of layers */
     ionlayer_sphharm_t ionlayers_sph_harm[MAX_ION_LAYERS]; /* ionosphere spherical harmonics */
@@ -914,6 +917,7 @@ typedef struct {        /* navigation data type */
     sbsion_t sbsion[MAXBAND+1]; /* SBAS ionosphere corrections */
     dgps_t dgps[MAXSAT]; /* DGPS corrections */
     ssr_t ssr[MAXSAT];  /* SSR corrections */
+    ssr_ion_t ssr_ion;  /* SSR ionosphere corrections */
 } nav_t;
 
 typedef struct {        /* station parameter type */
@@ -1617,6 +1621,8 @@ EXPORT int tropcorr(gtime_t time, const nav_t *nav, const double *pos,
 EXPORT int seliflc(int optnf, int sys);
 EXPORT int compute_stec_from_spherical_harmonics( const ssr_ion_t* ssr_ion, const int epoch_s,
                     const double* pos, const double* azel, double re_km, double* stec);
+EXPORT int ionssr(gtime_t time, const nav_t *nav, const double *pos,
+                  const double *azel, double *delay, double *var);
 
 /* antenna models ------------------------------------------------------------*/
 EXPORT int  readpcv(const char *file, pcvs_t *pcvs);
