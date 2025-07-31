@@ -10,9 +10,9 @@
 static void printhead(int topt, int mopt)
 {
     int i;
-    
+
     printf("%% %s  SAT ",topt?"  DAY      TIME  ":"   GPST  ");
-    
+
     if (mopt&1) {
         printf(" UDI IOD URA REF ");
     }
@@ -33,7 +33,7 @@ static void printssrmsg(int sat, const ssr_t *ssr, int topt, int mopt)
     double tow;
     int week;
     char tstr[40],id[8];
-    
+
     if (topt) {
         time2str(ssr->t0,tstr,0);
         printf("%s ",tstr);
@@ -44,7 +44,7 @@ static void printssrmsg(int sat, const ssr_t *ssr, int topt, int mopt)
     }
     satno2id(sat,id);
     printf("%4s ",id);
-    
+
     if (mopt&1) {
         printf("%4.0f %3d %3d %3d ",ssr->udint,ssr->iode,ssr->ura,ssr->refd);
     }
@@ -70,17 +70,17 @@ static void dumpssrmsg(FILE *fp, int sat, int topt, int mopt)
     static rtcm_t rtcm;
     static gtime_t t0[MAXSAT]={{0}};
     int i,stat;
-    
+
     init_rtcm(&rtcm);
-    
+
     while ((stat=input_rtcm3f(&rtcm,fp))>=0) {
-        
+
         if (stat!=10) continue; /* ssr message */
-        
+
         for (i=0;i<MAXSAT;i++) {
             if (timediff(rtcm.ssr[i].t0,t0[i])==0.0) continue;
             t0[i]=rtcm.ssr[i].t0;
-            
+
             if (!sat||i+1==sat) {
                 printssrmsg(i+1,rtcm.ssr+i,topt,mopt);
             }
@@ -91,11 +91,11 @@ static void dumpssrmsg(FILE *fp, int sat, int topt, int mopt)
 int main(int argc, char **argv)
 {
     const char *usage="dumpssr [-t][-s sat][-i][-o][-c][-b][-h][-x tr] file";
-    
+
     FILE *fp;
     char *file="";
     int i,sat=0,topt=0,mopt=0,trl=0;
-    
+
     for (i=0;i<argc;i++) {
         if      (!strcmp(argv[i],"-t")) topt =1;
         else if (!strcmp(argv[i],"-i")) mopt|=1;
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
         else file=argv[i];
     }
     if (!mopt) mopt=0xFF;
-    
+
     if (!(fp=fopen(file,"rb"))) {
         fprintf(stderr,"file open error: %s\n",file);
         return -1;
@@ -121,11 +121,11 @@ int main(int argc, char **argv)
         tracelevel(trl);
     }
     printhead(topt,mopt);
-    
+
     dumpssrmsg(fp,sat,topt,mopt);
-    
+
     fclose(fp);
     traceclose();
-    
+
     return 0;
 }
