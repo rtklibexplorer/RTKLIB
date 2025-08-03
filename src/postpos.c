@@ -896,6 +896,7 @@ static int antpos(prcopt_t *opt, int rcvno, const obs_t *obs, const nav_t *nav,
 static int openses(const prcopt_t *popt, const solopt_t *sopt,
                    const filopt_t *fopt, nav_t *nav, pcvs_t *pcvs, pcvs_t *pcvr)
 {
+    (void)popt; (void)nav;
     trace(3,"openses :\n");
 
     /* read satellite antenna parameters */

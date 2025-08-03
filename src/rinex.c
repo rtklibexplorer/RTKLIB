@@ -353,19 +353,8 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
                         char tobs[][MAXOBSTYPE][4], nav_t *nav, sta_t *sta)
 {
     /* default codes for unknown code */
-    const char frqcodes[]="1256789";
-    const char *defcodes[]={
-        "CWX    ",  /* GPS: L125____ */
-        "CCXX X ",  /* GLO: L1234_6_ */
-        "CXXXXX ",  /* GAL: L125678_ */ /* FIXME: Galileo should not have L2! */
-        "CXXX   ",  /* QZS: L1256___ */
-        "C X    ",  /* SBS: L1_5____ */
-        "XIXIIX ",  /* BDS: L125678_ */
-        "  A   A"   /* IRN: L__5___9 */
-    };
     double del[3];
     int i,j,k,n,nt,prn,fcn;
-    const char *p;
     char *label=buff+60,str[4];
 
     trace(4,"decode_obsh: ver=%.2f\n",ver);
@@ -418,7 +407,8 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
     else if (strstr(label,"ANTENNA: ZERODIR XYZ")) ; /* opt ver.3 */
     else if (strstr(label,"CENTER OF MASS: XYZ" )) ; /* opt ver.3 */
     else if (strstr(label,"SYS / # / OBS TYPES" )) { /* ver.3 */
-        if (!(p=strchr(syscodes,buff[0]))) {
+        const char *p = strchr(syscodes,buff[0]);
+        if (!p) {
             trace(2,"invalid system code: sys=%c\n",buff[0]);
             return;
         }
@@ -438,13 +428,23 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
             for (j=0;j<nt;j++) if (tobs[i][j][1]=='1') tobs[i][j][1]='2';
         }
 #ifdef RTK_DISABLED
-        /* uncomment this code to convert unknown codes to defaults */
-        for (j=0;j<nt;j++) {
-            if (tobs[i][j][2]) continue;
-            if (!(p=strchr(frqcodes,tobs[i][j][1]))) continue;
-            tobs[i][j][2]=defcodes[i][(int)(p-frqcodes)];
-            trace(2,"set default for unknown code: sys=%c code=%s\n",buff[0],
-                  tobs[i][j]);
+        // Uncomment this code to convert unknown codes to defaults.
+        const char frqcodes[] = "1256789";
+        const char *defcodes[] = {
+          "CWX    ",  // GPS: L125____
+          "CCXX X ",  // GLO: L1234_6_
+          "CXXXXX ",  // GAL: L125678_ FIXME: Galileo should not have L2!
+          "CXXX   ",  // QZS: L1256___
+          "C X    ",  // SBS: L1_5____
+          "XIXIIX ",  // BDS: L125678_
+          "  A   A"   // IRN: L__5___9
+        };
+        for (int j = 0; j < nt; j++) {
+          if (tobs[i][j][2]) continue;
+          const char *p = strchr(frqcodes, tobs[i][j][1]);
+          if (!p) continue;
+          tobs[i][j][2] = defcodes[i][(int)(p - frqcodes)];
+          trace(2, "set default for unknown code: sys=%c code=%s\n", buff[0], tobs[i][j]);
         }
 #endif
     }
@@ -633,6 +633,7 @@ static void decode_navh(char *buff, nav_t *nav)
 /* decode GNAV header --------------------------------------------------------*/
 static void decode_gnavh(char *buff, nav_t *nav)
 {
+    (void)nav;
     char *label=buff+60;
 
     trace(4,"decode_gnavh:\n");
@@ -643,6 +644,7 @@ static void decode_gnavh(char *buff, nav_t *nav)
 /* decode GEO NAV header -----------------------------------------------------*/
 static void decode_hnavh(char *buff, nav_t *nav)
 {
+    (void)nav;
     char *label=buff+60;
 
     trace(4,"decode_hnavh:\n");
@@ -968,6 +970,7 @@ static int set_sysmask(const char *opt)
 static void set_index(double ver, int sys, const char *opt,
                       char tobs[MAXOBSTYPE][4], sigind_t *ind)
 {
+    (void)ver;
     const char *p;
     char str[8],*optstr="";
     double shift;
@@ -1664,7 +1667,7 @@ extern int rnxcomment(rnxopt_t *opt, const char *format, ...) {
         trace(2,"rnxcomment: format error in '%s'\n", format);
         return 0;
     }
-    if (req >= sizeof(buff)) {
+    if ((unsigned)req >= sizeof(buff)) {
         trace(3, "rnxcomment: buffer overflow\n");
     }
     // Don't attempt to leave an empty comment
@@ -2081,6 +2084,7 @@ static void outobstype_ver3(FILE *fp, const rnxopt_t *opt)
 /* output RINEX phase shift --------------------------------------------------*/
 static void outrnx_phase_shift(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
+    (void)nav;
     static const uint8_t ref_code[RNX_NUMSYS][10]={ /* reference signal [9] table A23 */
         {CODE_L1C,CODE_L2P,CODE_L5I,0},                   /* GPS */
         {CODE_L1C,CODE_L4A,CODE_L2C,CODE_L6A,CODE_L3I,0}, /* GLO */

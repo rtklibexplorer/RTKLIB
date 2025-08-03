@@ -40,7 +40,6 @@
 #define I1(p) (*((int8_t  *)(p)))
 static uint16_t U2(uint8_t* p) { uint16_t u; memcpy(&u, p, 2); return u; }
 static uint32_t U4(uint8_t* p) { uint32_t u; memcpy(&u, p, 4); return u; }
-static int32_t  I4(uint8_t* p) { int32_t  i; memcpy(&i, p, 4); return i; }
 static float    R4(uint8_t* p) { float    r; memcpy(&r, p, 4); return r; }
 static double   R8(uint8_t* p) { double   r; memcpy(&r, p, 8); return r; }
 
@@ -254,9 +253,8 @@ static int decode_gpsephb(raw_t* raw)
     eph_t eph = { 0 };
     uint8_t* p = raw->buff + HLEN;
 
-    double tow, tocs, N, URA;
+    double tow, tocs, N;
     int prn, as, sat, week, zweek, health;
-    int iode1, iode2;
 
     if (raw->len < HLEN + 224) {
         trace(2, "unicore gpsephb length error: len=%d\n", raw->len);
@@ -267,7 +265,8 @@ static int decode_gpsephb(raw_t* raw)
     tow = R8(p); p += 8;
     health = U4(p) & 0x3f; p += 4;
     eph.iode = U4(p); p += 4;
-    iode2 = U4(p); p += 4;
+    int iode2 = U4(p); p += 4;
+    (void)iode2;
 
     eph.week = U4(p); p += 4;
     zweek = U4(p); p += 4;
@@ -352,11 +351,13 @@ static int decode_gloephb(raw_t* raw)
     }
     geph.frq = U2(p) + OFF_FRQNO; p += 2;
     int satType = U1(p); p += 1 + 1;
+    (void)satType;
 
     week = U2(p); p += 2;
     tow = floor(U4(p) / 1000.0 + 0.5); p += 4; /* rounded to integer sec */
     toff = U4(p); p += 4;
     int Nt = U2(p); p += 2 + 2;
+    (void)Nt;
     geph.iode = U4(p) & 0x7F; p += 4;
     geph.svh = (U4(p) < 4) ? 0 : 1; p += 4; /* 0:healthy,1:unhealthy */
     geph.pos[0] = R8(p); p += 8;
@@ -374,7 +375,9 @@ static int decode_gloephb(raw_t* raw)
     tof = U4(p) - toff; p += 4; /* glonasst->gpst */
 
     int P = U4(p); p += 4;
+    (void) P;
     int Ft = U4(p); p += 4;
+    (void) Ft;
     geph.age = U4(p); p += 4;
 
     geph.toe = gpst2time(week, tow);
@@ -503,11 +506,14 @@ static int decode_bdsephb(raw_t* raw)
     }
     prn = U4(p);   p += 4;
     double tow = R8(p); p += 8;
+    (void)tow;
     eph.svh = U4(p); p += 4;
     eph.iode = U4(p); p += 4;
     uint32_t AODE2 = U4(p); p += 4;
+    (void)AODE2;
     eph.week = U4(p) - 1356;   p += 4;
     int zweek = U4(p);   p += 4;
+    (void)zweek;
     eph.toes = R8(p);   p += 8;
     eph.A = R8(p);   p += 8;
     eph.deln = R8(p);   p += 8;
@@ -536,7 +542,9 @@ static int decode_bdsephb(raw_t* raw)
     eph.f2 = R8(p);   p += 8;
 
     int as = U4(p); p += 4;
+    (void)as;
     double N = R8(p);   p += 8;
+    (void)N;
     ura = R8(p);   p += 8;
 
 
@@ -567,9 +575,8 @@ static int decode_qzssephb(raw_t* raw) {
     eph_t eph = { 0 };
     uint8_t* p = raw->buff + HLEN;
 
-    double tow, tocs, N, URA;
+    double tow, tocs, N;
     int prn, as, sat, week, zweek, health;
-    int iode1, iode2;
 
     if (raw->len < HLEN + 224) {
         trace(2, "unicore qzssephemrisb length error: len=%d\n", raw->len);
@@ -580,7 +587,8 @@ static int decode_qzssephb(raw_t* raw) {
     tow = R8(p); p += 8;
     health = U4(p) & 0x3f; p += 4;
     eph.iode = U4(p); p += 4;
-    iode2 = U4(p); p += 4;
+    int iode2 = U4(p); p += 4;
+    (void)iode2;
 
     eph.week = U4(p); p += 4;
     zweek = U4(p); p += 4;
@@ -656,6 +664,7 @@ static int decode_irnssephb(raw_t* raw) {
 
     prn = U4(p);   p += 4;
     double towc = R8(p); p += 8;
+    (void)towc;
     l5_health = U4(p) & 1; p += 4;
     eph.iode = U4(p);   p += 4; /* IODEC */
     s_health = U4(p);   p += 4;
@@ -687,7 +696,9 @@ static int decode_irnssephb(raw_t* raw) {
     eph.f2 = R8(p);   p += 8;
 
     uint32_t flag = U4(p); p += 4;
+    (void)flag;
     double N = R8(p); p += 8;
+    (void)N;
     eph.sva = uraindex(R8(p)); p += 8;
 
     if (toc != eph.toes) { /* toe and toc should be matched */
@@ -727,7 +738,7 @@ static int decode_obsvmb(raw_t* raw)
     uint8_t* p = raw->buff + HLEN;
     char* q;
     double psr, adr, dop, snr, lockt, tt, freq, glo_bias = 0.0;
-    int i, index, prn, sat, sys, code, idx, track, plock, clock, lli;
+    int i, index, prn, sat, sys, code, idx, plock, clock, lli;
     int gfrq;
 
     if ((q = strstr(raw->opt, "-GLOBIAS="))) sscanf(q, "-GLOBIAS=%lf", &glo_bias);

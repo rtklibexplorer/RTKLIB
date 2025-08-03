@@ -604,6 +604,7 @@ extern void sbsoutmsg(FILE *fp, sbsmsg_t *sbsmsg)
 static void searchigp(gtime_t time, const double *pos, const sbsion_t *ion,
                       const sbsigp_t **igp, double *x, double *y)
 {
+    (void)time;
     int i,latp[2],lonp[4];
     double lat=pos[0]*R2D,lon=pos[1]*R2D;
     const sbsigp_t *p;

@@ -136,6 +136,7 @@ static double geoidh_egm08(const double *pos, int model)
 /* get gsi geoid data --------------------------------------------------------*/
 static double fgetgsi(FILE *fp, int nlon, int nlat, int i, int j)
 {
+    (void)nlat;
     const int nf=28,wf=9,nl=nf*wf+2,nr=(nlon-1)/nf+1;
     double v;
     int off=nl+j*nr*nl+i/nf*nl+i%nf*wf;

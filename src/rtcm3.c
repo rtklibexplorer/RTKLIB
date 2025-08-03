@@ -725,6 +725,7 @@ static int decode_type1012(rtcm_t *rtcm)
 /* decode type 1013: system parameters ---------------------------------------*/
 static int decode_type1013(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode type 1019: GPS ephemerides -----------------------------------------*/
@@ -885,42 +886,49 @@ static int decode_type1020(rtcm_t *rtcm)
 /* decode type 1021: helmert/abridged molodenski -----------------------------*/
 static int decode_type1021(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1021: not supported message\n");
     return 0;
 }
 /* decode type 1022: Moledenski-Badekas transfromation -----------------------*/
 static int decode_type1022(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1022: not supported message\n");
     return 0;
 }
 /* decode type 1023: residual, ellipsoidal grid representation ---------------*/
 static int decode_type1023(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1023: not supported message\n");
     return 0;
 }
 /* decode type 1024: residual, plane grid representation ---------------------*/
 static int decode_type1024(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1024: not supported message\n");
     return 0;
 }
 /* decode type 1025: projection (types except LCC2SP,OM) ---------------------*/
 static int decode_type1025(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1025: not supported message\n");
     return 0;
 }
 /* decode type 1026: projection (LCC2SP - lambert conic conformal (2sp)) -----*/
 static int decode_type1026(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1026: not supported message\n");
     return 0;
 }
 /* decode type 1027: projection (type OM - oblique mercator) -----------------*/
 static int decode_type1027(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1027: not supported message\n");
     return 0;
 }
@@ -959,18 +967,21 @@ static int decode_type1029(rtcm_t *rtcm)
 /* decode type 1030: network RTK residual ------------------------------------*/
 static int decode_type1030(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1030: not supported message\n");
     return 0;
 }
 /* decode type 1031: GLONASS network RTK residual ----------------------------*/
 static int decode_type1031(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1031: not supported message\n");
     return 0;
 }
 /* decode type 1032: physical reference station position information ---------*/
 static int decode_type1032(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1032: not supported message\n");
     return 0;
 }
@@ -1034,30 +1045,35 @@ static int decode_type1033(rtcm_t *rtcm)
 /* decode type 1034: GPS network FKP gradient --------------------------------*/
 static int decode_type1034(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1034: not supported message\n");
     return 0;
 }
 /* decode type 1035: GLONASS network FKP gradient ----------------------------*/
 static int decode_type1035(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1035: not supported message\n");
     return 0;
 }
 /* decode type 1037: GLONASS network RTK ionospheric correction difference ---*/
 static int decode_type1037(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1037: not supported message\n");
     return 0;
 }
 /* decode type 1038: GLONASS network RTK geometic correction difference ------*/
 static int decode_type1038(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1038: not supported message\n");
     return 0;
 }
 /* decode type 1039: GLONASS network RTK combined correction difference ------*/
 static int decode_type1039(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1039: not supported message\n");
     return 0;
 }

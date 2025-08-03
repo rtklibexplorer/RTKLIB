@@ -348,6 +348,7 @@ static void swapsolstat(void)
 /* output solution status ----------------------------------------------------*/
 static void outsolstat(rtk_t *rtk,const nav_t *nav)
 {
+    (void)nav;
     if (statlevel<=0||!fp_stat||!rtk->sol.stat) return;
 
     trace(3,"outsolstat:\n");
@@ -401,6 +402,7 @@ static double gfobs(const obsd_t *obs, int i, int j, int k, const nav_t *nav)
 static double varerr(int sat, int sys, double el, double snr_rover, double snr_base,
                      double bl, double dt, int f, const prcopt_t *opt, const obsd_t *obs)
 {
+    (void)sat;
     double a,b,c,d,e;
     double snr_max=opt->err[5];
     double fact;
@@ -599,6 +601,7 @@ static void udion(rtk_t *rtk, double tt, double bl, const int *sat, int ns)
 /* temporal update of tropospheric parameters --------------------------------*/
 static void udtrop(rtk_t *rtk, double tt, double bl)
 {
+    (void)bl;
     int i,j,k;
 
     trace(3,"udtrop  : tt=%.3f\n",tt);
@@ -652,7 +655,9 @@ static void udrcvbias(rtk_t *rtk, double tt)
 // observation code changes then consider it a slip.
 static void detslp_code(rtk_t *rtk, const obsd_t *obs, int i, int rcv) {
   int sat = obs[i].sat;
-  for (int f = 0; f < rtk->opt.nf; f++) {
+  int nf = rtk->opt.nf;
+  if (nf > NFREQ) nf = NFREQ; // Quieten compiler warnings on slip[] write.
+  for (int f = 0; f < nf; f++) {
     int code = obs[i].code[f];
     if (code == CODE_NONE) continue;
     int ccode = rtk->ssat[sat - 1].code[f][rcv - 1];
@@ -749,6 +754,7 @@ static void detslp_gf(rtk_t *rtk, const obsd_t *obs, int i, int j,
 static void detslp_dop(rtk_t *rtk, const obsd_t *obs, const int *ix, int ns,
                        int rcv, const nav_t *nav)
 {
+    (void)nav;
     int i,ii,f,sat,ndop=0,nf=rtk->opt.nf;
     double dph,dpt,mean_dop=0;
     double dopdif[MAXSAT][NFREQ], tt[MAXSAT][NFREQ];
@@ -1569,6 +1575,7 @@ static int ddidx(rtk_t *rtk, int *ix, int gps, int glo, int sbs)
 /* translate double diff fixed phase-bias values to single diff fix phase-bias values */
 static void restamb(rtk_t *rtk, const double *bias, int nb, double *xa)
 {
+    (void)nb;
     int i,n,m,f,index[MAXSAT]={0},nv=0,nf=NF(&rtk->opt);
 
     trace(3,"restamb :\n");

@@ -631,6 +631,7 @@ static int decode_solsss(char *buff, sol_t *sol)
 /* decode GSI F solution -----------------------------------------------------*/
 static int decode_solgsi(char *buff, const solopt_t *opt, sol_t *sol)
 {
+    (void)opt;
     double val[MAXFIELD];
     int i=0,j;
     
@@ -1406,6 +1407,7 @@ extern int outnmea_gsa(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 /* output solution in the form of NMEA GSV sentences -------------------------*/
 extern int outnmea_gsv(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 {
+    (void)sol;
     double az,el,snr;
     int i,j,k,n,nsat,nmsg,prn,sys,sats[MAXSAT];
     char *p=(char *)buff,*q,*s,sum;
