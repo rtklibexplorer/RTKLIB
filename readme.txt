@@ -47,3 +47,5 @@ Pre-complied linux packages are available at https://build.opensuse.org/package/
 
 The last step will copy the compiled executables into a new directory RTKLIB_bin next to the rtklib source directory.
 
+
+The CRX2RNX utility needs to be available in the search path for the decompression of CRX compressed RINEX files. For Linux the 'CRX2RNX' command needs to be renamed to 'crx2rnx'. This utility is available at https://terras.gsi.go.jp/ja/crx2rnx.html.
