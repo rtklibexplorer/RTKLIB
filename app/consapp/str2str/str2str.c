@@ -290,7 +290,7 @@ int main(int argc, char **argv)
     char *local="",*proxy="",*opt="",buff[256],*p;
     char strmsg[MAXSTRMSG]="",*antinfo="",*rcvinfo="";
     char *ant[]={"","",""},*rcv[]={"","",""},*logfile="";
-    int i,j,n=0,dispint=5000,trlevel=0,opts[]={10000,10000,2000,32768,10,0,30,0};
+    int i,j,n=0,count_stream=0,dispint=5000,trlevel=0,opts[]={10000,10000,2000,32768,10,0,30,0};
     int types[MAXSTR]={STR_FILE,STR_FILE},stat[MAXSTR]={0},log_stat[MAXSTR]={0};
     int byte[MAXSTR]={0},bps[MAXSTR]={0},fmts[MAXSTR]={0},sta=0;
     int deamon=0;
@@ -307,6 +307,7 @@ int main(int argc, char **argv)
     for (i=1;i<argc;i++) {
         if (!strcmp(argv[i],"-in")&&i+1<argc) {
             if (!decodepath(argv[++i],types,paths[0],fmts)) return EXIT_FAILURE;
+            count_stream++;
         }
         else if (!strcmp(argv[i],"-msg")&&i+1<argc) msg=argv[++i];
         else if (!strcmp(argv[i],"-out")&&i+1<argc&&n<MAXSTR-1) {
@@ -314,6 +315,7 @@ int main(int argc, char **argv)
             // Capture the current messages for this output stream.
             msgs[n + 1] = msg;
             n++;
+            count_stream++;
         }
         else if (!strcmp(argv[i],"-p")&&i+3<argc) {
             pos[0]=atof(argv[++i])*D2R;
@@ -348,7 +350,9 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-l"  )&&i+1<argc) local=argv[++i];
         else if (!strcmp(argv[i],"-x"  )&&i+1<argc) proxy=argv[++i];
         else if (!strcmp(argv[i],"-b"  )&&i+1<argc) opts[7]=atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-fl" )&&i+1<argc) logfile=argv[++i];
+        else if (!strcmp(argv[i],"-fl" )&&i+1<argc) {
+            logs[count_stream]=argv[++i];
+        }
         else if (!strcmp(argv[i],"-t"  )&&i+1<argc) trlevel=atoi(argv[++i]);
         else if (!strcmp(argv[i], "--deamon")) deamon=1;
         else if (!strcmp(argv[i], "--version")) {
