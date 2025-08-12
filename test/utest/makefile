@@ -7,7 +7,7 @@ LDLIBS = -lm -llapack -lblas
 CC = gcc
 
 BIN    = t_matrix t_time t_coord t_rinex t_lambda t_atmos t_misc t_preceph t_gloeph \
-t_geoid t_ppp t_ionex t_tle
+t_geoid t_ppp t_ionex t_tle t_ssr_ion
 
 all        : $(BIN)
 t_matrix   : t_matrix.o rtkcmn.o trace.o preceph.o
@@ -24,6 +24,7 @@ t_ppp      : t_ppp.o rtkcmn.o trace.o ephemeris.o preceph.o sbas.o ionex.o pntpo
 t_ppp      : lambda.o tides.o
 t_ionex    : t_ionex.o rtkcmn.o trace.o preceph.o ionex.o
 t_tle      : t_tle.o rtkcmn.o trace.o rinex.o ephemeris.o sbas.o preceph.o tle.o
+t_ssr_ion  : t_ssr_ion.o rtkcmn.o trace.o preceph.o ephemeris.o sbas.o ionex.o pntpos.o ssr_ion.o
 
 rtkcmn.o   : $(SRC)/rtklib.h $(SRC)/rtkcmn.c
 	$(CC) -c $(CFLAGS) $(SRC)/rtkcmn.c
@@ -55,9 +56,12 @@ tle.o      : $(SRC)/rtklib.h $(SRC)/tle.c
 	$(CC) -c $(CFLAGS) $(SRC)/tle.c
 tides.o   : $(SRC)/rtklib.h $(SRC)/tides.c
 	$(CC) -c $(CFLAGS) $(SRC)/tides.c
+ssr_ion.o : $(SRC)/rtklib.h $(SRC)/ssr_ion.c
+	$(CC) -c $(CFLAGS) $(SRC)/ssr_ion.c
 
 utest : utest1 utest2 utest3 utest4 utest5 utest6 utest7 utest8
 utest : utest9 utest10 utest11 utest12 utest14
+utest : utest_ssr_ion
 
 utest1 :
 	./t_matrix  > utest1.out
@@ -85,6 +89,8 @@ utest12 :
 	./t_ionex   > utest12.out
 utest14 :
 	./t_tle     > utest14.out
+utest_ssr_ion :
+	./t_ssr_ion > utest_ssr_ion.out
 
 clean :
 	rm -f *.o *.out *.exe $(BIN) *.stackdump gmon.out
