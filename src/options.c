@@ -45,7 +45,7 @@ static char snrmask_[NFREQ][1024];
 #define MODOPT  "0:single,1:dgps,2:kinematic,3:static,4:static-start,5:movingbase,6:fixed,7:ppp-kine,8:ppp-static,9:ppp-fixed"
 #define FRQOPT  "1:l1,2:l1+l2,3:l1+l2+l5,4:l1+l2+l5+l6"
 #define TYPOPT  "0:forward,1:backward,2:combined,3:combined-nophasereset"
-#define IONOPT  "0:off,1:brdc,2:sbas,3:dual-freq,4:est-stec,5:ionex-tec,6:qzs-brdc"
+#define IONOPT  "0:off,1:brdc,2:sbas,3:dual-freq,4:est-stec,5:ionex-tec,6:qzs-brdc,9:ssr"
 #define TRPOPT  "0:off,1:saas,2:sbas,3:est-ztd,4:est-ztdgrad"
 #define EPHOPT  "0:brdc,1:precise,2:brdc+sbas,3:brdc+ssrapc,4:brdc+ssrcom"
 #define NAVOPT  "1:gps+2:sbas+4:glo+8:gal+16:qzs+32:bds+64:navic"
@@ -88,7 +88,7 @@ EXPORT opt_t sysopts[]={
     {"pos1-posopt6",    3,  (void *)&prcopt_.posopt[5],  SWTOPT },
     {"pos1-exclsats",   2,  (void *)exsats_,             "prn ..."},
     {"pos1-navsys",     0,  (void *)&prcopt_.navsys,     NAVOPT },
-    
+
     {"pos2-armode",     3,  (void *)&prcopt_.modear,     ARMOPT },
     {"pos2-gloarmode",  3,  (void *)&prcopt_.glomodear,  GAROPT },
     {"pos2-bdsarmode",  3,  (void *)&prcopt_.bdsmodear,  SWTOPT },
@@ -120,7 +120,7 @@ EXPORT opt_t sysopts[]={
     {"pos2-niter",      0,  (void *)&prcopt_.niter,      ""     },
     {"pos2-baselen",    1,  (void *)&prcopt_.baseline[0],"m"    },
     {"pos2-basesig",    1,  (void *)&prcopt_.baseline[1],"m"    },
-    
+
     {"out-solformat",   3,  (void *)&solopt_.posf,       SOLOPT },
     {"out-outhead",     3,  (void *)&solopt_.outhead,    SWTOPT },
     {"out-outopt",      3,  (void *)&solopt_.outopt,     SWTOPT },
@@ -159,7 +159,7 @@ EXPORT opt_t sysopts[]={
     {"stats-prntrop",   1,  (void *)&prcopt_.prn[2],     "m"    },
     {"stats-prnpos",    1,  (void *)&prcopt_.prn[5],     "m"    },
     {"stats-clkstab",   1,  (void *)&prcopt_.sclkstab,   "s/s"  },
-    
+
     {"ant1-postype",    3,  (void *)&prcopt_.rovpos,     POSOPT },
     {"ant1-pos1",       1,  (void *)&antpos_[0][0],      "deg|m"},
     {"ant1-pos2",       1,  (void *)&antpos_[0][1],      "deg|m"},
@@ -168,7 +168,7 @@ EXPORT opt_t sysopts[]={
     {"ant1-antdele",    1,  (void *)&prcopt_.antdel[0][0],"m"   },
     {"ant1-antdeln",    1,  (void *)&prcopt_.antdel[0][1],"m"   },
     {"ant1-antdelu",    1,  (void *)&prcopt_.antdel[0][2],"m"   },
-    
+
     {"ant2-postype",    3,  (void *)&prcopt_.refpos,     POSOPT },
     {"ant2-pos1",       1,  (void *)&antpos_[1][0],      "deg|m"},
     {"ant2-pos2",       1,  (void *)&antpos_[1][1],      "deg|m"},
@@ -179,13 +179,13 @@ EXPORT opt_t sysopts[]={
     {"ant2-antdelu",    1,  (void *)&prcopt_.antdel[1][2],"m"   },
     {"ant2-maxaveep",   0,  (void *)&prcopt_.maxaveep    ,""    },
     {"ant2-initrst",    3,  (void *)&prcopt_.initrst,    SWTOPT },
-    
+
     {"misc-timeinterp", 3,  (void *)&prcopt_.intpref,    SWTOPT },
     {"misc-sbasatsel",  0,  (void *)&prcopt_.sbassatsel, "0:all"},
     {"misc-rnxopt1",    2,  (void *)prcopt_.rnxopt[0],   ""     },
     {"misc-rnxopt2",    2,  (void *)prcopt_.rnxopt[1],   ""     },
     {"misc-pppopt",     2,  (void *)prcopt_.pppopt,      ""     },
-    
+
     {"file-satantfile", 2,  (void *)&filopt_.satantp,    ""     },
     {"file-rcvantfile", 2,  (void *)&filopt_.rcvantp,    ""     },
     {"file-staposfile", 2,  (void *)&filopt_.stapos,     ""     },
@@ -198,7 +198,7 @@ EXPORT opt_t sysopts[]={
     {"file-geexefile",  2,  (void *)&filopt_.geexe,      ""     },
     {"file-solstatfile",2,  (void *)&filopt_.solstat,    ""     },
     {"file-tracefile",  2,  (void *)&filopt_.trace,      ""     },
-    
+
     {"",0,NULL,""} /* terminator */
 };
 /* discard space characters at tail ------------------------------------------*/
@@ -213,7 +213,7 @@ static int enum2str(char *s, const char *comment, int val)
 {
     char str[32],*p,*q;
     int n;
-    
+
     n=sprintf(str,"%d:",val);
     if (!(p=strstr(comment,str))) {
         return sprintf(s,"%d",val);
@@ -263,9 +263,9 @@ static int str2enum(const char *str, const char *comment, int *val) {
 extern opt_t *searchopt(const char *name, const opt_t *opts)
 {
     int i;
-    
+
     trace(3,"searchopt: name=%s\n",name);
-    
+
     for (i=0;*opts[i].name;i++) {
         if (strstr(opts[i].name,name)) return (opt_t *)(opts+i);
     }
@@ -297,9 +297,9 @@ extern int str2opt(opt_t *opt, const char *str)
 extern int opt2str(const opt_t *opt, char *str)
 {
     char *p=str;
-    
+
     trace(3,"opt2str : name=%s\n",opt->name);
-    
+
     switch (opt->format) {
         case 0: p+=sprintf(p,"%d"   ,*(int   *)opt->var); break;
         case 1: p+=sprintf(p,"%.15g",*(double*)opt->var); break;
@@ -318,9 +318,9 @@ extern int opt2buf(const opt_t *opt, char *buff)
 {
     char *p=buff;
     int n;
-    
+
     trace(3,"opt2buf : name=%s\n",opt->name);
-    
+
     p+=sprintf(p,"%-18s =",opt->name);
     p+=opt2str(opt,p);
     if (*opt->comment) {
@@ -342,9 +342,9 @@ extern int loadopts(const char *file, opt_t *opts)
     opt_t *opt;
     char buff[2048],*p;
     int n=0;
-    
+
     trace(3,"loadopts: file=%s\n",file);
-    
+
     if (!(fp=fopen(file,"r"))) {
         trace(1,"loadopts: options file open error (%s)\n",file);
         return 0;
@@ -352,9 +352,9 @@ extern int loadopts(const char *file, opt_t *opts)
     while (fgets(buff,sizeof(buff),fp)) {
         n++;
         chop(buff);
-        
+
         if (buff[0]=='\0') continue;
-        
+
         if (!(p=strstr(buff,"="))) {
             fprintf(stderr,"invalid option %s (%s:%d)\n",buff,file,n);
             continue;
@@ -362,14 +362,14 @@ extern int loadopts(const char *file, opt_t *opts)
         *p++='\0';
         chop(buff);
         if (!(opt=searchopt(buff,opts))) continue;
-        
+
         if (!str2opt(opt,p)) {
             fprintf(stderr,"invalid option value %s (%s:%d)\n",buff,file,n);
             continue;
         }
     }
     fclose(fp);
-    
+
     return 1;
 }
 /* save options to file --------------------------------------------------------
@@ -387,15 +387,15 @@ extern int saveopts(const char *file, const char *mode, const char *comment,
     FILE *fp;
     char buff[2048];
     int i;
-    
+
     trace(3,"saveopts: file=%s mode=%s\n",file,mode);
-    
+
     if (!(fp=fopen(file,mode))) {
         trace(1,"saveopts: options file open error (%s)\n",file);
         return 0;
     }
     if (comment) fprintf(fp,"# %s\n\n",comment);
-    
+
     for (i=0;*opts[i].name;i++) {
         opt2buf(opts+i,buff);
         fprintf(fp,"%s\n",buff);
@@ -409,15 +409,15 @@ static void buff2sysopts(void)
     double pos[3],*rr;
     char buff[1024],*p,*id;
     int i,j,sat,ps;
-    
+
     prcopt_.elmin     =elmask_    *D2R;
     prcopt_.elmaskar  =elmaskar_  *D2R;
     prcopt_.elmaskhold=elmaskhold_*D2R;
-    
+
     for (i=0;i<2;i++) {
         ps=i==0?prcopt_.rovpos:prcopt_.refpos;
         rr=i==0?prcopt_.ru:prcopt_.rb;
-        
+
         if (ps==POSOPT_POS_LLH) { /* lat/lon/hgt */
             pos[0]=antpos_[i][0]*D2R;
             pos[1]=antpos_[i][1]*D2R;
@@ -467,15 +467,15 @@ static void sysopts2buff(void)
     double pos[3],*rr;
     char id[8],*p;
     int i,j,sat,ps;
-    
+
     elmask_    =prcopt_.elmin     *R2D;
     elmaskar_  =prcopt_.elmaskar  *R2D;
     elmaskhold_=prcopt_.elmaskhold*R2D;
-    
+
     for (i=0;i<2;i++) {
         ps=i==0?prcopt_.rovpos:prcopt_.refpos;
         rr=i==0?prcopt_.ru:prcopt_.rb;
-        
+
         if (ps==POSOPT_POS_LLH) {
             ecef2pos(rr,pos);
             antpos_[i][0]=pos[0]*R2D;
@@ -518,9 +518,9 @@ static void sysopts2buff(void)
 extern void resetsysopts(void)
 {
     int i,j;
-    
+
     trace(3,"resetsysopts:\n");
-    
+
     prcopt_=prcopt_default;
     solopt_=solopt_default;
     filopt_.satantp[0]='\0';
@@ -550,7 +550,7 @@ extern void resetsysopts(void)
 extern void getsysopts(prcopt_t *popt, solopt_t *sopt, filopt_t *fopt)
 {
     trace(3,"getsysopts:\n");
-    
+
     buff2sysopts();
     if (popt) *popt=prcopt_;
     if (sopt) *sopt=solopt_;
@@ -568,7 +568,7 @@ extern void setsysopts(const prcopt_t *prcopt, const solopt_t *solopt,
                        const filopt_t *filopt)
 {
     trace(3,"setsysopts:\n");
-    
+
     resetsysopts();
     if (prcopt) prcopt_=*prcopt;
     if (solopt) solopt_=*solopt;

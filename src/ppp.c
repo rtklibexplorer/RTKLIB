@@ -915,6 +915,9 @@ static int model_iono(gtime_t time, const double *pos, const double *azel,
     if (opt->ionoopt==IONOOPT_TEC) {
         return iontec(time,nav,pos,azel,1,dion,var);
     }
+    if (opt->ionoopt==IONOOPT_SSR) {
+        return ionssr(time,nav,pos,azel,dion,var);
+    }
     if (opt->ionoopt==IONOOPT_BRDC) {
         *dion=ionmodel(time,nav->ion_gps,pos,azel);
         *var=SQR(*dion*ERR_BRDCI);

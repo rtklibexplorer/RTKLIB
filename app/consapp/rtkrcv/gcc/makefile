@@ -16,7 +16,7 @@ rtkrcv     : sbas.o stream.o rcvraw.o rtcm.o preceph.o options.o pntpos.o ppp.o 
 rtkrcv     : novatel.o ublox.o crescent.o skytraq.o javad.o nvs.o binex.o
 rtkrcv     : rt17.o ephemeris.o rinex.o ionex.o rtcm2.o rtcm3.o rtcm3e.o
 rtkrcv     : tides.o septentrio.o swiftnav.o unicore.o
-rtkrcv     : sofa.o
+rtkrcv     : sofa.o ssr_ion.o
 
 
 rtkrcv.o   : ../rtkrcv.c
@@ -93,6 +93,8 @@ unicore.o: $(SRC)/rcv/unicore.c
 	$(CC) -c $(CFLAGS) $(SRC)/rcv/unicore.c
 sofa.o     : $(SRC)/sofa.c
 	$(CC) -c $(CFLAGS) $(SRC)/sofa.c
+ssr_ion.o  : $(SRC)/ssr_ion.c
+	$(CC) -c $(CFLAGS) $(SRC)/ssr_ion.c
 
 rtkrcv.o   : $(SRC)/rtklib.h ../vt.h
 vt.o       : ../vt.h
@@ -142,6 +144,10 @@ test2:
 
 test3:
 	./rtkrcv -o ../rtk_pb.conf
+
+test_ion_ssr:
+	./rtkrcv -t 4 -nc -o ../conf/ssr_iono.conf
+
 
 clean:
 	rm -f rtkrcv rtkrcv.exe rtkrcv.nav *.o *.out *.trace
