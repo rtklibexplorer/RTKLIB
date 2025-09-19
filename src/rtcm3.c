@@ -2075,6 +2075,7 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
         }
         else {
             trace(2,"rtcm3 %d satellite error: prn=%d\n",type,prn);
+            continue;
         }
         fcn=0;
         if (sys==SYS_GLO) {
