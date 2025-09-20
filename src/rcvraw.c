@@ -1303,7 +1303,6 @@ extern int init_raw(raw_t *raw, int format)
     obsd_t data0={{0}};
     eph_t  eph0 ={0,-1,-1};
     alm_t  alm0 ={0,-1};
-    geph_t geph0={0,-1};
     seph_t seph0={0};
     sbsmsg_t sbsmsg0={0};
     int i,j,ret=1;
@@ -1346,7 +1345,6 @@ extern int init_raw(raw_t *raw, int format)
         !(raw->obuf.data=(obsd_t *)malloc(sizeof(obsd_t)*MAXOBS))||
         !(raw->nav.eph  =(eph_t  *)malloc(sizeof(eph_t )*MAXSAT*2))||
         !(raw->nav.alm  =(alm_t  *)malloc(sizeof(alm_t )*MAXSAT))||
-        !(raw->nav.geph =(geph_t *)malloc(sizeof(geph_t)*NSATGLO))||
         !(raw->nav.seph =(seph_t *)malloc(sizeof(seph_t)*NSATSBS*2))) {
         free_raw(raw);
         return 0;
@@ -1355,13 +1353,11 @@ extern int init_raw(raw_t *raw, int format)
     raw->obuf.n=0;
     raw->nav.n =raw->nav.nmax =MAXSAT*2;
     raw->nav.na=raw->nav.namax=MAXSAT;
-    raw->nav.ng=raw->nav.ngmax=NSATGLO;
     raw->nav.ns=raw->nav.nsmax=NSATSBS*2;
     for (i=0;i<MAXOBS   ;i++) raw->obs.data [i]=data0;
     for (i=0;i<MAXOBS   ;i++) raw->obuf.data[i]=data0;
     for (i=0;i<MAXSAT*2 ;i++) raw->nav.eph  [i]=eph0;
     for (i=0;i<MAXSAT   ;i++) raw->nav.alm  [i]=alm0;
-    for (i=0;i<NSATGLO  ;i++) raw->nav.geph [i]=geph0;
     for (i=0;i<NSATSBS*2;i++) raw->nav.seph [i]=seph0;
     raw->sta.name[0]=raw->sta.markerno[0]=raw->sta.markertype[0]='\0';
     raw->sta.observer[0]=raw->sta.agency[0]='\0';
@@ -1372,7 +1368,18 @@ extern int init_raw(raw_t *raw, int format)
         raw->sta.pos[i]=raw->sta.del[i]=0.0;
     }
     raw->sta.hgt=0.0;
-    
+
+    if (MAXPRNGLO > 0) {
+      raw->nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO);
+      if (raw->nav.geph == NULL) {
+        free_raw(raw);
+        return 0;
+      }
+      geph_t geph0 = {0, -1};
+      for (int i = 0; i < MAXPRNGLO; i++) raw->nav.geph[i] = geph0;
+    }
+    raw->nav.ng = raw->nav.ngmax = MAXPRNGLO;
+
     /* initialize receiver dependent data */
     raw->format=format;
     switch (format) {

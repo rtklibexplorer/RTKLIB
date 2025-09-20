@@ -1864,7 +1864,6 @@ extern int init_rnxctr(rnxctr_t *rnx)
     gtime_t time0={0};
     obsd_t data0={{0}};
     eph_t  eph0={0,-1,-1};
-    geph_t geph0={0,-1};
     seph_t seph0={0};
     int i,j;
 
@@ -1877,7 +1876,6 @@ extern int init_rnxctr(rnxctr_t *rnx)
 
     if (!(rnx->obs.data=(obsd_t *)malloc(sizeof(obsd_t)*MAXOBS   ))||
         !(rnx->nav.eph =(eph_t  *)malloc(sizeof(eph_t )*MAXSAT*2 ))||
-        !(rnx->nav.geph=(geph_t *)malloc(sizeof(geph_t)*NSATGLO  ))||
         !(rnx->nav.seph=(seph_t *)malloc(sizeof(seph_t)*NSATSBS*2))) {
         free_rnxctr(rnx);
         return 0;
@@ -1889,14 +1887,23 @@ extern int init_rnxctr(rnxctr_t *rnx)
     rnx->obs.n=0;
     rnx->obs.nmax=MAXOBS;
     rnx->nav.n=rnx->nav.nmax=MAXSAT*2;
-    rnx->nav.ng=rnx->nav.ngmax=NSATGLO;
     rnx->nav.ns=rnx->nav.nsmax=NSATSBS*2;
     for (i=0;i<MAXOBS   ;i++) rnx->obs.data[i]=data0;
     for (i=0;i<MAXSAT*2 ;i++) rnx->nav.eph [i]=eph0;
-    for (i=0;i<NSATGLO  ;i++) rnx->nav.geph[i]=geph0;
     for (i=0;i<NSATSBS*2;i++) rnx->nav.seph[i]=seph0;
     rnx->ephsat=rnx->ephset=0;
     rnx->opt[0]='\0';
+
+    if (MAXPRNGLO > 0) {
+      rnx->nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO);
+      if (rnx->nav.geph == NULL) {
+        free_rnxctr(rnx);
+        return 0;
+      }
+      geph_t geph0 = {0, -1};
+      for (int i = 0; i < MAXPRNGLO ; i++) rnx->nav.geph[i] = geph0;
+    }
+    rnx->nav.ng = rnx->nav.ngmax = MAXPRNGLO;
 
     return 1;
 }
