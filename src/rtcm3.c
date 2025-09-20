@@ -2085,7 +2085,7 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
                     rtcm->nav.glo_fcn[prn-1]=fcn+8; /* fcn+8 */
                 }
             }
-            else if (rtcm->nav.geph[prn-1].sat==sat) {
+            else if (sat && rtcm->nav.geph[prn-1].sat == sat) {
                 fcn=rtcm->nav.geph[prn-1].frq;
             }
             else if (rtcm->nav.glo_fcn[prn-1]>0) {

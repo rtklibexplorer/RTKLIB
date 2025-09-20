@@ -181,7 +181,6 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
                        int index)
 {
     eph_t *eph1,*eph2,*eph3;
-    geph_t *geph1,*geph2,*geph3;
     int prn;
     
     if (satsys(ephsat,&prn)!=SYS_GLO) {
@@ -202,8 +201,9 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
             }
             svr->nmsg[index][1]++;
         }
-        else {
+    else {
            if (!svr->navsel||svr->navsel==index+1) {
+               geph_t *geph1,*geph2,*geph3;
                geph1=nav->geph+prn-1;
                geph2=svr->nav.geph+prn-1;
                geph3=svr->nav.geph+prn-1+MAXPRNGLO;
@@ -215,8 +215,8 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
                }
            }
            svr->nmsg[index][6]++;
-        }
     }
+}
 /* update sbas message -------------------------------------------------------*/
 static void update_sbs(rtksvr_t *svr, sbsmsg_t *sbsmsg, int index)
 {
@@ -767,7 +767,6 @@ extern int rtksvrinit(rtksvr_t *svr)
     gtime_t time0={0};
     sol_t  sol0 ={{0}};
     eph_t  eph0 ={0,-1,-1};
-    geph_t geph0={0,-1};
     seph_t seph0={0};
     int i,j;
     
@@ -799,19 +798,28 @@ extern int rtksvrinit(rtksvr_t *svr)
     memset(&svr->nav,0,sizeof(nav_t));
     memset(&svr->obs,0,sizeof(svr->obs));
     if (!(svr->nav.eph =(eph_t  *)malloc(sizeof(eph_t )*MAXSAT*4 ))||
-        !(svr->nav.geph=(geph_t *)malloc(sizeof(geph_t)*NSATGLO*2))||
         !(svr->nav.seph=(seph_t *)malloc(sizeof(seph_t)*NSATSBS*2))) {
         tracet(1,"rtksvrinit: malloc error\n");
         rtksvrfree(svr);
         return 0;
     }
     for (i=0;i<MAXSAT*4 ;i++) svr->nav.eph [i]=eph0;
-    for (i=0;i<NSATGLO*2;i++) svr->nav.geph[i]=geph0;
     for (i=0;i<NSATSBS*2;i++) svr->nav.seph[i]=seph0;
     svr->nav.n =svr->nav.nmax =MAXSAT *4;
-    svr->nav.ng=svr->nav.ngmax=NSATGLO*2;
     svr->nav.ns=svr->nav.nsmax=NSATSBS*2;
-    
+
+    if (MAXPRNGLO > 0) {
+      svr->nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO * 2);
+      if (svr->nav.geph == NULL) {
+        tracet(1,"rtksvrinit: malloc error\n");
+        rtksvrfree(svr);
+        return 0;
+      }
+      geph_t geph0 = {0,-1};
+      for (i = 0; i < MAXPRNGLO * 2; i++) svr->nav.geph[i] = geph0;
+    }
+    svr->nav.ng = svr->nav.ngmax = MAXPRNGLO * 2;
+
     for (i=0;i<3;i++) for (j=0;j<MAXOBSBUF;j++) {
         if (!(svr->obs[i][j].data=(obsd_t *)malloc(sizeof(obsd_t)*MAXOBS))) {
             tracet(1,"rtksvrinit: malloc error\n");
@@ -978,7 +986,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     }
     /* update navigation data */
     for (i=0;i<MAXSAT*4 ;i++) svr->nav.eph [i].ttr=time0;
-    for (i=0;i<NSATGLO*2;i++) svr->nav.geph[i].tof=time0;
+    for (i=0;i<MAXPRNGLO*2;i++) svr->nav.geph[i].tof=time0;
     for (i=0;i<NSATSBS*2;i++) svr->nav.seph[i].tof=time0;
     
     /* set monitor stream */
