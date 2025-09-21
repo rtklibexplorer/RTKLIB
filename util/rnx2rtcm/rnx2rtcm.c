@@ -186,24 +186,28 @@ static int conv_rtcm(const int *type, int n, const char *opt, const char *outfil
   rtcm.nav.n = rtcm.nav.nmax = 2;
   for (int i = 0; i < MAXSAT * 2; i++) rtcm.nav.eph[i] = eph0;
 
-  geph_t geph0 = {0};
-  rtcm.nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO);
-  if (!rtcm.nav.geph) return 0;
-  rtcm.nav.ng = rtcm.nav.ngmax = 1;
-  for (int i = 0; i < MAXPRNGLO; i++) rtcm.nav.geph[i] = geph0;
+  rtcm.nav.geph = NULL;
+  rtcm.nav.ng = rtcm.nav.ngmax = 0;
+  if (MAXPRNGLO > 0) {
+    geph_t geph0 = {0};
+    rtcm.nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO);
+    if (!rtcm.nav.geph) return 0;
+    rtcm.nav.ng = rtcm.nav.ngmax = 1;
+    for (int i = 0; i < MAPRNGLO; i++) rtcm.nav.geph[i] = geph0;
+
+    // Update GLONASS freq channel number
+    for (int i = 0; i < nav->ng; i++) {
+      int prn;
+      if (satsys(nav->geph[i].sat, &prn) != SYS_GLO) continue;
+      rtcm.nav.geph[prn - 1] = nav->geph[i];
+    }
+    for (int i = 0; i < MAXPRNGLO; i++) {
+      rtcm.nav.glo_fcn[i] = nav->glo_fcn[i];
+    }
+  }
 
   rtcm.staid = staid;
   rtcm.sta = *sta;
-
-  // Update GLONASS freq channel number
-  for (int i = 0; i < nav->ng; i++) {
-    int prn;
-    if (satsys(nav->geph[i].sat, &prn) != SYS_GLO) continue;
-    rtcm.nav.geph[prn - 1] = nav->geph[i];
-  }
-  for (int i = 0; i < NSATGLO; i++) {
-    rtcm.nav.glo_fcn[i] = nav->glo_fcn[i];
-  }
 
   FILE *fp = stdout;
   if (*outfile && !(fp = fopen(outfile, "wb"))) {
