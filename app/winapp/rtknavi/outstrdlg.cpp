@@ -23,12 +23,16 @@ void __fastcall TOutputStrDialog::FormShow(TObject *Sender)
 {
 	Stream1C ->Checked  =StreamC[0];
 	Stream2C ->Checked  =StreamC[1];
+	Stream3C ->Checked  =StreamC[2];
 	Stream1  ->ItemIndex=Stream[0];
 	Stream2  ->ItemIndex=Stream[1];
+	Stream3  ->ItemIndex=Stream[2];
 	Format1  ->ItemIndex=Format[0];
 	Format2  ->ItemIndex=Format[1];
+	Format3  ->ItemIndex=Format[2];
 	FilePath1->Text     =GetFilePath(Paths[0][2]);
 	FilePath2->Text     =GetFilePath(Paths[1][2]);
+	FilePath3->Text     =GetFilePath(Paths[2][2]);
 	SwapIntv->Text      =SwapInterval;
 	TimeTagC ->Checked  =OutTimeTag;
 	UpdateEnable();
@@ -38,12 +42,16 @@ void __fastcall TOutputStrDialog::BtnOkClick(TObject *Sender)
 {
 	StreamC[0]  =Stream1C->Checked;
 	StreamC[1]  =Stream2C->Checked;
+	StreamC[2]  =Stream3C->Checked;
 	Stream[0]   =Stream1->ItemIndex;
 	Stream[1]   =Stream2->ItemIndex;
+	Stream[2]   =Stream3->ItemIndex;
 	Format[0]   =Format1->ItemIndex;
 	Format[1]   =Format2->ItemIndex;
+	Format[2]   =Format3->ItemIndex;
 	Paths [0][2]=SetFilePath(FilePath1->Text);
 	Paths [1][2]=SetFilePath(FilePath2->Text);
+	Paths [2][2]=SetFilePath(FilePath3->Text);
 	SwapInterval=SwapIntv->Text;
 	OutTimeTag  =TimeTagC->Checked;
 }
@@ -62,6 +70,13 @@ void __fastcall TOutputStrDialog::BtnFile2Click(TObject *Sender)
 	FilePath2->Text=SaveDialog->FileName;
 }
 //---------------------------------------------------------------------------
+void __fastcall TOutputStrDialog::BtnFile3Click(TObject *Sender)
+{
+	SaveDialog->FileName=FilePath3->Text;
+	if (!SaveDialog->Execute()) return;
+	FilePath3->Text=SaveDialog->FileName;
+}
+//---------------------------------------------------------------------------
 void __fastcall TOutputStrDialog::Stream1Change(TObject *Sender)
 {
 	UpdateEnable();
@@ -72,12 +87,22 @@ void __fastcall TOutputStrDialog::Stream2Change(TObject *Sender)
 	UpdateEnable();
 }
 //---------------------------------------------------------------------------
+void __fastcall TOutputStrDialog::Stream3Change(TObject *Sender)
+{
+	UpdateEnable();
+}
+//---------------------------------------------------------------------------
 void __fastcall TOutputStrDialog::Stream1CClick(TObject *Sender)
 {
 	UpdateEnable();
 }
 //---------------------------------------------------------------------------
 void __fastcall TOutputStrDialog::Stream2CClick(TObject *Sender)
+{
+	UpdateEnable();
+}
+//---------------------------------------------------------------------------
+void __fastcall TOutputStrDialog::Stream3CClick(TObject *Sender)
 {
 	UpdateEnable();
 }
@@ -106,6 +131,17 @@ void __fastcall TOutputStrDialog::BtnStr2Click(TObject *Sender)
 		case 2: TcpOpt(1,0); break;
 		case 3: TcpOpt(1,2); break;
 		case 4: TcpOpt(1,4); break;
+	}
+}
+//---------------------------------------------------------------------------
+void __fastcall TOutputStrDialog::BtnStr3Click(TObject *Sender)
+{
+	switch (Stream3->ItemIndex) {
+		case 0: SerialOpt(2,0); break;
+		case 1: TcpOpt(2,1); break;
+		case 2: TcpOpt(2,0); break;
+		case 3: TcpOpt(2,2); break;
+		case 4: TcpOpt(2,4); break;
 	}
 }
 //---------------------------------------------------------------------------
@@ -157,12 +193,16 @@ void __fastcall TOutputStrDialog::UpdateEnable(void)
 			(Stream2C->Checked&&Stream2->ItemIndex==5);
 	Stream1  ->Enabled=Stream1C->Checked;
 	Stream2  ->Enabled=Stream2C->Checked;
+	Stream3  ->Enabled=Stream3C->Checked;
 	BtnStr1  ->Enabled=Stream1C->Checked&&Stream1->ItemIndex<=4;
 	BtnStr2  ->Enabled=Stream2C->Checked&&Stream2->ItemIndex<=4;
+	BtnStr3  ->Enabled=Stream3C->Checked&&Stream3->ItemIndex<=4;
 	FilePath1->Enabled=Stream1C->Checked&&Stream1->ItemIndex==5;
 	FilePath2->Enabled=Stream2C->Checked&&Stream2->ItemIndex==5;
+	FilePath3->Enabled=Stream3C->Checked&&Stream3->ItemIndex==5;
 	BtnFile1 ->Enabled=Stream1C->Checked&&Stream1->ItemIndex==5;
 	BtnFile2 ->Enabled=Stream2C->Checked&&Stream2->ItemIndex==5;
+	BtnFile3 ->Enabled=Stream3C->Checked&&Stream3->ItemIndex==5;
 	LabelF1  ->Enabled=ena;
 	Label1   ->Enabled=ena;
 	Label2   ->Enabled=ena;

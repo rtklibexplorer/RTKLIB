@@ -4,6 +4,8 @@
 //---------------------------------------------------------------------------
 #include <QDialog>
 
+#include "rtklib.h"
+
 namespace Ui {
 class OutputStrDialog;
 }
@@ -49,8 +51,10 @@ protected:
 public slots:
     void showStream1Options();
     void showStream2Options();
+    void showStream3Options();
     void selectFile1();
     void selectFile2();
+    void selectFile3();
     void showKeyDialog();
     void updateEnable();
 
@@ -62,7 +66,7 @@ private:
 
     Ui::OutputStrDialog *ui;
 
-    QString paths[2][4];
+    QString paths[RTKSVRNSOL][4];
     QString history[10];
 
 };
