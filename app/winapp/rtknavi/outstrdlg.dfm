@@ -4,7 +4,7 @@ object OutputStrDialog: TOutputStrDialog
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'Output Streams'
-  ClientHeight = 158
+  ClientHeight = 202
   ClientWidth = 393
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
@@ -17,6 +17,13 @@ object OutputStrDialog: TOutputStrDialog
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
+  object Label10: TLabel
+    Left = 44
+    Top = 3
+    Width = 71
+    Height = 13
+    Caption = 'Output Stream'
+  end
   object Label5: TLabel
     Left = 169
     Top = 3
@@ -31,13 +38,6 @@ object OutputStrDialog: TOutputStrDialog
     Height = 13
     Caption = 'Option'
   end
-  object Label10: TLabel
-    Left = 44
-    Top = 3
-    Width = 71
-    Height = 13
-    Caption = 'Output Stream'
-  end
   object Label7: TLabel
     Left = 308
     Top = 5
@@ -45,54 +45,14 @@ object OutputStrDialog: TOutputStrDialog
     Height = 13
     Caption = 'Format'
   end
-  object LabelF1: TLabel
+  object Stream1C: TCheckBox
     Left = 8
-    Top = 65
-    Width = 83
-    Height = 13
-    Caption = 'Output File Paths'
-  end
-  object BtnKey: TSpeedButton
-    Left = 190
-    Top = 128
-    Width = 21
-    Height = 23
-    Caption = '?'
-    Flat = True
-    OnClick = BtnKeyClick
-  end
-  object Label1: TLabel
-    Left = 78
-    Top = 132
-    Width = 49
-    Height = 13
-    Caption = 'Swap Intv'
-  end
-  object Label2: TLabel
-    Left = 178
-    Top = 132
-    Width = 7
-    Height = 13
-    Caption = 'H'
-  end
-  object BtnCancel: TButton
-    Left = 301
-    Top = 127
-    Width = 85
-    Height = 27
-    Caption = '&Cancel'
-    ModalResult = 2
-    TabOrder = 0
-  end
-  object BtnOk: TButton
-    Left = 213
-    Top = 127
-    Width = 85
-    Height = 27
-    Caption = '&OK'
-    ModalResult = 1
-    TabOrder = 1
-    OnClick = BtnOkClick
+    Top = 20
+    Width = 120
+    Height = 17
+    Caption = '(7) Solution 1'
+    TabOrder = 2
+    OnClick = Stream1CClick
   end
   object Stream1: TComboBox
     Left = 133
@@ -127,20 +87,30 @@ object OutputStrDialog: TOutputStrDialog
     TabOrder = 4
     OnClick = BtnStr1Click
   end
-  object BtnStr2: TButton
-    Left = 237
-    Top = 40
-    Width = 25
-    Height = 22
-    Caption = '...'
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -9
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentFont = False
-    TabOrder = 8
-    OnClick = BtnStr2Click
+  object Format1: TComboBox
+    Left = 278
+    Top = 18
+    Width = 107
+    Height = 21
+    Style = csDropDownList
+    ItemIndex = 0
+    TabOrder = 5
+    Text = 'Lat/Lon/Height'
+    Items.Strings = (
+      'Lat/Lon/Height'
+      'X/Y/Z-ECEF'
+      'E/N/U-Baseline'
+      'NMEA0183'
+      'Solution Status')
+  end
+  object Stream2C: TCheckBox
+    Left = 8
+    Top = 43
+    Width = 120
+    Height = 17
+    Caption = '(8) Solution 2'
+    TabOrder = 6
+    OnClick = Stream2CClick
   end
   object Stream2: TComboBox
     Left = 133
@@ -158,21 +128,20 @@ object OutputStrDialog: TOutputStrDialog
       'NTRIP Caster'
       'File')
   end
-  object Format1: TComboBox
-    Left = 278
-    Top = 18
-    Width = 107
-    Height = 21
-    Style = csDropDownList
-    ItemIndex = 0
-    TabOrder = 5
-    Text = 'Lat/Lon/Height'
-    Items.Strings = (
-      'Lat/Lon/Height'
-      'X/Y/Z-ECEF'
-      'E/N/U-Baseline'
-      'NMEA0183'
-      'Solution Status')
+  object BtnStr2: TButton
+    Left = 237
+    Top = 40
+    Width = 25
+    Height = 22
+    Caption = '...'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -9
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 8
+    OnClick = BtnStr2Click
   end
   object Format2: TComboBox
     Left = 278
@@ -188,16 +157,34 @@ object OutputStrDialog: TOutputStrDialog
       'NMEA0183'
       'Solution Status')
   end
-  object FilePath1: TEdit
-    Left = 6
-    Top = 80
-    Width = 355
-    Height = 21
+  object Stream3C: TCheckBox
+    Left = 8
+    Top = 66
+    Width = 120
+    Height = 17
+    Caption = '(9) Solution 3'
     TabOrder = 10
+    OnClick = Stream3CClick
   end
-  object BtnFile1: TButton
-    Left = 361
-    Top = 79
+  object Stream3: TComboBox
+    Left = 133
+    Top = 64
+    Width = 103
+    Height = 21
+    Style = csDropDownList
+    TabOrder = 11
+    OnChange = Stream3Change
+    Items.Strings = (
+      'Serial'
+      'TCP Client'
+      'TCP Server'
+      'NTRIP Server'
+      'NTRIP Caster'
+      'File')
+  end
+  object BtnStr3: TButton
+    Left = 237
+    Top = 63
     Width = 25
     Height = 22
     Caption = '...'
@@ -207,19 +194,62 @@ object OutputStrDialog: TOutputStrDialog
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 11
+    TabOrder = 12
+    OnClick = BtnStr3Click
+  end
+  object Format3: TComboBox
+    Left = 278
+    Top = 64
+    Width = 107
+    Height = 21
+    Style = csDropDownList
+    TabOrder = 13
+    Items.Strings = (
+      'Lat/Lon/Height'
+      'X/Y/Z-ECEF'
+      'E/N/U-Baseline'
+      'NMEA0183'
+      'Solution Status')
+  end
+  object LabelF1: TLabel
+    Left = 8
+    Top = 87
+    Width = 83
+    Height = 13
+    Caption = 'Output File Paths'
+  end
+  object FilePath1: TEdit
+    Left = 6
+    Top = 103
+    Width = 355
+    Height = 21
+    TabOrder = 14
+  end
+  object BtnFile1: TButton
+    Left = 361
+    Top = 102
+    Width = 25
+    Height = 22
+    Caption = '...'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -9
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 15
     OnClick = BtnFile1Click
   end
   object FilePath2: TEdit
     Left = 6
-    Top = 102
+    Top = 125
     Width = 355
     Height = 21
-    TabOrder = 12
+    TabOrder = 16
   end
   object BtnFile2: TButton
     Left = 361
-    Top = 101
+    Top = 124
     Width = 25
     Height = 22
     Caption = '...'
@@ -229,41 +259,68 @@ object OutputStrDialog: TOutputStrDialog
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 13
+    TabOrder = 17
     OnClick = BtnFile2Click
+  end
+  object FilePath3: TEdit
+    Left = 6
+    Top = 146
+    Width = 355
+    Height = 21
+    TabOrder = 18
+  end
+  object BtnFile3: TButton
+    Left = 361
+    Top = 145
+    Width = 25
+    Height = 22
+    Caption = '...'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -9
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 19
+    OnClick = BtnFile3Click
+  end
+  object BtnKey: TSpeedButton
+    Left = 190
+    Top = 172
+    Width = 21
+    Height = 23
+    Caption = '?'
+    Flat = True
+    OnClick = BtnKeyClick
+  end
+  object Label1: TLabel
+    Left = 78
+    Top = 176
+    Width = 49
+    Height = 13
+    Caption = 'Swap Intv'
+  end
+  object Label2: TLabel
+    Left = 178
+    Top = 176
+    Width = 7
+    Height = 13
+    Caption = 'H'
   end
   object TimeTagC: TCheckBox
     Left = 8
-    Top = 130
+    Top = 174
     Width = 65
     Height = 17
     Caption = 'Time-Tag'
-    TabOrder = 14
-  end
-  object Stream1C: TCheckBox
-    Left = 8
-    Top = 20
-    Width = 120
-    Height = 17
-    Caption = '(4) Solution 1'
-    TabOrder = 2
-    OnClick = Stream1CClick
-  end
-  object Stream2C: TCheckBox
-    Left = 8
-    Top = 43
-    Width = 120
-    Height = 17
-    Caption = '(5) Solution 2'
-    TabOrder = 6
-    OnClick = Stream2CClick
+    TabOrder = 20
   end
   object SwapIntv: TComboBox
     Left = 130
-    Top = 129
+    Top = 173
     Width = 45
     Height = 21
-    TabOrder = 15
+    TabOrder = 21
     Items.Strings = (
       ''
       '0.25'
@@ -273,6 +330,25 @@ object OutputStrDialog: TOutputStrDialog
       '6'
       '12'
       '24')
+  end
+  object BtnCancel: TButton
+    Left = 301
+    Top = 171
+    Width = 85
+    Height = 27
+    Caption = '&Cancel'
+    ModalResult = 2
+    TabOrder = 0
+  end
+  object BtnOk: TButton
+    Left = 213
+    Top = 171
+    Width = 85
+    Height = 27
+    Caption = '&OK'
+    ModalResult = 1
+    TabOrder = 1
+    OnClick = BtnOkClick
   end
   object SaveDialog: TSaveDialog
     Filter = 

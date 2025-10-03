@@ -1463,7 +1463,7 @@ void __fastcall TMonitorDialog::SetStr(void)
 		"STR","Stream","Type","Format","Mode","State","Input(bytes)","Input(bps)",
 		"Output(bytes)","Output(bps)","Path","Message"
 	};
-	int i,width[]={25,95,70,80,35,35,70,70,70,70,220,220};
+	int i,width[]={30,95,70,80,35,35,70,70,70,70,220,220};
 	
 	Tbl->ColCount=12;
 	Tbl->RowCount=2;
@@ -1476,9 +1476,10 @@ void __fastcall TMonitorDialog::SetStr(void)
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::ShowStr(void)
 {
-	AnsiString ch[]={
-		"Input Rover","Input Base","Input Correction","Output Solution 1",
-		"Output Solution 2","Log Rover","Log Base","Log Correction",
+	AnsiString ch[MAXSTRRTK + 1]={
+		"Input Rover","Input Base","Input Correction",
+                "Log Rover","Log Base","Log Correction",
+                "Output Solution 1","Output Solution 2","Output Solution 3",
 		"Monitor"
 	};
 	AnsiString type[]={
@@ -1492,28 +1493,28 @@ void __fastcall TMonitorDialog::ShowStr(void)
 	};
 	AnsiString state[]={"Error","-","OK"};
 	AnsiString s,mode,form;
-	stream_t stream[9];
-	int i,j,format[9]={0};
+	stream_t stream[MAXSTRRTK + 1];
+	int i,j,format[MAXSTRRTK + 1]={0};
 	char path[MAXSTRPATH]="",*p,*q,*pp;
 	
 	rtksvrlock(&rtksvr); // lock
-	for (i=0;i<8;i++) stream[i]=rtksvr.stream[i];
+	for (i=0;i<MAXSTRRTK;i++) stream[i]=rtksvr.stream[i];
 	for (i=0;i<3;i++) format[i]=rtksvr.format[i];
-	for (i=3;i<5;i++) format[i]=rtksvr.solopt[i-3].posf;
-	stream[8]=monistr;
-	format[8]=SOLF_LLH;
+	for (i=0;i<RTKSVRNSOL;i++) format[6+i]=rtksvr.solopt[i].posf;
+	stream[MAXSTRRTK]=monistr;
+	format[MAXSTRRTK]=SOLF_LLH;
 	rtksvrunlock(&rtksvr); // unlock
 	
-	Tbl->RowCount=10;
+	Tbl->RowCount=1 + MAXSTRRTK + 1;
 	Label->Caption="";
-	for (i=0;i<9;i++) {
+	for (i=0;i<MAXSTRRTK + 1;i++) {
 		j=0;
 		Tbl->Cells[j++][i+1]=s.sprintf("(%d)",i+1);
 		Tbl->Cells[j++][i+1]=ch[i];
 		Tbl->Cells[j++][i+1]=type[stream[i].type];
 		if (!stream[i].type) form="-";
 		else if (i<3) form=formatstrs[format[i]];
-		else if (i<5||i==8) form=outformat[format[i]];
+		else if (i >= 6) form=outformat[format[i]];
 		else form="-";
 		Tbl->Cells[j++][i+1]=form;
 		if (stream[i].mode&STR_MODE_R) mode="R"; else mode="";

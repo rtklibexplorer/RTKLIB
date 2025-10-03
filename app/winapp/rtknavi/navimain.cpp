@@ -120,8 +120,8 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 {
     SvrCycle=SvrBuffSize=0;
     SolBuffSize=1000;
-    for (int i=0;i<8;i++) {
-        StreamC[i]=Stream[i]=Format[i]=CmdEna[i][0]=CmdEna[i][1]=CmdEna[i][2]=0;
+    for (int i=0;i<MAXSTRRTK;i++) {
+        StreamC[i]=Stream[i]=Format[i]=0;
     }
     for (int i=0;i<3;i++) {
         CmdEna[i][0]=CmdEna[i][1]=CmdEna[i][2]=0;
@@ -721,16 +721,16 @@ void __fastcall TMainForm::BtnOutputStrClick(TObject *Sender)
     int otype[]={
         STR_SERIAL,STR_TCPCLI,STR_TCPSVR,STR_NTRIPSVR,STR_NTRIPCAS,STR_FILE
     };
-    int i,j,str,update[2]={0};
+    int i,j,str,update[RTKSVRNSOL]={0};
     char *path;
     
     trace(3,"BtnOutputStrClick\n");
     
-    for (i=3;i<5;i++) {
-        OutputStrDialog->StreamC[i-3]=StreamC[i];
-        OutputStrDialog->Stream [i-3]=Stream[i];
-        OutputStrDialog->Format [i-3]=Format[i];
-        for (j=0;j<4;j++) OutputStrDialog->Paths[i-3][j]=Paths[i][j];
+    for (i=6;i<MAXSTRRTK;i++) {
+        OutputStrDialog->StreamC[i-6]=StreamC[i];
+        OutputStrDialog->Stream [i-6]=Stream[i];
+        OutputStrDialog->Format [i-6]=Format[i];
+        for (j=0;j<4;j++) OutputStrDialog->Paths[i-6][j]=Paths[i][j];
     }
     for (i=0;i<10;i++) {
         OutputStrDialog->History [i]=History [i];
@@ -741,18 +741,18 @@ void __fastcall TMainForm::BtnOutputStrClick(TObject *Sender)
     
     if (OutputStrDialog->ShowModal()!=mrOk) return;
     
-    for (i=3;i<5;i++) {
-        if (StreamC[i]!=OutputStrDialog->StreamC[i-3]||
-            Stream [i]!=OutputStrDialog->Stream[i-3]||
-            Format [i]!=OutputStrDialog->Format[i-3]||
-            Paths[i][0]!=OutputStrDialog->Paths[i-3][0]||
-            Paths[i][1]!=OutputStrDialog->Paths[i-3][1]||
-            Paths[i][2]!=OutputStrDialog->Paths[i-3][2]||
-            Paths[i][3]!=OutputStrDialog->Paths[i-3][3]) update[i-3]=1;
-        StreamC[i]=OutputStrDialog->StreamC[i-3];
-        Stream [i]=OutputStrDialog->Stream[i-3];
-        Format [i]=OutputStrDialog->Format[i-3];
-        for (j=0;j<4;j++) Paths[i][j]=OutputStrDialog->Paths[i-3][j];
+    for (i=6;i<MAXSTRRTK;i++) {
+        if (StreamC[i]!=OutputStrDialog->StreamC[i-6]||
+            Stream [i]!=OutputStrDialog->Stream[i-6]||
+            Format [i]!=OutputStrDialog->Format[i-6]||
+            Paths[i][0]!=OutputStrDialog->Paths[i-6][0]||
+            Paths[i][1]!=OutputStrDialog->Paths[i-6][1]||
+            Paths[i][2]!=OutputStrDialog->Paths[i-6][2]||
+            Paths[i][3]!=OutputStrDialog->Paths[i-6][3]) update[i-6]=1;
+        StreamC[i]=OutputStrDialog->StreamC[i-6];
+        Stream [i]=OutputStrDialog->Stream[i-6];
+        Format [i]=OutputStrDialog->Format[i-6];
+        for (j=0;j<4;j++) Paths[i][j]=OutputStrDialog->Paths[i-6][j];
     }
     for (i=0;i<10;i++) {
         History [i]=OutputStrDialog->History [i];
@@ -763,8 +763,8 @@ void __fastcall TMainForm::BtnOutputStrClick(TObject *Sender)
     
     if (BtnStart->Enabled) return;
     
-    for (i=3;i<5;i++) {
-        if (!update[i-3]) continue;
+    for (i=6;i<MAXSTRRTK;i++) {
+        if (!update[i-6]) continue;
         
         rtksvrclosestr(&rtksvr,i);
         
@@ -794,10 +794,10 @@ void __fastcall TMainForm::BtnLogStrClick(TObject *Sender)
     
     trace(3,"BtnLogStrClick\n");
     
-    for (i=5;i<8;i++) {
-        LogStrDialog->StreamC[i-5]=StreamC[i];
-        LogStrDialog->Stream [i-5]=Stream [i];
-        for (j=0;j<4;j++) LogStrDialog->Paths[i-5][j]=Paths[i][j];
+    for (i=3;i<6;i++) {
+        LogStrDialog->StreamC[i-3]=StreamC[i];
+        LogStrDialog->Stream [i-3]=Stream [i];
+        for (j=0;j<4;j++) LogStrDialog->Paths[i-3][j]=Paths[i][j];
     }
     for (i=0;i<10;i++) {
         LogStrDialog->History [i]=History [i];
@@ -808,16 +808,16 @@ void __fastcall TMainForm::BtnLogStrClick(TObject *Sender)
     
     if (LogStrDialog->ShowModal()!=mrOk) return;
     
-    for (i=5;i<8;i++) {
-        if (StreamC[i]!=OutputStrDialog->StreamC[i-5]||
-            Stream [i]!=OutputStrDialog->Stream[i-5]||
-            Paths[i][0]!=OutputStrDialog->Paths[i-3][0]||
-            Paths[i][1]!=OutputStrDialog->Paths[i-3][1]||
-            Paths[i][2]!=OutputStrDialog->Paths[i-3][2]||
-            Paths[i][3]!=OutputStrDialog->Paths[i-3][3]) update[i-5]=1;
-        StreamC[i]=LogStrDialog->StreamC[i-5];
-        Stream [i]=LogStrDialog->Stream [i-5];
-        for (j=0;j<4;j++) Paths[i][j]=LogStrDialog->Paths[i-5][j];
+    for (i=3;i<6;i++) {
+        if (StreamC[i]!=LogStrDialog->StreamC[i-3]||
+            Stream [i]!=LogStrDialog->Stream[i-3]||
+            Paths[i][0]!=LogStrDialog->Paths[i-3][0]||
+            Paths[i][1]!=LogStrDialog->Paths[i-3][1]||
+            Paths[i][2]!=LogStrDialog->Paths[i-3][2]||
+            Paths[i][3]!=LogStrDialog->Paths[i-3][3]) update[i-3]=1;
+        StreamC[i]=LogStrDialog->StreamC[i-3];
+        Stream [i]=LogStrDialog->Stream [i-3];
+        for (j=0;j<4;j++) Paths[i][j]=LogStrDialog->Paths[i-3][j];
     }
     for (i=0;i<10;i++) {
         History [i]=LogStrDialog->History [i];
@@ -828,7 +828,7 @@ void __fastcall TMainForm::BtnLogStrClick(TObject *Sender)
     
     if (BtnStart->Enabled) return;
     
-    for (i=5;i<8;i++) {
+    for (i=3;i<6;i++) {
         if (!update[i-5]) continue;
         
         rtksvrclosestr(&rtksvr,i);
@@ -1114,7 +1114,7 @@ void __fastcall TMainForm::MenuExitClick(TObject *Sender)
 void __fastcall TMainForm::SvrStart(void)
 {
     AnsiString s;
-    solopt_t solopt[2];
+    solopt_t solopt[RTKSVRNSOL];
     double pos[3],nmeapos[3];
     int itype[]={
         STR_SERIAL,STR_TCPCLI,STR_TCPSVR,STR_NTRIPCLI,STR_FILE,STR_FTP,STR_HTTP
@@ -1234,9 +1234,9 @@ void __fastcall TMainForm::SvrStart(void)
         PrcOpt.baseline[1]=0.0;
     }
     for (i=0;i<3;i++) strs[i]=StreamC[i]?itype[Stream[i]]:STR_NONE;
-    for (i=3;i<5;i++) strs[i]=StreamC[i]?otype[Stream[i]]:STR_NONE;
-    for (i=5;i<8;i++) strs[i]=StreamC[i]?otype[Stream[i]]:STR_NONE;
-    for (i=0;i<8;i++) {
+    for (i=3;i<6;i++) strs[i]=StreamC[i]?otype[Stream[i]]:STR_NONE;
+    for (i=6;i<MAXSTRRTK;i++) strs[i]=StreamC[i]?otype[Stream[i]]:STR_NONE;
+    for (i=0;i<MAXSTRRTK;i++) {
         if      (strs[i]==STR_NONE  ) paths[i]=(char *)"";
         else if (strs[i]==STR_SERIAL) paths[i]=Paths[i][0].c_str();
         else if (strs[i]==STR_FILE  ) paths[i]=Paths[i][2].c_str();
@@ -1264,7 +1264,7 @@ void __fastcall TMainForm::SvrStart(void)
     strsetdir(LocalDirectory.c_str());
     strsetproxy(ProxyAddr.c_str());
     
-    for (i=3;i<8;i++) {
+    for (i=3;i<MAXSTRRTK;i++) {
       if (strs[i]==STR_FILE&&!ConfOverwrite(paths[i])) {
         if (SolOpt.trace>0) traceclose();
         free_pcvs(&rtksvr.pcvsr);
@@ -1280,9 +1280,10 @@ void __fastcall TMainForm::SvrStart(void)
     if (DCBFileF!="") {
         readdcb(DCBFileF.c_str(),&rtksvr.nav,NULL);
     }
-    for (i=0;i<2;i++) {
+
+    for (i=0;i<RTKSVRNSOL;i++) {
         solopt[i]=SolOpt;
-        solopt[i].posf=Format[i+3];
+        solopt[i].posf=Format[6+i];
     }
     stropt[0]=TimeoutTime;
     stropt[1]=ReconTime;
@@ -1614,7 +1615,7 @@ void __fastcall TMainForm::UpdatePos(void)
 void __fastcall TMainForm::UpdateStr(void)
 {
     TColor color[]={clRed,clWindow,CLORANGE,clGreen,clLime};
-    TPanel *ind[MAXSTRRTK]={Str1,Str2,Str3,Str4,Str5,Str6,Str7,Str8};
+    TPanel *ind[MAXSTRRTK]={Str1,Str2,Str3,Str4,Str5,Str6,Str7,Str8,Str9};
     int i,sstat[MAXSTRRTK]={0};
     char msg[MAXSTRMSG]="";
     
@@ -2427,12 +2428,12 @@ void __fastcall TMainForm::LoadOpt(void)
 {
     TIniFile *ini=new TIniFile(IniFile);
     AnsiString s;
-    int i,j,no,strno[]={0,1,6,2,3,4,5,7};
+    int i,j,no,strno[]={0, 1, 6, 4, 5, 7, 2, 3, 8};
     char *p;
     
     trace(3,"LoadOpt\n");
     
-    for (i=0;i<8;i++) {
+    for (i=0;i<MAXSTRRTK;i++) {
         no=strno[i];
         StreamC[i]=ini->ReadInteger("stream",s.sprintf("streamc%d",no),0);
         Stream [i]=ini->ReadInteger("stream",s.sprintf("stream%d", no),0);
@@ -2693,12 +2694,12 @@ void __fastcall TMainForm::SaveOpt(void)
 {
     TIniFile *ini=new TIniFile(IniFile);
     AnsiString s;
-    int i,j,no,strno[]={0,1,6,2,3,4,5,7};
+    int i,j,no,strno[]={0, 1, 6, 4, 5, 7, 2, 3, 8};
     char *p;
     
     trace(3,"SaveOpt\n");
     
-    for (i=0;i<8;i++) {
+    for (i=0;i<MAXSTRRTK;i++) {
         no=strno[i];
         ini->WriteInteger("stream",s.sprintf("streamc%d",no),StreamC[i]);
         ini->WriteInteger("stream",s.sprintf("stream%d" ,no),Stream [i]);

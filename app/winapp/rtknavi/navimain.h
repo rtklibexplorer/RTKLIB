@@ -66,6 +66,7 @@ __published:
 	TPanel *Str6;
 	TPanel *Str7;
 	TPanel *Str8;
+	TPanel *Str9;
 	TPanel *Svr;
 	TPanel *Panel122;
 	TSpeedButton *BtnOutputStr;

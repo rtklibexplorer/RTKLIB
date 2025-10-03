@@ -210,7 +210,7 @@ object LogStrDialog: TLogStrDialog
     Top = 19
     Width = 117
     Height = 17
-    Caption = '(6) Rover'
+    Caption = '(3) Rover'
     TabOrder = 2
     OnClick = Stream1CClick
   end
@@ -219,7 +219,7 @@ object LogStrDialog: TLogStrDialog
     Top = 42
     Width = 117
     Height = 17
-    Caption = '(7) Base Station'
+    Caption = '(4) Base Station'
     TabOrder = 5
     OnClick = Stream2CClick
   end
@@ -228,7 +228,7 @@ object LogStrDialog: TLogStrDialog
     Top = 65
     Width = 117
     Height = 17
-    Caption = '(8) Correction'
+    Caption = '(5) Correction'
     TabOrder = 13
     OnClick = Stream3CClick
   end
