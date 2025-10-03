@@ -46,6 +46,7 @@ __published:
 	TLabel *LabelHold;
 	TLabel *Label22;
 	TLabel *Label14;
+	TLabel *Label58;
 	TLabel *Label11;
 	TLabel *Label37;
 	TComboBox *AmbRes;

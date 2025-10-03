@@ -5,6 +5,8 @@
 
 #include <QDialog>
 
+#include "rtklib.h"
+
 namespace Ui {
 class InputStrDialog;
 }
@@ -88,15 +90,19 @@ public slots:
     void  showStreamOptions1();
     void  showStreamOptions2();
     void  showStreamOptions3();
+    void  showStreamOptions4();
     void  showCommandDialog1();
     void  showCommandDialog2();
     void  showCommandDialog3();
+    void  showCommandDialog4();
     void  selectFile1();
     void  selectFile2();
     void  selectFile3();
+    void  selectFile4();
     void  showReceiverOptions1();
     void  showReceiverOptions2();
     void  showReceiverOptions3();
+    void  showReceiverOptions4();
     void  selectPosition();
     void  updateEnable();
 
@@ -116,12 +122,12 @@ private:
     TcpOptDialog *tcpOptDialog;
     FtpOptDialog *ftpOptDialog;
 
-    int commandEnable[3][3], commandEnableTcp[3][3];
-    QString commands[3][3], commandsTcp[3][3];
-    QString paths[3][4];
+    int commandEnable[RTKSVRNIN][3], commandEnableTcp[RTKSVRNIN][3];
+    QString commands[RTKSVRNIN][3], commandsTcp[RTKSVRNIN][3];
+    QString paths[RTKSVRNIN][4];
 
 
-    QString receiverOptions[3];
+    QString receiverOptions[RTKSVRNIN];
     QString history[10];
     int noFormats;
     QString stationPositionFile;

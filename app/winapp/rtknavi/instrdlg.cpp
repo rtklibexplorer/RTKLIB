@@ -30,11 +30,14 @@ __fastcall TInputStrDialog::TInputStrDialog(TComponent* Owner)
 	int i;
 	Format1->Items->Clear();
 	Format2->Items->Clear();
+	Format3->Items->Clear();
+	Format4->Items->Clear();
 	NRcv=0;
 	for (i=0;i<=MAXRCVFMT;i++) {
 		Format1->Items->Add(formatstrs[i]);
 		Format2->Items->Add(formatstrs[i]);
 		Format3->Items->Add(formatstrs[i]);
+		Format4->Items->Add(formatstrs[i]);
 		NRcv++;
 	}
 	Format3->Items->Add("SP3");
@@ -47,15 +50,19 @@ void __fastcall TInputStrDialog::FormShow(TObject *Sender)
 	StreamC1  ->Checked  =StreamC[0];
 	StreamC2  ->Checked  =StreamC[1];
 	StreamC3  ->Checked  =StreamC[2];
+	StreamC4  ->Checked  =StreamC[3];
 	Stream1   ->ItemIndex=Stream[0];
 	Stream2   ->ItemIndex=Stream[1];
 	Stream3   ->ItemIndex=Stream[2];
+	Stream4   ->ItemIndex=Stream[3];
 	Format1   ->ItemIndex=Format[0];
 	Format2   ->ItemIndex=Format[1]<NRcv?Format[1]:NRcv+Format[1]-STRFMT_SP3;
 	Format3   ->ItemIndex=Format[2]<NRcv?Format[2]:NRcv+Format[2]-STRFMT_SP3;
+	Format4   ->ItemIndex=Format[3]<NRcv?Format[3]:NRcv+Format[3]-STRFMT_SP3;
 	FilePath1 ->Text     =GetFilePath(Paths[0][2]);
 	FilePath2 ->Text     =GetFilePath(Paths[1][2]);
 	FilePath3 ->Text     =GetFilePath(Paths[2][2]);
+	FilePath4 ->Text     =GetFilePath(Paths[3][2]);
 	NmeaReqL  ->ItemIndex=NmeaReq;
 	TimeTagC  ->Checked  =TimeTag;
 	TimeSpeedL->Text     =TimeSpeed;
@@ -74,15 +81,19 @@ void __fastcall TInputStrDialog::BtnOkClick(TObject *Sender)
 	StreamC[0] =StreamC1  ->Checked;
 	StreamC[1] =StreamC2  ->Checked;
 	StreamC[2] =StreamC3  ->Checked;
+	StreamC[3] =StreamC4  ->Checked;
 	Stream[0]  =Stream1   ->ItemIndex;
 	Stream[1]  =Stream2   ->ItemIndex;
 	Stream[2]  =Stream3   ->ItemIndex;
+	Stream[3]  =Stream4   ->ItemIndex;
 	Format[0]  =Format1   ->ItemIndex;
 	Format[1]  =Format2->ItemIndex<NRcv?Format2->ItemIndex:STRFMT_SP3+Format2->ItemIndex-NRcv;
 	Format[2]  =Format3->ItemIndex<NRcv?Format3->ItemIndex:STRFMT_SP3+Format3->ItemIndex-NRcv;
+	Format[3]  =Format4->ItemIndex<NRcv?Format4->ItemIndex:STRFMT_SP3+Format4->ItemIndex-NRcv;
 	Paths[0][2]=SetFilePath(FilePath1->Text);
 	Paths[1][2]=SetFilePath(FilePath2->Text);
 	Paths[2][2]=SetFilePath(FilePath3->Text);
+	Paths[3][2]=SetFilePath(FilePath4->Text);
 	NmeaReq    =NmeaReqL  ->ItemIndex;
 	TimeTag    =TimeTagC  ->Checked;
 	TimeSpeed  =TimeSpeedL->Text;
@@ -100,8 +111,17 @@ void __fastcall TInputStrDialog::StreamC1Click(TObject *Sender)
 	UpdateEnable();
 }
 //---------------------------------------------------------------------------
-
 void __fastcall TInputStrDialog::StreamC2Click(TObject *Sender)
+{
+	UpdateEnable();
+}
+//---------------------------------------------------------------------------
+void __fastcall TInputStrDialog::StreamC3Click(TObject *Sender)
+{
+	UpdateEnable();
+}
+//---------------------------------------------------------------------------
+void __fastcall TInputStrDialog::StreamC4Click(TObject *Sender)
 {
 	UpdateEnable();
 }
@@ -117,6 +137,11 @@ void __fastcall TInputStrDialog::Stream2Change(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 void __fastcall TInputStrDialog::Stream3Change(TObject *Sender)
+{
+	UpdateEnable();
+}
+//---------------------------------------------------------------------------
+void __fastcall TInputStrDialog::Stream4Change(TObject *Sender)
 {
 	UpdateEnable();
 }
@@ -184,6 +209,18 @@ void __fastcall TInputStrDialog::BtnStr3Click(TObject *Sender)
 		case 3: TcpOpt(2,3); break;
 		case 5: FtpOpt(2,0); break;
 		case 6: FtpOpt(2,1); break;
+	}
+}
+//---------------------------------------------------------------------------
+void __fastcall TInputStrDialog::BtnStr4Click(TObject *Sender)
+{
+	switch (Stream4->ItemIndex) {
+		case 0: SerialOpt(3,0); break;
+		case 1: TcpOpt(3,1); break;
+		case 2: TcpOpt(3,0); break;
+		case 3: TcpOpt(3,3); break;
+		case 5: FtpOpt(3,0); break;
+		case 6: FtpOpt(3,1); break;
 	}
 }
 //---------------------------------------------------------------------------
@@ -262,6 +299,31 @@ void __fastcall TInputStrDialog::BtnCmd3Click(TObject *Sender)
 	}
 }
 //---------------------------------------------------------------------------
+void __fastcall TInputStrDialog::BtnCmd4Click(TObject *Sender)
+{
+	for (int i=0;i<3;i++) {
+		if (Stream4->ItemIndex==0) {
+			CmdOptDialog->Cmds  [i]=Cmds  [3][i];
+			CmdOptDialog->CmdEna[i]=CmdEna[3][i];
+		}
+		else {
+			CmdOptDialog->Cmds  [i]=CmdsTcp  [3][i];
+			CmdOptDialog->CmdEna[i]=CmdEnaTcp[3][i];
+		}
+	}
+	if (CmdOptDialog->ShowModal()!=mrOk) return;
+	for (int i=0;i<3;i++) {
+		if (Stream4->ItemIndex==0) {
+			Cmds  [3][i]=CmdOptDialog->Cmds  [i];
+			CmdEna[3][i]=CmdOptDialog->CmdEna[i];
+		}
+		else {
+			CmdsTcp  [3][i]=CmdOptDialog->Cmds  [i];
+			CmdEnaTcp[3][i]=CmdOptDialog->CmdEna[i];
+		}
+	}
+}
+//---------------------------------------------------------------------------
 void __fastcall TInputStrDialog::BtnRcvOpt1Click(TObject *Sender)
 {
 	RcvOptDialog->Option=RcvOpt[0];
@@ -281,6 +343,13 @@ void __fastcall TInputStrDialog::BtnRcvOpt3Click(TObject *Sender)
 	RcvOptDialog->Option=RcvOpt[2];
 	if (RcvOptDialog->ShowModal()!=mrOk) return;
 	RcvOpt[2]=RcvOptDialog->Option;
+}
+//---------------------------------------------------------------------------
+void __fastcall TInputStrDialog::BtnRcvOpt4Click(TObject *Sender)
+{
+	RcvOptDialog->Option=RcvOpt[3];
+	if (RcvOptDialog->ShowModal()!=mrOk) return;
+	RcvOpt[3]=RcvOptDialog->Option;
 }
 //---------------------------------------------------------------------------
 void __fastcall TInputStrDialog::BtnPosClick(TObject *Sender)
@@ -325,6 +394,13 @@ void __fastcall TInputStrDialog::BtnFile3Click(TObject *Sender)
 	FilePath3->Text=OpenDialog->FileName;
 }
 //---------------------------------------------------------------------------
+void __fastcall TInputStrDialog::BtnFile4Click(TObject *Sender)
+{
+	//OpenDialog->FileName=FilePath4->Text;
+	if (!OpenDialog->Execute()) return;
+	FilePath4->Text=OpenDialog->FileName;
+}
+//---------------------------------------------------------------------------
 void __fastcall TInputStrDialog::TcpOpt(int index, int opt)
 {
 	TcpOptDialog->Path=Paths[index][1];
@@ -351,24 +427,30 @@ void __fastcall TInputStrDialog::UpdateEnable(void)
 {
 	int ena1=(StreamC1->Checked&&Stream1->ItemIndex==4)||
              (StreamC2->Checked&&Stream2->ItemIndex==4)||
-             (StreamC3->Checked&&Stream3->ItemIndex==4);
+             (StreamC3->Checked&&Stream3->ItemIndex==4)||
+             (StreamC4->Checked&&Stream4->ItemIndex==4);
 	int ena2=StreamC2->Checked&&Stream2->ItemIndex<=3;
 	
 	Stream1   ->Enabled=StreamC1->Checked;
 	Stream2   ->Enabled=StreamC2->Checked;
 	Stream3   ->Enabled=StreamC3->Checked;
+	Stream4   ->Enabled=StreamC4->Checked;
 	BtnStr1   ->Enabled=StreamC1->Checked&&Stream1->ItemIndex!=4;
 	BtnStr2   ->Enabled=StreamC2->Checked&&Stream2->ItemIndex!=4;
 	BtnStr3   ->Enabled=StreamC3->Checked&&Stream3->ItemIndex!=4;
+	BtnStr4   ->Enabled=StreamC4->Checked&&Stream4->ItemIndex!=4;
 	BtnCmd1   ->Enabled=StreamC1->Checked&&Stream1->ItemIndex!=4;
 	BtnCmd2   ->Enabled=StreamC2->Checked&&Stream2->ItemIndex!=4;
 	BtnCmd3   ->Enabled=StreamC3->Checked&&Stream3->ItemIndex!=4;
+	BtnCmd4   ->Enabled=StreamC4->Checked&&Stream4->ItemIndex!=4;
 	Format1   ->Enabled=StreamC1->Checked;
 	Format2   ->Enabled=StreamC2->Checked;
 	Format3   ->Enabled=StreamC3->Checked;
+	Format4   ->Enabled=StreamC4->Checked;
 	BtnRcvOpt1->Enabled=StreamC1->Checked;
 	BtnRcvOpt2->Enabled=StreamC2->Checked;
 	BtnRcvOpt3->Enabled=StreamC3->Checked;
+	BtnRcvOpt4->Enabled=StreamC4->Checked;
 	
 	LabelNmea ->Enabled=ena2;
 	NmeaReqL  ->Enabled=ena2;
@@ -386,9 +468,11 @@ void __fastcall TInputStrDialog::UpdateEnable(void)
 	FilePath1 ->Enabled=StreamC1->Checked&&Stream1->ItemIndex==4;
 	FilePath2 ->Enabled=StreamC2->Checked&&Stream2->ItemIndex==4;
 	FilePath3 ->Enabled=StreamC3->Checked&&Stream3->ItemIndex==4;
+	FilePath4 ->Enabled=StreamC4->Checked&&Stream4->ItemIndex==4;
 	BtnFile1  ->Enabled=StreamC1->Checked&&Stream1->ItemIndex==4;
 	BtnFile2  ->Enabled=StreamC2->Checked&&Stream2->ItemIndex==4;
 	BtnFile3  ->Enabled=StreamC3->Checked&&Stream3->ItemIndex==4;
+	BtnFile4  ->Enabled=StreamC4->Checked&&Stream4->ItemIndex==4;
 	TimeTagC  ->Enabled=ena1;
 	TimeStartE->Enabled=ena1&&TimeTagC->Checked;
 	TimeSpeedL->Enabled=ena1&&TimeTagC->Checked;

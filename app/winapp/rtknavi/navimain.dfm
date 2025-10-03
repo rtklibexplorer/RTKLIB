@@ -1365,17 +1365,17 @@ object MainForm: TMainForm
       end
     end
     object Panel12: TPanel
-      Left = 469
+      Left = 407
       Top = 2
-      Width = 187
+      Width = 244
       Height = 23
       Align = alRight
       BevelOuter = bvNone
       TabOrder = 0
       object Panel121: TPanel
-        Left = 0
+        Left = 27
         Top = 0
-        Width = 27
+        Width = 28
         Height = 22
         TabOrder = 9
         object BtnInputStr: TSpeedButton
@@ -1402,7 +1402,7 @@ object MainForm: TMainForm
         end
       end
       object Str1: TPanel
-        Left = 31
+        Left = 58
         Top = 5
         Width = 9
         Height = 14
@@ -1413,7 +1413,7 @@ object MainForm: TMainForm
         TabOrder = 0
       end
       object Image2: TImage
-        Left = 38
+        Left = 74
         Top = 3
         Width = 29
         Height = 17
@@ -1475,7 +1475,7 @@ object MainForm: TMainForm
         Transparent = True
       end
       object Str2: TPanel
-        Left = 40
+        Left = 67
         Top = 5
         Width = 9
         Height = 14
@@ -1486,7 +1486,7 @@ object MainForm: TMainForm
         TabOrder = 1
       end
       object Str3: TPanel
-        Left = 49
+        Left = 76
         Top = 5
         Width = 9
         Height = 14
@@ -1496,8 +1496,19 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 2
       end
+      object Str4: TPanel
+        Left = 85
+        Top = 5
+        Width = 9
+        Height = 14
+        BevelInner = bvRaised
+        BevelOuter = bvLowered
+        Color = clWindow
+        ParentBackground = False
+        TabOrder = 3
+      end
       object Image1: TImage
-        Left = 56
+        Left = 92
         Top = 3
         Width = 29
         Height = 17
@@ -1559,29 +1570,7 @@ object MainForm: TMainForm
         Transparent = True
       end
       object Svr: TPanel
-        Left = 67
-        Top = 5
-        Width = 9
-        Height = 14
-        BevelInner = bvRaised
-        BevelOuter = bvLowered
-        Color = clWindow
-        ParentBackground = False
-        TabOrder = 8
-      end
-      object Str4: TPanel
-        Left = 85
-        Top = 5
-        Width = 9
-        Height = 14
-        BevelInner = bvRaised
-        BevelOuter = bvLowered
-        Color = clWindow
-        ParentBackground = False
-        TabOrder = 3
-      end
-      object Str5: TPanel
-        Left = 94
+        Left = 103
         Top = 5
         Width = 9
         Height = 14
@@ -1591,8 +1580,8 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 4
       end
-      object Str6: TPanel
-        Left = 105
+      object Str5: TPanel
+        Left = 121
         Top = 5
         Width = 9
         Height = 14
@@ -1602,8 +1591,8 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 5
       end
-      object Str7: TPanel
-        Left = 114
+      object Str6: TPanel
+        Left = 130
         Top = 5
         Width = 9
         Height = 14
@@ -1613,8 +1602,8 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 6
       end
-      object Str8: TPanel
-        Left = 123
+      object Str7: TPanel
+        Left = 139
         Top = 5
         Width = 9
         Height = 14
@@ -1624,42 +1613,56 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 7
       end
-      object Panel122: TPanel
-        Left = 134
-        Top = 0
-        Width = 27
-        Height = 22
+      object Str8: TPanel
+        Left = 148
+        Top = 5
+        Width = 9
+        Height = 14
+        BevelInner = bvRaised
+        BevelOuter = bvLowered
+        Color = clWindow
+        ParentBackground = False
+        TabOrder = 8
+      end
+      object Str9: TPanel
+        Left = 159
+        Top = 5
+        Width = 9
+        Height = 14
+        BevelInner = bvRaised
+        BevelOuter = bvLowered
+        Color = clWindow
+        ParentBackground = False
+        TabOrder = 9
+      end
+      object Str10: TPanel
+        Left = 168
+        Top = 5
+        Width = 9
+        Height = 14
+        BevelInner = bvRaised
+        BevelOuter = bvLowered
+        Color = clWindow
+        ParentBackground = False
         TabOrder = 10
-        object BtnOutputStr: TSpeedButton
-          Left = 1
-          Top = 0
-          Width = 25
-          Height = 21
-          Hint = 'Output Streams'
-          Margins.Left = 2
-          Margins.Top = 2
-          Margins.Right = 2
-          Margins.Bottom = 2
-          Caption = 'O'
-          Flat = True
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = []
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          Spacing = 1
-          OnClick = BtnOutputStrClick
-        end
+      end
+      object Str11: TPanel
+        Left = 177
+        Top = 5
+        Width = 9
+        Height = 14
+        BevelInner = bvRaised
+        BevelOuter = bvLowered
+        Color = clWindow
+        ParentBackground = False
+        TabOrder = 11
       end
       object Panel123: TPanel
-        Left = 161
+        Left = 188
         Top = 0
         Width = 27
         Height = 22
-        TabOrder = 11
+        TabOrder = 12
         object BtnLogStr: TSpeedButton
           Left = 1
           Top = 0
@@ -1682,6 +1685,36 @@ object MainForm: TMainForm
           ShowHint = True
           Spacing = 1
           OnClick = BtnLogStrClick
+        end
+      end
+      object Panel122: TPanel
+        Left = 217
+        Top = 0
+        Width = 27
+        Height = 22
+        TabOrder = 13
+        object BtnOutputStr: TSpeedButton
+          Left = 1
+          Top = 0
+          Width = 25
+          Height = 21
+          Hint = 'Output Streams'
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 2
+          Caption = 'O'
+          Flat = True
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clBlack
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          Spacing = 1
+          OnClick = BtnOutputStrClick
         end
       end
     end

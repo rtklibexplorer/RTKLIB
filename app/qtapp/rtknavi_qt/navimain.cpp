@@ -81,13 +81,9 @@ MainWindow *mainForm;
 #define SQRT(x)     ((x)<0.0||(x)!=(x)?0.0:sqrt(x))
 
 // receiver options table ---------------------------------------------------
-static int strtype[] = {                  /* stream types */
-    STR_NONE, STR_NONE, STR_NONE, STR_NONE, STR_NONE, STR_NONE, STR_NONE, STR_NONE
-};
-static char strpath[8][MAXSTR] = { "" };        /* stream paths */
-static int strfmt[] = {                         /* stream formats */
-    STRFMT_RTCM3, STRFMT_RTCM3, STRFMT_SP3, SOLF_LLH, SOLF_NMEA, 0, 0, 0
-};
+static int strtype[MAXSTRRTK];                 /* stream types */
+static char strpath[MAXSTRRTK][MAXSTR];        /* stream paths */
+static int strfmt[MAXSTRRTK];                  /* stream formats */
 
 #define TIMOPT  "0:gpst,1:utc,2:jst,3:tow"
 #define CONOPT  "0:dms,1:deg,2:xyz,3:enu,4:pyl"
@@ -118,6 +114,11 @@ MainWindow::MainWindow(QWidget *parent)
     setlocale(LC_NUMERIC, "C");
 
     for (int i = 0; i < MAXSTRRTK; i++) {
+        strtype[i] = STR_NONE;
+        strpath[i][0] = '\0';
+        if (i < RTKSVRNIN) strfmt[i] = STRFMT_RTCM3;
+        else if (i >= RTKSVRNIN*2) strfmt[i] = i == RTKSVRNIN*2 ? SOLF_LLH : SOLF_NMEA;
+        else strfmt[i] = 0;
         streamEnabled[i] = streamType[i] = inputFormat[i] = 0;
     }
     for (int i = 0; i < 3; i++)
@@ -148,29 +149,37 @@ MainWindow::MainWindow(QWidget *parent)
 
     static opt_t rcvopts[] = {
         { "inpstr1-type",     3, (void *)&strtype[0],  ISTOPT  },
-        { "inpstr2-type",     3, (void *)&strtype[1],  ISTOPT  },
-        { "inpstr3-type",     3, (void *)&strtype[2],  ISTOPT  },
         { "inpstr1-path",     2, (void *)strpath [0],  ""      },
-        { "inpstr2-path",     2, (void *)strpath [1],  ""      },
-        { "inpstr3-path",     2, (void *)strpath [2],  ""      },
         { "inpstr1-format",   3, (void *)&strfmt [0],  FMTOPT  },
+        { "inpstr2-type",     3, (void *)&strtype[1],  ISTOPT  },
+        { "inpstr2-path",     2, (void *)strpath [1],  ""      },
         { "inpstr2-format",   3, (void *)&strfmt [1],  FMTOPT  },
+        { "inpstr2-nmeareq",  3, (void *)&nmeaRequestType, NMEOPT},
+        { "inpstr2-nmealat",  1, (void *)&nmeaPosition[0], "deg"},
+        { "inpstr2-nmealon",  1, (void *)&nmeaPosition[1], "deg"},
+        { "inpstr3-type",     3, (void *)&strtype[2],  ISTOPT  },
+        { "inpstr3-path",     2, (void *)strpath [2],  ""      },
         { "inpstr3-format",   3, (void *)&strfmt [2],  FMTOPT  },
-        { "inpstr2-nmeareq",  3, (void *)&nmeaRequestType,     NMEOPT  },
-        { "inpstr2-nmealat",  1, (void *)&nmeaPosition[0],  "deg"   },
-        { "inpstr2-nmealon",  1, (void *)&nmeaPosition[1],  "deg"   },
-        { "outstr1-type",     3, (void *)&strtype[3],  OSTOPT  },
-        { "outstr2-type",     3, (void *)&strtype[4],  OSTOPT  },
-        { "outstr1-path",     2, (void *)strpath [3],  ""      },
-        { "outstr2-path",     2, (void *)strpath [4],  ""      },
-        { "outstr1-format",   3, (void *)&strfmt [3],  SOLOPT  },
-        { "outstr2-format",   3, (void *)&strfmt [4],  SOLOPT  },
-        { "logstr1-type",     3, (void *)&strtype[5],  OSTOPT  },
-        { "logstr2-type",     3, (void *)&strtype[6],  OSTOPT  },
-        { "logstr3-type",     3, (void *)&strtype[7],  OSTOPT  },
-        { "logstr1-path",     2, (void *)strpath [5],  ""      },
-        { "logstr2-path",     2, (void *)strpath [6],  ""      },
-        { "logstr3-path",     2, (void *)strpath [7],  ""      },
+        { "inpstr4-type",     3, (void *)&strtype[3],  ISTOPT  },
+        { "inpstr4-path",     2, (void *)strpath [3],  ""      },
+        { "inpstr4-format",   3, (void *)&strfmt [3],  FMTOPT  },
+        { "logstr1-type",     3, (void *)&strtype[RTKSVRNIN], OSTOPT},
+        { "logstr1-path",     2, (void *)strpath [RTKSVRNIN], ""},
+        { "logstr2-type",     3, (void *)&strtype[RTKSVRNIN + 1], OSTOPT},
+        { "logstr2-path",     2, (void *)strpath [RTKSVRNIN + 1], ""},
+        { "logstr3-type",     3, (void *)&strtype[RTKSVRNIN + 2], OSTOPT},
+        { "logstr3-path",     2, (void *)strpath [RTKSVRNIN + 2], ""},
+        { "logstr4-type",     3, (void *)&strtype[RTKSVRNIN + 3], OSTOPT},
+        { "logstr4-path",     2, (void *)strpath [RTKSVRNIN + 3], ""},
+        { "outstr1-type",     3, (void *)&strtype[RTKSVRNIN*2], OSTOPT},
+        { "outstr1-path",     2, (void *)strpath [RTKSVRNIN*2], ""    },
+        { "outstr1-format",   3, (void *)&strfmt [RTKSVRNIN*2], SOLOPT},
+        { "outstr2-type",     3, (void *)&strtype[RTKSVRNIN*2 + 1], OSTOPT},
+        { "outstr2-path",     2, (void *)strpath [RTKSVRNIN*2 + 1], ""    },
+        { "outstr2-format",   3, (void *)&strfmt [RTKSVRNIN*2 + 1], SOLOPT},
+        { "outstr3-type",     3, (void *)&strtype[RTKSVRNIN*2 + 2], OSTOPT},
+        { "outstr3-path",     2, (void *)strpath [RTKSVRNIN*2 + 2], ""    },
+        { "outstr3-format",   3, (void *)&strfmt [RTKSVRNIN*2 + 2], SOLOPT},
         { "",		      0, NULL,		       ""      }
     };
 
@@ -498,9 +507,9 @@ void MainWindow::showOptionsDialog()
 
     trace(3, "showOptionsDialog\n");
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < MAXSTRRTK; i++) {
         int stype = streamType[i];
-        if (i < 3) {
+        if (i < RTKSVRNIN) {
             if (stype >= 0 && stype < (int)(sizeof(itype) / sizeof(int)))
                 strtype[i] = itype[stype];
             else
@@ -579,10 +588,10 @@ void MainWindow::showOptionsDialog()
 
     if (optDialog->result() != QDialog::Accepted) return;
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < MAXSTRRTK; i++) {
         streamType[i] = 0; // Default to serial
         bool found = false;
-        if (i < 3) {
+        if (i < RTKSVRNIN) {
             // Input
             for (int j = 0; j < (int)(sizeof(itype) / sizeof(int)); j++) {
                 if (strtype[i] != itype[j]) continue;
@@ -601,7 +610,7 @@ void MainWindow::showOptionsDialog()
         }
         // Disable if the stream type is not found.
         if (found == false) streamEnabled[i] = false;
-        if (i < 5) inputFormat[i] = strfmt[i];
+        if (i < RTKSVRNIN || i >= RTKSVRNIN * 2) inputFormat[i] = strfmt[i];
 
         if (strtype[i] == STR_SERIAL)
             paths[i][0] = strpath[i];
@@ -641,7 +650,7 @@ void MainWindow::showInputStreamDialog()
 
     trace(3, "showInputStreamDialog\n");
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < RTKSVRNIN; i++) {
         inputStrDialog->setStreamEnabled(i, streamEnabled[i]);
         inputStrDialog->setStreamType(i, streamType[i]);
         inputStrDialog->setStreamFormat(i, inputFormat[i]);
@@ -650,7 +659,7 @@ void MainWindow::showInputStreamDialog()
         /* Paths -> [0]:serial, [1]:tcp, [2]:file, [3]:ftp */
         for (j = 0; j < 4; j++) inputStrDialog->setPath(i, j, paths[i][j]);
     }
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < RTKSVRNIN; i++)
         for (j = 0; j < 3; j++) {
             inputStrDialog->setCommandsEnabled(i, j, commandEnabled[i][j]);
             inputStrDialog->setCommands(i, j, commands[i][j]);
@@ -676,7 +685,7 @@ void MainWindow::showInputStreamDialog()
 
     if (inputStrDialog->result() != QDialog::Accepted) return;
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < RTKSVRNIN; i++) {
         streamEnabled[i] = inputStrDialog->getStreamEnabled(i);
         streamType[i] = inputStrDialog->getStreamType(i);
         inputFormat [i] = inputStrDialog->getStreamFormat(i);
@@ -684,7 +693,7 @@ void MainWindow::showInputStreamDialog()
         for (j = 0; j < 4; j++)
             paths[i][j] = inputStrDialog->getPath(i, j);
     }
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < RTKSVRNIN; i++)
         for (j = 0; j < 3; j++) {
             commandEnabled[i][j] = inputStrDialog->getCommandsEnabled(i, j);
             commands[i][j] = inputStrDialog->getCommands(i, j);
@@ -719,7 +728,7 @@ int MainWindow::confirmOverwrite(const QString &path)
     if (!QFile::exists(filename)) return 1; // file not exists
 
     // check overwrite input files
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < RTKSVRNIN; i++) {
         if (!streamEnabled[i] || itype[streamType[i]] != STR_FILE) continue;
 
         streamFilename = paths[i][2];
@@ -737,17 +746,17 @@ int MainWindow::confirmOverwrite(const QString &path)
 void MainWindow::showOutputStreamDialog()
 {
     int otype[] = {STR_SERIAL, STR_TCPCLI, STR_TCPSVR, STR_NTRIPSVR, STR_NTRIPCAS, STR_FILE};
-    int i, j, str, update[2] = { 0 };
+    int i, j, str, update[RTKSVRNSOL] = { 0 };
     QString path;
 
     trace(3, "showOutputStreamDialog\n");
 
-    for (i = 3; i < 5; i++) {
-        outputStrDialog->setStreamEnabled(i - 3, streamEnabled[i]);
-        outputStrDialog->setStreamType(i - 3, streamType[i]);
-        outputStrDialog->setStreamFormat(i - 3, inputFormat[i]);
+    for (i = RTKSVRNIN * 2; i < MAXSTRRTK; i++) {
+        outputStrDialog->setStreamEnabled(i - RTKSVRNIN * 2, streamEnabled[i]);
+        outputStrDialog->setStreamType(i - RTKSVRNIN * 2, streamType[i]);
+        outputStrDialog->setStreamFormat(i - RTKSVRNIN * 2, inputFormat[i]);
         for (j = 0; j < 4; j++)
-            outputStrDialog->setPath(i - 3, j, paths[i][j]);
+            outputStrDialog->setPath(i - RTKSVRNIN * 2, j, paths[i][j]);
     }
     for (i = 0; i < 10; i++) {
         outputStrDialog->setHistory(i, history[i]);
@@ -758,21 +767,21 @@ void MainWindow::showOutputStreamDialog()
 
     if (outputStrDialog->result() != QDialog::Accepted) return;
 
-    for (i = 3; i < 5; i++) {
-        if (streamEnabled[i] != outputStrDialog->getStreamEnabled(i - 3) ||
-            streamType[i] != outputStrDialog->getStreamType(i - 3) ||
-            inputFormat[i] != outputStrDialog->getStreamFormat(i - 3) ||
-            paths[i][0] != outputStrDialog->getPath(i - 3, 0) ||
-            paths[i][1] != outputStrDialog->getPath(i - 3, 1) ||
-            paths[i][2] != outputStrDialog->getPath(i - 3, 2) ||
-            paths[i][3] != outputStrDialog->getPath(i - 3, 3))
-                update[i - 3] = 1;
+    for (i = RTKSVRNIN * 2; i < MAXSTRRTK; i++) {
+        if (streamEnabled[i] != outputStrDialog->getStreamEnabled(i - RTKSVRNIN * 2) ||
+            streamType[i] != outputStrDialog->getStreamType(i - RTKSVRNIN * 2) ||
+            inputFormat[i] != outputStrDialog->getStreamFormat(i - RTKSVRNIN * 2) ||
+            paths[i][0] != outputStrDialog->getPath(i - RTKSVRNIN * 2, 0) ||
+            paths[i][1] != outputStrDialog->getPath(i - RTKSVRNIN * 2, 1) ||
+            paths[i][2] != outputStrDialog->getPath(i - RTKSVRNIN * 2, 2) ||
+            paths[i][3] != outputStrDialog->getPath(i - RTKSVRNIN * 2, 3))
+                update[i - RTKSVRNIN * 2] = 1;
 
-        streamEnabled[i] = outputStrDialog->getStreamEnabled(i - 3);
-        streamType[i] = outputStrDialog->getStreamType(i - 3);
-        inputFormat[i] = outputStrDialog->getStreamFormat(i - 3);
+        streamEnabled[i] = outputStrDialog->getStreamEnabled(i - RTKSVRNIN * 2);
+        streamType[i] = outputStrDialog->getStreamType(i - RTKSVRNIN * 2);
+        inputFormat[i] = outputStrDialog->getStreamFormat(i - RTKSVRNIN * 2);
         for (j = 0; j < 4; j++)
-            paths[i][j] = outputStrDialog->getPath(i - 3, j);
+            paths[i][j] = outputStrDialog->getPath(i - RTKSVRNIN * 2, j);
     }
     for (i = 0; i < 10; i++) {
         history[i] = outputStrDialog->getHistory(i);
@@ -782,8 +791,8 @@ void MainWindow::showOutputStreamDialog()
 
     if (ui->btnStart->isEnabled()) return;
 
-    for (i = 3; i < 5; i++) {
-        if (!update[i - 3]) continue;
+    for (i = RTKSVRNIN * 2; i < MAXSTRRTK; i++) {
+        if (!update[i - RTKSVRNIN * 2]) continue;
 
         rtksvrclosestr(rtksvr, i);
 
@@ -806,16 +815,16 @@ void MainWindow::showOutputStreamDialog()
 void MainWindow::showLogStreamDialog()
 {
     int otype[] = {STR_SERIAL, STR_TCPCLI, STR_TCPSVR, STR_NTRIPSVR, STR_NTRIPCAS, STR_FILE};
-    int i, j, str, update[3] = {0};
+    int i, j, str, update[RTKSVRNIN] = {0};
     QString path;
 
     trace(3, "showLogStreamDialog\n");
 
-    for (i = 5; i < 8; i++) {
-        logStrDialog->setStreamEnabled(i - 5, streamEnabled[i]);
-        logStrDialog->setStreamType(i - 5, streamType [i]);
+    for (i = RTKSVRNIN; i < RTKSVRNIN * 2; i++) {
+        logStrDialog->setStreamEnabled(i - RTKSVRNIN, streamEnabled[i]);
+        logStrDialog->setStreamType(i - RTKSVRNIN, streamType [i]);
         for (j = 0; j < 4; j++)
-            logStrDialog->setPath(i - 5, j, paths[i][j]);
+            logStrDialog->setPath(i - RTKSVRNIN, j, paths[i][j]);
     }
     for (i = 0; i < 10; i++) {
         logStrDialog->setHistory(i, history[i]);
@@ -827,20 +836,20 @@ void MainWindow::showLogStreamDialog()
 
     if (logStrDialog->result() != QDialog::Accepted) return;
 
-    for (i = 5; i < 8; i++) {
-        if (streamEnabled[i] != outputStrDialog->getStreamEnabled((i - 5) % 2) ||
-            streamType[i] != outputStrDialog->getStreamType((i - 5) % 2) ||
-            paths[i][0] != outputStrDialog->getPath((i - 3) % 2, 0) ||
-            paths[i][1] != outputStrDialog->getPath((i - 3) % 2, 1) ||
-            paths[i][2] != outputStrDialog->getPath((i - 3) % 2, 2) ||
-            paths[i][3] != outputStrDialog->getPath((i - 3) % 2, 3))
-                update[i - 5] = 1;
+    for (i = RTKSVRNIN; i < RTKSVRNIN * 2; i++) {
+        if (streamEnabled[i] != logStrDialog->getStreamEnabled(i - RTKSVRNIN) ||
+            streamType[i] != logStrDialog->getStreamType(i - RTKSVRNIN) ||
+            paths[i][0] != logStrDialog->getPath(i - RTKSVRNIN, 0) ||
+            paths[i][1] != logStrDialog->getPath(i - RTKSVRNIN, 1) ||
+            paths[i][2] != logStrDialog->getPath(i - RTKSVRNIN, 2) ||
+            paths[i][3] != logStrDialog->getPath(i - RTKSVRNIN, 3))
+                update[i - RTKSVRNIN] = 1;
 
-        streamEnabled[i] = logStrDialog->getStreamEnabled(i - 5);
-        streamType[i] = logStrDialog->getStreamType(i - 5);
+        streamEnabled[i] = logStrDialog->getStreamEnabled(i - RTKSVRNIN);
+        streamType[i] = logStrDialog->getStreamType(i - RTKSVRNIN);
 
         for (j = 0; j < 4; j++)
-            paths[i][j] = logStrDialog->getPath(i - 5, j);
+            paths[i][j] = logStrDialog->getPath(i - RTKSVRNIN, j);
     }
     for (i = 0; i < 10; i++) {
         history[i] = logStrDialog->getHistory(i);
@@ -851,8 +860,8 @@ void MainWindow::showLogStreamDialog()
 
     if (ui->btnStart->isEnabled()) return;
 
-    for (i = 5; i < 8; i++) {
-        if (!update[i - 5]) continue;
+    for (i = RTKSVRNIN; i < RTKSVRNIN * 2; i++) {
+        if (!update[i - RTKSVRNIN]) continue;
 
         rtksvrclosestr(rtksvr, i);
 
@@ -1109,12 +1118,12 @@ void MainWindow::expandFromTray()
 // start rtk server ---------------------------------------------------------
 void MainWindow::serverStart()
 {
-    solopt_t solopt[2];
+    solopt_t solopt[RTKSVRNSOL];
     double pos[3], nmeapos[3];
     int itype[] = {STR_SERIAL, STR_TCPCLI, STR_TCPSVR, STR_NTRIPCLI, STR_FILE, STR_FTP, STR_HTTP};
     int otype[] = {STR_SERIAL, STR_TCPCLI, STR_TCPSVR, STR_NTRIPSVR, STR_NTRIPCAS, STR_FILE};
     int i, j, streamTypes[MAXSTRRTK] = {0}, stropt[8] = {0};
-    char *serverPaths[8], *cmds[3] = {0}, *cmds_periodic[3] = {0}, *rcvopts[3] = {0};
+    char *serverPaths[MAXSTRRTK], *cmds[RTKSVRNIN] = {0}, *cmds_periodic[RTKSVRNIN] = {0}, *rcvopts[RTKSVRNIN] = {0};
     char errmsg[20148];
     gtime_t time = timeget();
     pcvs_t pcvs;
@@ -1154,11 +1163,11 @@ void MainWindow::serverStart()
         free_pcvs(&pcvs);
     }
 
-    for (i = 0; i < 3; i++) streamTypes[i] = streamEnabled[i] ? itype[streamType[i]] : STR_NONE;  // input stream
-    for (i = 3; i < 5; i++) streamTypes[i] = streamEnabled[i] ? otype[streamType[i]] : STR_NONE;  // output stream
-    for (i = 5; i < 8; i++) streamTypes[i] = streamEnabled[i] ? otype[streamType[i]] : STR_NONE;  // log streams
+    for (i = 0; i < RTKSVRNIN; i++) streamTypes[i] = streamEnabled[i] ? itype[streamType[i]] : STR_NONE;  // input stream
+    for (i = RTKSVRNIN; i < RTKSVRNIN * 2; i++) streamTypes[i] = streamEnabled[i] ? otype[streamType[i]] : STR_NONE;  // log streams
+    for (i = RTKSVRNIN * 2; i < MAXSTRRTK; i++) streamTypes[i] = streamEnabled[i] ? otype[streamType[i]] : STR_NONE;  // output stream
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < MAXSTRRTK; i++) {
         serverPaths[i] = new char[1024];
         serverPaths[i][0] = '\0';
         if (streamTypes[i] == STR_NONE) strncpy(serverPaths[i], "", 1023);
@@ -1168,7 +1177,7 @@ void MainWindow::serverStart()
         else strncpy(serverPaths[i], qPrintable(paths[i][1]), 1023);
     }
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < RTKSVRNIN; i++) {
         rcvopts[i] = new char[1024];
         cmds[i] = cmds_periodic[i] = NULL;
 
@@ -1197,15 +1206,15 @@ void MainWindow::serverStart()
     strsetdir(optDialog->fileOptions.tempdir);
     strsetproxy(qPrintable(optDialog->proxyAddress));
 
-    for (i = 3; i < 8; i++)
+    for (i = RTKSVRNIN; i < MAXSTRRTK; i++)
         if (streamTypes[i] == STR_FILE && !confirmOverwrite(serverPaths[i])) {
             if (optDialog->solutionOptions.trace > 0) traceclose();
             free_pcvs(&rtksvr->pcvsr);
-            for (j = 0; j < 8; j++) delete[] serverPaths[j];
-            for (j = 0; j < 3; j++) delete[] rcvopts[j];
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < MAXSTRRTK; j++) delete[] serverPaths[j];
+            for (j = 0; j < RTKSVRNIN; j++) delete[] rcvopts[j];
+            for (j = 0; j < RTKSVRNIN; j++)
                 if (cmds[j]) delete[] cmds[j];
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < RTKSVRNIN; j++)
                 if (cmds_periodic[j]) delete[] cmds_periodic[j];
             return;
         }
@@ -1217,9 +1226,9 @@ void MainWindow::serverStart()
     if (strlen(optDialog->fileOptions.dcb) > 0)
         readdcb(optDialog->fileOptions.dcb, &rtksvr->nav, NULL);
 
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < RTKSVRNSOL; i++) {
         solopt[i] = optDialog->solutionOptions;
-        solopt[i].posf = inputFormat[i + 3];
+        solopt[i].posf = inputFormat[RTKSVRNIN*2 + i];
     }
     stropt[0] = optDialog->timeoutTime;
     stropt[1] = optDialog->reconnectTime;
@@ -1238,20 +1247,20 @@ void MainWindow::serverStart()
         trace(2, "rtksvrstart error %s\n", errmsg);
         if (optDialog->solutionOptions.trace > 0) traceclose();
         free_pcvs(&rtksvr->pcvsr);
-        for (i = 0; i < 8; i++) delete[] serverPaths[i];
-        for (i = 0; i < 3; i++) delete[] rcvopts[i];
-        for (i = 0; i < 3; i++)
+        for (i = 0; i < MAXSTRRTK; i++) delete[] serverPaths[i];
+        for (i = 0; i < RTKSVRNIN; i++) delete[] rcvopts[i];
+        for (i = 0; i < RTKSVRNIN; i++)
             if (cmds[i]) delete[] cmds[i];
-        for (i = 0; i < 3; i++)
+        for (i = 0; i < RTKSVRNIN; i++)
             if (cmds_periodic[i]) delete[] cmds_periodic[i];
         return;
     }
 
-    for (i = 0; i < 8; i++) delete[] serverPaths[i];
-    for (i = 0; i < 3; i++) delete[] rcvopts[i];
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < MAXSTRRTK; i++) delete[] serverPaths[i];
+    for (i = 0; i < RTKSVRNIN; i++) delete[] rcvopts[i];
+    for (i = 0; i < RTKSVRNIN; i++)
         if (cmds[i]) delete[] cmds[i];
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < RTKSVRNIN; i++)
         if (cmds_periodic[i]) delete[] cmds_periodic[i];
 
     solutionsCurrent = solutionsStart = solutionsEnd = 0;
@@ -1284,12 +1293,12 @@ void MainWindow::serverStart()
 // stop rtk server ---------------------------------------------------------
 void MainWindow::serverStop()
 {
-    char *cmds[3] = { 0 };
+    char *cmds[RTKSVRNIN] = { 0 };
     int i, n, m, streamTypes;
 
     trace(3, "serverStop\n");
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < RTKSVRNIN; i++) {
         cmds[i] = NULL;
         streamTypes = rtksvr->stream[i].type;
 
@@ -1307,7 +1316,7 @@ void MainWindow::serverStop()
 
     free_pcvs(&rtksvr->pcvsr);
 
-    for (i = 0; i < 3; i++) delete[] cmds[i];
+    for (i = 0; i < RTKSVRNIN; i++) delete[] cmds[i];
 
     ui->btnStart->setVisible(true);
     ui->btnStart->setEnabled(true);
@@ -1622,7 +1631,7 @@ void MainWindow::updatePosition()
 void MainWindow::updateStream()
 {
     static const QColor color[] = {QColor(Qt::red), QColor(Qt::white), Color::Orange, Qt::darkGreen, Color::Lime};
-    QLabel *ind[MAXSTRRTK] = {ui->lblStream1, ui->lblStream2, ui->lblStream3, ui->lblStream4, ui->lblStream5, ui->lblStream6, ui->lblStream7, ui->lblStream8};
+    QLabel *ind[MAXSTRRTK] = {ui->lblStream1, ui->lblStream2, ui->lblStream3, ui->lblStream4, ui->lblStream5, ui->lblStream6, ui->lblStream7, ui->lblStream8, ui->lblStream9, ui->lblStream10, ui->lblStream11};
     int i, sstat[MAXSTRRTK] = {0};
     char msg[MAXSTRMSG] = "";
 
@@ -2486,11 +2495,11 @@ void MainWindow::setTrayIcon(int index)
 void MainWindow::loadOptions()
 {
     QSettings settings(iniFile, QSettings::IniFormat);
-    int i, j, no, strno[] = { 0, 1, 6, 2, 3, 4, 5, 7 };
+    int i, j, no, strno[MAXSTRRTK] = { 0, 1, 6, 9, 4, 5, 7, 10, 2, 3, 8 };
 
     trace(3, "loadOptions\n");
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < MAXSTRRTK; i++) {
         no = strno[i];
         streamEnabled[i] = settings.value(QString("stream/streamc%1").arg(no), 0).toInt();
         streamType[i] = settings.value(QString("stream/stream%1").arg(no), 0).toInt();
@@ -2499,17 +2508,17 @@ void MainWindow::loadOptions()
             paths[i][j] = settings.value(QString("stream/path_%1_%2").arg(no).arg(j), "").toString();
     }
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < RTKSVRNIN; i++)
         receiverOptions [i] = settings.value(QString("stream/rcvopt%1").arg(i + 1), "").toString();
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < RTKSVRNIN; i++)
         for (j = 0; j < 3; j++) {
             commands[i][j] = settings.value(QString("serial/cmd_%1_%2").arg(i).arg(j), "").toString();
             commandEnabled[i][j] = settings.value(QString("serial/cmdena_%1_%2").arg(i).arg(j), 0).toInt();
             commands[i][j].replace("@@", "\r\n");
         }
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < RTKSVRNIN; i++)
         for (j = 0; j < 3; j++) {
             commandsTcp[i][j] = settings.value(QString("tcpip/cmd_%1_%2").arg(i).arg(j), "").toString();
             commandEnableTcp[i][j] = settings.value(QString("tcpip/cmdena_%1_%2").arg(i).arg(j), 0).toInt();
@@ -2584,13 +2593,13 @@ void MainWindow::loadOptions()
 void MainWindow::saveOptions()
 {
     QSettings settings(iniFile, QSettings::IniFormat);
-    int i, j, no, strno[] = { 0, 1, 6, 2, 3, 4, 5, 7 };
+    int i, j, no, strno[MAXSTRRTK] = { 0, 1, 6, 9, 4, 5, 7, 10, 2, 3, 8 };
 
     trace(3, "saveOptions\n");
 
     optDialog->saveOptions(settings);
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < MAXSTRRTK; i++) {
         no = strno[i];
         settings.setValue(QString("stream/streamc%1").arg(no), streamEnabled[i]);
         settings.setValue(QString("stream/stream%1").arg(no), streamType[i]);
@@ -2598,16 +2607,16 @@ void MainWindow::saveOptions()
         for (j = 0; j < 4; j++)
             settings.setValue(QString("stream/path_%1_%2").arg(no).arg(j), paths[i][j]);
     }
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < RTKSVRNIN; i++)
         settings.setValue(QString("stream/rcvopt%1").arg(i + 1), receiverOptions[i]);
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < RTKSVRNIN; i++)
         for (j = 0; j < 3; j++) {
             commands[i][j].replace("\r\n", "@@");
             settings.setValue(QString("serial/cmd_%1_%2").arg(i).arg(j), commands[i][j]);
             settings.setValue(QString("serial/cmdena_%1_%2").arg(i).arg(j), commandEnabled[i][j]);
         }
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < RTKSVRNIN; i++)
         for (j = 0; j < 3; j++) {
             commandsTcp[i][j].replace("\r\n", "@@");
             settings.setValue(QString("tcpip/cmd_%1_%2").arg(i).arg(j), commandsTcp[i][j]);

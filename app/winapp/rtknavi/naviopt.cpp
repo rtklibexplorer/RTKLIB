@@ -24,12 +24,12 @@ static double str2dbl(AnsiString str)
 	return val;
 }
 // receiver options table ---------------------------------------------------
-static int strtype[]={                  /* stream types */
-    STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE
+static int strtype[MAXSTRRTK]={         /* stream types */
+    STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE
 };
-static char strpath[8][MAXSTR]={""};    /* stream paths */
-static int strfmt[]={                   /* stream formats */
-    STRFMT_RTCM3,STRFMT_RTCM3,STRFMT_SP3,SOLF_LLH,SOLF_NMEA,0,0,0
+static char strpath[MAXSTRRTK][MAXSTR]={""}; /* stream paths */
+static int strfmt[MAXSTRRTK]={          /* stream formats */
+    STRFMT_RTCM3,STRFMT_RTCM3,STRFMT_RTCM3,STRFMT_RTCM3,0,0,0,0,SOLF_LLH,SOLF_NMEA,SOLF_NMEA
 };
 static int svrcycle     =10;            /* server cycle (ms) */
 static int timeout      =10000;         /* timeout time (ms) */
@@ -54,29 +54,37 @@ static char proxyaddr[MAXSTR]="";       /* proxy address */
 
 static opt_t rcvopts[]={
     {"inpstr1-type",    3,  (void *)&strtype[0],         ISTOPT },
-    {"inpstr2-type",    3,  (void *)&strtype[1],         ISTOPT },
-    {"inpstr3-type",    3,  (void *)&strtype[2],         ISTOPT },
     {"inpstr1-path",    2,  (void *)strpath [0],         ""     },
-    {"inpstr2-path",    2,  (void *)strpath [1],         ""     },
-    {"inpstr3-path",    2,  (void *)strpath [2],         ""     },
     {"inpstr1-format",  3,  (void *)&strfmt [0],         FMTOPT },
+    {"inpstr2-type",    3,  (void *)&strtype[1],         ISTOPT },
+    {"inpstr2-path",    2,  (void *)strpath [1],         ""     },
     {"inpstr2-format",  3,  (void *)&strfmt [1],         FMTOPT },
-    {"inpstr3-format",  3,  (void *)&strfmt [2],         FMTOPT },
     {"inpstr2-nmeareq", 3,  (void *)&nmeareq,            NMEOPT },
     {"inpstr2-nmealat", 1,  (void *)&nmeapos[0],         "deg"  },
     {"inpstr2-nmealon", 1,  (void *)&nmeapos[1],         "deg"  },
-    {"outstr1-type",    3,  (void *)&strtype[3],         OSTOPT },
-    {"outstr2-type",    3,  (void *)&strtype[4],         OSTOPT },
-    {"outstr1-path",    2,  (void *)strpath [3],         ""     },
-    {"outstr2-path",    2,  (void *)strpath [4],         ""     },
-    {"outstr1-format",  3,  (void *)&strfmt [3],         SOLOPT },
-    {"outstr2-format",  3,  (void *)&strfmt [4],         SOLOPT },
-    {"logstr1-type",    3,  (void *)&strtype[5],         OSTOPT },
-    {"logstr2-type",    3,  (void *)&strtype[6],         OSTOPT },
-    {"logstr3-type",    3,  (void *)&strtype[7],         OSTOPT },
-    {"logstr1-path",    2,  (void *)strpath [5],         ""     },
-    {"logstr2-path",    2,  (void *)strpath [6],         ""     },
-    {"logstr3-path",    2,  (void *)strpath [7],         ""     },
+    {"inpstr3-type",    3,  (void *)&strtype[2],         ISTOPT },
+    {"inpstr3-path",    2,  (void *)strpath [2],         ""     },
+    {"inpstr3-format",  3,  (void *)&strfmt [2],         FMTOPT },
+    {"inpstr4-type",    3,  (void *)&strtype[3],         ISTOPT },
+    {"inpstr4-path",    2,  (void *)strpath [3],         ""     },
+    {"inpstr4-format",  3,  (void *)&strfmt [3],         FMTOPT },
+    {"logstr1-type",    3,  (void *)&strtype[RTKSVRNIN], OSTOPT },
+    {"logstr1-path",    2,  (void *)strpath [RTKSVRNIN], ""     },
+    {"logstr2-type",    3,  (void *)&strtype[RTKSVRNIN + 1], OSTOPT},
+    {"logstr2-path",    2,  (void *)strpath [RTKSVRNIN + 1], ""    },
+    {"logstr3-type",    3,  (void *)&strtype[RTKSVRNIN + 2], OSTOPT},
+    {"logstr3-path",    2,  (void *)strpath [RTKSVRNIN + 2], ""    },
+    {"logstr4-type",    3,  (void *)&strtype[RTKSVRNIN + 3], OSTOPT},
+    {"logstr4-path",    2,  (void *)strpath [RTKSVRNIN + 3], ""    },
+    {"outstr1-type",    3,  (void *)&strtype[RTKSVRNIN*2], OSTOPT },
+    {"outstr1-path",    2,  (void *)strpath [RTKSVRNIN*2], ""     },
+    {"outstr1-format",  3,  (void *)&strfmt [RTKSVRNIN*2],SOLOPT },
+    {"outstr2-type",    3,  (void *)&strtype[RTKSVRNIN*2 + 1], OSTOPT},
+    {"outstr2-path",    2,  (void *)strpath [RTKSVRNIN*2 + 1], ""    },
+    {"outstr2-format",  3,  (void *)&strfmt [RTKSVRNIN*2 + 1], SOLOPT},
+    {"outstr3-type",    3,  (void *)&strtype[RTKSVRNIN*2 + 2], OSTOPT},
+    {"outstr3-path",    2,  (void *)strpath [RTKSVRNIN*2 + 2], ""    },
+    {"outstr3-format",  3,  (void *)&strfmt [RTKSVRNIN*2 + 2], SOLOPT},
     
     {"misc-svrcycle",   0,  (void *)&svrcycle,           "ms"   },
     {"misc-timeout",    0,  (void *)&timeout,            "ms"   },
@@ -717,15 +725,15 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	    !loadopts(file.c_str(),rcvopts)) return;
 	getsysopts(&prcopt,&solopt,&filopt);
 	
-	for (int i=0;i<8;i++) {
+	for (int i=0;i<MAXSTRRTK;i++) {
 		MainForm->StreamC[i]=strtype[i]!=STR_NONE;
 		MainForm->Stream[i]=STR_NONE;
-		for (int j=0;j<(i<3?num_itype:num_otype);j++) {
-			if (strtype[i]!=(i<3?itype[j]:otype[j])) continue;
+		for (int j=0;j<(i<RTKSVRNIN?num_itype:num_otype);j++) {
+			if (strtype[i]!=(i<RTKSVRNIN?itype[j]:otype[j])) continue;
 			MainForm->Stream[i]=j;
 			break;
 		}
-		if (i<5) MainForm->Format[i]=strfmt[i];
+		if (i<RTKSVRNIN || i>=RTKSVRNIN*2) MainForm->Format[i]=strfmt[i];
 		
 		if (strtype[i]==STR_SERIAL) {
 			MainForm->Paths[i][0]=strpath[i];
@@ -911,8 +919,8 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
 	solopt_t solopt=solopt_default;
 	filopt_t filopt={""};
 	
-	for (int i=0;i<8;i++) {
-		strtype[i]=i<3?itype[MainForm->Stream[i]]:otype[MainForm->Stream[i]];
+	for (int i=0;i<MAXSTRRTK;i++) {
+		strtype[i]=i<RTKSVRNIN?itype[MainForm->Stream[i]]:otype[MainForm->Stream[i]];
 		strfmt[i]=MainForm->Format[i];
 		
 		if (!MainForm->StreamC[i]) {

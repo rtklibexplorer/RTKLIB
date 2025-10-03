@@ -169,6 +169,13 @@
         </property>
        </widget>
       </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>(4)</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0" colspan="2">
        <widget class="QLabel" name="lblInputFilePath">
         <property name="toolTip">
@@ -186,6 +193,13 @@
        <widget class="QLineEdit" name="lEFilePath1">
         <property name="toolTip">
          <string>Specify file name for rover data</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLineEdit" name="lEFilePath4">
+        <property name="toolTip">
+         <string>Specify file name for correction data</string>
         </property>
        </widget>
       </item>
@@ -724,7 +738,96 @@
         </item>
        </widget>
       </item>
-     </layout>
+      <item row="4" column="0">
+       <widget class="QCheckBox" name="cBStreamC4">
+        <property name="toolTip">
+         <string>Activate data input stream for additional corrections</string>
+        </property>
+        <property name="text">
+         <string>(4) Correction</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QComboBox" name="cBStream4">
+        <property name="toolTip">
+         <string>Select input stream type for corrections</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>Serial</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>TCP Client</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>TCP Server</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NTRIP Client</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>File</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>FTP</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>HTTP</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="4" column="2">
+       <widget class="QPushButton" name="btnStream4">
+        <property name="toolTip">
+         <string>Select options for the correction data stream</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QPushButton" name="btnCmd4">
+        <property name="toolTip">
+         <string>Specify additional commands for the correction data stream</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="4">
+       <widget class="QComboBox" name="cBFormat4">
+        <property name="toolTip">
+         <string>Select correction data stream format</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="5">
+       <widget class="QPushButton" name="btnReceiverOptions4">
+        <property name="toolTip">
+         <string>Define additional options for the receiver</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+    </layout>
     </widget>
    </item>
   </layout>
@@ -748,6 +851,12 @@
   <tabstop>btnCmd3</tabstop>
   <tabstop>cBFormat3</tabstop>
   <tabstop>btnReceiverOptions3</tabstop>
+  <tabstop>cBStreamC4</tabstop>
+  <tabstop>cBStream4</tabstop>
+  <tabstop>btnStream4</tabstop>
+  <tabstop>btnCmd4</tabstop>
+  <tabstop>cBFormat4</tabstop>
+  <tabstop>btnReceiverOptions4</tabstop>
   <tabstop>cBNmeaRequestType</tabstop>
   <tabstop>sBNmeaPosition1</tabstop>
   <tabstop>sBNmeaPosition2</tabstop>
@@ -758,6 +867,7 @@
   <tabstop>lEFilePath1</tabstop>
   <tabstop>lEFilePath2</tabstop>
   <tabstop>lEFilePath3</tabstop>
+  <tabstop>lEFilePath4</tabstop>
   <tabstop>cBTimeTag</tabstop>
   <tabstop>cBTimeSpeed</tabstop>
   <tabstop>cB64Bit</tabstop>

@@ -32,6 +32,7 @@ LogStrDialog::LogStrDialog(QWidget *parent)
     ui->lEFilePath1->setCompleter(new QCompleter(fileModel, this));
     ui->lEFilePath2->setCompleter(new QCompleter(fileModel, this));
     ui->lEFilePath3->setCompleter(new QCompleter(fileModel, this));
+    ui->lEFilePath4->setCompleter(new QCompleter(fileModel, this));
 
     // line edit actions
     QAction *aclEFilePath1Select = ui->lEFilePath1->addAction(QIcon(":/buttons/folder"), QLineEdit::TrailingPosition);
@@ -40,6 +41,8 @@ LogStrDialog::LogStrDialog(QWidget *parent)
     aclEFilePath2Select->setToolTip(tr("Select File"));
     QAction *aclEFilePath3Select = ui->lEFilePath3->addAction(QIcon(":/buttons/folder"), QLineEdit::TrailingPosition);
     aclEFilePath3Select->setToolTip(tr("Select File"));
+    QAction *aclEFilePath4Select = ui->lEFilePath4->addAction(QIcon(":/buttons/folder"), QLineEdit::TrailingPosition);
+    aclEFilePath4Select->setToolTip(tr("Select File"));
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &LogStrDialog::accept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &LogStrDialog::reject);
@@ -47,15 +50,19 @@ LogStrDialog::LogStrDialog(QWidget *parent)
     connect(aclEFilePath1Select, &QAction::triggered, this, &LogStrDialog::selectFile1);
     connect(aclEFilePath2Select, &QAction::triggered, this, &LogStrDialog::selectFile2);
     connect(aclEFilePath3Select, &QAction::triggered, this, &LogStrDialog::selectFile3);
+    connect(aclEFilePath4Select, &QAction::triggered, this, &LogStrDialog::selectFile4);
     connect(ui->btnStream1, &QPushButton::clicked, this, &LogStrDialog::showStreamOptions1);
     connect(ui->btnStream2, &QPushButton::clicked, this, &LogStrDialog::showStreamOptions2);
     connect(ui->btnStream3, &QPushButton::clicked, this, &LogStrDialog::showStreamOptions3);
+    connect(ui->btnStream4, &QPushButton::clicked, this, &LogStrDialog::showStreamOptions4);
     connect(ui->cBStream1, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &LogStrDialog::updateEnable);
     connect(ui->cBStream2, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &LogStrDialog::updateEnable);
     connect(ui->cBStream3, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &LogStrDialog::updateEnable);
+    connect(ui->cBStream4, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &LogStrDialog::updateEnable);
     connect(ui->cBStream1C, &QCheckBox::clicked, this, &LogStrDialog::updateEnable);
     connect(ui->cBStream2C, &QCheckBox::clicked, this, &LogStrDialog::updateEnable);
     connect(ui->cBStream3C, &QCheckBox::clicked, this, &LogStrDialog::updateEnable);
+    connect(ui->cBStream4C, &QCheckBox::clicked, this, &LogStrDialog::updateEnable);
 
     ui->cBSwapInterval->setValidator(new QDoubleValidator(this));
 }
@@ -73,6 +80,11 @@ void LogStrDialog::selectFile2()
 void LogStrDialog::selectFile3()
 {
     ui->lEFilePath3->setText(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Open..."), ui->lEFilePath3->text())));
+}
+//---------------------------------------------------------------------------
+void LogStrDialog::selectFile4()
+{
+    ui->lEFilePath4->setText(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Open..."), ui->lEFilePath4->text())));
 }
 //---------------------------------------------------------------------------
 void LogStrDialog::showKeyDialog()
@@ -98,7 +110,7 @@ void LogStrDialog::showStreamOptions2()
         case 1: showTcpOptions(1, 1); break;
         case 2: showTcpOptions(1, 0); break;
         case 3: showTcpOptions(1, 2); break;
-        case 4: showTcpOptions(0, 4); break;
+        case 4: showTcpOptions(1, 4); break;
 	}
 }
 //---------------------------------------------------------------------------
@@ -109,7 +121,18 @@ void LogStrDialog::showStreamOptions3()
         case 1: showTcpOptions(2, 1); break;
         case 2: showTcpOptions(2, 0); break;
         case 3: showTcpOptions(2, 2); break;
-        case 4: showTcpOptions(0, 4); break;
+        case 4: showTcpOptions(2, 4); break;
+    }
+}
+//---------------------------------------------------------------------------
+void LogStrDialog::showStreamOptions4()
+{
+    switch (ui->cBStream4->currentIndex()) {
+        case 0: showSerialOptions(3, 0); break;
+        case 1: showTcpOptions(3, 1); break;
+        case 2: showTcpOptions(3, 0); break;
+        case 3: showTcpOptions(3, 2); break;
+        case 4: showTcpOptions(3, 4); break;
     }
 }
 //---------------------------------------------------------------------------
@@ -133,7 +156,7 @@ QString LogStrDialog::setFilePath(const QString &p)
 //---------------------------------------------------------------------------
 void LogStrDialog::showSerialOptions(int index, int opt)
 {
-    if ((index < 0) || (index > 2)) return;
+    if ((index < 0) || (index >= RTKSVRNIN)) return;
 
     serialOptDialog->setOptions(opt);
     serialOptDialog->setPath(paths[index][0]);
@@ -146,7 +169,7 @@ void LogStrDialog::showSerialOptions(int index, int opt)
 //---------------------------------------------------------------------------
 void LogStrDialog::showTcpOptions(int index, int opt)
 {
-    if ((index < 0) || (index > 2)) return;
+    if ((index < 0) || (index >= RTKSVRNIN)) return;
 
     tcpOptDialog->setOptions(opt);
     tcpOptDialog->setHistory(history, 10);
@@ -165,17 +188,21 @@ void LogStrDialog::updateEnable()
 {
     int ena = (ui->cBStream1C->isChecked() && ui->cBStream1->currentIndex() == 5) ||
               (ui->cBStream2C->isChecked() && ui->cBStream2->currentIndex() == 5) ||
-              (ui->cBStream3C->isChecked() && ui->cBStream3->currentIndex() == 5);
+              (ui->cBStream3C->isChecked() && ui->cBStream3->currentIndex() == 5) ||
+              (ui->cBStream4C->isChecked() && ui->cBStream4->currentIndex() == 5);
 
     ui->cBStream1->setEnabled(ui->cBStream1C->isChecked());
     ui->cBStream2->setEnabled(ui->cBStream2C->isChecked());
     ui->cBStream3->setEnabled(ui->cBStream3C->isChecked());
+    ui->cBStream4->setEnabled(ui->cBStream4C->isChecked());
     ui->btnStream1->setEnabled(ui->cBStream1C->isChecked() && ui->cBStream1->currentIndex() <= 4);
     ui->btnStream2->setEnabled(ui->cBStream2C->isChecked() && ui->cBStream2->currentIndex() <= 4);
     ui->btnStream3->setEnabled(ui->cBStream3C->isChecked() && ui->cBStream3->currentIndex() <= 4);
+    ui->btnStream4->setEnabled(ui->cBStream4C->isChecked() && ui->cBStream4->currentIndex() <= 4);
     ui->lEFilePath1->setEnabled(ui->cBStream1C->isChecked() && ui->cBStream1->currentIndex() == 5);
     ui->lEFilePath2->setEnabled(ui->cBStream2C->isChecked() && ui->cBStream2->currentIndex() == 5);
     ui->lEFilePath3->setEnabled(ui->cBStream3C->isChecked() && ui->cBStream3->currentIndex() == 5);
+    ui->lEFilePath4->setEnabled(ui->cBStream4C->isChecked() && ui->cBStream4->currentIndex() == 5);
     ui->lblSwapInterval->setEnabled(ena);
     ui->lblF1->setEnabled(ena);
     ui->cBTimeTag->setEnabled(ena);
@@ -185,8 +212,8 @@ void LogStrDialog::updateEnable()
 //---------------------------------------------------------------------------
 void LogStrDialog::setStreamEnabled(int stream, int enabled)
 {
-    QCheckBox *cBStreamC[] = {ui->cBStream1C, ui->cBStream2C, ui->cBStream3C};
-    if ((stream < 0 ) || (stream > 2)) return;
+    QCheckBox *cBStreamC[] = {ui->cBStream1C, ui->cBStream2C, ui->cBStream3C, ui->cBStream4C};
+    if ((stream < 0 ) || (stream >= RTKSVRNIN)) return;
 
     cBStreamC[stream]->setChecked(enabled);
     updateEnable();
@@ -194,16 +221,16 @@ void LogStrDialog::setStreamEnabled(int stream, int enabled)
 //---------------------------------------------------------------------------
 int LogStrDialog::getStreamEnabled(int stream)
 {
-    QCheckBox *cBStreamC[] = {ui->cBStream1C, ui->cBStream2C, ui->cBStream3C};
-    if ((stream < 0 ) || (stream > 2)) return false;
+    QCheckBox *cBStreamC[] = {ui->cBStream1C, ui->cBStream2C, ui->cBStream3C, ui->cBStream4C};
+    if ((stream < 0 ) || (stream >= RTKSVRNIN)) return false;
 
     return cBStreamC[stream]->isChecked();
 }
 //---------------------------------------------------------------------------
 void LogStrDialog::setStreamType(int stream, int type)
 {
-    QComboBox *cBStream[] = {ui->cBStream1, ui->cBStream2, ui->cBStream3};
-    if ((stream < 0 ) || (stream > 2)) return;
+    QComboBox *cBStream[] = {ui->cBStream1, ui->cBStream2, ui->cBStream3, ui->cBStream4};
+    if ((stream < 0 ) || (stream >= RTKSVRNIN)) return;
 
     cBStream[stream]->setCurrentIndex(type);
 
@@ -212,16 +239,16 @@ void LogStrDialog::setStreamType(int stream, int type)
 //---------------------------------------------------------------------------
 int LogStrDialog::getStreamType(int stream)
 {
-    QComboBox *cBStream[] = {ui->cBStream1, ui->cBStream2, ui->cBStream3};
-    if ((stream < 0 ) || (stream > 2)) return STR_NONE;
+    QComboBox *cBStream[] = {ui->cBStream1, ui->cBStream2, ui->cBStream3, ui->cBStream4};
+    if ((stream < 0 ) || (stream >= RTKSVRNIN)) return STR_NONE;
 
     return cBStream[stream]->currentIndex();
 };
 //---------------------------------------------------------------------------
 void LogStrDialog::setPath(int stream, int type, const QString &path)
 {
-    QLineEdit *edits[] = {ui->lEFilePath1, ui->lEFilePath2, ui->lEFilePath3};
-    if ((stream < 0 ) || (stream > 2)) return;
+    QLineEdit *edits[] = {ui->lEFilePath1, ui->lEFilePath2, ui->lEFilePath3, ui->lEFilePath4};
+    if ((stream < 0 ) || (stream >= RTKSVRNIN)) return;
     if ((type < 0 ) || (type > 3)) return;
 
     paths[stream][type] = path;
@@ -240,8 +267,8 @@ void LogStrDialog::setPath(int stream, int type, const QString &path)
 //---------------------------------------------------------------------------
 QString LogStrDialog::getPath(int stream, int type)
 {
-    QLineEdit *edits[] = {ui->lEFilePath1, ui->lEFilePath2, ui->lEFilePath3};
-    if ((stream < 0 ) || (stream > 2)) return "";
+    QLineEdit *edits[] = {ui->lEFilePath1, ui->lEFilePath2, ui->lEFilePath3, ui->lEFilePath4};
+    if ((stream < 0 ) || (stream >= RTKSVRNIN)) return "";
     if ((type < 0 ) || (type > 3)) return "";
 
     if (type == 2)

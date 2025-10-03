@@ -69,16 +69,16 @@ void __fastcall TMonitorDialog::BtnCloseClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::TypeChange(TObject *Sender)
 {
-	int index;
-	
 	TypeF=Type->ItemIndex;
-	index=TypeF-NMONITEM;
 	
-	if (0<=index) {
+	if (TypeF >= 16) {
+		// Clear the peek buffers.
 		rtksvrlock(&rtksvr);
-		if      (index<2) rtksvr.npb[index  ]=0;
-		else if (index<4) rtksvr.nsb[index-2]=0;
-		else              rtksvr.rtk.neb=0;
+                if (TypeF == 16) {
+                  for (int i = 0; i < RTKSVRNIN; i++) rtksvr.npb[i] = 0;
+                } else if (TypeF == 17) {
+                  for (int i = 0; i < RTKSVRNSOL; i++) rtksvr.nsb[i] = 0;
+                } else rtksvr.rtk.neb = 0;
 		rtksvrunlock(&rtksvr);
 	}
 	ClearTable();
@@ -369,7 +369,7 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	double *del,*off,runtime,rt[3]={0},dop[4]={0};
 	double azel[MAXSAT*2],pos[3],vel[3],rr[3]={0},enu[3]={0};
 	int i,j,k,thread,cycle,state,rtkstat,nsat0,nsat1,prcout,nave;
-	int cputime,nb[3]={0},nmsg[3][10]={{0}},ne;
+	int cputime,nb[RTKSVRNIN]={0},nmsg[RTKSVRNIN][10]={{0}},ne;
 	char tstr[40],*ant,id[8],s1[40]="-",s2[40]="-",s3[40]="-";
 	char file[1024]="";
 	const char *ionoopt[]={"OFF","Broadcast","SBAS","Dual-Frequency","Estimate STEC","IONEX TEC","QZSS LEX",""};
@@ -391,8 +391,8 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	cputime=rtksvr.cputime;
 	prcout =rtksvr.prcout;
 	nave=rtksvr.nave;
-	for (i=0;i<3;i++) nb[i]=rtksvr.nb[i];
-	for (i=0;i<3;i++) for (j=0;j<10;j++) {
+	for (i=0;i<RTKSVRNIN;i++) nb[i]=rtksvr.nb[i];
+	for (i=0;i<RTKSVRNIN;i++) for (j=0;j<10;j++) {
 		nmsg[i][j]=rtksvr.nmsg[i][j];
 	}
 	if (rtksvr.state) {
@@ -433,7 +433,7 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	if (rtk->opt.navsys&SYS_SBS) navsys=navsys+"SBAS ";
 	
 	Label->Caption="";
-	Tbl->RowCount=55+NFREQ*2;
+	Tbl->RowCount=56+NFREQ*2;
 	
 	i=1;
 	Tbl->Cells[0][i  ]="RTKLIB Version";
@@ -533,10 +533,14 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 								 nmsg[1][0],nmsg[1][1]+nmsg[1][6],nmsg[1][2],nmsg[1][3],
 								 nmsg[1][4],nmsg[1][5],nmsg[1][7],nmsg[1][9]);
 	
-	Tbl->Cells[0][i  ]="# of Input Data Ephemeris";
+	Tbl->Cells[0][i  ]="# of Input Data Correction 1";
 	Tbl->Cells[1][i++]=s.sprintf("Obs(%d), Nav(%d), Ion(%d), Sbs(%d), Pos(%d), Dgps(%d), Ssr(%d), Err(%d)",
 								 nmsg[2][0],nmsg[2][1]+nmsg[2][6],nmsg[2][2],nmsg[2][3],
 								 nmsg[2][4],nmsg[2][5],nmsg[2][7],nmsg[2][9]);
+	Tbl->Cells[0][i  ]="# of Input Data Correction 2";
+	Tbl->Cells[1][i++]=s.sprintf("Obs(%d), Nav(%d), Ion(%d), Sbs(%d), Pos(%d), Dgps(%d), Ssr(%d), Err(%d)",
+								 nmsg[3][0],nmsg[3][1]+nmsg[3][6],nmsg[3][2],nmsg[3][3],
+								 nmsg[3][4],nmsg[3][5],nmsg[3][7],nmsg[3][9]);
 	
 	Tbl->Cells[0][i  ]="Solution Status";
 	Tbl->Cells[1][i++]=sol[rtkstat];
@@ -1481,7 +1485,7 @@ void __fastcall TMonitorDialog::SetStr(void)
 		"STR","Stream","Type","Format","Mode","State","Input(bytes)","Input(bps)",
 		"Output(bytes)","Output(bps)","Path","Message"
 	};
-	int i,width[]={25,95,70,80,35,35,70,70,70,70,220,220};
+	int i,width[]={30,95,70,80,35,35,70,70,70,70,220,220};
 	
 	Tbl->ColCount=12;
 	Tbl->RowCount=2;
@@ -1494,9 +1498,10 @@ void __fastcall TMonitorDialog::SetStr(void)
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::ShowStr(void)
 {
-	AnsiString ch[]={
-		"Input Rover","Input Base","Input Correction","Output Solution 1",
-		"Output Solution 2","Log Rover","Log Base","Log Correction",
+	AnsiString ch[MAXSTRRTK + 1]={
+		"Input Rover","Input Base","Input Correction 1","Input Correction 2",
+                "Log Rover","Log Base","Log Correction 1","Log Correction 2",
+                "Output Solution 1","Output Solution 2","Output Solution 3",
 		"Monitor"
 	};
 	AnsiString type[]={
@@ -1510,28 +1515,28 @@ void __fastcall TMonitorDialog::ShowStr(void)
 	};
 	AnsiString state[]={"Error","-","OK"};
 	AnsiString s,mode,form;
-	stream_t stream[9];
-	int i,j,format[9]={0};
+	stream_t stream[MAXSTRRTK + 1];
+	int i,j,format[MAXSTRRTK + 1]={0};
 	char path[MAXSTRPATH]="",*p,*q,*pp;
 	
 	rtksvrlock(&rtksvr); // lock
-	for (i=0;i<8;i++) stream[i]=rtksvr.stream[i];
-	for (i=0;i<3;i++) format[i]=rtksvr.format[i];
-	for (i=3;i<5;i++) format[i]=rtksvr.solopt[i-3].posf;
-	stream[8]=monistr;
-	format[8]=SOLF_LLH;
+	for (i=0;i<MAXSTRRTK;i++) stream[i]=rtksvr.stream[i];
+	for (i=0;i<RTKSVRNIN;i++) format[i]=rtksvr.format[i];
+	for (i=0;i<RTKSVRNSOL;i++) format[RTKSVRNIN*2+i]=rtksvr.solopt[i].posf;
+	stream[MAXSTRRTK]=monistr;
+	format[MAXSTRRTK]=SOLF_LLH;
 	rtksvrunlock(&rtksvr); // unlock
 	
-	Tbl->RowCount=10;
+	Tbl->RowCount=1 + MAXSTRRTK + 1;
 	Label->Caption="";
-	for (i=0;i<9;i++) {
+	for (i=0;i<MAXSTRRTK + 1;i++) {
 		j=0;
 		Tbl->Cells[j++][i+1]=s.sprintf("(%d)",i+1);
 		Tbl->Cells[j++][i+1]=ch[i];
 		Tbl->Cells[j++][i+1]=type[stream[i].type];
 		if (!stream[i].type) form="-";
-		else if (i<3) form=formatstrs[format[i]];
-		else if (i<5||i==8) form=outformat[format[i]];
+		else if (i<RTKSVRNIN) form=formatstrs[format[i]];
+		else if (i >= RTKSVRNIN*2) form=outformat[format[i]];
 		else form="-";
 		Tbl->Cells[j++][i+1]=form;
 		if (stream[i].mode&STR_MODE_R) mode="R"; else mode="";
