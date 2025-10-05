@@ -871,11 +871,12 @@ static int sort_solbuf(solbuf_t *solbuf)
 *         (gtime_t te)      I  end time   (te.time==0: to end)
 *         (double tint)     I  time interval (0: all)
 *         (int    qflag)    I  quality flag  (0: all)
+*          int    mean      I  calculate the mean when true.
 *          solbuf_t *solbuf O  solution buffer
 * return : status (1:ok,0:no data or error)
 *-----------------------------------------------------------------------------*/
 extern int readsolt(const char *files[], int nfile, gtime_t ts, gtime_t te,
-                    double tint, int qflag, solbuf_t *solbuf)
+                    double tint, int qflag, int mean, solbuf_t *solbuf)
 {
     FILE *fp;
     solopt_t opt=solopt_default;
@@ -900,6 +901,26 @@ extern int readsolt(const char *files[], int nfile, gtime_t ts, gtime_t te,
         }
         fclose(fp);
     }
+    if (solbuf->n <= 1) return 1;
+    if (mean) {
+      double rr[3]={0};
+      for (int i=0;i<3;i++) {
+        for (int j=0;j<solbuf->n;j++) rr[i]+=solbuf->data[j].rr[i];
+        rr[i]/=solbuf->n;
+      }
+      sol_t *solbuf_data=(sol_t *)malloc(sizeof(sol_t));
+      if (!solbuf_data) {
+        free(solbuf->data); solbuf->data=NULL; solbuf->n=solbuf->nmax=0;
+        return 0;
+      }
+      *solbuf_data = solbuf->data[solbuf->n - 1];
+      solbuf->data = solbuf_data;
+      for (int i = 0; i < 3; i++) solbuf->data[0].rr[i] = rr[i];
+      solbuf->nmax = solbuf->n = 1;
+      solbuf->start = 0;
+      solbuf->end = 1;
+      return 1;
+    }
     return sort_solbuf(solbuf);
 }
 extern int readsol(const char *files[], int nfile, solbuf_t *sol)
@@ -908,7 +929,7 @@ extern int readsol(const char *files[], int nfile, solbuf_t *sol)
     
     trace(3,"readsol: nfile=%d\n",nfile);
     
-    return readsolt(files,nfile,time,time,0.0,0,sol);
+    return readsolt(files,nfile,time,time,0.0,0,0,sol);
 }
 /* add solution data to solution buffer ----------------------------------------
 * add solution data to solution buffer

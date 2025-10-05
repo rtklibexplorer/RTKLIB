@@ -40,6 +40,7 @@ __published:
 	TEdit *TimeH2;
 	TComboBox *QFlags;
 	TCheckBox *TimeIntF;
+	TCheckBox *SingleMeanF;
 	TEdit *OutputFile;
 	TEdit *InputFile;
 	TLabel *Label7;
@@ -55,6 +56,7 @@ __published:
 	TButton *BtnGoogleEarthFile;
 	TRadioButton *FormatKML;
 	TLabel *Label6;
+	TRadioButton *FormatCSV;
 	TRadioButton *FormatGPX;
 	TBitBtn *BtnView;
 	void __fastcall BtnCloseClick(TObject *Sender);
@@ -63,6 +65,7 @@ __published:
 	void __fastcall BtnGoogleClick(TObject *Sender);
 	void __fastcall TimeSpanClick(TObject *Sender);
 	void __fastcall TimeIntFClick(TObject *Sender);
+	void __fastcall SingleMeanFClick(TObject *Sender);
 	void __fastcall BtnInputFileClick(TObject *Sender);
 	void __fastcall InputFileChange(TObject *Sender);
 	void __fastcall TimeY1UDChangingEx(TObject *Sender, bool &AllowChange,
@@ -78,6 +81,7 @@ __published:
 	void __fastcall GoogleEarthFileChange(TObject *Sender);
 	void __fastcall BtnGoogleEarthFileClick(TObject *Sender);
 	void __fastcall FormatKMLClick(TObject *Sender);
+	void __fastcall FormatCSVClick(TObject *Sender);
 	void __fastcall FormatGPXClick(TObject *Sender);
 	void __fastcall BtnViewClick(TObject *Sender);
 private:
