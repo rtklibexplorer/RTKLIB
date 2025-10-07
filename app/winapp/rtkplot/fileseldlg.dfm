@@ -129,7 +129,7 @@ object FileSelDialog: TFileSelDialog
       Height = 21
       Align = alClient
       FileList = FileList
-      Filter = 'All (*.*)|*.*|Position File (*.pos, *.nmea)|*.pos;*.nmea'
+      Filter = 'All (*.*)|*.*|Position File (*.pos, *.nmea, *.nma)|*.pos;*.nmea;*.nma'
       TabOrder = 0
       OnClick = FilterClick
     end
