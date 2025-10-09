@@ -12,8 +12,9 @@ int showmsg(const char *format,...) {return 0;}
 }
 //---------------------------------------------------------------------------
 const char *PTypes[]={
-    "Gnd Trk","Position","Velocity","Accel","NSat","Residuals","Resid-EL",
-    "Sat Vis","Skyplot","DOP/NSat","SNR/MP/EL","SNR/MP-EL","MP-Skyplot",""
+  "Gnd Trk","Position","Velocity","Accel","NSat","Skyplot","DOP/NSat",
+  "Residuals","Resid-EL","Sat Vis","Skyplot obs","DOP/NSat obs","SNR/MP/EL",
+  "SNR/MP-EL","MP-Skyplot",""
 };
 // show message in status-bar -----------------------------------------------
 void __fastcall TPlot::ShowMsg(UTF8String msg)
@@ -342,7 +343,7 @@ TColor __fastcall TPlot::ObsColor(const obsd_t *obs, double az, double el)
         if (obs->L[freq-1]==0.0&&obs->P[freq-1]==0.0) {
             return clBlack;
         }
-        color=SnrColor(obs->SNR[freq-1]*SNR_UNIT);
+        color=SnrColor(obs->SNR[freq-1]);
     }
     else {
         for (i=0;i<NFREQ+NEXOBS;i++) {
@@ -354,7 +355,7 @@ TColor __fastcall TPlot::ObsColor(const obsd_t *obs, double az, double el)
         if (obs->L[i]==0.0&&obs->P[i]==0.0) {
             return clBlack;
         }
-        color=SnrColor(obs->SNR[i]*SNR_UNIT);
+        color=SnrColor(obs->SNR[i]);
     }
     if (el<ElMask*D2R||(ElMaskP&&el<ElMaskData[(int)(az*R2D+0.5)])) {
         return HideLowSat?clBlack:MColor[0][0];

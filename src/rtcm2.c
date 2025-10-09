@@ -42,8 +42,8 @@ static int obsindex(obs_t *obs, gtime_t time, int sat)
     obs->data[i].sat=sat;
     for (j=0;j<NFREQ;j++) {
         obs->data[i].L[j]=obs->data[i].P[j]=0.0;
-        obs->data[i].D[j]=0.0;
-        obs->data[i].SNR[j]=obs->data[i].LLI[j]=obs->data[i].code[j]=0;
+        obs->data[i].D[j]=obs->data[i].SNR[j]=0.0;
+        obs->data[i].LLI[j]=obs->data[i].code[j]=0;
     }
     obs->n++;
     return i;
@@ -341,41 +341,49 @@ static int decode_type22(rtcm_t *rtcm)
 /* decode type 23: antenna type definition record ----------------------------*/
 static int decode_type23(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode type 24: antenna reference point (arp) -----------------------------*/
 static int decode_type24(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode type 31: differential glonass correction ---------------------------*/
 static int decode_type31(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode type 32: differential glonass reference station parameters ---------*/
 static int decode_type32(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode type 34: glonass partial differential correction set ---------------*/
 static int decode_type34(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode type 36: glonass special message -----------------------------------*/
 static int decode_type36(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode type 37: gnss system time offset -----------------------------------*/
 static int decode_type37(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode type 59: proprietary message ---------------------------------------*/
 static int decode_type59(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode rtcm ver.2 message -------------------------------------------------*/

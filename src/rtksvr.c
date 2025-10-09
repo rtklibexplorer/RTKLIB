@@ -181,7 +181,6 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
                        int index)
 {
     eph_t *eph1,*eph2,*eph3;
-    geph_t *geph1,*geph2,*geph3;
     int prn;
     
     if (satsys(ephsat,&prn)!=SYS_GLO) {
@@ -202,8 +201,9 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
             }
             svr->nmsg[index][1]++;
         }
-        else {
+    else {
            if (!svr->navsel||svr->navsel==index+1) {
+               geph_t *geph1,*geph2,*geph3;
                geph1=nav->geph+prn-1;
                geph2=svr->nav.geph+prn-1;
                geph3=svr->nav.geph+prn-1+MAXPRNGLO;
@@ -215,8 +215,8 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
                }
            }
            svr->nmsg[index][6]++;
-        }
     }
+}
 /* update sbas message -------------------------------------------------------*/
 static void update_sbs(rtksvr_t *svr, sbsmsg_t *sbsmsg, int index)
 {
@@ -254,42 +254,61 @@ static void update_ionutc(rtksvr_t *svr, nav_t *nav, int index)
         }
         svr->nmsg[index][2]++;
     }
-/* update antenna position ---------------------------------------------------*/
-static void update_antpos(rtksvr_t *svr, int index)
-{
-    sta_t *sta;
-    double pos[3],del[3]={0},dr[3];
-    int i;
+// Update antenna position ---------------------------------------------------
+static void update_antpos(rtksvr_t *svr, int index) {
+  sta_t *sta;
+  if (svr->format[index] == STRFMT_RTCM2 || svr->format[index] == STRFMT_RTCM3) {
+    sta = &svr->rtcm[index].sta;
+  } else {
+    sta = &svr->raw[index].sta;
+  }
+  if (index == 1 && svr->rtk.opt.refpos == POSOPT_RTCM) {
+    // Update base station position.
+    for (int i = 0; i < 3; i++) svr->rtk.rb[i] = sta->pos[i];
+    tracet(2, "updated antenna index=%d position to %.4f %.4f %.4f\n", index, svr->rtk.rb[0], svr->rtk.rb[1], svr->rtk.rb[2]);
+  }
+  if (index == 0 && svr->rtk.opt.rovpos == POSOPT_RTCM &&
+      (svr->rtk.opt.mode == PMODE_FIXED || svr->rtk.opt.mode == PMODE_PPP_FIXED)) {
+    // Update rover fixed position.
+    for (int i = 0; i < 3; i++) svr->rtk.opt.ru[i] = sta->pos[i];
+    tracet(2, "updated antenna index=%d position to %.4f %.4f %.4f\n", index, svr->rtk.rb[0], svr->rtk.rb[1], svr->rtk.rb[2]);
+  }
 
-        if (svr->rtk.opt.refpos==POSOPT_RTCM&&index==1) {
-        if (svr->format[1]==STRFMT_RTCM2||svr->format[1]==STRFMT_RTCM3) {
-            sta=&svr->rtcm[1].sta;
-            }
-        else {
-            sta=&svr->raw[1].sta;
-        }
-        /* update base station position */
-            for (i=0;i<3;i++) {
-            svr->rtk.rb[i]=sta->pos[i];
-            }
-            /* antenna delta */
-            ecef2pos(svr->rtk.rb,pos);
-        if (sta->deltype) { /* xyz */
-            del[2]=sta->hgt;
-                enu2ecef(pos,del,dr);
-                for (i=0;i<3;i++) {
-                svr->rtk.rb[i]+=sta->del[i]+dr[i];
-                }
-            }
-            else { /* enu */
-            enu2ecef(pos,sta->del,dr);
-                for (i=0;i<3;i++) {
-                    svr->rtk.rb[i]+=dr[i];
-                }
-            }
-        }
-        svr->nmsg[index][4]++;
+  // Antenna type and delta. These are updated independently of the antenna
+  // marker position above when the anttype is "*".
+  if (strcmp(svr->rtk.opt.anttype[index], "*") == 0) {
+    if (sta->antdes[0] != '\0' && strcmp(svr->rtk.opt.pcvr[index].type, sta->antdes) != 0) {
+      // Antenna type is to be set from the RTCM stream, and does not match
+      // the current pcv_t type, so search for this pcv.
+      pcv_t *pcv = searchpcv(0, sta->antdes, utc2gpst(timeget()), &svr->pcvsr);
+      if (!pcv) {
+        tracet(2, "antenna index=%d no '%s'\n", index, sta->antdes);
+      } else {
+        tracet(2, "updated antenna index=%d to '%s'\n", index, sta->antdes);
+        svr->rtk.opt.pcvr[index] = *pcv;
+      }
     }
+    // Update the delta from the marker position to the antenna ARP, taking
+    // into account the RCTM antenna height. This overrides any config delta
+    // values which are ignored in this path.
+    if (sta->deltype == 1) {  // XYZ
+      // Convert to the antdel ENU, adding the height.
+      // Need at least an approx position to map the delta.
+      if (norm(sta->pos, 3) > 0.0) {
+        double pos[3];
+        ecef2pos(sta->pos, pos);
+        ecef2enu(pos, sta->del, svr->rtk.opt.antdel[index]);
+        svr->rtk.opt.antdel[index][2] += sta->hgt;
+      }
+    } else {  // ENU
+      for (int i = 0; i < 3; i++) svr->rtk.opt.antdel[index][i] = sta->del[i];
+      svr->rtk.opt.antdel[index][2] += sta->hgt;
+    }
+    tracet(2, "updated antenna index=%d delta to %.4f %.4f %.4f\n", index,
+           svr->rtk.opt.antdel[index][0], svr->rtk.opt.antdel[index][1], svr->rtk.opt.antdel[index][2]);
+  }
+  svr->nmsg[index][4]++;
+}
 /* update ssr corrections ----------------------------------------------------*/
 static void update_ssr(rtksvr_t *svr, int index)
 {
@@ -400,7 +419,7 @@ static int decoderaw(rtksvr_t *svr, int index)
             ephset=svr->raw[index].ephset;
             sbsmsg=&svr->raw[index].sbsmsg;
         }
-#if 0 /* record for receiving tick for debug */
+#ifdef RTK_DISABLED /* record for receiving tick for debug */
         if (ret==1) {
             char tstr[40];
             trace(0,"%d %10d T=%s NS=%2d\n",index,tickget(),
@@ -425,20 +444,25 @@ static int decoderaw(rtksvr_t *svr, int index)
 /* decode download file ------------------------------------------------------*/
 static void decodefile(rtksvr_t *svr, int index)
 {
-    nav_t nav={0};
-    char file[1024];
-    int nb;
-    
     tracet(4,"decodefile: index=%d\n",index);
-    
+
+    nav_t *nav = (nav_t *)calloc(1, sizeof(nav_t));
+    if (nav == NULL) {
+      trace(1, "decodefile: nav alloc failed\n");
+      return;
+    }
+
     rtksvrlock(svr);
     
     /* check file path completed */
-    if ((nb=svr->nb[index])<=2||
+    int nb = svr->nb[index];
+    if (nb<=2||
         svr->buff[index][nb-2]!='\r'||svr->buff[index][nb-1]!='\n') {
         rtksvrunlock(svr);
+        free(nav);
         return;
     }
+    char file[1024];
     strncpy(file,(char *)svr->buff[index],nb-2); file[nb-2]='\0';
     svr->nb[index]=0;
     
@@ -447,18 +471,19 @@ static void decodefile(rtksvr_t *svr, int index)
     if (svr->format[index]==STRFMT_SP3) { /* precise ephemeris */
         
         /* read sp3 precise ephemeris */
-        readsp3(file,&nav,0);
-        if (nav.ne<=0) {
+        readsp3(file,nav,0);
+        if (nav->ne<=0) {
             tracet(1,"sp3 file read error: %s\n",file);
+            free(nav);
             return;
         }
         /* update precise ephemeris */
         rtksvrlock(svr);
         
         if (svr->nav.peph) free(svr->nav.peph);
-        svr->nav.ne = nav.ne;
-        svr->nav.nemax = nav.nemax;
-        svr->nav.peph=nav.peph;
+        svr->nav.ne = nav->ne;
+        svr->nav.nemax = nav->nemax;
+        svr->nav.peph=nav->peph;
         svr->ftime[index]=utc2gpst(timeget());
         strcpy(svr->files[index],file);
         
@@ -467,22 +492,24 @@ static void decodefile(rtksvr_t *svr, int index)
     else if (svr->format[index]==STRFMT_RNXCLK) { /* precise clock */
         
         /* read rinex clock */
-        if (readrnxc(file,&nav)<=0) {
+        if (readrnxc(file,nav)<=0) {
             tracet(1,"rinex clock file read error: %s\n",file);
+            free(nav);
             return;
         }
         /* update precise clock */
         rtksvrlock(svr);
         
         if (svr->nav.pclk) free(svr->nav.pclk);
-        svr->nav.nc = nav.nc;
-        svr->nav.ncmax = nav.ncmax;
-        svr->nav.pclk=nav.pclk;
+        svr->nav.nc = nav->nc;
+        svr->nav.ncmax = nav->ncmax;
+        svr->nav.pclk=nav->pclk;
         svr->ftime[index]=utc2gpst(timeget());
         strcpy(svr->files[index],file);
         
         rtksvrunlock(svr);
     }
+    free(nav);
 }
 /* carrier-phase bias (fcb) correction ---------------------------------------*/
 static void corr_phase_bias(obsd_t *obs, int n, const nav_t *nav)
@@ -598,7 +625,6 @@ static void *rtksvrthread(void *arg)
 {
     rtksvr_t *svr=(rtksvr_t *)arg;
     obs_t obs;
-    obsd_t data[MAXOBS*2];
     sol_t sol={{0}};
     double tt;
     uint32_t tick,ticknmea,tick1hz,tickreset;
@@ -608,11 +634,20 @@ static void *rtksvrthread(void *arg)
     
     tracet(3,"rtksvrthread:\n");
     
-    svr->state=1; obs.data=data;
+    obsd_t *data = (obsd_t *)calloc(MAXOBS * 2, sizeof(obsd_t));
+    if (data == NULL) {
+      trace(1, "rtksvrthread: obsd_t alloc failed\n");
+      return 0;
+    }
+    obs.data = data;
+    obs.n = 0;
+    obs.nmax = MAXOBS * 2;
+
+    svr->state=1;
     svr->tick=tickget();
     ticknmea=tick1hz=svr->tick-1000;
     tickreset=svr->tick-MIN_INT_RESET;
-    
+
     for (cycle=0;svr->state;cycle++) {
         tick=tickget();
         for (i=0;i<3;i++) {
@@ -707,6 +742,7 @@ static void *rtksvrthread(void *arg)
         /* sleep until next cycle */
         sleepms(svr->cycle-cputime);
     }
+    free(data);
     for (i=0;i<MAXSTRRTK;i++) strclose(svr->stream+i);
     for (i=0;i<3;i++) {
         svr->nb[i]=svr->npb[i]=0;
@@ -731,7 +767,6 @@ extern int rtksvrinit(rtksvr_t *svr)
     gtime_t time0={0};
     sol_t  sol0 ={{0}};
     eph_t  eph0 ={0,-1,-1};
-    geph_t geph0={0,-1};
     seph_t seph0={0};
     int i,j;
     
@@ -763,19 +798,28 @@ extern int rtksvrinit(rtksvr_t *svr)
     memset(&svr->nav,0,sizeof(nav_t));
     memset(&svr->obs,0,sizeof(svr->obs));
     if (!(svr->nav.eph =(eph_t  *)malloc(sizeof(eph_t )*MAXSAT*4 ))||
-        !(svr->nav.geph=(geph_t *)malloc(sizeof(geph_t)*NSATGLO*2))||
         !(svr->nav.seph=(seph_t *)malloc(sizeof(seph_t)*NSATSBS*2))) {
         tracet(1,"rtksvrinit: malloc error\n");
         rtksvrfree(svr);
         return 0;
     }
     for (i=0;i<MAXSAT*4 ;i++) svr->nav.eph [i]=eph0;
-    for (i=0;i<NSATGLO*2;i++) svr->nav.geph[i]=geph0;
     for (i=0;i<NSATSBS*2;i++) svr->nav.seph[i]=seph0;
     svr->nav.n =svr->nav.nmax =MAXSAT *4;
-    svr->nav.ng=svr->nav.ngmax=NSATGLO*2;
     svr->nav.ns=svr->nav.nsmax=NSATSBS*2;
-    
+
+    if (MAXPRNGLO > 0) {
+      svr->nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO * 2);
+      if (svr->nav.geph == NULL) {
+        tracet(1,"rtksvrinit: malloc error\n");
+        rtksvrfree(svr);
+        return 0;
+      }
+      geph_t geph0 = {0,-1};
+      for (i = 0; i < MAXPRNGLO * 2; i++) svr->nav.geph[i] = geph0;
+    }
+    svr->nav.ng = svr->nav.ngmax = MAXPRNGLO * 2;
+
     for (i=0;i<3;i++) for (j=0;j<MAXOBSBUF;j++) {
         if (!(svr->obs[i][j].data=(obsd_t *)malloc(sizeof(obsd_t)*MAXOBS))) {
             tracet(1,"rtksvrinit: malloc error\n");
@@ -942,7 +986,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     }
     /* update navigation data */
     for (i=0;i<MAXSAT*4 ;i++) svr->nav.eph [i].ttr=time0;
-    for (i=0;i<NSATGLO*2;i++) svr->nav.geph[i].tof=time0;
+    for (i=0;i<MAXPRNGLO*2;i++) svr->nav.geph[i].tof=time0;
     for (i=0;i<NSATSBS*2;i++) svr->nav.seph[i].tof=time0;
     
     /* set monitor stream */
@@ -1113,7 +1157,7 @@ extern int rtksvrostat(rtksvr_t *svr, int rcv, gtime_t *time, int *sat,
         az  [i]=svr->rtk.ssat[sat[i]-1].azel[0];
         el  [i]=svr->rtk.ssat[sat[i]-1].azel[1];
         for (j=0;j<NFREQ;j++) {
-            snr[i][j]=(int)(svr->obs[rcv][0].data[i].SNR[j]*SNR_UNIT+0.5);
+            snr[i][j]=(int)(svr->obs[rcv][0].data[i].SNR[j]);
         }
         if (svr->rtk.sol.stat==SOLQ_NONE||svr->rtk.sol.stat==SOLQ_SINGLE) {
             vsat[i]=svr->rtk.ssat[sat[i]-1].vs;

@@ -860,6 +860,7 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	RovPosTypeP	 ->ItemIndex	=0;
         if (prcopt.rovpos == POSOPT_POS_LLH) RovPosTypeP->ItemIndex = 0;
         else if (prcopt.rovpos == POSOPT_POS_XYZ) RovPosTypeP->ItemIndex = 2;
+	else if (prcopt.rovpos == POSOPT_RTCM) RovPosTypeP->ItemIndex= 3;
 
 	RefPosTypeP	 ->ItemIndex	=0;
         if (prcopt.refpos == POSOPT_POS_LLH) RefPosTypeP->ItemIndex = 0;
@@ -1102,6 +1103,7 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
         prcopt.rovpos = POSOPT_POS_LLH;
         if (RovPosTypeP->ItemIndex < 2) prcopt.rovpos = POSOPT_POS_LLH;
         else if (RovPosTypeP->ItemIndex == 2) prcopt.rovpos = POSOPT_POS_XYZ;
+        else if (RovPosTypeP->ItemIndex == 3) prcopt.rovpos = POSOPT_RTCM;
 
         prcopt.refpos = POSOPT_POS_LLH;
         if (RefPosTypeP->ItemIndex < 2) prcopt.refpos = POSOPT_POS_LLH;
@@ -1124,7 +1126,7 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
 	strcpy(filopt.tempdir,LocalDir_Text.c_str());
 	
 	time2str(utc2gpst(timeget()),s,0);
-	sprintf(comment,"RTKNAVI options (%s, v.%s %s)",s,VER_RTKLIB,PATCH_LEVEL);
+	sprintf(comment,"RTKNAVI options (%s-%s %s)",s,VER_RTKLIB,PATCH_LEVEL);
 	setsysopts(&prcopt,&solopt,&filopt);
 	if (!saveopts(file.c_str(),"w",comment,sysopts)||
 		!saveopts(file.c_str(),"a","",rcvopts)) return;
@@ -1141,8 +1143,8 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	Freq           ->Enabled=prec;
 	DynamicModel   ->Enabled=prec;
 	TideCorr       ->Enabled=prec;
-	PosOpt1        ->Enabled=ppp;
-	PosOpt2        ->Enabled=ppp;
+	PosOpt1        ->Enabled=rel||ppp;
+	PosOpt2        ->Enabled=rel||ppp;
 	PosOpt3        ->Enabled=ppp;
 	PosOpt4        ->Enabled=ppp;
 	PosOpt6        ->Enabled=ppp;
@@ -1189,18 +1191,17 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	OutputHeight   ->Enabled=SolFormat->ItemIndex==0;
 	OutputGeoid    ->Enabled=SolFormat->ItemIndex==0&&OutputHeight->ItemIndex==1;
 	
+        // For rtknavi the delta can be supplied even when antenna selection
+        // is automated, in which case the delta fills in until overwritten
+        // when the antenna and it's delta are known.
 	RovAntPcv      ->Enabled=rel||ppp;
 	RovAnt         ->Enabled=(rel||ppp)&&RovAntPcv->Checked;
-	RovAntE        ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
-	RovAntN        ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
-	RovAntU        ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
-	LabelRovAntD   ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
 	RefAntPcv      ->Enabled=rel;
 	RefAnt         ->Enabled=rel&&RefAntPcv->Checked;
-	RefAntE        ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
-	RefAntN        ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
-	RefAntU        ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
-	LabelRefAntD   ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
+	RefAntE        ->Enabled=rel;
+	RefAntN        ->Enabled=rel;
+	RefAntU        ->Enabled=rel;
+	LabelRefAntD   ->Enabled=rel;
 	
 	RovPosTypeP    ->Enabled=PosMode->ItemIndex==PMODE_FIXED||PosMode->ItemIndex==PMODE_PPP_FIXED;
 	RovPos1        ->Enabled=RovPosTypeP->Enabled&&RovPosTypeP->ItemIndex<=2;
@@ -1284,22 +1285,21 @@ void __fastcall TOptDialog::ReadAntList(void)
 	pcvs_t pcvs={0};
 	char *p;
 	
-	if (!readpcv(AntPcvFile_Text.c_str(),&pcvs)) return;
-	
 	list=new TStringList;
 	list->Add("");
 	list->Add("*");
 	
-	for (int i=0;i<pcvs.n;i++) {
-		if (pcvs.pcv[i].sat) continue;
-		if ((p=strchr(pcvs.pcv[i].type,' '))) *p='\0';
-		if (i>0&&!strcmp(pcvs.pcv[i].type,pcvs.pcv[i-1].type)) continue;
-		list->Add(pcvs.pcv[i].type);
-	}
+	if (readpcv(AntPcvFile_Text.c_str(),&pcvs)) {
+          for (int i=0;i<pcvs.n;i++) {
+            if (pcvs.pcv[i].sat) continue;
+            if ((p=strchr(pcvs.pcv[i].type,' '))) *p='\0';
+            if (i>0&&!strcmp(pcvs.pcv[i].type,pcvs.pcv[i-1].type)) continue;
+            list->Add(pcvs.pcv[i].type);
+          }
+          free_pcvs(&pcvs);
+        }
 	RovAnt->Items=list;
 	RefAnt->Items=list;
-	
-	free(pcvs.pcv);
 }
 //---------------------------------------------------------------------------
 void __fastcall TOptDialog::NavSys6Click(TObject *Sender)

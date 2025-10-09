@@ -46,13 +46,11 @@ InputStrDialog::InputStrDialog(QWidget *parent)
     ftpOptDialog = new FtpOptDialog(this);
 
     // setup completers
-    QCompleter *fileCompleter = new QCompleter(this);
-    QFileSystemModel *fileModel = new QFileSystemModel(fileCompleter);
+    QFileSystemModel *fileModel = new QFileSystemModel(this);
     fileModel->setRootPath("");
-    fileCompleter->setModel(fileModel);
-    ui->lEFilePath1->setCompleter(fileCompleter);
-    ui->lEFilePath2->setCompleter(fileCompleter);
-    ui->lEFilePath3->setCompleter(fileCompleter);
+    ui->lEFilePath1->setCompleter(new QCompleter(fileModel, this));
+    ui->lEFilePath2->setCompleter(new QCompleter(fileModel, this));
+    ui->lEFilePath3->setCompleter(new QCompleter(fileModel, this));
 
     // line edit actions
     QAction *aclEFilePath1Select = ui->lEFilePath1->addAction(QIcon(":/buttons/folder"), QLineEdit::TrailingPosition);

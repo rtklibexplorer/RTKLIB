@@ -68,12 +68,6 @@ test/utest/t_rinex
 test/utest/t_time
 test/utest/t_tle
 
-util/gencrc/gencrc
-util/gencrc/genmsk
-util/gencrc/genxor
-util/rnx2rtcm/rnx2rtcm
-util/simobs/gcc/simobs
-
 # gets created by qmake
 *.qmake.stash
 /app/qtapp/Makefile

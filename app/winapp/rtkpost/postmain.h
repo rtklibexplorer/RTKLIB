@@ -141,6 +141,7 @@ __published:
 	void __fastcall BtnKeywordClick    (TObject *Sender);
 	
 	void __fastcall TimeStartClick     (TObject *Sender);
+	void __fastcall TimeEndClick       (TObject *Sender);
 	void __fastcall TimeIntFClick      (TObject *Sender);
 	void __fastcall TimeUnitFClick     (TObject *Sender);
 	void __fastcall InputFile1Change   (TObject *Sender);

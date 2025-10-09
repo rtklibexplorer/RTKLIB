@@ -517,6 +517,7 @@ static void closeserial(serial_t *serial)
 /* read serial ---------------------------------------------------------------*/
 static int readserial(serial_t *serial, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     char msg_tcp[128];
 #ifdef WIN32
     DWORD nr;
@@ -542,6 +543,7 @@ static int readserial(serial_t *serial, uint8_t *buff, int n, char *msg)
 /* write serial --------------------------------------------------------------*/
 static int writeserial(serial_t *serial, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     int ns=0;
     
     tracet(3,"writeserial: dev=%d n=%d\n",serial->dev,n);
@@ -1175,6 +1177,17 @@ static int gentcp(tcp_t *tcp, int type, char *msg)
         setsockopt(tcp->sock,SOL_SOCKET,SO_REUSEADDR,(const char *)&opt,
                    sizeof(opt));
 #endif
+        if(tcp->saddr[0])
+        {
+            if(!(hp=gethostbyname(tcp->saddr))) {
+                sprintf(msg,"address error (%s)",tcp->saddr);
+                tracet(1,"gentcp: gethostbyname error addr=%s err=%d\n",tcp->saddr,errsock());
+                closesocket(tcp->sock);
+                tcp->state=-1;
+                return 0;
+            }
+            memcpy(&tcp->addr.sin_addr,hp->h_addr,hp->h_length);
+        }
         if (bind(tcp->sock,(struct sockaddr *)&tcp->addr,sizeof(tcp->addr))==-1) {
             sprintf(msg,"bind error (%d) : %d",errsock(),tcp->port);
             tracet(1,"gentcp: bind error port=%d err=%d\n",tcp->port,errsock());
@@ -1389,7 +1402,7 @@ static int statextcp(tcp_t *tcp, char *msg)
     p+=sprintf(p,"    saddr = %s\n",tcp->saddr);
     p+=sprintf(p,"    port  = %d\n",tcp->port);
     p+=sprintf(p,"    sock  = %d\n",(int)tcp->sock);
-#if 0 /* for debug */
+#ifdef RTK_DISABLED /* for debug */
     p+=sprintf(p,"    tcon  = %d\n",tcp->tcon);
     p+=sprintf(p,"    tact  = %u\n",tcp->tact);
     p+=sprintf(p,"    tdis  = %u\n",tcp->tdis);
@@ -1552,6 +1565,7 @@ static int statetcpcli(tcpcli_t *tcpcli)
 /* get extended state tcp client ---------------------------------------------*/
 static int statextcpcli(tcpcli_t *tcpcli, char *msg)
 {
+    (void)msg;
     return tcpcli?tcpcli->svr.state:0;
 }
 /* base64 encoder ------------------------------------------------------------*/
@@ -2204,6 +2218,7 @@ static void closeudpsvr(udp_t *udpsvr)
 /* read udp server -----------------------------------------------------------*/
 static int readudpsvr(udp_t *udpsvr, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     struct timeval tv={0};
     fd_set rs;
     int ret,nr;
@@ -2263,6 +2278,7 @@ static void closeudpcli(udp_t *udpcli)
 /* write udp client -----------------------------------------------------------*/
 static int writeudpcli(udp_t *udpcli, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     tracet(4,"writeudpcli: sock=%d n=%d\n",udpcli->sock,n);
     
     return (int)sendto(udpcli->sock,(char *)buff,n,0,
@@ -2541,6 +2557,7 @@ static int stateftp(ftp_t *ftp)
 /* get extended state ftp ----------------------------------------------------*/
 static int statexftp(ftp_t *ftp, char *msg)
 {
+    (void)msg;
     return !ftp?0:(ftp->state==0?2:(ftp->state<=2?3:-1));
 }
 /* open memory buffer --------------------------------------------------------*/
@@ -2581,6 +2598,7 @@ static void closemembuf(membuf_t *membuf)
 /* read memory buffer --------------------------------------------------------*/
 static int readmembuf(membuf_t *membuf, uint8_t *buff, int n, char *msg)
 {
+    (void)msg;
     tracet(4,"readmembuf: n=%d\n",n);
     
     if (!membuf) return 0;

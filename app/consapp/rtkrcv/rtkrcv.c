@@ -364,41 +364,69 @@ static int readcmd(const char *file, char *cmd, int type)
     fclose(fp);
     return 1;
 }
-/* read antenna file ---------------------------------------------------------*/
-static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav)
-{
-    const pcv_t pcv0={0};
-    pcvs_t pcvr={0},pcvs={0};
-    pcv_t *pcv;
-    gtime_t time=timeget();
-    int i;
+/* Read antenna file ---------------------------------------------------------*/
+static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav, pcvs_t *pcvsr) {
+  trace(3,"readant:\n");
     
-    trace(3,"readant:\n");
-    
-    opt->pcvr[0]=opt->pcvr[1]=pcv0;
-    if (!*filopt.rcvantp) return;
-    
-    if (readpcv(filopt.rcvantp,&pcvr)) {
-        for (i=0;i<2;i++) {
-            if (!*opt->anttype[i]) continue;
-            if (!(pcv=searchpcv(0,opt->anttype[i],time,&pcvr))) {
-                vt_printf(vt,"no antenna %s in %s",opt->anttype[i],filopt.rcvantp);
-                continue;
-            }
-            opt->pcvr[i]=*pcv;
+  const pcv_t pcv0 = {0};
+  opt->pcvr[0] = opt->pcvr[1] = pcv0;
+
+  if (*filopt.rcvantp) {
+    gtime_t time = timeget();
+    if (readpcv(filopt.rcvantp, pcvsr)) {
+      for (int i = 0; i < 2; i++) {
+        if (!*opt->anttype[i] || !strcmp(opt->anttype[i], "*")) continue;
+        pcv_t *pcv = searchpcv(0, opt->anttype[i], time, pcvsr);
+        if (!pcv) {
+          vt_printf(vt, "no antenna %s in %s", opt->anttype[i], filopt.rcvantp);
+          continue;
+         }
+        opt->pcvr[i] = *pcv;
+      }
+    } else
+      vt_printf(vt, "antenna file open error %s", filopt.rcvantp);
+  }
+
+  if (*filopt.satantp) {
+    pcvs_t pcvs = {0};
+    if (readpcv(filopt.satantp, &pcvs)) {
+      gtime_t time = timeget();
+#ifdef TRACE
+      int found[MAXSAT] = {0}, missing = 0;
+#endif
+      for (int i = 0; i < MAXSAT; i++) {
+        pcv_t *pcv = searchpcv(i + 1, "", time, &pcvs);
+        if (!pcv) {
+#ifdef TRACE
+          missing++;
+#endif
+          continue;
         }
-    }
-    else vt_printf(vt,"antenna file open error %s",filopt.rcvantp);
-    
-    if (readpcv(filopt.satantp,&pcvs)) {
-        for (i=0;i<MAXSAT;i++) {
-            if (!(pcv=searchpcv(i+1,"",time,&pcvs))) continue;
-            nav->pcvs[i]=*pcv;
+        nav->pcvs[i]=*pcv;
+#ifdef TRACE
+        found[i] = 1;
+#endif
+      }
+      free_pcvs(&pcvs);
+#ifdef TRACE
+      if (missing > 0) {
+        // Report satellites not found.
+        char satlst[MAXSAT * 4] = "", *p = satlst;
+        for (int i = 0; i < MAXSAT; i++) {
+          if (!found[i]) {
+            char id[8];
+            satno2id(i + 1, id);
+            int len = strlen(satlst);
+            if (len + strlen(id) > sizeof(satlst) - 1) continue;
+            p += sprintf(p, " %s", id);
+          }
         }
-    }
-    else vt_printf(vt,"antenna file open error %s",filopt.satantp);
-    
-    free(pcvr.pcv); free(pcvs.pcv);
+        trace(2, "Satellites missing pcv in %s:%s\n", filopt.satantp, satlst);
+      }
+#endif
+    } else
+      vt_printf(vt, "antenna file open error %s", filopt.satantp);
+  }
 }
 /* start rtk server ----------------------------------------------------------*/
 static int startsvr(vt_t *vt)
@@ -442,9 +470,9 @@ static int startsvr(vt_t *vt)
     pos[1]=nmeapos[1]*D2R;
     pos[2]=nmeapos[2];
     pos2ecef(pos,npos);
-    
+
     /* read antenna file */
-    readant(vt,&prcopt,&svr.nav);
+    readant(vt,&prcopt,&svr.nav,&svr.pcvsr);
     
     /* read dcb file */
     if (*filopt.dcb) {
@@ -488,6 +516,7 @@ static int startsvr(vt_t *vt)
                      solopt,&moni,errmsg)) {
         trace(2,"rtk server start error (%s)\n",errmsg);
         vt_printf(vt,"rtk server start error (%s)\n",errmsg);
+        free_pcvs(&svr.pcvsr);
         return 0;
     }
     return 1;
@@ -522,7 +551,9 @@ static void stopsvr(vt_t *vt)
     }
 #endif
     if (solopt[0].geoid>0) closegeoid();
-    
+
+    free_pcvs(&svr.pcvsr);
+
     vt_printf(vt,"stop rtk server\n");
 }
 /* print time ----------------------------------------------------------------*/
@@ -641,7 +672,6 @@ static void prsolution(vt_t *vt, const sol_t *sol, const double *rb)
 /* print status --------------------------------------------------------------*/
 static void prstatus(vt_t *vt)
 {
-    rtk_t rtk;
     const char *svrstate[]={"stop","run"},*type[]={"rover","base","corr"};
     const char *sol[]={"-","fix","float","SBAS","DGPS","single","PPP",""};
     const char *mode[]={
@@ -660,8 +690,11 @@ static void prstatus(vt_t *vt)
     
     trace(4,"prstatus:\n");
     
+    rtk_t *rtk = (rtk_t *)malloc(sizeof(rtk_t));
+    if (rtk == NULL) return;
+
     rtksvrlock(&svr);
-    rtk=svr.rtk;
+    *rtk=svr.rtk;
     thread=svr.thread;
     cycle=svr.cycle;
     state=svr.state;
@@ -691,10 +724,10 @@ static void prstatus(vt_t *vt)
     rtksvrunlock(&svr);
     
     for (i=n=0;i<MAXSAT;i++) {
-        if (rtk.opt.mode==PMODE_SINGLE&&!rtk.ssat[i].vs) continue;
-        if (rtk.opt.mode!=PMODE_SINGLE&&!rtk.ssat[i].vsat[0]) continue;
-        azel[  n*2]=rtk.ssat[i].azel[0];
-        azel[1+n*2]=rtk.ssat[i].azel[1];
+        if (rtk->opt.mode==PMODE_SINGLE&&!rtk->ssat[i].vs) continue;
+        if (rtk->opt.mode!=PMODE_SINGLE&&!rtk->ssat[i].vsat[0]) continue;
+        azel[  n*2]=rtk->ssat[i].azel[0];
+        azel[1+n*2]=rtk->ssat[i].azel[1];
         n++;
     }
     dops(n,azel,0.0,dop);
@@ -704,8 +737,8 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %lx\n","rtk server thread",(unsigned long)thread);
     vt_printf(vt,"%-28s: %s\n","rtk server state",svrstate[state]);
     vt_printf(vt,"%-28s: %d\n","processing cycle (ms)",cycle);
-    vt_printf(vt,"%-28s: %s\n","positioning mode",mode[rtk.opt.mode]);
-    vt_printf(vt,"%-28s: %s\n","frequencies",freq[rtk.opt.nf]);
+    vt_printf(vt,"%-28s: %s\n","positioning mode",mode[rtk->opt.mode]);
+    vt_printf(vt,"%-28s: %s\n","frequencies",freq[rtk->opt.nf]);
     vt_printf(vt,"%-28s: %02.0f:%02.0f:%04.1f\n","accumulated time to run",rt[0],rt[1],rt[2]);
     vt_printf(vt,"%-28s: %d\n","cpu time for a cycle (ms)",cputime);
     vt_printf(vt,"%-28s: %d\n","missing obs data count",prcout);
@@ -735,55 +768,55 @@ static void prstatus(vt_t *vt)
         vt_printf(vt,"%-15s %-9s: %s\n","# of rtcm messages",type[i],s);
     }
     vt_printf(vt,"%-28s: %s\n","solution status",sol[rtkstat]);
-    time2str(rtk.sol.time,tstr,9);
-    vt_printf(vt,"%-28s: %s\n","time of receiver clock rover",rtk.sol.time.time?tstr:"-");
-    vt_printf(vt,"%-28s: %.3f,%.3f,%.3f,%.3f\n","time sys offset (ns)",rtk.sol.dtr[1]*1e9,
-              rtk.sol.dtr[2]*1e9,rtk.sol.dtr[3]*1e9,rtk.sol.dtr[4]*1e9);
-    vt_printf(vt,"%-28s: %.3f\n","solution interval (s)",rtk.tt);
-    vt_printf(vt,"%-28s: %.3f\n","age of differential (s)",rtk.sol.age);
-    vt_printf(vt,"%-28s: %.3f\n","ratio for ar validation",rtk.sol.ratio);
+    time2str(rtk->sol.time,tstr,9);
+    vt_printf(vt,"%-28s: %s\n","time of receiver clock rover",rtk->sol.time.time?tstr:"-");
+    vt_printf(vt,"%-28s: %.3f,%.3f,%.3f,%.3f\n","time sys offset (ns)",rtk->sol.dtr[1]*1e9,
+              rtk->sol.dtr[2]*1e9,rtk->sol.dtr[3]*1e9,rtk->sol.dtr[4]*1e9);
+    vt_printf(vt,"%-28s: %.3f\n","solution interval (s)",rtk->tt);
+    vt_printf(vt,"%-28s: %.3f\n","age of differential (s)",rtk->sol.age);
+    vt_printf(vt,"%-28s: %.3f\n","ratio for ar validation",rtk->sol.ratio);
     vt_printf(vt,"%-28s: %d\n","# of satellites rover",nsat0);
     vt_printf(vt,"%-28s: %d\n","# of satellites base",nsat1);
-    vt_printf(vt,"%-28s: %d\n","# of valid satellites",rtk.sol.ns);
+    vt_printf(vt,"%-28s: %d\n","# of valid satellites",rtk->sol.ns);
     vt_printf(vt,"%-28s: %.1f,%.1f,%.1f,%.1f\n","GDOP/PDOP/HDOP/VDOP",dop[0],dop[1],dop[2],dop[3]);
-    vt_printf(vt,"%-28s: %d\n","# of real estimated states",rtk.na);
-    vt_printf(vt,"%-28s: %d\n","# of all estimated states",rtk.nx);
+    vt_printf(vt,"%-28s: %d\n","# of real estimated states",rtk->na);
+    vt_printf(vt,"%-28s: %d\n","# of all estimated states",rtk->nx);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","pos xyz single (m) rover",
-            rtk.sol.rr[0],rtk.sol.rr[1],rtk.sol.rr[2]);
-    if (norm(rtk.sol.rr,3)>0.0) ecef2pos(rtk.sol.rr,pos); else pos[0]=pos[1]=pos[2]=0.0;
+            rtk->sol.rr[0],rtk->sol.rr[1],rtk->sol.rr[2]);
+    if (norm(rtk->sol.rr,3)>0.0) ecef2pos(rtk->sol.rr,pos); else pos[0]=pos[1]=pos[2]=0.0;
     vt_printf(vt,"%-28s: %.8f,%.8f,%.3f\n","pos llh single (deg,m) rover",
             pos[0]*R2D,pos[1]*R2D,pos[2]);
-    ecef2enu(pos,rtk.sol.rr+3,vel);
+    ecef2enu(pos,rtk->sol.rr+3,vel);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","vel enu (m/s) rover",vel[0],vel[1],vel[2]);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","pos xyz float (m) rover",
-            rtk.x?rtk.x[0]:0,rtk.x?rtk.x[1]:0,rtk.x?rtk.x[2]:0);
+            rtk->x?rtk->x[0]:0,rtk->x?rtk->x[1]:0,rtk->x?rtk->x[2]:0);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","pos xyz float std (m) rover",
-            rtk.P?SQRT(rtk.P[0]):0,rtk.P?SQRT(rtk.P[1+1*rtk.nx]):0,rtk.P?SQRT(rtk.P[2+2*rtk.nx]):0);
+            rtk->P?SQRT(rtk->P[0]):0,rtk->P?SQRT(rtk->P[1+1*rtk->nx]):0,rtk->P?SQRT(rtk->P[2+2*rtk->nx]):0);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","pos xyz fixed (m) rover",
-            rtk.xa?rtk.xa[0]:0,rtk.xa?rtk.xa[1]:0,rtk.xa?rtk.xa[2]:0);
+            rtk->xa?rtk->xa[0]:0,rtk->xa?rtk->xa[1]:0,rtk->xa?rtk->xa[2]:0);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","pos xyz fixed std (m) rover",
-            rtk.Pa?SQRT(rtk.Pa[0]):0,rtk.Pa?SQRT(rtk.Pa[1+1*rtk.na]):0,rtk.Pa?SQRT(rtk.Pa[2+2*rtk.na]):0);
+            rtk->Pa?SQRT(rtk->Pa[0]):0,rtk->Pa?SQRT(rtk->Pa[1+1*rtk->na]):0,rtk->Pa?SQRT(rtk->Pa[2+2*rtk->na]):0);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","pos xyz (m) base",
-            rtk.rb[0],rtk.rb[1],rtk.rb[2]);
-    if (norm(rtk.rb,3)>0.0) ecef2pos(rtk.rb,pos); else pos[0]=pos[1]=pos[2]=0.0;
+            rtk->rb[0],rtk->rb[1],rtk->rb[2]);
+    if (norm(rtk->rb,3)>0.0) ecef2pos(rtk->rb,pos); else pos[0]=pos[1]=pos[2]=0.0;
     vt_printf(vt,"%-28s: %.8f,%.8f,%.3f\n","pos llh (deg,m) base",
             pos[0]*R2D,pos[1]*R2D,pos[2]);
     vt_printf(vt,"%-28s: %d\n","# of average single pos base",nave);
-    vt_printf(vt,"%-28s: %s\n","ant type rover",rtk.opt.pcvr[0].type);
-    del=rtk.opt.antdel[0];
-    vt_printf(vt,"%-28s: %.3f %.3f %.3f\n","ant delta rover",del[0],del[1],del[2]);
-    vt_printf(vt,"%-28s: %s\n","ant type base" ,rtk.opt.pcvr[1].type);
-    del=rtk.opt.antdel[1];
-    vt_printf(vt,"%-28s: %.3f %.3f %.3f\n","ant delta base",del[0],del[1],del[2]);
-    ecef2enu(pos,rtk.rb+3,vel);
+    vt_printf(vt,"%-28s: %s\n","ant type rover",rtk->opt.pcvr[0].type);
+    del=rtk->opt.antdel[0];
+    vt_printf(vt,"%-28s: %.4f %.4f %.4f\n","ant delta rover",del[0],del[1],del[2]);
+    vt_printf(vt,"%-28s: %s\n","ant type base" ,rtk->opt.pcvr[1].type);
+    del=rtk->opt.antdel[1];
+    vt_printf(vt,"%-28s: %.4f %.4f %.4f\n","ant delta base",del[0],del[1],del[2]);
+    ecef2enu(pos,rtk->rb+3,vel);
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","vel enu (m/s) base",
             vel[0],vel[1],vel[2]);
-    if (rtk.opt.mode>0&&rtk.x&&norm(rtk.x,3)>0.0) {
-        for (i=0;i<3;i++) rr[i]=rtk.x[i]-rtk.rb[i];
+    if (rtk->opt.mode>0&&rtk->x&&norm(rtk->x,3)>0.0) {
+        for (i=0;i<3;i++) rr[i]=rtk->x[i]-rtk->rb[i];
         bl1=norm(rr,3);
     }
-    if (rtk.opt.mode>0&&rtk.xa&&norm(rtk.xa,3)>0.0) {
-        for (i=0;i<3;i++) rr[i]=rtk.xa[i]-rtk.rb[i];
+    if (rtk->opt.mode>0&&rtk->xa&&norm(rtk->xa,3)>0.0) {
+        for (i=0;i<3;i++) rr[i]=rtk->xa[i]-rtk->rb[i];
         bl2=norm(rr,3);
     }
     vt_printf(vt,"%-28s: %.3f\n","baseline length float (m)",bl1);
@@ -791,19 +824,22 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %s\n","last time mark",tmcount ? tmstr : "-");
     vt_printf(vt,"%-28s: %d\n","receiver time mark count",rcvcount);
     vt_printf(vt,"%-28s: %d\n","rtklib time mark count",tmcount);
+    free(rtk);
 }
 /* print satellite -----------------------------------------------------------*/
 static void prsatellite(vt_t *vt, int nf)
 {
-    rtk_t rtk;
     double az,el;
     char id[8];
     int i,j,fix,frq[]={1,2,5,7,8,6};
     
     trace(4,"prsatellite:\n");
     
+    rtk_t *rtk = (rtk_t *)malloc(sizeof(rtk_t));
+    if (rtk == NULL) return;
+
     rtksvrlock(&svr);
-    rtk=svr.rtk;
+    *rtk=svr.rtk;
     rtksvrunlock(&svr);
     if (nf<=0||nf>NFREQ) nf=NFREQ;
     vt_printf(vt,"\n%s%3s %2s %5s %4s",ESC_BOLD,"SAT","C1","Az","El");
@@ -817,34 +853,40 @@ static void prsatellite(vt_t *vt, int nf)
     vt_printf(vt,"%s\n",ESC_RESET);
     
     for (i=0;i<MAXSAT;i++) {
-        if (rtk.ssat[i].azel[1]<=0.0) continue;
+        if (rtk->ssat[i].azel[1]<=0.0) continue;
         satno2id(i+1,id);
-        vt_printf(vt,"%3s %2s",id,rtk.ssat[i].vs?"OK":"-");
-        az=rtk.ssat[i].azel[0]*R2D; if (az<0.0) az+=360.0;
-        el=rtk.ssat[i].azel[1]*R2D;
+        vt_printf(vt,"%3s %2s",id,rtk->ssat[i].vs?"OK":"-");
+        az=rtk->ssat[i].azel[0]*R2D; if (az<0.0) az+=360.0;
+        el=rtk->ssat[i].azel[1]*R2D;
         vt_printf(vt," %5.1f %4.1f",az,el);
-        for (j=0;j<nf;j++) vt_printf(vt," %2s",rtk.ssat[i].vsat[j]?"OK":"-");
+        for (j=0;j<nf;j++) vt_printf(vt," %2s",rtk->ssat[i].vsat[j]?"OK":"-");
         for (j=0;j<nf;j++) {
-            fix=rtk.ssat[i].fix[j];
+            fix=rtk->ssat[i].fix[j];
             vt_printf(vt," %5s",fix==1?"FLOAT":(fix==2?"FIX":(fix==3?"HOLD":"-")));
         }
-        for (j=0;j<nf;j++) vt_printf(vt,"%7.3f",rtk.ssat[i].resp[j]);
-        for (j=0;j<nf;j++) vt_printf(vt,"%8.4f",rtk.ssat[i].resc[j]);
-        for (j=0;j<nf;j++) vt_printf(vt," %4d",rtk.ssat[i].slipc[j]);
-        for (j=0;j<nf;j++) vt_printf(vt," %6d",rtk.ssat[i].lock [j]);
-        for (j=0;j<nf;j++) vt_printf(vt," %3d",rtk.ssat[i].rejc [j]);
+        for (j=0;j<nf;j++) vt_printf(vt,"%7.3f",rtk->ssat[i].resp[j]);
+        for (j=0;j<nf;j++) vt_printf(vt,"%8.4f",rtk->ssat[i].resc[j]);
+        for (j=0;j<nf;j++) vt_printf(vt," %4d",rtk->ssat[i].slipc[j]);
+        for (j=0;j<nf;j++) vt_printf(vt," %6d",rtk->ssat[i].lock [j]);
+        for (j=0;j<nf;j++) vt_printf(vt," %3d",rtk->ssat[i].rejc [j]);
         vt_printf(vt,"\n");
     }
+    free(rtk);
 }
 /* print observation data ----------------------------------------------------*/
 static void probserv(vt_t *vt, int nf)
 {
-    obsd_t obs[MAXOBS*2];
     char tstr[40],id[8];
     int i,j,n=0,frq[]={1,2,5,7,8,6,9};
     
     trace(4,"probserv:\n");
     
+    obsd_t *obs = (obsd_t *)calloc(MAXOBS * 2, sizeof(obsd_t));
+    if (obs == NULL) {
+      trace(1, "probserv obsd_t alloc failed\n");
+      return;
+    }
+
     rtksvrlock(&svr);
     for (i=0;i<svr.obs[0][0].n&&n<MAXOBS*2;i++) {
         obs[n++]=svr.obs[0][0].data[i];
@@ -868,10 +910,11 @@ static void probserv(vt_t *vt, int nf)
         for (j=0;j<nf;j++) vt_printf(vt,"%13.3f",obs[i].P[j]);
         for (j=0;j<nf;j++) vt_printf(vt,"%14.3f",obs[i].L[j]);
         for (j=0;j<nf;j++) vt_printf(vt,"%8.1f" ,obs[i].D[j]);
-        for (j=0;j<nf;j++) vt_printf(vt,"%3.0f" ,obs[i].SNR[j]*SNR_UNIT);
+        for (j=0;j<nf;j++) vt_printf(vt,"%3.0f" ,obs[i].SNR[j]);
         for (j=0;j<nf;j++) vt_printf(vt,"%2d"   ,obs[i].LLI[j]);
         vt_printf(vt,"\n");
     }
+    free(obs);
 }
 /* print navigation data -----------------------------------------------------*/
 static void prnavidata(vt_t *vt)
@@ -1277,7 +1320,7 @@ static void cmd_mark(char **args, int narg, vt_t *vt)
 /* Mode command --------------------------------------------------------------*/
 static void cmd_mode(char **args, int narg, vt_t *vt) {
   const char *mode[] = {"single",      "DGPS",  "kinematic",  "static",    "static-start",
-                        "moving-base", "fixed", "PPP-kinematic", "PPP-static"};
+                        "moving-base", "fixed", "PPP-kinematic", "PPP-static", "PPP-fixed"};
 
   trace(3, "cmd_mode:\n");
 

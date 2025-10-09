@@ -1,0 +1,6 @@
+# Ignore all files in the lib directory
+*
+
+# But not the following directories and files
+!.gitignore
+!readme.txt

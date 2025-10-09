@@ -71,9 +71,9 @@ extern "C" {
 
 /* constants -----------------------------------------------------------------*/
 
-#define VER_RTKLIB  "demo5"             /* library version */
+#define VER_RTKLIB  "EX"             /* library version */
 
-#define PATCH_LEVEL "b34L"               /* patch level */
+#define PATCH_LEVEL "2.5.0"               /* patch level */
 
 #define COPYRIGHT_RTKLIB \
             "Copyright (C) 2007-2020 T.Takasu\nAll rights reserved."
@@ -158,8 +158,6 @@ extern "C" {
 #ifndef NEXOBS
 #define NEXOBS      0                   /* number of extended obs codes */
 #endif
-
-#define SNR_UNIT    0.001               /* SNR unit (dBHz) */
 
 #define MINPRNGPS   1                   /* min satellite PRN number of GPS */
 #define MAXPRNGPS   32                  /* max satellite PRN number of GPS */
@@ -582,19 +580,18 @@ typedef struct {        /* time struct */
 typedef struct {        /* observation data record */
     gtime_t time;       /* receiver sampling time (GPST) */
     uint8_t sat,rcv;    /* satellite/receiver number */
-    uint16_t SNR[NFREQ+NEXOBS]; /* signal strength (0.001 dBHz) */
-    uint8_t  LLI[NFREQ+NEXOBS]; /* loss of lock indicator */
+    uint8_t freq;       /* GLONASS frequency channel (0-13) */
+    uint8_t LLI[NFREQ+NEXOBS]; /* loss of lock indicator */
     uint8_t code[NFREQ+NEXOBS]; /* code indicator (CODE_???) */
     double L[NFREQ+NEXOBS]; /* observation data carrier-phase (cycle) */
     double P[NFREQ+NEXOBS]; /* observation data pseudorange (m) */
-    float  D[NFREQ+NEXOBS]; /* observation data doppler frequency (Hz) */
+    float D[NFREQ+NEXOBS]; /* observation data doppler frequency (Hz) */
+    float SNR[NFREQ+NEXOBS]; /* signal strength (dBHz) */
+    float Lstd[NFREQ+NEXOBS]; /* stdev of carrier phase (cycles)  */
+    float Pstd[NFREQ+NEXOBS]; /* stdev of pseudorange (meters) */
 
     int timevalid;      /* time is valid (Valid GNSS fix) for time mark */
     gtime_t eventime;   /* time of event (GPST) */
-    uint8_t Lstd[NFREQ+NEXOBS]; /* stdev of carrier phase (0.004 cycles)  */
-    uint8_t Pstd[NFREQ+NEXOBS]; /* stdev of pseudorange (0.01*2^(n+5) meters) */
-    uint8_t freq; /* GLONASS frequency channel (0-13) */
-
 } obsd_t;
 
 typedef struct {        /* observation data */
@@ -947,7 +944,7 @@ typedef struct {        /* solution status type */
     float resp;         /* pseudorange residual (m) */
     float resc;         /* carrier-phase residual (m) */
     uint8_t flag;       /* flags: (vsat<<5)+(slip<<3)+fix */
-    uint16_t snr;       /* signal strength (*SNR_UNIT dBHz) */
+    float snr;          /* signal strength (dBHz) */
     uint16_t lock;      /* lock counter */
     uint16_t outc;      /* outage counter */
     uint16_t slipc;     /* slip counter */
@@ -1182,8 +1179,8 @@ typedef struct {        /* satellite status type */
     double resc[NFREQ]; /* residuals of carrier-phase (m) */
     double icbias[NFREQ];  /* glonass IC bias (cycles) */
     uint8_t vsat[NFREQ]; /* valid satellite flag */
-    uint16_t snr_rover [NFREQ]; /* rover signal strength (0.25 dBHz) */
-    uint16_t snr_base  [NFREQ]; /* base signal strength (0.25 dBHz) */
+    float snr_rover [NFREQ]; /* rover signal strength (dBHz) */
+    float snr_base  [NFREQ]; /* base signal strength (dBHz) */
     uint8_t fix [NFREQ]; /* ambiguity fix flag (1:float,2:fix,3:hold) */
     int code[NFREQ][2];  // Current code per frequency index for the base and rover.
     uint8_t slip[NFREQ]; /* cycle-slip flag */
@@ -1350,6 +1347,7 @@ typedef struct {        /* RTK server type */
     char cmds_periodic[3][MAXRCVCMD]; /* periodic commands */
     char cmd_reset[MAXRCVCMD]; /* reset command */
     double bl_reset;    /* baseline length to reset (km) */
+    pcvs_t pcvsr;       // Receiver antenna parameters.
     rtklib_lock_t lock; /* lock flag */
 } rtksvr_t;
 
@@ -1588,6 +1586,7 @@ EXPORT pcv_t *searchpcv(int sat, const char *type, gtime_t time,
 EXPORT void antmodel(const pcv_t *pcv, const double *del, const double *azel,
                      int opt, double *dant);
 EXPORT void antmodel_s(const pcv_t *pcv, double nadir, double *dant);
+EXPORT void free_pcvs(pcvs_t *pcvs);
 
 /* earth tide models ---------------------------------------------------------*/
 EXPORT void sunmoonpos(gtime_t tutc, const double *erpv, double *rsun,
@@ -1871,12 +1870,13 @@ EXPORT int postpos(gtime_t ts, gtime_t te, double ti, double tu,
                    const prcopt_t *popt, const solopt_t *sopt,
                    const filopt_t *fopt, const char **infile, int n, const char *outfile,
                    const char *rov, const char *base);
+EXPORT int getstapos(const char *file, const char *name, double *r);
 
 /* stream server functions ---------------------------------------------------*/
 EXPORT void strsvrinit (strsvr_t *svr, int nout);
 EXPORT int  strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
                         const char **logs, strconv_t **conv, const char **cmds,
-                        const char **cmds_priodic, const double *nmeapos);
+                        const char **cmds_periodic, const double *nmeapos);
 EXPORT void strsvrstop (strsvr_t *svr, const char **cmds);
 EXPORT void strsvrstat (strsvr_t *svr, int *stat, int *log_stat, int *byte,
                         int *bps, char *msg);

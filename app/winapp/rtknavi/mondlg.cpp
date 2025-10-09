@@ -359,7 +359,6 @@ void __fastcall TMonitorDialog::SetRtk(void)
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::ShowRtk(void)
 {
-	rtk_t rtk;
 	AnsiString s,exsats,navsys="";
 	AnsiString svrstate[]={"Stop","Run"};
 	AnsiString sol[]={"-","Fix","Float","SBAS","DGPS","Single","PPP",""};
@@ -376,9 +375,12 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	const char *tropopt[]={"OFF","Saastamoinen","SBAS","Estimate ZTD","Estimate ZTD+Grad",""};
 	const char *ephopt []={"Broadcast","Precise","Broadcast+SBAS","Broadcat+SSR APC","Broadcast+SSR CoM","QZSS LEX",""};
 	
+        rtk_t *rtk = static_cast<rtk_t *>(malloc(sizeof(rtk_t)));
+        if (rtk == NULL) return;
+
 	rtksvrlock(&rtksvr); // lock
 	
-	rtk=rtksvr.rtk;
+	*rtk=rtksvr.rtk;
 	thread=(int)rtksvr.thread;
 	cycle=rtksvr.cycle;
 	state=rtksvr.state;
@@ -407,21 +409,21 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	rtksvrunlock(&rtksvr); // unlock
 	
 	for (j=k=0;j<MAXSAT;j++) {
-		if (rtk.opt.mode==PMODE_SINGLE&&!rtk.ssat[j].vs) continue;
-		if (rtk.opt.mode!=PMODE_SINGLE&&!rtk.ssat[j].vsat[0]) continue;
-		azel[  k*2]=rtk.ssat[j].azel[0];
-		azel[1+k*2]=rtk.ssat[j].azel[1];
+		if (rtk->opt.mode==PMODE_SINGLE&&!rtk->ssat[j].vs) continue;
+		if (rtk->opt.mode!=PMODE_SINGLE&&!rtk->ssat[j].vsat[0]) continue;
+		azel[  k*2]=rtk->ssat[j].azel[0];
+		azel[1+k*2]=rtk->ssat[j].azel[1];
 		k++;
 	}
 	dops(k,azel,0.0,dop);
 	
-	if (rtk.opt.navsys&SYS_GPS) navsys=navsys+"GPS ";
-	if (rtk.opt.navsys&SYS_GLO) navsys=navsys+"GLONASS ";
-	if (rtk.opt.navsys&SYS_GAL) navsys=navsys+"Galileo ";
-	if (rtk.opt.navsys&SYS_QZS) navsys=navsys+"QZSS ";
-	if (rtk.opt.navsys&SYS_CMP) navsys=navsys+"BDS ";
-	if (rtk.opt.navsys&SYS_IRN) navsys=navsys+"NavIC ";
-	if (rtk.opt.navsys&SYS_SBS) navsys=navsys+"SBAS ";
+	if (rtk->opt.navsys&SYS_GPS) navsys=navsys+"GPS ";
+	if (rtk->opt.navsys&SYS_GLO) navsys=navsys+"GLONASS ";
+	if (rtk->opt.navsys&SYS_GAL) navsys=navsys+"Galileo ";
+	if (rtk->opt.navsys&SYS_QZS) navsys=navsys+"QZSS ";
+	if (rtk->opt.navsys&SYS_CMP) navsys=navsys+"BDS ";
+	if (rtk->opt.navsys&SYS_IRN) navsys=navsys+"NavIC ";
+	if (rtk->opt.navsys&SYS_SBS) navsys=navsys+"SBAS ";
 	
 	Label->Caption="";
 	Tbl->RowCount=55+NFREQ*2;
@@ -440,54 +442,54 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	Tbl->Cells[1][i++]=s.sprintf("%d",cycle);
 	
 	Tbl->Cells[0][i  ]="Positioning Mode";
-	Tbl->Cells[1][i++]=mode[rtk.opt.mode];
+	Tbl->Cells[1][i++]=mode[rtk->opt.mode];
 	
 	Tbl->Cells[0][i  ]="Frequencies";
-	Tbl->Cells[1][i++]=freq[rtk.opt.nf];
+	Tbl->Cells[1][i++]=freq[rtk->opt.nf];
 	
 	Tbl->Cells[0][i  ]="Elevation Mask (deg)";
-	Tbl->Cells[1][i++]=s.sprintf("%.0f",rtk.opt.elmin*R2D);
+	Tbl->Cells[1][i++]=s.sprintf("%.0f",rtk->opt.elmin*R2D);
 	
 	Tbl->Cells[0][i  ]="SNR Mask L1 (dBHz)";
-	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
+	Tbl->Cells[1][i++]=!rtk->opt.snrmask.ena[0]?s.sprintf(""):
 		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
-				  rtk.opt.snrmask.mask[0][0],rtk.opt.snrmask.mask[0][1],rtk.opt.snrmask.mask[0][2],
-				  rtk.opt.snrmask.mask[0][3],rtk.opt.snrmask.mask[0][4],rtk.opt.snrmask.mask[0][5],
-				  rtk.opt.snrmask.mask[0][6],rtk.opt.snrmask.mask[0][7],rtk.opt.snrmask.mask[0][8]);
+				  rtk->opt.snrmask.mask[0][0],rtk->opt.snrmask.mask[0][1],rtk->opt.snrmask.mask[0][2],
+				  rtk->opt.snrmask.mask[0][3],rtk->opt.snrmask.mask[0][4],rtk->opt.snrmask.mask[0][5],
+				  rtk->opt.snrmask.mask[0][6],rtk->opt.snrmask.mask[0][7],rtk->opt.snrmask.mask[0][8]);
 	
 	Tbl->Cells[0][i  ]="SNR Mask L2 (dBHz)";
-	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
+	Tbl->Cells[1][i++]=!rtk->opt.snrmask.ena[0]?s.sprintf(""):
 		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
-				  rtk.opt.snrmask.mask[1][0],rtk.opt.snrmask.mask[1][1],rtk.opt.snrmask.mask[1][2],
-				  rtk.opt.snrmask.mask[1][3],rtk.opt.snrmask.mask[1][4],rtk.opt.snrmask.mask[1][5],
-				  rtk.opt.snrmask.mask[1][6],rtk.opt.snrmask.mask[1][7],rtk.opt.snrmask.mask[1][8]);
+				  rtk->opt.snrmask.mask[1][0],rtk->opt.snrmask.mask[1][1],rtk->opt.snrmask.mask[1][2],
+				  rtk->opt.snrmask.mask[1][3],rtk->opt.snrmask.mask[1][4],rtk->opt.snrmask.mask[1][5],
+				  rtk->opt.snrmask.mask[1][6],rtk->opt.snrmask.mask[1][7],rtk->opt.snrmask.mask[1][8]);
 
 	Tbl->Cells[0][i  ]="SNR Mask L5 (dBHz)";
-	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
+	Tbl->Cells[1][i++]=!rtk->opt.snrmask.ena[0]?s.sprintf(""):
 		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
-				  rtk.opt.snrmask.mask[2][0],rtk.opt.snrmask.mask[2][1],rtk.opt.snrmask.mask[2][2],
-				  rtk.opt.snrmask.mask[2][3],rtk.opt.snrmask.mask[2][4],rtk.opt.snrmask.mask[2][5],
-				  rtk.opt.snrmask.mask[2][6],rtk.opt.snrmask.mask[2][7],rtk.opt.snrmask.mask[2][8]);
+				  rtk->opt.snrmask.mask[2][0],rtk->opt.snrmask.mask[2][1],rtk->opt.snrmask.mask[2][2],
+				  rtk->opt.snrmask.mask[2][3],rtk->opt.snrmask.mask[2][4],rtk->opt.snrmask.mask[2][5],
+				  rtk->opt.snrmask.mask[2][6],rtk->opt.snrmask.mask[2][7],rtk->opt.snrmask.mask[2][8]);
 
 	Tbl->Cells[0][i  ]="SNR Mask L6 (dBHz)";
-	Tbl->Cells[1][i++]=!rtk.opt.snrmask.ena[0]?s.sprintf(""):
+	Tbl->Cells[1][i++]=!rtk->opt.snrmask.ena[0]?s.sprintf(""):
 		s.sprintf("%.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f, %.0f",
-				  rtk.opt.snrmask.mask[3][0],rtk.opt.snrmask.mask[3][1],rtk.opt.snrmask.mask[3][2],
-				  rtk.opt.snrmask.mask[3][3],rtk.opt.snrmask.mask[3][4],rtk.opt.snrmask.mask[3][5],
-				  rtk.opt.snrmask.mask[3][6],rtk.opt.snrmask.mask[3][7],rtk.opt.snrmask.mask[3][8]);
+				  rtk->opt.snrmask.mask[3][0],rtk->opt.snrmask.mask[3][1],rtk->opt.snrmask.mask[3][2],
+				  rtk->opt.snrmask.mask[3][3],rtk->opt.snrmask.mask[3][4],rtk->opt.snrmask.mask[3][5],
+				  rtk->opt.snrmask.mask[3][6],rtk->opt.snrmask.mask[3][7],rtk->opt.snrmask.mask[3][8]);
 	Tbl->Cells[0][i  ]="Rec Dynamic/Earth Tides Correction";
-	Tbl->Cells[1][i++]=s.sprintf("%s, %s",rtk.opt.dynamics?"ON":"OFF",rtk.opt.tidecorr?"ON":"OFF");
+	Tbl->Cells[1][i++]=s.sprintf("%s, %s",rtk->opt.dynamics?"ON":"OFF",rtk->opt.tidecorr?"ON":"OFF");
 	
 	Tbl->Cells[0][i  ]="Ionosphere/Troposphere Model";
-	Tbl->Cells[1][i++]=s.sprintf("%s, %s",ionoopt[rtk.opt.ionoopt],tropopt[rtk.opt.tropopt]);
+	Tbl->Cells[1][i++]=s.sprintf("%s, %s",ionoopt[rtk->opt.ionoopt],tropopt[rtk->opt.tropopt]);
 	
 	Tbl->Cells[0][i  ]="Satellite Ephemeris";
-	Tbl->Cells[1][i++]=ephopt[rtk.opt.sateph];
+	Tbl->Cells[1][i++]=ephopt[rtk->opt.sateph];
 	
 	for (j=1;j<=MAXSAT;j++) {
-		if (!rtk.opt.exsats[j-1]) continue;
+		if (!rtk->opt.exsats[j-1]) continue;
 		satno2id(j,id);
-		if (rtk.opt.exsats[j-1]==2) exsats=exsats+"+";
+		if (rtk->opt.exsats[j-1]==2) exsats=exsats+"+";
 		exsats=exsats+id+" ";
 	}
 	Tbl->Cells[0][i  ]="Excluded Satellites";
@@ -526,22 +528,22 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	Tbl->Cells[0][i  ]="Solution Status";
 	Tbl->Cells[1][i++]=sol[rtkstat];
 	
-	time2str(rtk.sol.time,tstr,9);
+	time2str(rtk->sol.time,tstr,9);
 	Tbl->Cells[0][i  ] ="Time of Receiver Clock Rover";
-	Tbl->Cells[1][i++]=rtk.sol.time.time?tstr:"-";
+	Tbl->Cells[1][i++]=rtk->sol.time.time?tstr:"-";
 	
 	Tbl->Cells[0][i  ] ="Time Sytem Offset/Receiver Bias (GLO-GPS,GAL-GPS,BDS-GPS,IRN-GPS) (ns)";
-	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f, %.3f",rtk.sol.dtr[1]*1E9,rtk.sol.dtr[2]*1E9,
-                                 rtk.sol.dtr[3]*1E9,rtk.sol.dtr[4]*1E9);
+	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f, %.3f",rtk->sol.dtr[1]*1E9,rtk->sol.dtr[2]*1E9,
+                                 rtk->sol.dtr[3]*1E9,rtk->sol.dtr[4]*1E9);
 	
 	Tbl->Cells[0][i  ]="Solution Interval (s)";
-	Tbl->Cells[1][i++]=s.sprintf("%.3f",rtk.tt);
+	Tbl->Cells[1][i++]=s.sprintf("%.3f",rtk->tt);
 	
 	Tbl->Cells[0][i  ]="Age of Differential (s)";
-	Tbl->Cells[1][i++] =s.sprintf("%.3f",rtk.sol.age);
+	Tbl->Cells[1][i++] =s.sprintf("%.3f",rtk->sol.age);
 	
 	Tbl->Cells[0][i  ]="Ratio for AR Validation";
-	Tbl->Cells[1][i++]=s.sprintf("%.3f",rtk.sol.ratio);
+	Tbl->Cells[1][i++]=s.sprintf("%.3f",rtk->sol.ratio);
 	
 	Tbl->Cells[0][i  ]="# of Satellites Rover";
 	Tbl->Cells[1][i++]=s.sprintf("%d",nsat0);
@@ -550,57 +552,57 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	Tbl->Cells[1][i++]=s.sprintf("%d",nsat1);
 	
 	Tbl->Cells[0][i  ]="# of Valid Satellites";
-	Tbl->Cells[1][i++]=s.sprintf("%d",rtk.sol.ns);
+	Tbl->Cells[1][i++]=s.sprintf("%d",rtk->sol.ns);
 	
 	Tbl->Cells[0][i  ]="GDOP/PDOP/HDOP/VDOP";
 	Tbl->Cells[1][i++]=s.sprintf("%.1f, %.1f, %.1f, %.1f",dop[0],dop[1],dop[2],dop[3]);
 	
 	Tbl->Cells[0][i  ]="# of Real Estimated States";
-	Tbl->Cells[1][i++]=s.sprintf("%d",rtk.na);
+	Tbl->Cells[1][i++]=s.sprintf("%d",rtk->na);
 	
 	Tbl->Cells[0][i  ]="# of All Estimated States";
-	Tbl->Cells[1][i++]=s.sprintf("%d",rtk.nx);
+	Tbl->Cells[1][i++]=s.sprintf("%d",rtk->nx);
 	
 	Tbl->Cells[0][i  ]="Pos X/Y/Z Single (m) Rover";
-	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",rtk.sol.rr[0],rtk.sol.rr[1],rtk.sol.rr[2]);
+	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",rtk->sol.rr[0],rtk->sol.rr[1],rtk->sol.rr[2]);
 	
-	if (norm(rtk.sol.rr,3)>0.0) ecef2pos(rtk.sol.rr,pos); else pos[0]=pos[1]=pos[2]=0.0;
+	if (norm(rtk->sol.rr,3)>0.0) ecef2pos(rtk->sol.rr,pos); else pos[0]=pos[1]=pos[2]=0.0;
 	Tbl->Cells[0][i  ]="Lat/Lon/Height Single (deg,m) Rover";
 	Tbl->Cells[1][i++]=s.sprintf("%.8f, %.8f, %.3f",pos[0]*R2D,pos[1]*R2D,pos[2]);
 	
-	ecef2enu(pos,rtk.sol.rr+3,vel);
+	ecef2enu(pos,rtk->sol.rr+3,vel);
 	Tbl->Cells[0][i  ]="Vel E/N/U (m/s) Rover";
 	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",vel[0],vel[1],vel[2]);
 	
 	Tbl->Cells[0][i  ]="Pos X/Y/Z Float (m) Rover";
 	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",
-		rtk.x?rtk.x[0]:0,rtk.x?rtk.x[1]:0,rtk.x?rtk.x[2]:0);
+		rtk->x?rtk->x[0]:0,rtk->x?rtk->x[1]:0,rtk->x?rtk->x[2]:0);
 	
 	Tbl->Cells[0][i  ]="Pos X/Y/Z Float Std (m) Rover";
 	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",
-		rtk.P?SQRT(rtk.P[0]):0,rtk.P?SQRT(rtk.P[1+1*rtk.nx]):0,rtk.P?SQRT(rtk.P[2+2*rtk.nx]):0);
+		rtk->P?SQRT(rtk->P[0]):0,rtk->P?SQRT(rtk->P[1+1*rtk->nx]):0,rtk->P?SQRT(rtk->P[2+2*rtk->nx]):0);
 	
 	Tbl->Cells[0][i  ]="Pos X/Y/Z Fixed (m) Rover";
 	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",
-		rtk.xa?rtk.xa[0]:0,rtk.xa?rtk.xa[1]:0,rtk.xa?rtk.xa[2]:0);
+		rtk->xa?rtk->xa[0]:0,rtk->xa?rtk->xa[1]:0,rtk->xa?rtk->xa[2]:0);
 	
 	Tbl->Cells[0][i  ]="Pos X/Y/Z Fixed Std (m) Rover";
 	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",
-		rtk.Pa?SQRT(rtk.Pa[0]):0,rtk.Pa?SQRT(rtk.Pa[1+1*rtk.na]):0,rtk.Pa?SQRT(rtk.Pa[2+2*rtk.na]):0);
+		rtk->Pa?SQRT(rtk->Pa[0]):0,rtk->Pa?SQRT(rtk->Pa[1+1*rtk->na]):0,rtk->Pa?SQRT(rtk->Pa[2+2*rtk->na]):0);
 	
 	Tbl->Cells[0][i  ]="Pos X/Y/Z (m) Base Station";
-	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",rtk.rb[0],rtk.rb[1],rtk.rb[2]);
+	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",rtk->rb[0],rtk->rb[1],rtk->rb[2]);
 	
-	if (norm(rtk.rb,3)>0.0) ecef2pos(rtk.rb,pos); else pos[0]=pos[1]=pos[2]=0.0;
+	if (norm(rtk->rb,3)>0.0) ecef2pos(rtk->rb,pos); else pos[0]=pos[1]=pos[2]=0.0;
 	Tbl->Cells[0][i  ]="Lat/Lon/Height (deg,m) Base Station";
 	Tbl->Cells[1][i++]=s.sprintf("%.8f, %.8f, %.3f",pos[0]*R2D,pos[1]*R2D,pos[2]);
 	
-	ecef2enu(pos,rtk.rb+3,vel);
+	ecef2enu(pos,rtk->rb+3,vel);
 	Tbl->Cells[0][i  ]="Vel E/N/U (m/s) Base Station";
 	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",vel[0],vel[1],vel[2]);
 	
-	if (norm(rtk.rb,3)>0.0) {
-	    for (k=0;k<3;k++) rr[k]=rtk.sol.rr[k]-rtk.rb[k];
+	if (norm(rtk->rb,3)>0.0) {
+	    for (k=0;k<3;k++) rr[k]=rtk->sol.rr[k]-rtk->rb[k];
 	    ecef2enu(pos,rr,enu);
 	}
 	Tbl->Cells[0][i  ]="Baseline Length/E/N/U (m) Rover-Base Station";
@@ -610,26 +612,26 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	Tbl->Cells[1][i++]=s.sprintf("%d",nave);
 	
 	Tbl->Cells[0][i  ]="Antenna Type Rover";
-	Tbl->Cells[1][i++]=rtk.opt.pcvr[0].type;
+	Tbl->Cells[1][i++]=rtk->opt.pcvr[0].type;
 	
 	for (j=0;j<NFREQ;j++) {
-	    off=rtk.opt.pcvr[0].off[j];
+	    off=rtk->opt.pcvr[0].off[j];
 	    Tbl->Cells[0][i  ]=s.sprintf("Ant Phase Center L%d E/N/U (m) Rover",j+1);
 	    Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",off[0],off[1],off[2]);
 	}
-	del=rtk.opt.antdel[0];
+	del=rtk->opt.antdel[0];
 	Tbl->Cells[0][i  ]="Ant Delta E/N/U (m) Rover";
 	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",del[0],del[1],del[2]);
 	
 	Tbl->Cells[0][i  ]="Antenna Type Base Station";
-	Tbl->Cells[1][i++]=rtk.opt.pcvr[1].type;
+	Tbl->Cells[1][i++]=rtk->opt.pcvr[1].type;
 	
 	for (j=0;j<NFREQ;j++) {
-	    off=rtk.opt.pcvr[1].off[0];
+	    off=rtk->opt.pcvr[1].off[0];
     	Tbl->Cells[0][i  ]=s.sprintf("Ant Phase Center L%d E/N/U (m) Base Station",j+1);
 	    Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",off[0],off[1],off[2]);
 	}
-	del=rtk.opt.antdel[1];
+	del=rtk->opt.antdel[1];
 	Tbl->Cells[0][i  ]="Ant Delta E/N/U (m) Base Station";
 	Tbl->Cells[1][i++]=s.sprintf("%.3f, %.3f, %.3f",del[0],del[1],del[2]);
 	
@@ -641,6 +643,7 @@ void __fastcall TMonitorDialog::ShowRtk(void)
 	
 	Tbl->Cells[0][i  ]="Precise Ephemeris Download File";
 	Tbl->Cells[1][i++]=file;
+        free(rtk);
 }
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::SetSat(void)
@@ -712,7 +715,6 @@ void __fastcall TMonitorDialog::SetSat(void)
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::ShowSat(void)
 {
-	rtk_t rtk;
 	ssat_t *ssat;
 	AnsiString s;
 	int i,j,k,n,fix,prn,pmode,nfreq,sys=sys_tbl[SelSys->ItemIndex];
@@ -720,10 +722,13 @@ void __fastcall TMonitorDialog::ShowSat(void)
 	char id[8];
 	double az,el,cbias[MAXSAT][2];
 	
+        rtk_t *rtk = static_cast<rtk_t *>(malloc(sizeof(rtk_t)));
+        if (rtk == NULL) return;
+
 	SetSat();
 
 	rtksvrlock(&rtksvr);
-	rtk=rtksvr.rtk;
+	*rtk=rtksvr.rtk;
 	for (i=0;i<MAXSAT;i++) for (j=0;j<2;j++) {
 		cbias[i][j]=rtksvr.nav.cbias[i][j][0];
 	}
@@ -734,18 +739,19 @@ void __fastcall TMonitorDialog::ShowSat(void)
 	Label->Caption="";
 	
 	for (i=0;i<MAXSAT;i++) {
-		ssat=rtk.ssat+i;
+		ssat=rtk->ssat+i;
 		vsat[i]=ssat->vs;
 	}
 	for (i=0,n=1;i<MAXSAT;i++) {
 		if (!(satsys(i+1,NULL)&sys)) continue;
-		ssat=rtk.ssat+i;
+		ssat=rtk->ssat+i;
 		if (SelSat->ItemIndex==1&&!vsat[i]) continue;
 		n++;
 	}
 	if (n<2) {
 		Tbl->RowCount=2;
 		for (i=0;i<Tbl->ColCount;i++) Tbl->Cells[i][1]="";
+                free(rtk);
 		return;
 	}
 	Tbl->RowCount=n;
@@ -753,7 +759,7 @@ void __fastcall TMonitorDialog::ShowSat(void)
 	for (i=0,n=1;i<MAXSAT;i++) {
 		if (!(satsys(i+1,NULL)&sys)) continue;
 		j=0;
-		ssat=rtk.ssat+i;
+		ssat=rtk->ssat+i;
 		if (SelSat->ItemIndex==1&&!vsat[i]) continue;
 		satno2id(i+1,id);
 		Tbl->Cells[j++][n]=id;
@@ -794,6 +800,7 @@ void __fastcall TMonitorDialog::ShowSat(void)
 		Tbl->Cells[j++][n]=s.sprintf("%.2f",0);
 		n++;
 	}
+        free(rtk);
 }
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::SetEst(void)
@@ -983,10 +990,15 @@ void __fastcall TMonitorDialog::SetObs(void)
 void __fastcall TMonitorDialog::ShowObs(void)
 {
 	AnsiString s;
-	obsd_t obs[MAXOBS*2];
 	char tstr[40],id[8],*code;
 	int i,j,k,n=0,nex=ObsMode?NEXOBS:0,sys=sys_tbl[SelSys->ItemIndex];
 	
+        obsd_t *obs = static_cast<obsd_t *>(calloc(MAXOBS * 2, sizeof(obsd_t)));
+        if (obs == NULL) {
+          trace(1, "TMonitorDialog::ShowObs obsd_t alloc failed\n");
+          return;
+        }
+
 	rtksvrlock(&rtksvr);
 	for (i=0;i<rtksvr.obs[0][0].n&&n<MAXOBS*2;i++) {
         if (!(satsys(rtksvr.obs[0][0].data[i].sat,NULL)&sys)) continue;
@@ -1015,7 +1027,7 @@ void __fastcall TMonitorDialog::ShowObs(void)
 			else       Tbl->Cells[j++][i+1]="-";
 		}
 		for (k=0;k<NFREQ+nex;k++) {
-			if (obs[i].SNR[k]) Tbl->Cells[j++][i+1]=s.sprintf("%.1f",obs[i].SNR[k]*SNR_UNIT);
+			if (obs[i].SNR[k]) Tbl->Cells[j++][i+1]=s.sprintf("%.1f",obs[i].SNR[k]);
 			else               Tbl->Cells[j++][i+1]=s.sprintf("-");
 		}
 		for (k=0;k<NFREQ+nex;k++) {
@@ -1031,6 +1043,7 @@ void __fastcall TMonitorDialog::ShowObs(void)
 			Tbl->Cells[j++][i+1]=s.sprintf("%d",obs[i].LLI[k]);
 		}
 	}
+        free(obs);
 }
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::SetNav(void)

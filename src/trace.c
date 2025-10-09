@@ -102,11 +102,11 @@ extern void traceobs_impl(int level, const obsd_t *obs, int n)
         satno2id(obs[i].sat, id);
         fprintf(fp_trace,
                 " (%2d) %s %-3s rcv%d %13.3f %13.3f %13.3f %13.3f %d %d %d %d "
-                "%x %x %3.1f %3.1f\n",
+                "%3.4f %3.3f %3.1f %3.1f\n",
                 i + 1, str, id, obs[i].rcv, obs[i].L[0], obs[i].L[1],
                 obs[i].P[0], obs[i].P[1], obs[i].LLI[0], obs[i].LLI[1],
                 obs[i].code[0], obs[i].code[1], obs[i].Lstd[0], obs[i].Pstd[0],
-                obs[i].SNR[0] * SNR_UNIT, obs[i].SNR[1] * SNR_UNIT);
+                obs[i].SNR[0], obs[i].SNR[1]);
     }
     fflush(fp_trace);
 }

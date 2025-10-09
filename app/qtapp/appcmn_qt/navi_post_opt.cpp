@@ -197,17 +197,15 @@ OptDialog::OptDialog(QWidget *parent, int opts)
 	}
 
     // set up completers
-    QCompleter *fileCompleter = new QCompleter(this);
-    QFileSystemModel *fileModel = new QFileSystemModel(fileCompleter);
+    QFileSystemModel *fileModel = new QFileSystemModel(this);
     fileModel->setRootPath("");
-    fileCompleter->setModel(fileModel);
-    ui->lEStationPositionFile->setCompleter(fileCompleter);
-    ui->lEAntennaPcvFile->setCompleter(fileCompleter);
-    ui->lESatellitePcvFile->setCompleter(fileCompleter);
-    ui->lEDCBFile->setCompleter(fileCompleter);
-    ui->lEGeoidDataFile->setCompleter(fileCompleter);
-    ui->lEEOPFile->setCompleter(fileCompleter);
-    ui->lEBLQFile->setCompleter(fileCompleter);
+    ui->lEStationPositionFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lEAntennaPcvFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lESatellitePcvFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lEDCBFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lEGeoidDataFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lEEOPFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lEBLQFile->setCompleter(new QCompleter(fileModel, this));
 
     QCompleter *dirCompleter = new QCompleter(this);
     QFileSystemModel *dirModel = new QFileSystemModel(dirCompleter);
@@ -347,6 +345,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
 
     if (options == PostOptions) {
         refPosModel->item(6)->setFlags(refPosModel->item(6)->flags() & ~Qt::ItemIsEnabled); // disable "RTCM/Raw Antenna Position"
+        rovPosModel->item(6)->setFlags(refPosModel->item(6)->flags() & ~Qt::ItemIsEnabled); // disable "RTCM/Raw Antenna Position"
     } else if (options == NaviOptions) {
         refPosModel->item(4)->setFlags(refPosModel->item(4)->flags() & ~Qt::ItemIsEnabled); // disable "Get from Position File"
         refPosModel->item(5)->setFlags(refPosModel->item(5)->flags() & ~Qt::ItemIsEnabled); // disable "RINEX Header Position"
@@ -656,7 +655,7 @@ void OptDialog::updateOptions()
     QLineEdit *editu[] = {ui->lERoverPosition1, ui->lERoverPosition2, ui->lERoverPosition3 };
     QLineEdit *editr[] = {ui->lEReferencePosition1, ui->lEReferencePosition2, ui->lEReferencePosition3 };
     pcvs_t pcvr;
-    pcv_t *pcv, pcv0;
+    pcv_t pcv0;
     gtime_t time = timeget();
 
     memset(&pcvr, 0, sizeof(pcvs_t));
@@ -690,7 +689,7 @@ void OptDialog::updateOptions()
     if (ui->cBNavSys6->isChecked()) processingOptions.navsys |= SYS_CMP;
     if (ui->cBNavSys7->isChecked()) processingOptions.navsys |= SYS_IRN;
     processingOptions.elmin = ui->cBElevationMask->currentText().toDouble() * D2R;
-    // snrmask: already set by calling mask dialog
+    processingOptions.snrmask = snrmask;
     processingOptions.sateph = ui->cBSatelliteEphemeris->currentIndex();
     processingOptions.modear = ui->cBAmbiguityResolution->currentIndex();
     processingOptions.glomodear = ui->cBAmbiguityResolutionGLO->currentIndex();
@@ -775,53 +774,53 @@ void OptDialog::updateOptions()
     processingOptions.rovpos = POSOPT_POS_LLH;
     if (ui->cBRoverPositionType->currentIndex() < 2) processingOptions.rovpos = POSOPT_POS_LLH;
     else if (ui->cBRoverPositionType->currentIndex() == 2) processingOptions.rovpos = POSOPT_POS_XYZ;
-    else if (options == PostOptions) {
+    else if (options == NaviOptions) {
+        if (ui->cBRoverPositionType->currentIndex() == 6) processingOptions.rovpos = POSOPT_RTCM;
+    } else if (options == PostOptions) {
         processingOptions.rovpos = ui->cBRoverPositionType->currentIndex() - 1; /* 2:single, 3:posfile, 4:rinex */
     }
 
+    processingOptions.antdel[0][0] = ui->sBRoverAntennaE->value();
+    processingOptions.antdel[0][1] = ui->sBRoverAntennaN->value();
+    processingOptions.antdel[0][2] = ui->sBRoverAntennaU->value();
     if (ui->cBRoverAntennaPcv->isChecked()) {
         strncpy(processingOptions.anttype[0], qPrintable(ui->cBRoverAntenna->currentText()), 63);
-        processingOptions.antdel[0][0] = ui->sBRoverAntennaE->value();
-        processingOptions.antdel[0][1] = ui->sBRoverAntennaN->value();
-        processingOptions.antdel[0][2] = ui->sBRoverAntennaU->value();
     } else {
         strncpy(processingOptions.anttype[0], "", sizeof(processingOptions.anttype[0]) - 1);
-        processingOptions.antdel[0][0] = 0;
-        processingOptions.antdel[0][1] = 0;
-        processingOptions.antdel[0][2] = 0;
     }
 
+    processingOptions.antdel[1][0] = ui->sBReferenceAntennaE->value();
+    processingOptions.antdel[1][1] = ui->sBReferenceAntennaN->value();
+    processingOptions.antdel[1][2] = ui->sBReferenceAntennaU->value();
     if (ui->cBReferenceAntennaPcv->isChecked()) {
         strncpy(processingOptions.anttype[1], qPrintable(ui->cBReferenceAntenna->currentText()), 63);
-        processingOptions.antdel[1][0] = ui->sBReferenceAntennaE->value();
-        processingOptions.antdel[1][1] = ui->sBReferenceAntennaN->value();
-        processingOptions.antdel[1][2] = ui->sBReferenceAntennaU->value();
     } else {
         strncpy(processingOptions.anttype[1], "", sizeof(processingOptions.anttype[1]) - 1);
-        processingOptions.antdel[1][0] = 0;
-        processingOptions.antdel[1][1] = 0;
-        processingOptions.antdel[1][2] = 0;
     }
 
     processingOptions.pcvr[0] = processingOptions.pcvr[1] = pcv0; // initialize antenna PCV
-    if ((ui->cBRoverAntennaPcv->isChecked() || ui->cBReferenceAntennaPcv->isChecked()) && !readpcv(fileOptions.rcvantp, &pcvr)) {
+    if ((ui->cBRoverAntennaPcv->isChecked() || ui->cBReferenceAntennaPcv->isChecked()) &&
+        fileOptions.rcvantp[0] != '\0' && !readpcv(fileOptions.rcvantp, &pcvr)) {
         QMessageBox::warning(this, tr("Error"), tr("Antenna file read error: \"%1\"").arg(fileOptions.rcvantp));
         return;
     }
-    if (ui->cBRoverAntennaPcv->isChecked() && (processingOptions.anttype[0] != QStringLiteral("*"))) {
-        if ((pcv = searchpcv(0, processingOptions.anttype[0], time, &pcvr)))
+    if (ui->cBRoverAntennaPcv->isChecked() && processingOptions.anttype[0] != QLatin1String("") &&
+        processingOptions.anttype[0] != QStringLiteral("*")) {
+        pcv_t *pcv = searchpcv(0, processingOptions.anttype[0], time, &pcvr);
+        if (pcv)
             processingOptions.pcvr[0] = *pcv;
         else
             QMessageBox::warning(this, tr("Error"), tr("No rover antenna PCV: \"%1\"").arg(processingOptions.anttype[0]));
     }
-    if (ui->cBReferenceAntennaPcv->isChecked()&& (processingOptions.anttype[1] != QStringLiteral("*"))) {
-        if ((pcv = searchpcv(0, processingOptions.anttype[1], time, &pcvr)))
+    if (ui->cBReferenceAntennaPcv->isChecked() && processingOptions.anttype[1] != QLatin1String("") &&
+        processingOptions.anttype[1] != QStringLiteral("*")) {
+        pcv_t *pcv = searchpcv(0, processingOptions.anttype[1], time, &pcvr);
+        if (pcv)
             processingOptions.pcvr[1] = *pcv;
         else
             QMessageBox::warning(this, tr("Error"), tr("No reference station antenna PCV: \"%1\"").arg(processingOptions.anttype[1]));
     }
-    if (ui->cBRoverAntennaPcv->isChecked() || ui->cBReferenceAntennaPcv->isChecked())
-        free(pcvr.pcv);
+    free_pcvs(&pcvr);
     fillExcludedSatellites(&processingOptions, ui->lEExcludedSatellites->text());
     processingOptions.maxaveep = ui->sBMaxAveEp->value();
     processingOptions.initrst = ui->cBInitRestart->isChecked();
@@ -946,6 +945,7 @@ void OptDialog::updateUi(const prcopt_t &prcopt, const solopt_t &solopt, const f
         ui->cBRoverPositionType->setCurrentIndex(0);
         if (prcopt.rovpos == POSOPT_POS_LLH) ui->cBRoverPositionType->setCurrentIndex(0);
         else if (prcopt.rovpos == POSOPT_POS_XYZ) ui->cBRoverPositionType->setCurrentIndex(2);
+        else if (prcopt.rovpos == POSOPT_RTCM) ui->cBRoverPositionType->setCurrentIndex(6);
 
         ui->cBReferencePositionType->setCurrentIndex(0);
         if (prcopt.refpos == POSOPT_POS_LLH) ui->cBReferencePositionType->setCurrentIndex(0);
@@ -1143,14 +1143,18 @@ void OptDialog::save(const QString &file)
     else if (options == PostOptions)
         procOpts.sbassatsel = ui->sBSbasSat->value();
 
-    procOpts.rovpos = ui->cBRoverPositionType->currentIndex() < 2 ? POSOPT_POS_LLH : ui->cBRoverPositionType->currentIndex() == 2 ? POSOPT_POS_XYZ : ui->cBRoverPositionType->currentIndex() - 1;
     if (options == NaviOptions) {
+        procOpts.rovpos = POSOPT_POS_LLH;
+        if      (ui->cBRoverPositionType->currentIndex() < 2) procOpts.rovpos = POSOPT_POS_LLH;
+        else if (ui->cBRoverPositionType->currentIndex() == 2) procOpts.rovpos = POSOPT_POS_XYZ;
+        else if (ui->cBRoverPositionType->currentIndex() == 6) procOpts.rovpos = POSOPT_RTCM;
         procOpts.refpos = POSOPT_POS_LLH;
         if      (ui->cBReferencePositionType->currentIndex() < 2) procOpts.refpos = POSOPT_POS_LLH;
         else if (ui->cBReferencePositionType->currentIndex() == 2) procOpts.refpos = POSOPT_POS_XYZ;
         else if (ui->cBReferencePositionType->currentIndex() == 3) procOpts.refpos = POSOPT_SINGLE;
         else if (ui->cBReferencePositionType->currentIndex() == 6) procOpts.refpos = POSOPT_RTCM;
     } else if (options == PostOptions) {
+        procOpts.rovpos = ui->cBRoverPositionType->currentIndex() < 2 ? POSOPT_POS_LLH : ui->cBRoverPositionType->currentIndex() == 2 ? POSOPT_POS_XYZ : ui->cBRoverPositionType->currentIndex() - 1;
         procOpts.refpos = ui->cBReferencePositionType->currentIndex() < 2 ? POSOPT_POS_LLH : ui->cBReferencePositionType->currentIndex() == 2 ? POSOPT_POS_XYZ : ui->cBReferencePositionType->currentIndex() - 1;
     }
     procOpts.eratio[0] = ui->sBMeasurementErrorR1->value();
@@ -1741,6 +1745,7 @@ void OptDialog::updateEnable()
     ui->sBBaselineLen->setEnabled(ui->cBBaselineConstrain->isChecked() && ui->cBPositionMode->currentIndex() == PMODE_MOVEB);
     ui->sBBaselineSig->setEnabled(ui->cBBaselineConstrain->isChecked() && ui->cBPositionMode->currentIndex() == PMODE_MOVEB);
     ui->cBRoverPositionType->setEnabled(ui->cBPositionMode->currentIndex() == PMODE_FIXED || ui->cBPositionMode->currentIndex() == PMODE_PPP_FIXED);
+    setComboBoxItemEnabled(ui->cBRoverPositionType, 6, options == NaviOptions);
     ui->lERoverPosition1->setEnabled(ui->cBRoverPositionType->isEnabled() && ui->cBRoverPositionType->currentIndex() <= 2);
     ui->lERoverPosition2->setEnabled(ui->cBRoverPositionType->isEnabled() && ui->cBRoverPositionType->currentIndex() <= 2);
     ui->lERoverPosition3->setEnabled(ui->cBRoverPositionType->isEnabled() && ui->cBRoverPositionType->currentIndex() <= 2);
@@ -1756,21 +1761,37 @@ void OptDialog::updateEnable()
     ui->btnReferencePosition->setEnabled(ui->cBReferencePositionType->isEnabled() && ui->cBReferencePositionType->currentIndex() <= 2);
     ui->cBRoverAntennaPcv->setEnabled(rel || ppp);
     ui->cBRoverAntenna->setEnabled((rel || ppp) && ui->cBRoverAntennaPcv->isChecked());
-    ui->sBRoverAntennaE->setEnabled((rel || ppp) && ui->cBRoverAntennaPcv->isChecked() && ui->cBRoverAntenna->currentText()!="*");
-    ui->sBRoverAntennaN->setEnabled((rel || ppp) && ui->cBRoverAntennaPcv->isChecked() && ui->cBRoverAntenna->currentText()!="*");
-    ui->sBRoverAntennaU->setEnabled((rel || ppp) && ui->cBRoverAntennaPcv->isChecked() && ui->cBRoverAntenna->currentText()!="*");
-    ui->lblRoverAntennaD->setEnabled((rel || ppp) && ui->cBRoverAntennaPcv->isChecked() && ui->cBRoverAntenna->currentText()!="*");
     ui->cBReferenceAntennaPcv->setEnabled(rel);
     ui->cBReferenceAntenna->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked());
-    ui->sBReferenceAntennaE->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
-    ui->sBReferenceAntennaN->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
-    ui->sBReferenceAntennaU->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
-    ui->lblReferenceAntennaD->setEnabled(rel && ui->cBReferenceAntennaPcv->isChecked() && ui->cBReferenceAntenna->currentText()!="*");
     if (options == NaviOptions) {
+      // For rtknavi the delta can be supplied even when antenna selection is
+      // automated, in which case the delta fills in until overwritten when
+      // the antenna and it's delta are known.
+      ui->sBRoverAntennaE->setEnabled(rel || ppp);
+      ui->sBRoverAntennaN->setEnabled(rel || ppp);
+      ui->sBRoverAntennaU->setEnabled(rel || ppp);
+      ui->lblRoverAntennaD->setEnabled(rel || ppp);
+      ui->sBReferenceAntennaE->setEnabled(rel);
+      ui->sBReferenceAntennaN->setEnabled(rel);
+      ui->sBReferenceAntennaU->setEnabled(rel);
+      ui->lblReferenceAntennaD->setEnabled(rel);
       ui->lblMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
       ui->sBMaxAveEp->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
       ui->cBInitRestart->setVisible(ui->cBReferencePositionType->currentIndex() == 3);
     } else {
+      // For rtkpost, and when setting the antenna and delta automatically,
+      // this should occur before processing, so disable the delta setting
+      // here in that case.
+      int rovp = !ui->cBRoverAntennaPcv->isChecked() || ui->cBRoverAntenna->currentText() != "*";
+      ui->sBRoverAntennaE->setEnabled((rel || ppp) && rovp);
+      ui->sBRoverAntennaN->setEnabled((rel || ppp) && rovp);
+      ui->sBRoverAntennaU->setEnabled((rel || ppp) && rovp);
+      ui->lblRoverAntennaD->setEnabled((rel || ppp) && rovp);
+      int refp = !ui->cBReferenceAntennaPcv->isChecked() || ui->cBReferenceAntenna->currentText() != "*";
+      ui->sBReferenceAntennaE->setEnabled(rel && refp);
+      ui->sBReferenceAntennaN->setEnabled(rel && refp);
+      ui->sBReferenceAntennaU->setEnabled(rel && refp);
+      ui->lblReferenceAntennaD->setEnabled(rel && refp);
       ui->lblMaxAveEp->setVisible(false);
       ui->sBMaxAveEp->setVisible(false);
       ui->cBInitRestart->setVisible(false);
@@ -1936,8 +1957,6 @@ void OptDialog::readAntennaList()
     QString currentRoverAntenna, currentReferenceAntenna;
     int i;
 
-    if (!readpcv(qPrintable(ui->lEAntennaPcvFile->text()), &pcvs)) return;
-
     /* Save currently defined antennas */
     currentRoverAntenna = ui->cBRoverAntenna->currentText();
     currentReferenceAntenna = ui->cBReferenceAntenna->currentText();
@@ -1949,12 +1968,15 @@ void OptDialog::readAntennaList()
     ui->cBRoverAntenna->addItem(""); ui->cBReferenceAntenna->addItem("");
     ui->cBRoverAntenna->addItem("*"); ui->cBReferenceAntenna->addItem("*");
 
-    for (int i = 0; i < pcvs.n; i++) {
+    if (readpcv(qPrintable(ui->lEAntennaPcvFile->text()), &pcvs)) {
+      for (int i = 0; i < pcvs.n; i++) {
         if (pcvs.pcv[i].sat) continue;
         if ((p = strchr(pcvs.pcv[i].type, ' '))) *p = '\0';
         if (i > 0 && !strcmp(pcvs.pcv[i].type, pcvs.pcv[i - 1].type)) continue;
         ui->cBRoverAntenna->addItem(pcvs.pcv[i].type);
         ui->cBReferenceAntenna->addItem(pcvs.pcv[i].type);
+      }
+      free_pcvs(&pcvs);
     }
 
     /* Restore previously defined antennas */
@@ -1962,8 +1984,6 @@ void OptDialog::readAntennaList()
     ui->cBRoverAntenna->setCurrentIndex(i == -1 ? 0 : i);
     i = ui->cBReferenceAntenna->findText(currentReferenceAntenna);
     ui->cBReferenceAntenna->setCurrentIndex(i == -1 ? 0 : i);
-
-    free(pcvs.pcv);
 }
 //---------------------------------------------------------------------------
 void OptDialog::showKeyDialog()
@@ -2004,6 +2024,7 @@ QString OptDialog::excludedSatellitesString(const prcopt_t *prcopt)
 //---------------------------------------------------------------------------
 bool OptDialog::fillExcludedSatellites(prcopt_t *prcopt, const QString &excludedSatellites)
 {
+    memset(prcopt->exsats, 0, MAXSAT);  // reset mask
     if (!excludedSatellites.isEmpty()) {
         foreach (QString sat, excludedSatellites.split(' ')) {
             unsigned char ex;

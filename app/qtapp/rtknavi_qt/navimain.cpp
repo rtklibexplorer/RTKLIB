@@ -1118,8 +1118,6 @@ void MainWindow::serverStart()
     char errmsg[20148];
     gtime_t time = timeget();
     pcvs_t pcvs;
-    pcv_t *pcv;
-
     trace(3, "serverStart\n");
 
     memset(&pcvs, 0, sizeof(pcvs_t));
@@ -1131,16 +1129,29 @@ void MainWindow::serverStart()
         tracelevel(optDialog->solutionOptions.trace);
     }
 
-    if (optDialog->processingOptions.sateph == EPHOPT_PREC || optDialog->processingOptions.sateph == EPHOPT_SSRCOM) {
-        if (!readpcv(optDialog->fileOptions.satantp, &pcvs)) {
+    if (optDialog->fileOptions.rcvantp[0] != '\0' &&
+        !readpcv(optDialog->fileOptions.rcvantp, &rtksvr->pcvsr)) {
+        if (optDialog->solutionOptions.trace > 0) traceclose();
+        ui->lblMessage->setText(tr("Receiver antenna file read error: %1").arg(optDialog->fileOptions.rcvantp));
+        return;
+    }
+
+    if (optDialog->processingOptions.sateph == EPHOPT_PREC ||
+        optDialog->processingOptions.sateph == EPHOPT_SSRCOM ||
+        optDialog->processingOptions.mode >= PMODE_PPP_KINEMA) {
+        if (optDialog->fileOptions.satantp[0] != '\0' &&
+            !readpcv(optDialog->fileOptions.satantp, &pcvs)) {
+            if (optDialog->solutionOptions.trace > 0) traceclose();
+            free_pcvs(&rtksvr->pcvsr);
             ui->lblMessage->setText(tr("Satellite antenna file read error: %1").arg(optDialog->fileOptions.satantp));
             return;
         }
         for (i = 0; i < MAXSAT; i++) {
-            if (!(pcv = searchpcv(i + 1, "", time, &pcvs))) continue;
+            pcv_t *pcv = searchpcv(i + 1, "", time, &pcvs);
+            if (!pcv) continue;
             rtksvr->nav.pcvs[i] = *pcv;
         }
-        free(pcvs.pcv);
+        free_pcvs(&pcvs);
     }
 
     for (i = 0; i < 3; i++) streamTypes[i] = streamEnabled[i] ? itype[streamType[i]] : STR_NONE;  // input stream
@@ -1188,6 +1199,8 @@ void MainWindow::serverStart()
 
     for (i = 3; i < 8; i++)
         if (streamTypes[i] == STR_FILE && !confirmOverwrite(serverPaths[i])) {
+            if (optDialog->solutionOptions.trace > 0) traceclose();
+            free_pcvs(&rtksvr->pcvsr);
             for (j = 0; j < 8; j++) delete[] serverPaths[j];
             for (j = 0; j < 3; j++) delete[] rcvopts[j];
             for (j = 0; j < 3; j++)
@@ -1223,7 +1236,8 @@ void MainWindow::serverStart()
                      &optDialog->processingOptions, solopt, &monistr, errmsg)) {
 
         trace(2, "rtksvrstart error %s\n", errmsg);
-        traceclose();
+        if (optDialog->solutionOptions.trace > 0) traceclose();
+        free_pcvs(&rtksvr->pcvsr);
         for (i = 0; i < 8; i++) delete[] serverPaths[i];
         for (i = 0; i < 3; i++) delete[] rcvopts[i];
         for (i = 0; i < 3; i++)
@@ -1290,6 +1304,8 @@ void MainWindow::serverStop()
         }
     }
     rtksvrstop(rtksvr, (const char **)cmds);
+
+    free_pcvs(&rtksvr->pcvsr);
 
     for (i = 0; i < 3; i++) delete[] cmds[i];
 

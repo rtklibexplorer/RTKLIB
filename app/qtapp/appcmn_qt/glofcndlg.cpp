@@ -29,23 +29,32 @@ GloFcnDialog::GloFcnDialog(QWidget* parent) : QDialog(parent), ui(new Ui::GloFcn
 //---------------------------------------------------------------------------
 void GloFcnDialog::readRinex()
 {
-    QString filename;
-    nav_t nav;
-	int prn;
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open RINEX file"), "", tr("Rinex (*.obs *.*O);;All (*.*)"));
 
-    memset(&nav, 0, sizeof(nav_t));
+    if (filename.isEmpty()) return;
+
+    nav_t *nav = static_cast<nav_t *>(calloc(1, sizeof(nav_t)));
+    if (nav == NULL) {
+      trace(1, "GloFcnDialog::readRinex nav alloc failed\n");
+      return;
+    }
 
     filename = QFileDialog::getOpenFileName(this, tr("Open RINEX file"), "", tr("Rinex (*.obs *.*O);;All (*.*)"));
 
     if (filename.isEmpty()) return;
     
-    if (!readrnx(qPrintable(filename), 0, "", NULL, &nav, NULL)) return;
-	
-    for (int i = 0; i < nav.ng; i++) {
-        if (satsys(nav.geph[i].sat, &prn) != SYS_GLO) continue;
-        getFcn(prn)->setValue(nav.geph[i].frq);
+    if (!readrnx(qPrintable(filename), 0, "", NULL, nav, NULL)) {
+      free(nav);
+      return;
+    }
+
+    for (int i = 0; i < nav->ng; i++) {
+	int prn;
+        if (satsys(nav->geph[i].sat, &prn) != SYS_GLO) continue;
+        getFcn(prn)->setValue(nav->geph[i].frq);
 	}
-    freenav(&nav, 0xFF);
+    freenav(nav, 0xFF);
+    free(nav);
 }
 //---------------------------------------------------------------------------
 void GloFcnDialog::clearFrequencies()

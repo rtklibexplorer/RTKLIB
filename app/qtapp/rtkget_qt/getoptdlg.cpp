@@ -18,12 +18,10 @@ DownOptDialog::DownOptDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
-    QCompleter *fileCompleter = new QCompleter(this);
-    QFileSystemModel *fileModel = new QFileSystemModel(fileCompleter);
+    QFileSystemModel *fileModel = new QFileSystemModel(this);
     fileModel->setRootPath("");
-    fileCompleter->setModel(fileModel);
-    ui->lEUrlFilename->setCompleter(fileCompleter);
-    ui->lELogFilename->setCompleter(fileCompleter);
+    ui->lEUrlFilename->setCompleter(new QCompleter(fileModel, this));
+    ui->lELogFilename->setCompleter(new QCompleter(fileModel, this));
 
     QAction *acLogFilename = ui->lELogFilename->addAction(QIcon(":/icons/folder"), QLineEdit::TrailingPosition);
     acLogFilename->setToolTip(tr("Select Log File Path"));

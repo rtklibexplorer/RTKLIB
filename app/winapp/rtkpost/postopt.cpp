@@ -925,7 +925,7 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	strcpy(filopt.iono,   IonoFile_Text.c_str());
 	
 	time2str(utc2gpst(timeget()),s,0);
-	sprintf(comment,"rtkpost options (%s, v.%s %s)",s,VER_RTKLIB,PATCH_LEVEL);
+	sprintf(comment,"rtkpost options (%s-%s %s)",s,VER_RTKLIB,PATCH_LEVEL);
 	setsysopts(&prcopt,&solopt,&filopt);
 	if (!saveopts(file.c_str(),"w",comment,sysopts)) return;
 }
@@ -943,8 +943,8 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	                         PosMode->ItemIndex==PMODE_PPP_KINEMA;
 	TideCorr       ->Enabled=rel||ppp;
 	//IonoOpt        ->Enabled=!ppp;
-	PosOpt1        ->Enabled=ppp;
-	PosOpt2        ->Enabled=ppp;
+	PosOpt1        ->Enabled=rel||ppp;
+	PosOpt2        ->Enabled=rel||ppp;
 	PosOpt3        ->Enabled=ppp;
 	PosOpt4        ->Enabled=ppp;
 	PosOpt6        ->Enabled=ppp;
@@ -993,18 +993,23 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	SolStatic      ->Enabled=PosMode->ItemIndex==PMODE_STATIC||
 	PosMode        ->ItemIndex==PMODE_PPP_STATIC;
 	
+        // For rtkpost, and when setting the antenna and delta automatically,
+        // this should occur before processing, so disable the delta setting
+        // here in that case.
 	RovAntPcv      ->Enabled=rel||ppp;
 	RovAnt         ->Enabled=(rel||ppp)&&RovAntPcv->Checked;
-	RovAntE        ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
-	RovAntN        ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
-	RovAntU        ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
-	LabelRovAntD   ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
+        int rovp = !RovAntPcv->Checked || RovAnt->Text != "*";
+	RovAntE        ->Enabled=(rel||ppp)&&rovp;
+	RovAntN        ->Enabled=(rel||ppp)&&rovp;
+	RovAntU        ->Enabled=(rel||ppp)&&rovp;
+	LabelRovAntD   ->Enabled=(rel||ppp)&&rovp;
 	RefAntPcv      ->Enabled=rel;
 	RefAnt         ->Enabled=rel&&RefAntPcv->Checked;
-	RefAntE        ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
-	RefAntN        ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
-	RefAntU        ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
-	LabelRefAntD   ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
+        int refp = !RefAntPcv->Checked || RefAnt->Text != "*";
+	RefAntE        ->Enabled=rel&&refp;
+	RefAntN        ->Enabled=rel&&refp;
+	RefAntU        ->Enabled=rel&&refp;
+	LabelRefAntD   ->Enabled=rel&&refp;
 	
 	RovPosType     ->Enabled=PosMode->ItemIndex==PMODE_FIXED||PosMode->ItemIndex==PMODE_PPP_FIXED;
 	RovPos1        ->Enabled=RovPosType->Enabled&&RovPosType->ItemIndex<=2;
@@ -1082,22 +1087,21 @@ void __fastcall TOptDialog::ReadAntList(void)
 	pcvs_t pcvs={0};
 	char *p;
 	
-	if (!readpcv(AntPcvFile_Text.c_str(),&pcvs)) return;
-	
 	list=new TStringList;
 	list->Add("");
 	list->Add("*");
 	
-	for (int i=0;i<pcvs.n;i++) {
-		if (pcvs.pcv[i].sat) continue;
-		if ((p=strchr(pcvs.pcv[i].type,' '))) *p='\0';
-		if (i>0&&!strcmp(pcvs.pcv[i].type,pcvs.pcv[i-1].type)) continue;
-		list->Add(pcvs.pcv[i].type);
-	}
+	if (readpcv(AntPcvFile_Text.c_str(),&pcvs)) {
+          for (int i=0;i<pcvs.n;i++) {
+            if (pcvs.pcv[i].sat) continue;
+            if ((p=strchr(pcvs.pcv[i].type,' '))) *p='\0';
+            if (i>0&&!strcmp(pcvs.pcv[i].type,pcvs.pcv[i-1].type)) continue;
+            list->Add(pcvs.pcv[i].type);
+          }
+          free_pcvs(&pcvs);
+        }
 	RovAnt->Items=list;
 	RefAnt->Items=list;
-	
-	free(pcvs.pcv);
 }
 //---------------------------------------------------------------------------
 void __fastcall TOptDialog::BtnHelpClick(TObject *Sender)

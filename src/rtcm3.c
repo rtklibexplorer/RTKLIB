@@ -215,9 +215,9 @@ static int lossoflock(rtcm_t *rtcm, int sat, int idx, int lock)
     return lli;
 }
 /* S/N ratio -----------------------------------------------------------------*/
-static uint16_t snratio(double snr)
+static double snratio(double snr)
 {
-    return (uint16_t)(snr<=0.0||100.0<=snr?0.0:snr/SNR_UNIT+0.5);
+    return snr<=0.0||100.0<=snr?0.0:snr;
 }
 /* get observation data index ------------------------------------------------*/
 static int obsindex(obs_t *obs, gtime_t time, int sat)
@@ -725,6 +725,7 @@ static int decode_type1012(rtcm_t *rtcm)
 /* decode type 1013: system parameters ---------------------------------------*/
 static int decode_type1013(rtcm_t *rtcm)
 {
+    (void)rtcm;
     return 0;
 }
 /* decode type 1019: GPS ephemerides -----------------------------------------*/
@@ -885,42 +886,49 @@ static int decode_type1020(rtcm_t *rtcm)
 /* decode type 1021: helmert/abridged molodenski -----------------------------*/
 static int decode_type1021(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1021: not supported message\n");
     return 0;
 }
 /* decode type 1022: Moledenski-Badekas transfromation -----------------------*/
 static int decode_type1022(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1022: not supported message\n");
     return 0;
 }
 /* decode type 1023: residual, ellipsoidal grid representation ---------------*/
 static int decode_type1023(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1023: not supported message\n");
     return 0;
 }
 /* decode type 1024: residual, plane grid representation ---------------------*/
 static int decode_type1024(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1024: not supported message\n");
     return 0;
 }
 /* decode type 1025: projection (types except LCC2SP,OM) ---------------------*/
 static int decode_type1025(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1025: not supported message\n");
     return 0;
 }
 /* decode type 1026: projection (LCC2SP - lambert conic conformal (2sp)) -----*/
 static int decode_type1026(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1026: not supported message\n");
     return 0;
 }
 /* decode type 1027: projection (type OM - oblique mercator) -----------------*/
 static int decode_type1027(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1027: not supported message\n");
     return 0;
 }
@@ -959,18 +967,21 @@ static int decode_type1029(rtcm_t *rtcm)
 /* decode type 1030: network RTK residual ------------------------------------*/
 static int decode_type1030(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1030: not supported message\n");
     return 0;
 }
 /* decode type 1031: GLONASS network RTK residual ----------------------------*/
 static int decode_type1031(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1031: not supported message\n");
     return 0;
 }
 /* decode type 1032: physical reference station position information ---------*/
 static int decode_type1032(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1032: not supported message\n");
     return 0;
 }
@@ -1034,30 +1045,35 @@ static int decode_type1033(rtcm_t *rtcm)
 /* decode type 1034: GPS network FKP gradient --------------------------------*/
 static int decode_type1034(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1034: not supported message\n");
     return 0;
 }
 /* decode type 1035: GLONASS network FKP gradient ----------------------------*/
 static int decode_type1035(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1035: not supported message\n");
     return 0;
 }
 /* decode type 1037: GLONASS network RTK ionospheric correction difference ---*/
 static int decode_type1037(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1037: not supported message\n");
     return 0;
 }
 /* decode type 1038: GLONASS network RTK geometic correction difference ------*/
 static int decode_type1038(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1038: not supported message\n");
     return 0;
 }
 /* decode type 1039: GLONASS network RTK combined correction difference ------*/
 static int decode_type1039(rtcm_t *rtcm)
 {
+    (void)rtcm;
     trace(2,"rtcm3 1039: not supported message\n");
     return 0;
 }
@@ -1986,7 +2002,7 @@ static void sigindex(int sys, const uint8_t *code, int n, const char *opt,
             trace(2,"rtcm msm: no space in obs data sys=%d code=%d\n",sys,code[i]);
             idx[i]=-1;
         }
-#if 0 /* for debug */
+#ifdef RTK_DISABLED /* for debug */
         trace(2,"sig pos: sys=%d code=%d ex=%d idx=%d\n",sys,code[i],ex[i],idx[i]);
 #endif
     }
@@ -2069,7 +2085,7 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
                     rtcm->nav.glo_fcn[prn-1]=fcn+8; /* fcn+8 */
                 }
             }
-            else if (rtcm->nav.geph[prn-1].sat==sat) {
+            else if (sat && rtcm->nav.geph[prn-1].sat == sat) {
                 fcn=rtcm->nav.geph[prn-1].frq;
             }
             else if (rtcm->nav.glo_fcn[prn-1]>0) {
@@ -2097,7 +2113,7 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
                 }
                 rtcm->obs.data[index].LLI[idx[k]]=
                     lossoflock(rtcm,sat,idx[k],lock[j])+(half[j]?2:0);
-                rtcm->obs.data[index].SNR [idx[k]]=(uint16_t)(cnr[j]/SNR_UNIT+0.5);
+                rtcm->obs.data[index].SNR [idx[k]]=cnr[j];
                 rtcm->obs.data[index].code[idx[k]]=code[k];
             }
             j++;

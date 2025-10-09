@@ -145,7 +145,7 @@ static int decode_xf5raw(raw_t *raw)
                   sat,L1,P1,D1);
             continue;
         }
-        raw->obs.data[n].SNR[0]=(uint16_t)(I1(p+3)/SNR_UNIT+0.5);
+        raw->obs.data[n].SNR[0]=I1(p+3);
         if (sys==SYS_GLO) {
             raw->obs.data[n].L[0]  =  L1 - toff*(FREQ1_GLO+DFRQ1_GLO*carrNo);
         } else {
@@ -164,8 +164,8 @@ static int decode_xf5raw(raw_t *raw)
         
         for (j=1;j<NFREQ+NEXOBS;j++) {
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
-            raw->obs.data[n].D[j]=0.0;
-            raw->obs.data[n].SNR[j]=raw->obs.data[n].LLI[j]=0;
+            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0;
+            raw->obs.data[n].LLI[j]=0;
             raw->obs.data[n].code[j]=CODE_NONE;
         }
         n++;
@@ -245,6 +245,7 @@ static gtime_t adjday(gtime_t time, double tod)
 /* decode gloephem -----------------------------------------------------------*/
 static int decode_gloephem(int sat, raw_t *raw)
 {
+    (void)sat;
     geph_t geph={0};
     uint8_t *p=(raw->buff)+2;
     int prn,tk,tb;
@@ -280,15 +281,15 @@ static int decode_gloephem(int sat, raw_t *raw)
     geph.iode=(tb/900)&0x7F;
     geph.toe=utc2gpst(adjday(raw->time,tb-10800.0));
     geph.tof=utc2gpst(adjday(raw->time,tk-10800.0));
-#if 0
+#ifdef RTK_DISABLED
     /* check illegal ephemeris by toe */
-    tt=timediff(raw->time,geph.toe);
+    double tt=timediff(raw->time,geph.toe);
     if (fabs(tt)>3600.0) {
         trace(3,"nvs NE illegal toe: prn=%2d tt=%6.0f\n",prn,tt);
         return 0;
     }
 #endif
-#if 0
+#ifdef RTK_DISABLED
     /* check illegal ephemeris by frequency number consistency */
     if (raw->nav.geph[prn-MINPRNGLO].toe.time&&
         geph.frq!=raw->nav.geph[prn-MINPRNGLO].frq) {

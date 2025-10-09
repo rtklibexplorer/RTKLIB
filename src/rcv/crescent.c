@@ -145,14 +145,14 @@ static int decode_cresraw(raw_t *raw)
         raw->obs.data[n].P[0]=pr;
         raw->obs.data[n].L[0]=cp*freq/CLIGHT;
         raw->obs.data[n].D[0]=-(float)(dop*freq/CLIGHT);
-        raw->obs.data[n].SNR[0]=(uint16_t)(snr/SNR_UNIT+0.5);
+        raw->obs.data[n].SNR[0]=snr;
         raw->obs.data[n].LLI[0]=(uint8_t)lli;
         raw->obs.data[n].code[0]=CODE_L1C;
         
         for (j=1;j<NFREQ;j++) {
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
-            raw->obs.data[n].D[j]=0.0;
-            raw->obs.data[n].SNR[j]=raw->obs.data[n].LLI[j]=0;
+            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0;
+            raw->obs.data[n].LLI[j]=0;
             raw->obs.data[n].code[j]=CODE_NONE;
         }
         n++;
@@ -256,14 +256,14 @@ static int decode_cresraw2(raw_t *raw)
                 raw->obs.data[n].P[j]=pr[j]==0.0?0.0:pr[j]-toff;
                 raw->obs.data[n].L[j]=cp[j]==0.0?0.0:cp[j]-toff*freq[j]/CLIGHT;
                 raw->obs.data[n].D[j]=-(float)dop[j];
-                raw->obs.data[n].SNR[j]=(uint16_t)(snr[j]/SNR_UNIT+0.5);
+                raw->obs.data[n].SNR[j]=snr[j];
                 raw->obs.data[n].LLI[j]=(uint8_t)lli[j];
                 raw->obs.data[n].code[j]=j==0?CODE_L1C:CODE_L2P;
             }
             else {
                 raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
-                raw->obs.data[n].D[j]=0.0;
-                raw->obs.data[n].SNR[j]=raw->obs.data[n].LLI[j]=0;
+                raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0;
+                raw->obs.data[n].LLI[j]=0;
                 raw->obs.data[n].code[j]=CODE_NONE;
             }
         }
@@ -461,14 +461,14 @@ static int decode_cresgloraw(raw_t *raw)
                 raw->obs.data[n].P[j]=pr[j]==0.0?0.0:pr[j]-toff;
                 raw->obs.data[n].L[j]=cp[j]==0.0?0.0:cp[j]-toff*freq[j]/CLIGHT;
                 raw->obs.data[n].D[j]=-(float)dop[j];
-                raw->obs.data[n].SNR[j]=(uint16_t)(snr[j]/SNR_UNIT+0.5);
+                raw->obs.data[n].SNR[j]=snr[j];
                 raw->obs.data[n].LLI[j]=(uint8_t)lli[j];
                 raw->obs.data[n].code[j]=j==0?CODE_L1C:CODE_L2P;
             }
             else {
                 raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
-                raw->obs.data[n].D[j]=0.0;
-                raw->obs.data[n].SNR[j]=raw->obs.data[n].LLI[j]=0;
+                raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0;
+                raw->obs.data[n].LLI[j]=0;
                 raw->obs.data[n].code[j]=CODE_NONE;
             }
         }

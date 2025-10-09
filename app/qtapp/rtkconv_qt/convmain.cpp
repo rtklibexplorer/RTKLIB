@@ -109,20 +109,18 @@ MainWindow::MainWindow(QWidget *parent)
     ui->cBFormat->addItem(formatstrs[STRFMT_RINEX], STRFMT_RINEX);
 
     // set up completers to propose the user valid paths
-    QCompleter *fileCompleter = new QCompleter(this);
-    QFileSystemModel *fileModel = new QFileSystemModel(fileCompleter);
+    QFileSystemModel *fileModel = new QFileSystemModel(this);
     fileModel->setRootPath("");
-    fileCompleter->setModel(fileModel);
-    ui->lEOutputFile1->setCompleter(fileCompleter);
-    ui->lEOutputFile2->setCompleter(fileCompleter);
-    ui->lEOutputFile3->setCompleter(fileCompleter);
-    ui->lEOutputFile4->setCompleter(fileCompleter);
-    ui->lEOutputFile5->setCompleter(fileCompleter);
-    ui->lEOutputFile6->setCompleter(fileCompleter);
-    ui->lEOutputFile7->setCompleter(fileCompleter);
-    ui->lEOutputFile8->setCompleter(fileCompleter);
-    ui->lEOutputFile9->setCompleter(fileCompleter);
-    ui->cBInputFile->setCompleter(fileCompleter);
+    ui->lEOutputFile1->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile2->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile3->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile4->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile5->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile6->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile7->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile8->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile9->setCompleter(new QCompleter(fileModel, this));
+    ui->cBInputFile->setCompleter(new QCompleter(fileModel, this));
 
     ui->comboTimeInterval->setValidator(new QDoubleValidator());
 

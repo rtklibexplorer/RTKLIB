@@ -225,7 +225,7 @@ object MainForm: TMainForm
         Height = 17
         Caption = 'Time End (GPST)'
         TabOrder = 5
-        OnClick = TimeStartClick
+        OnClick = TimeEndClick
       end
       object BtnTime2: TSpeedButton
         Left = 298

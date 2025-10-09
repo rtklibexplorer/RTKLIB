@@ -1316,7 +1316,8 @@ object OptDialog: TOptDialog
           Items.Strings = (
             'Lat/Lon/Height (deg/m)'
             'Lat/Lon/Height (dms/m)'
-            'X/Y/Z-ECEF (m)')
+            'X/Y/Z-ECEF (m)'
+            'RTCM/Raw Antenna Position')
         end
         object BtnRovPos: TButton
           Left = 371

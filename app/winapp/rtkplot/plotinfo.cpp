@@ -259,14 +259,16 @@ void __fastcall TPlot::UpdatePlotType(void)
         PlotTypeS->AddItem(PTypes[PLOT_SOLA],NULL);
         PlotTypeS->AddItem(PTypes[PLOT_NSAT],NULL);
     }
+    if (SolStat[0].n>0||SolStat[1].n>0) {
+        PlotTypeS->AddItem(PTypes[PLOT_SSKY],NULL);
+        PlotTypeS->AddItem(PTypes[PLOT_SDOP],NULL);
+        PlotTypeS->AddItem(PTypes[PLOT_RES ],NULL);
+        PlotTypeS->AddItem(PTypes[PLOT_RESE],NULL);
+    }
     if (NObs>0) {
         PlotTypeS->AddItem(PTypes[PLOT_OBS ],NULL);
         PlotTypeS->AddItem(PTypes[PLOT_SKY ],NULL);
         PlotTypeS->AddItem(PTypes[PLOT_DOP ],NULL);
-    }
-    if (SolStat[0].n>0||SolStat[1].n>0) {
-        PlotTypeS->AddItem(PTypes[PLOT_RES ],NULL);
-        PlotTypeS->AddItem(PTypes[PLOT_RESE],NULL);
     }
     if (NObs>0) {
         PlotTypeS->AddItem(PTypes[PLOT_SNR ],NULL);
@@ -395,7 +397,7 @@ void __fastcall TPlot::UpdatePoint(int x, int y)
             msg=LatLonStr(pos,8);
         }
     }
-    else if (PlotType==PLOT_SKY||PlotType==PLOT_MPS) { // sky-plot
+    else if (PlotType==PLOT_SKY||PlotType==PLOT_SSKY||PlotType==PLOT_MPS) { // sky-plot
         
         GraphS->GetLim(xl,yl);
         GraphS->ToPos(p,q[0],q[1]);

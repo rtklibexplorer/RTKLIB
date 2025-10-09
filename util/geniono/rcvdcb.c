@@ -69,7 +69,7 @@ static void ekf_free(ekf_t *ekf)
 /* mapping function of ionosphere ---------------------------------------------*/
 static double map_iono(const double *pos, const double *azel)
 {
-#if 0
+#if RTK_DISABLED
     return ionmapf(pos,azel);
 #else
     return 1.0;
@@ -203,7 +203,7 @@ static int res_iono(const obsd_t *obs, int n, const nav_t *nav,
         
         /* residuals of ionosphere (geometriy-free) LC */
         v[nv  ]=(L1-L2)-LG;
-#if 0
+#if RTK_DISABLED
         v[nv+1]=(P1-P2)-PG;
 #else
         v[nv+1]=0.0;

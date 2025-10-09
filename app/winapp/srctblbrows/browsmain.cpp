@@ -106,7 +106,7 @@ void __fastcall TMainForm::FormShow(TObject *Sender)
     }
     if (argc>=2) url=argv[1];
 	
-	Caption=title.sprintf("%s ver.%s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
+	Caption=title.sprintf("%s-%s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
 
         // There appears to be a line length limit of around 2048 characters
         // for the init files and that can truncate this loaded list.

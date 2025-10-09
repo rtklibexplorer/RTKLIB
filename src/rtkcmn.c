@@ -1784,7 +1784,6 @@ static double timeoffset_=0.0;        /* time offset (s) */
 
 extern gtime_t timeget(void)
 {
-    gtime_t time;
     double ep[6]={0};
 #ifdef WIN32
     SYSTEMTIME ts;
@@ -1794,14 +1793,19 @@ extern gtime_t timeget(void)
     ep[3]=ts.wHour; ep[4]=ts.wMinute; ep[5]=ts.wSecond+ts.wMilliseconds*1E-3;
 #else
     struct timeval tv;
-    struct tm *tt;
-
-    if (!gettimeofday(&tv,NULL)&&(tt=gmtime(&tv.tv_sec))) {
-        ep[0]=tt->tm_year+1900; ep[1]=tt->tm_mon+1; ep[2]=tt->tm_mday;
-        ep[3]=tt->tm_hour; ep[4]=tt->tm_min; ep[5]=tt->tm_sec+tv.tv_usec*1E-6;
+    if (!gettimeofday(&tv, NULL)) {
+      struct tm tt;
+      if (gmtime_r(&tv.tv_sec, &tt)) {
+        ep[0] = tt.tm_year + 1900;
+        ep[1] = tt.tm_mon + 1;
+        ep[2] = tt.tm_mday;
+        ep[3] = tt.tm_hour;
+        ep[4] = tt.tm_min;
+        ep[5] = tt.tm_sec + tv.tv_usec * 1E-6;
+      }
     }
 #endif
-    time=epoch2time(ep);
+    gtime_t time = epoch2time(ep);
 
 #ifdef CPUTIME_IN_GPST /* cputime operated in gpst */
     time=gpst2utc(time);
@@ -2862,6 +2866,7 @@ extern int readerp(const char *file, erp_t *erp) {
       erp->data[erp->n].xp = v[1] * 1E-6 * AS2R;
       erp->data[erp->n].yp = v[2] * 1E-6 * AS2R;
       erp->data[erp->n].ut1_utc = v[3] * 1E-7;
+      (void)utcp;
       if (taip) {
         // Convert UT1-TAI to UT1-UTC.
         const double ep[] = {2000, 1, 1, 12, 0, 0};
@@ -3751,6 +3756,7 @@ extern int seliflc(int optnf,int sys)
 extern double tropmodel(gtime_t time, const double *pos, const double *azel,
                         double humi)
 {
+    (void)time;
     const double temp0=15.0; /* temperature at sea level */
     double hgt,pres,temp,e,z,trph,trpw;
 
@@ -3925,6 +3931,12 @@ extern void antmodel_s(const pcv_t *pcv, double nadir, double *dant)
     }
     trace(4,"antmodel_s: dant=%6.3f %6.3f\n",dant[0],dant[1]);
 }
+// Free the pcv array.
+void free_pcvs(pcvs_t *pcvs) {
+  free(pcvs->pcv);
+  pcvs->pcv = NULL;
+  pcvs->n = pcvs->nmax = 0;
+}
 
 /* Sun and moon position in ECI (ref [4] 5.1.1, 5.2.1) -----------------------*/
 int epv00(double date1, double date2, double pvh[2][3], double pvb[2][3]);
@@ -3934,6 +3946,7 @@ static void sunpos_eci(gtime_t tutc, const double *erpv, double *rsun) {
   trace(4, "sunpos_eci: tutc=%s\n", time2str(tutc, tstr, 3));
 
 #ifdef SUNPOS_SOFA  /* use high accuracy functions in sofa.c */
+  (void)erpv;
   static THREADLOCAL gtime_t tutc_ = {0, 0};
   static THREADLOCAL double rsun_[3];
 
@@ -3985,6 +3998,7 @@ static void moonpos_eci(gtime_t tutc, const double *erpv, double *rmoon) {
   trace(4, "moonpos_eci: tutc=%s\n", time2str(tutc, tstr, 3));
 
 #ifdef MOONPOS_SOFA   /* use high accuracy functions in sofa.c */
+  (void)erpv;
   static THREADLOCAL gtime_t tutc_ = {0, 0};
   static THREADLOCAL double rmoon_[3];
 
@@ -4144,6 +4158,117 @@ extern int rtk_uncompress(const char *file, char *uncfile)
     }
     trace(3,"rtk_uncompress: stat=%d\n",stat);
     return stat;
+}
+/* station position from file ------------------------------------------------*/
+extern int getstapos(const char *file, const char *name, double *r)
+{
+    trace(3, "getstapos: file=%s name=%s\n", file, name);
+
+    FILE *fp = fopen(file, "r");
+    if (!fp) {
+        trace(1,"station position file open error: %s\n",file);
+        return 0;
+    }
+
+    char buff[256];
+    int state = 0; // 0 pos file, 1 sinex misc, 2 sinex pos estimates.
+    int n = 0, posp = 0;
+    double poss[3];
+    while (fgets(buff, sizeof(buff), fp)) {
+      size_t len = strlen(buff);
+      if (state == 0) {
+        if (len >= 4 && strncmp(buff, "%=SNX", 4) == 0) {
+          state = 1;
+          continue;
+        }
+        // RTKLIB Position file
+        char *p = strchr(buff,'%');
+        if (p) *p='\0';
+
+        // Match either the full extended name or the 4 character
+        // prefix, giving priority to a full match.
+        char sname[256];
+        double pos[3];
+        if (sscanf(buff, "%lf %lf %lf %255s", pos, pos+1, pos+2, sname) < 4) continue;
+
+        int i = 0;
+        for (; sname[i] && name[i]; i++) {
+          if (toupper(sname[i]) != toupper(name[i])) break;
+        }
+
+        if (sname[i] == '\0' && name[i] == '\0') {
+          // Exact match.
+          pos[0] *= D2R;
+          pos[1] *= D2R;
+          pos2ecef(pos, r);
+          fclose(fp);
+          return 1;
+        }
+
+        if (i > 3 && (sname[i] == '\0' || name[i] == '\0') && i > posp) {
+          // Prefix match, save position.
+          posp = i;
+          for (int i = 0; i < 3; i++) poss[i] = pos[i];
+        }
+      }
+
+      // Sinex position file.
+      if (buff[0] == '*') continue; // Comment
+      if (strncmp(buff, "+SOLUTION/ESTIMATE", 18) == 0) {
+        state = 2;
+        continue;
+      }
+      if (state != 2) continue;
+
+      if (strncmp(buff, "-SOLUTION/ESTIMATE", 18) == 0) {
+        state = 1;
+        continue;
+      }
+      if (len < 68) {
+        trace(2, "getstapos: unexpected sinex line '%s'\n", buff);
+        continue;
+      }
+
+      // The solution sinex site codes are limited to 4 characters
+      // and only the 4 character prefix of the 'name' is matched.
+      char sname[5];
+      setstr(sname, buff + 14, 4);
+      int i = 0;
+      for (; i < 4 && sname[i] && name[i]; i++) {
+        if (toupper(sname[i]) != toupper(name[i])) break;
+      }
+      if (sname[i]) continue;
+      if (i < 4 && name[i]) continue;
+
+      if (strncmp(buff + 7, "STAX", 4) == 0) {
+        r[0] = str2num(buff, 47, 21);
+        n |= 1;
+      }
+      if (strncmp(buff + 7, "STAY", 4) == 0) {
+        r[1] = str2num(buff, 47, 21);
+        n |= 2;
+      }
+      if (strncmp(buff + 7, "STAZ", 4) == 0) {
+        r[2] = str2num(buff, 47, 21);
+        n |= 4;
+      }
+      if (n == 7) {
+        fclose(fp);
+        return 1;
+      }
+    }
+    fclose(fp);
+
+    if (state == 0 && posp > 0) {
+      // Return the longest prefix match.
+      poss[0] *= D2R;
+      poss[1] *= D2R;
+      pos2ecef(poss, r);
+      return 1;
+    }
+
+    trace(1, "no station position: %s %s\n", name, file);
+    return 0;
 }
 /* dummy application functions for shared library ----------------------------*/
 #if defined(WIN_DLL) || defined(DLL)

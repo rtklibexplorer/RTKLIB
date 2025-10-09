@@ -35,15 +35,17 @@
 #define PLOT_SOLV   2                   // plot-type: velocity-plot
 #define PLOT_SOLA   3                   // plot-type: accel-plot
 #define PLOT_NSAT   4                   // plot-type: number-of-satellite-plot
-#define PLOT_RES    5                   // plot-type: residual-plot
-#define PLOT_RESE   6                   // plot-type: residual-elevation plot
-#define PLOT_OBS    7                   // plot-type: observation-data-plot
-#define PLOT_SKY    8                   // plot-type: sky-plot
-#define PLOT_DOP    9                   // plot-type: dop-plot
-#define PLOT_SNR    10                  // plot-type: snr/mp-plot
-#define PLOT_SNRE   11                  // plot-type: snr/mp-el-plot
-#define PLOT_MPS    12                  // plot-type: mp-skyplot
-#define PLOT_IONOS  13                  // plot-type: iono-skyplot
+#define PLOT_SSKY   5                   // plot-type: sky-plot (solution)
+#define PLOT_SDOP   6                   // plot-type: dop-plot
+#define PLOT_RES    7                   // plot-type: residual-plot
+#define PLOT_RESE   8                   // plot-type: residual-elevation plot
+#define PLOT_OBS    9                   // plot-type: observation-data-plot
+#define PLOT_SKY    10                  // plot-type: sky-plot
+#define PLOT_DOP    11                  // plot-type: dop-plot (solution)
+#define PLOT_SNR    12                  // plot-type: snr/mp-plot
+#define PLOT_SNRE   13                  // plot-type: snr/mp-el-plot
+#define PLOT_MPS    14                  // plot-type: mp-skyplot
+#define PLOT_IONOS  15                  // plot-type: iono-skyplot
 
 #define ORG_STARTPOS 0                  // plot-origin: start position
 #define ORG_ENDPOS  1                   // plot-origin: end position
@@ -345,7 +347,9 @@ private:
     void drawObservationEphemeris(QPainter &g,double *yp);
     void drawSkyImage(QPainter &g,int level);
     void drawSky(QPainter &g,int level);
+    void drawSolSky(QPainter &g,int level);
     void drawDop(QPainter &g,int level);
+    void drawSolDop(QPainter &g,int level);
     void drawDopStat(QPainter &g,double *dop, int *ns, int n);
     void drawSnr(QPainter &g,int level);
     void drawSnrE(QPainter &g,int level);
