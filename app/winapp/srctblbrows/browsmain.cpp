@@ -100,13 +100,16 @@ void __fastcall TMainForm::FormShow(TObject *Sender)
     cmd=GetCommandLine();
     strcpy(buff,cmd.c_str());
     
-    for (p=strtok(buff," ");p&&argc<32;p=strtok(NULL," ")) {
+    char *sptr;
+    for (p=strtok_r(buff," ",&sptr);p&&argc<32;p=strtok_r(NULL," ",&sptr)) {
         argv[argc++]=p;
     }
     if (argc>=2) url=argv[1];
 	
-	Caption=title.sprintf("%s ver.%s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
-	
+	Caption=title.sprintf("%s-%s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
+
+        // There appears to be a line length limit of around 2048 characters
+        // for the init files and that can truncate this loaded list.
 	list=ini->ReadString("srctbl","addrlist","");
 	for (p=list.c_str();*p;) {
 		if (!(q=strchr(p,'@'))) break;
@@ -139,7 +142,8 @@ void __fastcall TMainForm::FormShow(TObject *Sender)
     for (int i=0;i<10;i++) {
         stas=ini->ReadString("sta",s.sprintf("station%d",i),"");
         strcpy(buff,stas.c_str());
-        for (p=strtok(buff,",");p;p=strtok(NULL,",")) {
+        char *sptr;
+        for (p=strtok_r(buff,",",&sptr);p;p=strtok_r(NULL,",",&sptr)) {
             StaList->Add(p);
         }
     }
@@ -386,7 +390,8 @@ void __fastcall TMainForm::UpdateCaster(void)
 		n=q-p<MAXLINE-1?q-p:MAXLINE-1;
 		strncpy(buff,p,n); buff[n]='\0';
 		if (strncmp(buff,"CAS",3)) continue;
-		for (i=0,r=strtok(buff,";");i<3&&p;i++,r=strtok(NULL,";")) item[i]=r;
+                char *sptr;
+		for (i=0,r=strtok_r(buff,";",&sptr);i<3&&r;i++,r=strtok_r(NULL,";",&sptr)) item[i]=r;
 		Address->AddItem(item[1]+":"+item[2],NULL);
 	}
 	if (Address->Items->Count>1) Address->Text=Address->Items->Strings[1];
@@ -459,6 +464,8 @@ void __fastcall TMainForm::ShowTable(void)
 	for (p=SrcTable.c_str(),j=1;*p;p=q+1) {
 		if (!(q=strchr(p,'\n'))) break;
 		n=q-p<MAXLINE-1?q-p:MAXLINE-1;
+                // Strip a trailing carriage return.
+                if (n > 0 && p[n - 1] == '\r') n--;
 		strncpy(buff,p,n); buff[n]='\0';
 		switch (type) {
 			case 0: if (!strncmp(buff,"STR",3)) break; else continue;

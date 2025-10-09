@@ -47,20 +47,21 @@ static volatile int intrflg=0;         /* interrupt flag */
 /* help text -----------------------------------------------------------------*/
 static const char *help[]={
 "",
-" usage: str2str [-in stream] [-out stream [-out stream...]] [options]",
+" usage: str2str [-in stream] [[-msg ...] -out stream [-out stream...]] [options]",
 "",
-" Input data from a stream and divide and output them to multiple streams",
+" Input data from a stream and divide and output them to multiple streams.",
 " The input stream can be serial, tcp client, tcp server, ntrip client, or",
-" file. The output stream can be serial, tcp client, tcp server, ntrip server,",
-" or file. str2str is a resident type application. To stop it, type ctr-c in",
-" console if run foreground or send signal SIGINT for background process.",
-" if run foreground or send signal SIGINT for background process.",
-" if both of the input stream and the output stream follow #format, the",
-" format of input messages are converted to output. To specify the output",
-" messages, use the -msg option before the respective -out options. If the",
-" option -in or -out omitted, stdin for input or stdout for output is used.",
-" If the stream in the option -in or -out is null, stdin or stdout is used as",
-" well. Command options are as follows.",
+" a file. The output stream can be serial, tcp client, tcp server, ntrip",
+" server, or a file. str2str is a resident type application. To stop it, type",
+" ctr-c in the console if run in the foreground or send signal SIGINT for a",
+" background process. If both of the input stream and the output stream have a",
+" #format then the format of the input messages are converted to the output",
+" format. To specify the output messages use the -msg option before the",
+" respective -out options. To specify the log file use the -log option before",
+" a respective -in or -out option, and the streams should have separate",
+" log files. If the options -in or -out are omitted then stdin for input or",
+" stdout for output are used. If the stream for the option -in or -out is null,"
+" the stdin or stdout are used. Command options are as follows.",
 "",
 " -in  stream[#format] input  stream path and format",
 " -out stream[#format] output stream path and format",
@@ -93,6 +94,7 @@ static const char *help[]={
 "",
 " -msg \"type[(tint)][,type[(tint)]...]\"",
 "                   rtcm message types and output intervals (s)",
+" -log file         input log file or output return log file"
 " -sta sta          station id",
 " -opt opt          receiver dependent options",
 " -s  msec          timeout time (ms) [10000]",
@@ -153,7 +155,9 @@ static void decodefmt(char *path, int *fmt)
         if      (!strcmp(p,"#rtcm2")) *fmt=STRFMT_RTCM2;
         else if (!strcmp(p,"#rtcm3")) *fmt=STRFMT_RTCM3;
         else if (!strcmp(p,"#nov"  )) *fmt=STRFMT_OEM4;
-        /* else if (!strcmp(p,"#cnav" )) *fmt=STRFMT_CNAV; */
+#ifdef RTK_DISABLED
+        else if (!strcmp(p,"#cnav" )) *fmt=STRFMT_CNAV;
+#endif
         else if (!strcmp(p,"#ubx"  )) *fmt=STRFMT_UBX;
         else if (!strcmp(p,"#swift")) *fmt=STRFMT_SBP;
         else if (!strcmp(p,"#hemis")) *fmt=STRFMT_CRES;
@@ -283,7 +287,7 @@ int main(int argc, char **argv)
     strconv_t *conv[MAXSTR]={NULL};
     double pos[3],stapos[3]={0},stadel[3]={0};
     static char s1[MAXSTR][MAXSTRPATH]={{0}},s2[MAXSTR][MAXSTRPATH]={{0}};
-    char *paths[MAXSTR],*logs[MAXSTR];
+    char *paths[MAXSTR];
     char *cmdfile[MAXSTR]={"","","","",""},*cmds[MAXSTR],*cmds_periodic[MAXSTR];
     char *local="",*proxy="",*opt="",buff[256],*p;
     char strmsg[MAXSTRMSG]="",*antinfo="",*rcvinfo="";
@@ -294,6 +298,8 @@ int main(int argc, char **argv)
     int deamon=0;
     const char *msg = "1004,1019"; // Current messages.
     const char *msgs[MAXSTR];      // Messages per output stream.
+    const char *log = NULL;        // Log for the next input or output stream.
+    const char *logs[MAXSTR];
     
     for (i=0;i<MAXSTR;i++) {
         paths[i]=s1[i];
@@ -305,13 +311,23 @@ int main(int argc, char **argv)
     for (i=1;i<argc;i++) {
         if (!strcmp(argv[i],"-in")&&i+1<argc) {
             if (!decodepath(argv[++i],types,paths[0],fmts)) return EXIT_FAILURE;
+            // Use the previous specified log file.
+            logs[0] = log;
+            log = NULL;
         }
         else if (!strcmp(argv[i],"-msg")&&i+1<argc) msg=argv[++i];
         else if (!strcmp(argv[i],"-out")&&i+1<argc&&n<MAXSTR-1) {
             if (!decodepath(argv[++i],types+n+1,paths[n+1],fmts+n+1)) return EXIT_FAILURE;
             // Capture the current messages for this output stream.
             msgs[n + 1] = msg;
+            // Use the previous specified log file.
+            logs[n + 1] = log;
+            log = NULL;
             n++;
+        }
+        else if (!strcmp(argv[i], "-log") && i + 1 < argc) {
+          if (log != NULL) fprintf(stderr, "Warning log '%s' ignored.\n", log);
+          log = argv[++i];
         }
         else if (!strcmp(argv[i],"-p")&&i+3<argc) {
             pos[0]=atof(argv[++i])*D2R;
@@ -355,8 +371,13 @@ int main(int argc, char **argv)
         }
         else if (*argv[i]=='-') printhelp();
     }
-    if (n<=0) n=1; /* stdout */
-    
+    if (n <= 0) {
+      n = 1; // stdout
+      logs[1] = log;
+      log = NULL;
+    }
+    if (log != NULL) fprintf(stderr, "Warning log '%s' ignored.\n", log);
+
     for (i=0;i<n;i++) {
         if (fmts[i+1]<=0) continue;
         if (fmts[i+1]!=STRFMT_RTCM3) {

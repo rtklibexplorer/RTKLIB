@@ -812,7 +812,7 @@ static int decode_bds_d2_eph(const uint8_t *buff, eph_t *eph)
 /* decode BDS D2 UTC parameters ----------------------------------------------*/
 static int decode_bds_d2_utc(const uint8_t *buff, double *utc)
 {
-    int i=8*38*10; /* subframe 5 pase 102 */
+    int i=8*38*10; /* subframe 5 page 102 */
     
     trace(4,"decode_bds_d2_utc:\n");
     
@@ -1214,19 +1214,18 @@ static int decode_frame_alm(const uint8_t *buff, alm_t *alm)
 /* decode GPS/QZSS iono parameters -------------------------------------------*/
 static int decode_frame_ion(const uint8_t *buff, double *ion)
 {
-    int i,frm;
-    
     trace(4,"decode_frame_ion:\n");
         
     /* subframe 4/5 and svid=56 (page18) (wide area for QZSS) */
-    for (frm=4,buff+=90;frm<=5;frm++,buff+=30) {
+    buff += 90;
+    for (unsigned frm=4;frm<=5;frm++,buff+=30) {
         if (frm==5&&getbitu(buff,48,2)==1) continue;
         if (getbitu(buff,43,3)!=frm||getbitu(buff,50,6)!=56) continue;
-            i=56;
-            ion[0]=getbits(buff,i, 8)*P2_30;     i+= 8;
-            ion[1]=getbits(buff,i, 8)*P2_27;     i+= 8;
-            ion[2]=getbits(buff,i, 8)*P2_24;     i+= 8;
-            ion[3]=getbits(buff,i, 8)*P2_24;     i+= 8;
+        int i=56;
+        ion[0]=getbits(buff,i, 8)*P2_30;     i+= 8;
+        ion[1]=getbits(buff,i, 8)*P2_27;     i+= 8;
+        ion[2]=getbits(buff,i, 8)*P2_24;     i+= 8;
+        ion[3]=getbits(buff,i, 8)*P2_24;     i+= 8;
         ion[4]=getbits(buff,i,8)*P2P11; i+=8;
         ion[5]=getbits(buff,i,8)*P2P14; i+=8;
         ion[6]=getbits(buff,i,8)*P2P16; i+=8;
@@ -1238,15 +1237,14 @@ static int decode_frame_ion(const uint8_t *buff, double *ion)
 /* decode GPS/QZSS UTC parameters --------------------------------------------*/
 static int decode_frame_utc(const uint8_t *buff, double *utc)
 {
-    int i,frm;
-    
     trace(4,"decode_frame_utc:\n");
     
     /* subframe 4/5 and svid=56 (page18) */
-    for (frm=4,buff+=90;frm<=5;frm++,buff+=30) {
+    buff += 90;
+    for (unsigned frm=4;frm<=5;frm++,buff+=30) {
         if (frm==5&&getbitu(buff,48,2)==1) continue;
         if (getbitu(buff,43,3)!=frm||getbitu(buff,50,6)!=56) continue;
-        i=120;
+        int i=120;
         utc[1]=getbits(buff,i,24)*P2_50; i+=24; /* A1 (s) */
         utc[0]=getbits(buff,i,32)*P2_30; i+=32; /* A0 (s) */
         utc[2]=getbitu(buff,i, 8)*P2P12; i+= 8; /* tot (s) */
@@ -1305,7 +1303,6 @@ extern int init_raw(raw_t *raw, int format)
     obsd_t data0={{0}};
     eph_t  eph0 ={0,-1,-1};
     alm_t  alm0 ={0,-1};
-    geph_t geph0={0,-1};
     seph_t seph0={0};
     sbsmsg_t sbsmsg0={0};
     int i,j,ret=1;
@@ -1322,6 +1319,7 @@ extern int init_raw(raw_t *raw, int format)
             raw->tobs [i][j]=time0;
             raw->lockt[i][j]=0.0;
             raw->halfc[i][j]=0;
+            raw->lockflag[i][j]=0;
         }
         raw->icpp[i]=raw->off[i]=raw->prCA[i]=raw->dpCA[i]=0.0;
     }
@@ -1347,7 +1345,6 @@ extern int init_raw(raw_t *raw, int format)
         !(raw->obuf.data=(obsd_t *)malloc(sizeof(obsd_t)*MAXOBS))||
         !(raw->nav.eph  =(eph_t  *)malloc(sizeof(eph_t )*MAXSAT*2))||
         !(raw->nav.alm  =(alm_t  *)malloc(sizeof(alm_t )*MAXSAT))||
-        !(raw->nav.geph =(geph_t *)malloc(sizeof(geph_t)*NSATGLO))||
         !(raw->nav.seph =(seph_t *)malloc(sizeof(seph_t)*NSATSBS*2))) {
         free_raw(raw);
         return 0;
@@ -1356,13 +1353,11 @@ extern int init_raw(raw_t *raw, int format)
     raw->obuf.n=0;
     raw->nav.n =raw->nav.nmax =MAXSAT*2;
     raw->nav.na=raw->nav.namax=MAXSAT;
-    raw->nav.ng=raw->nav.ngmax=NSATGLO;
     raw->nav.ns=raw->nav.nsmax=NSATSBS*2;
     for (i=0;i<MAXOBS   ;i++) raw->obs.data [i]=data0;
     for (i=0;i<MAXOBS   ;i++) raw->obuf.data[i]=data0;
     for (i=0;i<MAXSAT*2 ;i++) raw->nav.eph  [i]=eph0;
     for (i=0;i<MAXSAT   ;i++) raw->nav.alm  [i]=alm0;
-    for (i=0;i<NSATGLO  ;i++) raw->nav.geph [i]=geph0;
     for (i=0;i<NSATSBS*2;i++) raw->nav.seph [i]=seph0;
     raw->sta.name[0]=raw->sta.markerno[0]=raw->sta.markertype[0]='\0';
     raw->sta.observer[0]=raw->sta.agency[0]='\0';
@@ -1373,7 +1368,18 @@ extern int init_raw(raw_t *raw, int format)
         raw->sta.pos[i]=raw->sta.del[i]=0.0;
     }
     raw->sta.hgt=0.0;
-    
+
+    if (MAXPRNGLO > 0) {
+      raw->nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO);
+      if (raw->nav.geph == NULL) {
+        free_raw(raw);
+        return 0;
+      }
+      geph_t geph0 = {0, -1};
+      for (int i = 0; i < MAXPRNGLO; i++) raw->nav.geph[i] = geph0;
+    }
+    raw->nav.ng = raw->nav.ngmax = MAXPRNGLO;
+
     /* initialize receiver dependent data */
     raw->format=format;
     switch (format) {

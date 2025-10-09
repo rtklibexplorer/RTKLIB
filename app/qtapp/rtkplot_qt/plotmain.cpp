@@ -106,7 +106,6 @@ Plot::Plot(QWidget *parent) : QMainWindow(parent), ui(new Ui::Plot)
     setlocale(LC_NUMERIC, "C"); // use point as decimal separator in formatted output
 
     gtime_t t0 = {0, 0};
-    nav_t nav0 = {};
     obs_t obs0 = {};
     sta_t sta0 = {};
     gis_t gis0 = {};
@@ -134,13 +133,10 @@ Plot::Plot(QWidget *parent) : QMainWindow(parent), ui(new Ui::Plot)
     }
 
     obs0.data = NULL; obs0.n = obs0.nmax = 0;
-    nav0.eph = NULL; nav0.n = nav0.nmax = 0;
-    nav0.geph = NULL; nav0.ng = nav0.ngmax = 0;
-    nav0.seph = NULL; nav0.ns = nav0.nsmax = 0;
 
     observationIndex = 0;
     observation = obs0;
-    navigation = nav0;
+    memset(&navigation, 0, sizeof(navigation));
     station = sta0;
     gis = gis0;
     simulatedObservation = 0;
@@ -386,7 +382,7 @@ Plot::~Plot()
     delete [] azimuth;
     delete [] elevation;
 
-    for (int i = 0; i < NFREQ + NEXOBS; i++) delete multipath[i];
+    for (int i = 0; i < NFREQ + NEXOBS; i++) delete [] multipath[i];
 
     delete graphTrack;
     delete graphSingle;
@@ -657,7 +653,8 @@ void Plot::dropEvent(QDropEvent *event)
         if ((ext == "jpg") || (ext == "jpeg")) {
             if (plotType == PLOT_TRK)
                 readMapData(file);
-            else if (plotType == PLOT_SKY || plotType == PLOT_MPS || plotType == PLOT_IONOS)
+            else if (plotType == PLOT_SKY || plotType == PLOT_SSKY || plotType == PLOT_MPS ||
+                     plotType == PLOT_IONOS)
                 readSkyData(file);
         } else if (isObservation(files.at(0))) {
             readObservation(files);
@@ -1197,7 +1194,7 @@ void Plot::arrangePlotMapViewHorizontally()
     mapView->setVisible(true);
 }
 //---------------------------------------------------------------------------
-#if 0
+#ifdef RTK_DISABLED
 void Plot::DispGesture()
 {
     AnsiString s;
@@ -1365,7 +1362,7 @@ void Plot::updateCurrentObsSol()
 
     trace(3, "updateCurrentObsSol\n");
 
-    if (plotType <= PLOT_NSAT || plotType == PLOT_RES)
+    if (plotType <= PLOT_SDOP || plotType == PLOT_RES)
         solutionIndex[sel] = ui->sBTime->value();
     else
         observationIndex = ui->sBTime->value();
@@ -1389,7 +1386,7 @@ void Plot::mousePressEvent(QMouseEvent *event)
 
     if (plotType == PLOT_TRK)
         mouseDownTrack(dragStartX, dragStartY);
-    else if (plotType <= PLOT_NSAT || plotType == PLOT_RES || plotType == PLOT_SNR)
+    else if (plotType <= PLOT_SDOP || plotType == PLOT_RES || plotType == PLOT_SNR)
         mouseDownSolution(dragStartX, dragStartY);
     else if (plotType == PLOT_OBS || plotType == PLOT_DOP)
         mouseDownObservation(dragStartX, dragStartY);
@@ -1428,7 +1425,7 @@ void Plot::mouseMove(QMouseEvent *event)
 
     if (plotType == PLOT_TRK)
         mouseMoveTrack(dragCurrentX, dragCurrentY, dx, dy, dxs, dys);
-    else if (plotType <= PLOT_NSAT || plotType == PLOT_RES || plotType == PLOT_SNR)
+    else if (plotType <= PLOT_SDOP || plotType == PLOT_RES || plotType == PLOT_SNR)
         mouseMoveSolution(dragCurrentX, dragCurrentY, dx, dy, dxs, dys);
     else if (plotType == PLOT_OBS || plotType == PLOT_DOP)
         mouseMoveObservation(dragCurrentX, dragCurrentY, dx, dy, dxs, dys);
@@ -1473,7 +1470,7 @@ void Plot::mouseDoubleClickEvent(QMouseEvent *event)
 
         setCenterX(x);
         refresh();
-    } else if (plotType == PLOT_OBS || plotType == PLOT_DOP) {
+    } else if (plotType == PLOT_OBS || plotType == PLOT_DOP || plotType == PLOT_SDOP) {
         graphSingle->toPos(p, x, y);
 
         setCenterX(x);
@@ -1767,7 +1764,7 @@ void Plot::wheelEvent(QWheelEvent *event)
                 setScaleX(xs * ds);
             }
         }
-    } else if (plotType == PLOT_OBS || plotType == PLOT_DOP) {
+    } else if (plotType == PLOT_OBS || plotType == PLOT_DOP || plotType == PLOT_SDOP) {
         area = graphSingle->onAxis(p);
         if (area == 0 || area == 8) {  // center or below
             graphSingle->getScale(xs, ys);
@@ -1856,7 +1853,7 @@ void Plot::keyPressEvent(QKeyEvent *event)
         graphTriple[0]->setScale(xs, ys1);
         graphTriple[1]->setScale(xs, ys2);
         graphTriple[2]->setScale(xs, ys3);
-    } else if (plotType == PLOT_OBS || plotType == PLOT_DOP || plotType == PLOT_SNR) {
+    } else if (plotType == PLOT_OBS || plotType == PLOT_DOP || plotType == PLOT_SDOP || plotType == PLOT_SNR) {
         graphSingle->getCenter(xc, yc);
         graphSingle->getScale(xs, ys);
         if (event->key() == Qt::Key_Up) {
@@ -1946,7 +1943,7 @@ void Plot::timerTimer()
     } else if (ui->btnAnimate->isEnabled() && ui->btnAnimate->isChecked()) { // animation mode
         cycle = plotOptDialog->getAnimationCycle() <= 0 ? 1 : plotOptDialog->getAnimationCycle();
 
-        if (plotType <= PLOT_NSAT || plotType == PLOT_RES) {
+        if (plotType <= PLOT_SDOP || plotType == PLOT_RES) {
             solutionIndex[sel] += cycle;
             if (solutionIndex[sel] >= solutionData[sel].n - 1) {
                 solutionIndex[sel] = solutionData[sel].n - 1;
@@ -1975,7 +1972,7 @@ void Plot::timerTimer()
                 nStreamBuffer = 0;
             }
         }
-        if (time.time && (plotType <= PLOT_NSAT || plotType <= PLOT_RES)) {
+        if (time.time && (plotType <= PLOT_SDOP || plotType <= PLOT_RES)) {
            i = solutionIndex[sel];
            if (!(sol = getsol(solutionData + sel, i))) return;
 
@@ -2136,7 +2133,7 @@ void Plot::updateTime()
     if (observationIndex < 0) return;
 
     // time-cursor change on solution-plot
-    if (plotType <= PLOT_NSAT || plotType <= PLOT_RES) {
+    if (plotType <= PLOT_SDOP || plotType <= PLOT_RES) {
         ui->sBTime->setMaximum(qMax(1, solutionData[sel].n - 1));
         ui->sBTime->setValue(solutionIndex[sel]);
         if (!(sol = getsol(solutionData + sel, solutionIndex[sel]))) return;
@@ -2315,7 +2312,7 @@ void Plot::updateEnable()
 
     ui->menuConnect->setChecked(connectState);
     ui->btnSolution1->setEnabled(true);
-    ui->btnSolution2->setEnabled(plotType <= PLOT_NSAT || plotType == PLOT_RES || plotType == PLOT_RESE);
+    ui->btnSolution2->setEnabled(plotType <= PLOT_SDOP || plotType == PLOT_RES || plotType == PLOT_RESE);
     ui->btnSolution12->setEnabled(!connectState && plotType <= PLOT_SOLA && solutionData[0].n > 0 && solutionData[1].n > 0);
 
     // combo boxes
@@ -2325,10 +2322,11 @@ void Plot::updateEnable()
     ui->cBObservationType->setVisible(plotType == PLOT_OBS || plotType == PLOT_SKY);
     ui->cBObservationTypeSNR->setVisible(plotType == PLOT_SNR || plotType == PLOT_SNRE || plotType == PLOT_MPS);
 
-    ui->cBFrequencyType->setVisible(plotType == PLOT_RES || plotType == PLOT_RESE);
-    ui->cBDopType->setVisible(plotType == PLOT_DOP);
+    ui->cBFrequencyType->setVisible(plotType == PLOT_SSKY || plotType == PLOT_RES || plotType == PLOT_RESE);
+    ui->cBDopType->setVisible(plotType == PLOT_DOP || plotType == PLOT_SDOP);
     ui->cBSatelliteList->setVisible(plotType == PLOT_RES || plotType == PLOT_RESE || plotType >= PLOT_OBS ||
-                                    plotType == PLOT_SKY || plotType == PLOT_DOP ||
+                                    plotType == PLOT_SSKY || plotType == PLOT_SKY ||
+                                    plotType == PLOT_SDOP || plotType == PLOT_DOP ||
                                     plotType == PLOT_SNR || plotType == PLOT_SNRE ||
                                     plotType == PLOT_MPS || plotType == PLOT_IONOS);
     ui->cBQFlag->setEnabled(data);
@@ -2362,8 +2360,8 @@ void Plot::updateEnable()
     ui->btnFitHorizontal->setVisible(plotType == PLOT_SOLP || plotType == PLOT_SOLV ||
                                      plotType == PLOT_SOLA || plotType == PLOT_NSAT ||
                                      plotType == PLOT_RES || plotType == PLOT_OBS ||
-                                     plotType == PLOT_DOP || plotType == PLOT_SNR ||
-                                     plotType == PLOT_SNRE);
+                                     plotType == PLOT_DOP || plotType == PLOT_SDOP ||
+                                     plotType == PLOT_SNR || plotType == PLOT_SNRE);
     ui->btnFitVertical->setVisible(plotType == PLOT_TRK || plotType == PLOT_SOLP ||
                                    plotType == PLOT_SOLV || plotType == PLOT_SOLA);
     ui->btnFitHorizontal->setEnabled(data && ui->btnFitHorizontal->isVisible());
@@ -2376,7 +2374,8 @@ void Plot::updateEnable()
     ui->btnFixHorizontal->setVisible(plotType == PLOT_SOLP || plotType == PLOT_SOLV ||
                                      plotType == PLOT_SOLA || plotType == PLOT_NSAT ||
                                      plotType == PLOT_RES || plotType == PLOT_OBS ||
-                                     plotType == PLOT_DOP || plotType == PLOT_SNR);
+                                     plotType == PLOT_DOP || plotType == PLOT_SDOP ||
+                                     plotType == PLOT_SNR);
     ui->btnFixVertical->setVisible(plotType == PLOT_SOLP || plotType == PLOT_SOLV ||
                                    plotType == PLOT_SOLA);
     ui->btnFixCenter->setEnabled(data);
@@ -2404,7 +2403,7 @@ void Plot::updateEnable()
     // show dialog actions
     ui->menuShowTrack->setEnabled(data);
     ui->btnShowTrack->setVisible(ui->menuShowTrack->isEnabled());
-    ui->btnShowSkyplot->setVisible(plotType == PLOT_SKY || plotType == PLOT_MPS || plotType == PLOT_IONOS);
+    ui->btnShowSkyplot->setVisible(plotType == PLOT_SKY || plotType == PLOT_SSKY || plotType == PLOT_MPS || plotType == PLOT_IONOS);
     ui->menuShowSkyplot->setEnabled(ui->btnShowSkyplot->isVisible());
     ui->btnShowMap->setVisible(plotType == PLOT_TRK);
     ui->btnShowMap->setEnabled(!ui->btnSolution12->isChecked());
@@ -2419,7 +2418,7 @@ void Plot::updateEnable()
 
     // show actions
     ui->btnShowImage->setVisible((plotType == PLOT_TRK && !mapImageOriginal.isNull()) ||
-                                 ((plotType == PLOT_SKY || plotType == PLOT_MPS || plotType == PLOT_IONOS)
+                                 ((plotType == PLOT_SKY || plotType == PLOT_SSKY || plotType == PLOT_MPS || plotType == PLOT_IONOS)
                                                                                           && !skyImageOriginal.isNull()));
     ui->menuShowImage->setEnabled(ui->btnShowImage->isVisible());
     ui->btnShowGrid->setVisible(plotType == PLOT_TRK);

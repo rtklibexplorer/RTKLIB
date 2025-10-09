@@ -73,7 +73,9 @@ void Plot::updateDisplay()
             case  PLOT_NSAT: drawNsat(c, level);   break;
             case  PLOT_OBS: drawObservation(c, level);   break;
             case  PLOT_SKY: drawSky(c, level);   break;
+            case  PLOT_SSKY: drawSolSky(c, level);   break;
             case  PLOT_DOP: drawDop(c, level);   break;
+            case  PLOT_SDOP: drawSolDop(c, level);   break;
             case  PLOT_RES: drawResidual(c, level);   break;
             case  PLOT_RESE: drawResidualE(c, level);   break;
             case  PLOT_SNR: drawSnr(c, level);   break;
@@ -1387,7 +1389,7 @@ void Plot::drawSky(QPainter &c, int level)
                     if (obs->P[j] == 0.0 && obs->L[j] == 0.0)
                         s += "-- ";
                     else
-                        s += QStringLiteral("%1 ").arg(obs->SNR[j] * SNR_UNIT, 2, 'f', 0, QChar('0'));
+                        s += QStringLiteral("%1 ").arg(obs->SNR[j], 2, 'f', 0, QChar('0'));
                 }
 
                 // LLI
@@ -1410,7 +1412,7 @@ void Plot::drawSky(QPainter &c, int level)
                 if (obs->P[freq - 1] == 0.0 && obs->L[freq - 1] == 0.0)
                     s += "---- ";
                 else
-                    s += QStringLiteral("%1 ").arg(obs->SNR[freq - 1] * SNR_UNIT, 4, 'f', 1);
+                    s += QStringLiteral("%1 ").arg(obs->SNR[freq - 1], 4, 'f', 1);
 
                 // LLI
                 if (obs->L[freq-1] == 0.0)
@@ -1432,7 +1434,7 @@ void Plot::drawSky(QPainter &c, int level)
                 if (obs->P[j] == 0.0 && obs->L[j] == 0.0)
                     s += "---- ";
                 else
-                    s += QStringLiteral("%1 ").arg(obs->SNR[j] * SNR_UNIT, 4, 'f', 1);
+                    s += QStringLiteral("%1 ").arg(obs->SNR[j], 4, 'f', 1);
 
                 // LLI
                 if (obs->L[j] == 0.0)
@@ -1628,7 +1630,7 @@ void Plot::drawSky(QPainter &c, int level)
                     if (obs->P[j] == 0.0 && obs->L[j] == 0.0)
                         s += "-- ";
                     else
-                        s += QStringLiteral("%1 ").arg(obs->SNR[j] * SNR_UNIT, 2, 'f', 0, QChar('0'));
+                        s += QStringLiteral("%1 ").arg(obs->SNR[j], 2, 'f', 0, QChar('0'));
                 }
 
                 // LLI
@@ -1651,7 +1653,7 @@ void Plot::drawSky(QPainter &c, int level)
                 if (obs->P[freq - 1] == 0.0 && obs->L[freq - 1] == 0.0)
                     s += "---- ";
                 else
-                    s += QStringLiteral("%1 ").arg(obs->SNR[freq - 1] * SNR_UNIT, 4, 'f', 1);
+                    s += QStringLiteral("%1 ").arg(obs->SNR[freq - 1], 4, 'f', 1);
 
                 // LLI
                 if (obs->L[freq-1] == 0.0)
@@ -1673,7 +1675,7 @@ void Plot::drawSky(QPainter &c, int level)
                 if (obs->P[j] == 0.0 && obs->L[j] == 0.0)
                     s += "---- ";
                 else
-                    s += QStringLiteral("%1 ").arg(obs->SNR[j] * SNR_UNIT, 4, 'f', 1);
+                    s += QStringLiteral("%1 ").arg(obs->SNR[j], 4, 'f', 1);
 
                 // LLI
                 if (obs->L[j] == 0.0)
@@ -1695,6 +1697,179 @@ void Plot::drawSky(QPainter &c, int level)
         p2.ry() -= 3;
         drawLabel(graphSky, c, p2, tr("No navigation data"), Graph::Alignment::Right, Graph::Alignment::Bottom);
     }
+}
+// Draw sky-plot --------------------------------------------------------------
+void Plot::drawSolSky(QPainter &c, int level) {
+  trace(3, "drawSolSky: level=%d\n", level);
+
+  uint8_t frq = ui->cBFrequencyType->currentIndex() + 1;
+  int sel = !ui->btnSolution1->isChecked() && ui->btnSolution2->isChecked() ? 1 : 0;
+  int ind = solutionIndex[sel];
+  int sn = solutionStat[sel].n;
+
+  double xl[2], yl[2];
+  graphSky->getLimits(xl, yl);
+  QPoint p1, p2;
+  graphSky->getExtent(p1, p2);
+
+  double radius = qMin(xl[1] - xl[0], yl[1] - yl[0]) * 0.45;
+
+  if (ui->btnShowImage->isChecked()) drawSkyImage(c, level);
+
+  if (ui->btnShowSkyplot->isChecked())
+    graphSky->drawSkyPlot(c, 0.0, 0.0, plotOptDialog->getCColor(1), plotOptDialog->getCColor(2),
+                          plotOptDialog->getCColor(0), radius * 2.0);
+
+  if (!ui->btnSolution1->isChecked() && !ui->btnSolution2->isChecked()) return;
+
+  double xs, ys;
+  graphSky->getScale(xs, ys);
+
+  double p0[MAXSAT][2] = {{0}};
+  if (plotOptDialog->getPlotStyle() <= 2) {
+    // Plot style not "none".
+    double prevPoint[MAXSAT][2] = {{0}};
+    for (int i = 0; i < sn; i++) {
+      solstat_t *solstat = solutionStat[sel].data + i;
+      if (satelliteMask[solstat->sat - 1] || !satelliteSelection[solstat->sat - 1]) continue;
+      if (solstat->frq != frq || solstat->el <= 0) continue;
+
+      QColor col = snrColor(solstat->snr);
+      // Include satellites with invalid data but note this in the color.
+      if ((solstat->flag & 0x20) == 0) col = plotOptDialog->getMarkerColor(0, 7);
+      // Check against elevation mask.
+      if (solstat->el < plotOptDialog->getElevationMask() * D2R ||
+          (plotOptDialog->getElevationMaskEnabled() &&
+           solstat->el < elevationMaskData[static_cast<int>(solstat->az * R2D + 0.5)])) {
+        if (plotOptDialog->getHideLowSatellites()) continue;
+        col = plotOptDialog->getMarkerColor(0, 0);
+      }
+
+      double x = radius * sin(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double y = radius * cos(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double xp = prevPoint[solstat->sat - 1][0];
+      double yp = prevPoint[solstat->sat - 1][1];
+
+      if ((x - xp) * (x - xp) + (y - yp) * (y - yp) >= xs * xs) {
+        int siz = plotOptDialog->getPlotStyle() < 2 ? plotOptDialog->getMarkSize() : 1;
+        if (plotOptDialog->getPlotStyle() >= 2) col = plotOptDialog->getCColor(3);
+        graphSky->drawMark(c, x, y, Graph::MarkerTypes::Dot, col, siz, 0);
+        prevPoint[solstat->sat - 1][0] = x;
+        prevPoint[solstat->sat - 1][1] = y;
+      }
+      if (xp == 0.0 && yp == 0.0) {
+        // Save first point.
+        p0[solstat->sat - 1][0] = x;
+        p0[solstat->sat - 1][1] = y;
+      }
+    }
+  }
+
+  if ((plotOptDialog->getPlotStyle() == 0 || plotOptDialog->getPlotStyle() == 2) &&
+      !ui->btnShowTrack->isChecked()) {
+    // Plot style with lines.
+    for (int sat = 0; sat < MAXSAT; sat++) {
+      if (p0[sat][0] != 0.0 || p0[sat][1] != 0.0) {
+        QPoint pnt;
+        if (graphSky->toPoint(p0[sat][0], p0[sat][1], pnt)) {
+          char satId[8];
+          satno2id(sat + 1, satId);
+          drawLabel(graphSky, c, pnt, QString(satId), Graph::Alignment::Left,
+                    Graph::Alignment::Center);
+        }
+      }
+    }
+  }
+  if (!level) return;
+
+  if (plotOptDialog->getShowSlip() && plotOptDialog->getPlotStyle() <= 2) {
+    // Plot style not "none".
+    gtime_t prevTime[MAXSAT] = {{0, 0}};
+    double prevPoint[MAXSAT][2] = {{0}};
+    for (int i = 0; i < sn; i++) {
+      solstat_t *solstat = solutionStat[sel].data + i;
+      if (satelliteMask[solstat->sat - 1] || !satelliteSelection[solstat->sat - 1]) continue;
+      if (solstat->frq != frq) continue;
+
+      int slip = (solstat->flag >> 3) & 3;
+      if (slip == 0) continue;
+
+      double x = radius * sin(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double y = radius * cos(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double dx = x - prevPoint[solstat->sat - 1][0];
+      double dy = y - prevPoint[solstat->sat - 1][1];
+
+      double dt = timediff(solstat->time, prevTime[solstat->sat - 1]);
+
+      prevTime[solstat->sat - 1] = solstat->time;
+      prevPoint[solstat->sat - 1][0] = x;
+      prevPoint[solstat->sat - 1][1] = y;
+
+      // Don't connect observations by a line if the time difference is too large.
+      if (fabs(dt) > 300.0) continue;
+
+      graphSky->drawMark(c, x, y, Graph::MarkerTypes::Line, plotOptDialog->getMarkerColor(0, 5),
+                         plotOptDialog->getMarkSize() * 3 + 2,
+                         static_cast<int>(ATAN2(dy, dx) * R2D + 90));
+    }
+  }
+
+  // Draw elevation mask.
+  if (plotOptDialog->getElevationMaskEnabled()) {
+    double *x = new double[361];
+    double *y = new double[361];
+
+    for (int i = 0; i <= 360; i++) {
+      x[i] = radius * sin(i * D2R) * (1.0 - 2.0 * elevationMaskData[i] / PI);
+      y[i] = radius * cos(i * D2R) * (1.0 - 2.0 * elevationMaskData[i] / PI);
+    }
+    QPen pen = c.pen();
+    pen.setWidth(2);
+    c.setPen(pen);  // set prn width
+    graphSky->drawPoly(c, x, y, 361, COL_ELMASK, 0);
+    pen.setWidth(1);
+    c.setPen(pen);
+
+    delete[] x;
+    delete[] y;
+  }
+
+  // Draw current solution.
+  if (ui->btnShowTrack->isChecked() && 0 <= ind && ind < solutionData[sel].n) {
+    int fontsize = plotOptDialog->getFont().pointSize();
+    gtime_t t = solutionData[sel].data[ind].time;
+    for (int i = 0; i < sn; i++) {
+      solstat_t *solstat = solutionStat[sel].data + i;
+      if (timediff(solstat->time, t) < -DTTOL) continue;
+      if (timediff(solstat->time, t) > DTTOL) break;
+      if (satelliteMask[solstat->sat - 1] || !satelliteSelection[solstat->sat - 1]) continue;
+      if (solstat->frq != frq || solstat->el <= 0) continue;
+
+      QColor col = snrColor(solstat->snr);
+      // Include satellites with invalid data but note this in the color.
+      if ((solstat->flag & 0x20) == 0) col = plotOptDialog->getMarkerColor(0, 7);
+      // Check against elevation mask.
+      if (solstat->el < plotOptDialog->getElevationMask() * D2R ||
+          (plotOptDialog->getElevationMaskEnabled() &&
+           solstat->el < elevationMaskData[static_cast<int>(solstat->az * R2D + 0.5)])) {
+        if (plotOptDialog->getHideLowSatellites()) continue;
+        col = plotOptDialog->getMarkerColor(0, 0);
+      }
+
+      double x = radius * sin(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double y = radius * cos(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+
+      char satId[8];
+      satno2id(solstat->sat, satId);
+
+      graphSky->drawMark(c, x, y, Graph::MarkerTypes::Dot, col, fontsize * 2 + 5, 0);
+      QColor colc =
+          col == Qt::black ? plotOptDialog->getMarkerColor(0, 0) : plotOptDialog->getCColor(2);
+      graphSky->drawMark(c, x, y, Graph::MarkerTypes::Circle, colc, fontsize * 2 + 5, 0);
+      graphSky->drawText(c, x, y, QString(satId), plotOptDialog->getCColor(0), 0,
+                         Graph::Alignment::Center, Graph::Alignment::Center);
+    }
+  }
 }
 // draw DOP and number-of-satellite plot ------------------------------------
 void Plot::drawDop(QPainter &c, int level)
@@ -1841,6 +2016,199 @@ void Plot::drawDop(QPainter &c, int level)
     delete [] dop;
     delete [] ns;
 }
+// Draw DOP and number-of-satellite plot --------------------------------------
+void Plot::drawSolDop(QPainter &c, int level) {
+  trace(3, "drawSolDop: level=%d\n", level);
+
+  int sel = !ui->btnSolution1->isChecked() && ui->btnSolution2->isChecked() ? 1 : 0;
+  int ind = solutionIndex[sel];
+  int sn = solutionStat[sel].n;
+
+  graphSingle->xLabelPosition =
+      plotOptDialog->getTimeFormat() ? Graph::LabelPosition::Time : Graph::LabelPosition::Outer;
+  graphSingle->yLabelPosition = Graph::LabelPosition::Outer;
+  graphSingle->week = week;
+
+  // Adjust plot limits.
+  double xl[2], yl[2];
+  graphSingle->getLimits(xl, yl);
+  yl[0] = 0.0;
+  yl[1] = plotOptDialog->getMaxDop();
+  graphSingle->setLimits(xl, yl);
+  graphSingle->setTick(0.0, 0.0);
+
+  // Update plot center to current position.
+  if (0 <= ind && ind < solutionData[sel].n && ui->btnShowTrack->isChecked() &&
+      ui->btnFixHorizontal->isChecked()) {
+    gtime_t t = solutionData[sel].data[ind].time;
+
+    for (int panel = 0; panel < 3; panel++) {
+      double offset, xc, yc, xl[2], yl[2];
+
+      if (ui->btnFixHorizontal->isChecked()) {
+        graphTriple[panel]->getLimits(xl, yl);
+        offset = centX * (xl[1] - xl[0]) / 2.0;
+        graphTriple[panel]->getCenter(xc, yc);
+        graphTriple[panel]->getCenter(xc, yc);
+        graphTriple[panel]->setCenter(timePosition(t) - offset, yc);
+      } else {
+        graphTriple[panel]->getRight(xc, yc);
+        graphTriple[panel]->setRight(timePosition(t), yc);
+      }
+    }
+  }
+
+  graphSingle->drawAxis(c, true, true);
+
+  // Draw title.
+  QPoint p1, p2;
+  graphSingle->getExtent(p1, p2);
+  p1.setX((int)(QFontMetrics(plotOptDialog->getFont()).height()));
+  p1.setY((p1.y() + p2.y()) / 2);
+  QString label;
+  int doptype = ui->cBDopType->currentIndex();
+  if (doptype == 0)  // ALL
+    label = tr("# of Satellites / DOP (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
+  else if (doptype == 1)  // NSAT
+    label = tr("# of Satellites (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
+  else
+    label = tr("DOP x 10 (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
+  graphSingle->drawText(c, p1, label, plotOptDialog->getCColor(2), Graph::Alignment::Center,
+                        Graph::Alignment::Center, 90);
+
+  if (!ui->btnSolution1->isChecked() && !ui->btnSolution2->isChecked()) return;
+
+  double *x = new double[sn];
+  double *y = new double[sn];
+  double *dop = new double[sn * 4];
+  int *ns = new int[sn];
+
+  // Calculate DOP. Collecting the azimuth and elevation for all the
+  // satellites, and counting the number of satellites.
+  gtime_t time = {0, 0};
+  int nsat = 0, n = 0, prev_sat = 0;
+  double azel[MAXSAT * 2];
+  for (int i = 0; i < sn; i++) {
+    solstat_t *solstat = solutionStat[sel].data + i;
+    if (timediff(solstat->time, time) > DTTOL) {
+      if (nsat > 0) {
+        dops(nsat, azel, plotOptDialog->getElevationMask() * D2R, dop + n * 4);
+        ns[n] = nsat;
+        x[n] = timePosition(time);
+        n++;
+      }
+      time = solstat->time;
+      nsat = 0;
+      prev_sat = 0;
+    }
+    if (satelliteMask[solstat->sat - 1] || !satelliteSelection[solstat->sat - 1]) continue;
+    if (solstat->el < plotOptDialog->getElevationMask() * D2R) continue;
+    if (plotOptDialog->getElevationMaskEnabled() &&
+        solstat->el < elevationMaskData[static_cast<int>(solstat->az * R2D + 0.5)])
+      continue;
+    if (solstat->sat != prev_sat && (solstat->flag & 0x20) != 0) {
+      azel[nsat * 2] = solstat->az;
+      azel[nsat * 2 + 1] = solstat->el;
+      prev_sat = solstat->sat;
+      nsat++;
+    }
+  }
+
+  for (int i = 0; i < 4; i++) {  // For all DOP type (GDOP, PDOP, HDOP, VDOP).
+    if (doptype != 0 && doptype != i + 2) continue;
+
+    for (int j = 0; j < n; j++) y[j] = dop[i + j * 4] * 10;
+
+    if ((plotOptDialog->getPlotStyle() % 2) == 0)  // Line style.
+      drawPolyS(graphSingle, c, x, y, n, plotOptDialog->getCColor(3), 0);
+
+    if (level && plotOptDialog->getPlotStyle() < 2) {  // Marker style.
+      for (int j = 0; j < n; j++) {
+        if (y[j] == 0.0) continue;
+        QColor col = plotOptDialog->getMarkerColor(0, i + 2);
+        graphSingle->drawMark(c, x[j], y[j], Graph::MarkerTypes::Dot, col,
+                              plotOptDialog->getMarkSize(), 0);
+      }
+    }
+  }
+
+  // Draw number of satellites.
+  if (doptype == 0 || doptype == 1) {  // ALL or NSAT.
+    for (int i = 0; i < n; i++) y[i] = ns[i];
+
+    if ((plotOptDialog->getPlotStyle() % 2) == 0)  // Line style.
+      drawPolyS(graphSingle, c, x, y, n, plotOptDialog->getCColor(3), 1);
+
+    if (level && plotOptDialog->getPlotStyle() < 2) {  // Marker style.
+      for (int i = 0; i < n; i++) {
+        QColor col = plotOptDialog->getMarkerColor(0, 1);
+        graphSingle->drawMark(c, x[i], y[i], Graph::MarkerTypes::Dot, col,
+                              plotOptDialog->getMarkSize(), 0);
+      }
+    }
+  }
+
+  // Draw currently selected data.
+  if (ui->btnShowTrack->isChecked() && 0 <= ind && ind < solutionData[sel].n && n > 0) {
+    graphSingle->getLimits(xl, yl);
+    double xp = timePosition(solutionData[sel].data[ind].time);
+    xl[0] = xl[1] = xp;
+
+    // Vertical line at current position.
+    graphSingle->drawPoly(c, xl, yl, 2, plotOptDialog->getCColor(2), 0);
+
+    int xi = 0;
+    for (; xi < n; xi++)
+      if (fabs(x[xi] - xp) < DTTOL) break;
+    if (xi >= n) xi = n - 1;
+
+    for (int i = 0; i < 4; i++) {  // For all DOP type (GDOP, PDOP, HDOP, VDOP).
+      if ((doptype != 0 && doptype != i + 2) || dop[i + xi * 4] <= 0.0) continue;
+
+      graphSingle->drawMark(c, xl[0], dop[i + xi * 4] * 10.0, Graph::MarkerTypes::Dot,
+                            plotOptDialog->getMarkerColor(0, i + 2),
+                            plotOptDialog->getMarkSize() * 2 + 2, 0);
+    }
+
+    if (doptype == 0 || doptype == 1)  // ALL or NSAT.
+      graphSingle->drawMark(c, xl[0], ns[xi], Graph::MarkerTypes::Dot,
+                            plotOptDialog->getMarkerColor(0, 1),
+                            plotOptDialog->getMarkSize() * 2 + 2, 0);
+
+    graphSingle->drawMark(c, xl[0], yl[1] - 1E-6, Graph::MarkerTypes::Dot,
+                          plotOptDialog->getCColor(2), 5, 0);
+    if (!ui->btnFixHorizontal->isChecked())
+      graphSingle->drawMark(c, xl[0], yl[1] - 1E-6, Graph::MarkerTypes::Circle,
+                            plotOptDialog->getCColor(2), 9, 0);
+
+    if (plotOptDialog->getShowStats()) {
+      QString s0 = QStringLiteral("NSAT: %1, GDOP: %2, PDOP: %3, HDOP: %4, VDOP: %5")
+                       .arg(ns[xi], 2)
+                       .arg(dop[0 + xi * 4], 4, 'f', 1)
+                       .arg(dop[1 + xi * 4], 4, 'f', 1)
+                       .arg(dop[2 + xi * 4], 4, 'f', 1)
+                       .arg(dop[3 + xi * 4], 4, 'f', 1);
+      // Calculate text position on the right side of the plot.
+      int fonth = (int)(QFontMetrics(plotOptDialog->getFont()).height() * 1.2);
+      QPoint p1, p2;
+      graphSingle->getExtent(p1, p2);
+      p1.setX(p2.x() - 10);
+      p1.ry() += 8;
+      p2 = p1;
+      p2.rx() -= fonth * 3;
+      QPoint p3 = p2;
+      p3.rx() -= fonth * 4;
+      drawLabel(graphSingle, c, p1, s0, Graph::Alignment::Right, Graph::Alignment::Top);
+    }
+  } else {
+    drawDopStat(c, dop, ns, n);
+  }
+
+  delete[] x;
+  delete[] y;
+  delete[] dop;
+  delete[] ns;
+}
 // draw statistics on DOP and number-of-satellite plot ----------------------
 void Plot::drawDopStat(QPainter &c, double *dop, int *ns, int n)
 {
@@ -1980,12 +2348,12 @@ void Plot::drawSnr(QPainter &c, int level)
                         }
                         if (idx >= NFREQ + NEXOBS) continue;
                     }
-                    if (obs->SNR[idx] * SNR_UNIT <= 0.0) continue;  // skip negative SNR
+                    if (obs->SNR[idx] <= 0.0) continue;  // skip negative SNR
 
                     // calculate position
                     x[n] = timePosition(obs->time);
                     if (panel == 0) {  // SNR
-                        y[n] = obs->SNR[idx] * SNR_UNIT;
+                        y[n] = obs->SNR[idx];
                         col[n] = plotOptDialog->getMarkerColor(0, 4);
                     } else if (panel == 1) {  // multipath
                         if (!multipath[idx] || multipath[idx][j] == 0.0) continue;
@@ -1997,7 +2365,7 @@ void Plot::drawSnr(QPainter &c, int level)
                         if (simulatedObservation)
                             col[n] = sysColor(obs->sat);
                         else
-                            col[n] = snrColor(obs->SNR[idx] * SNR_UNIT);
+                            col[n] = snrColor(obs->SNR[idx]);
 
                         if (elevation[j] > 0.0 && elevation[j] < plotOptDialog->getElevationMask() * D2R) col[n] = plotOptDialog->getMarkerColor(0, 0);
                     }
@@ -2178,10 +2546,10 @@ void Plot::drawSnrE(QPainter &c, int level)
                     }
                     if (idx >= NFREQ + NEXOBS) continue;
                 }
-                if (obs->SNR[idx] * SNR_UNIT <= 0.0) continue;
+                if (obs->SNR[idx] <= 0.0) continue;
 
                 x[0][n[0]] = x[1][n[1]] = elevation[j] * R2D;
-                y[0][n[0]] = obs->SNR[idx] * SNR_UNIT;
+                y[0][n[0]] = obs->SNR[idx];
                 y[1][n[1]] = !multipath[idx] ? 0.0 : multipath[idx][j];
 
                 col[0][n[0]] = col[1][n[1]] = (elevation[j] > 0.0 && elevation[j] < plotOptDialog->getElevationMask() * D2R) ?\
@@ -2577,7 +2945,7 @@ void Plot::drawResidual(QPainter &c, int level)
                 y[0][m[0]] = solstat->resp;
                 y[1][m[1]] = solstat->resc;
                 y[2][m[2]] = solstat->el * R2D;
-                y[3][m[3]] = solstat->snr * SNR_UNIT;
+                y[3][m[3]] = solstat->snr;
 
                 if (!(solstat->flag >> 5)) q = 0;          // invalid
                 else if ((solstat->flag & 7) <= 1) q = 2;  // float

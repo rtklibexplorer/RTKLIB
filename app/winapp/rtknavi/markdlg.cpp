@@ -22,7 +22,7 @@ __fastcall TMarkDialog::TMarkDialog(TComponent* Owner)
 {
 	AnsiString s;
 	NMark=1;
-	FixPos[0]=FixPos[0]=FixPos[0]=0.0;
+	FixPos[0]=FixPos[1]=FixPos[2]=0.0;
 	Label1->Caption=s.sprintf("%%r=%03d",NMark);
 }
 //---------------------------------------------------------------------------

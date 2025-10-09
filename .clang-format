@@ -1,0 +1,6 @@
+# see https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+---
+BasedOnStyle: Google
+Language: Cpp
+ColumnLimit: 100
+UseTab: Never

@@ -88,6 +88,18 @@ __published:
 	TComboBox *InputFile6;
 	TButton *BtnInputFile6;
 	TSpeedButton *BtnInputView6;
+	TComboBox *InputFile7;
+	TButton *BtnInputFile7;
+	TSpeedButton *BtnInputView7;
+	TComboBox *InputFile8;
+	TButton *BtnInputFile8;
+	TSpeedButton *BtnInputView8;
+	TComboBox *InputFile9;
+	TButton *BtnInputFile9;
+	TSpeedButton *BtnInputView9;
+	TComboBox *InputFile10;
+	TButton *BtnInputFile10;
+	TSpeedButton *BtnInputView10;
 	TBitBtn *BtnView;
 	TBitBtn *BtnOption;
 	TBitBtn *BtnExec;
@@ -129,6 +141,7 @@ __published:
 	void __fastcall BtnKeywordClick    (TObject *Sender);
 	
 	void __fastcall TimeStartClick     (TObject *Sender);
+	void __fastcall TimeEndClick       (TObject *Sender);
 	void __fastcall TimeIntFClick      (TObject *Sender);
 	void __fastcall TimeUnitFClick     (TObject *Sender);
 	void __fastcall InputFile1Change   (TObject *Sender);
@@ -137,6 +150,14 @@ __published:
 	void __fastcall OutDirChange(TObject *Sender);
 	void __fastcall BtnInputFile6Click(TObject *Sender);
 	void __fastcall BtnInputView6Click(TObject *Sender);
+	void __fastcall BtnInputFile7Click(TObject *Sender);
+	void __fastcall BtnInputView7Click(TObject *Sender);
+	void __fastcall BtnInputFile8Click(TObject *Sender);
+	void __fastcall BtnInputView8Click(TObject *Sender);
+	void __fastcall BtnInputFile9Click(TObject *Sender);
+	void __fastcall BtnInputView9Click(TObject *Sender);
+	void __fastcall BtnInputFile10Click(TObject *Sender);
+	void __fastcall BtnInputView10Click(TObject *Sender);
 	void __fastcall BtnAbortClick(TObject *Sender);
 	void __fastcall Panel4Resize(TObject *Sender);
 	void __fastcall Panel5Resize(TObject *Sender);
@@ -203,8 +224,8 @@ public:
 	int SolStatic,SbasSat,MapFunc;
 	int PosOpt[6];
 	double ElMask,MaxAgeDiff,VarHoldAmb,GainHoldAmb,RejectCode,RejectPhase;
-	double MeasErrR1,MeasErrR2,MeasErrR5,MeasErr2,MeasErr3,MeasErr4,MeasErr5;
-    double MeasErr6,MeasErr7,MeasErr8;
+	double MeasErrR1,MeasErrR2,MeasErrR5,MeasErrR6;
+    double MeasErr2,MeasErr3,MeasErr4,MeasErr5,MeasErr6,MeasErr7,MeasErr8;
 	double SatClkStab,RovAntE,RovAntN,RovAntU,RefAntE,RefAntN,RefAntU;
 	double PrNoise1,PrNoise2,PrNoise3,PrNoise4,PrNoise5;
 	double ValidThresAR,ElMaskAR,ElMaskHold,SlipThres,DopThres;

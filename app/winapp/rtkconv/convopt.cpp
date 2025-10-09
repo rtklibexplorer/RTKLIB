@@ -63,6 +63,7 @@ void __fastcall TConvOptDialog::FormShow(TObject *Sender)
 	AutoPos->Checked=MainWindow->AutoPos;
 	PhaseShift->Checked=MainWindow->PhaseShift;
 	HalfCyc->Checked=MainWindow->HalfCyc;
+	SortSats->Checked=MainWindow->SortSats;
 	OutIono->Checked=MainWindow->OutIono;
 	OutTime->Checked=MainWindow->OutTime;
 	OutLeaps->Checked=MainWindow->OutLeaps;
@@ -124,6 +125,7 @@ void __fastcall TConvOptDialog::BtnOkClick(TObject *Sender)
 	MainWindow->AutoPos=AutoPos->Checked;
 	MainWindow->PhaseShift=PhaseShift->Checked;
 	MainWindow->HalfCyc=HalfCyc->Checked;
+	MainWindow->SortSats=SortSats->Checked;
 	MainWindow->OutIono=OutIono->Checked;
 	MainWindow->OutTime=OutTime->Checked;
 	MainWindow->OutLeaps=OutLeaps->Checked;

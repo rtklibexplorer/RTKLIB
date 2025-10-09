@@ -69,6 +69,14 @@ __published:
 	TPanel *Panel52;
 	TPanel *Panel53;
 	TPanel *Panel54;
+	TPanel *Panel55;
+	TPanel *Panel56;
+	TPanel *Panel57;
+	TPanel *Panel58;
+	TPanel *Panel59;
+	TPanel *Panel60;
+	TPanel *Panel61;
+	TPanel *Panel62;
 private:
 public:
 	__fastcall TFreqDialog(TComponent* Owner);

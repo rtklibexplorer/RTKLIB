@@ -101,7 +101,7 @@ void __fastcall TMainForm::FormCreate(TObject *Sender)
     strcpy(p,".ini");
     IniFile=file;
     
-    Caption=str.sprintf("%s v.%s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
+    Caption=str.sprintf("%s-%s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
     
     strcpy(buff,GetCommandLine());
     
@@ -575,9 +575,9 @@ void __fastcall TMainForm::LoadOpt(void)
     AnsiString stas,s;
     char buff[8192],*p;
     
-    TimeY1->Text       =ini->ReadString ("opt","startd","2020/01/01");
+    TimeY1->Text       =ini->ReadString ("opt","startd","2025/01/01");
     TimeH1->Text       =ini->ReadString ("opt","starth",     "00:00");
-    TimeY2->Text       =ini->ReadString ("opt","endd",  "2020/01/01");
+    TimeY2->Text       =ini->ReadString ("opt","endd",  "2025/01/01");
     TimeH2->Text       =ini->ReadString ("opt","endh",       "00:00");
     TimeInt->Text      =ini->ReadString ("opt","timeint",      "24H");
     Number->Text       =ini->ReadString ("opt","number",         "0");
@@ -668,7 +668,6 @@ void __fastcall TMainForm::SaveOpt(void)
 //---------------------------------------------------------------------------
 void __fastcall TMainForm::LoadUrl(AnsiString file)
 {
-    FILE *fp;
     url_t *urls;
     char *p,*subtype,sel[]="*",*sels[]={sel};
     int i,j,n;

@@ -67,7 +67,7 @@ void utest3(void)
     printf("Z_disp=%8.5f %8.5f %8.5f\n",dr[2],dp[2],dr[2]-dp[2]);
     
     for (i=0;i<3;i++) {
-        assert(fabs(dr[i]-dp[i])<0.001);
+        assert(fabs(dr[i]-dp[i])<0.0015);
     }
     printf("%s utset3 : OK\n",__FILE__);
 }

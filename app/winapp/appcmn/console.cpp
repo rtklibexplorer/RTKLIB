@@ -108,17 +108,22 @@ void __fastcall TConsole::AddMsg(uint8_t *msg, int n)
 	p+=sprintf(p,"%s",str.c_str());
 	
 	for (int i=0;i<n;i++) {
+        int add = 0;
 		if (mode) {
-			if (msg[i]=='\r') continue;
-			p+=sprintf(p,"%c",msg[i]=='\n'||isprint(msg[i])?msg[i]:'.');
+            if (msg[i] == '\r') continue;
+            if (msg[i] == '\n') add = 1;
+            else {
+              p+=sprintf(p,"%c",isprint(msg[i])?msg[i]:'.');
+              if (p-buff >= MAXLEN) add = 1;
+            }
 		}
 		else {
-			p+=sprintf(p,"%s%02X",(p-buff)%17==16?" ":"",msg[i]);
-			if (p-buff>=67) p+=sprintf(p,"\n");
+            if (strlen(buff) % 17 == 16) strcat(p++, " ");
+			p+=sprintf(p,"%02X",msg[i]);
+			if (p-buff>=67) add = 1;
 		}
-		if (p-buff>=MAXLEN) p+=sprintf(p,"\n");
 		
-		if (*(p-1)=='\n') {
+		if (add) {
 			ConBuff->Strings[ConBuff->Count-1]=buff;
 			ConBuff->Add("");
 			*(p=buff)=0;

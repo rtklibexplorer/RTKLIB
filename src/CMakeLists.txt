@@ -40,6 +40,8 @@ set(DIR_SRCS_RTKLIB_RCV
 list(APPEND DIR_SRCS ${DIR_SRCS_RTKLIB} ${DIR_SRCS_RTKLIB_RCV})
 
 add_library(rtklib SHARED ${DIR_SRCS} rtklib.h)
+set_property(TARGET rtklib PROPERTY C_STANDARD 99)
+
 
 target_include_directories(rtklib
     PUBLIC ${PROJECT_SOURCE_DIR}/include

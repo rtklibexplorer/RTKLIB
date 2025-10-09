@@ -49,7 +49,7 @@ public:
 
 protected:
     void showEvent(QShowEvent*);
-    QString excludedSatellitesString(prcopt_t *prcopt);
+    QString excludedSatellitesString(const prcopt_t *prcopt);
     bool fillExcludedSatellites(prcopt_t *prcopt, const QString &excludedSatellites);
 
     char proxyaddr[1024];  // proxy address stores in naviopts
@@ -75,7 +75,7 @@ protected slots:
     void referencePositionTypeChanged(int);
     void roverPositionTypeChanged(int);
     int getPosition(int type, QLineEdit **edit, double *pos);
-    void setPosition(int type, QLineEdit **edit, double *pos);
+    void setPosition(int type, QLineEdit **edit, const double *pos);
     void selectPanelFont();
     void selectSolutionFont();
     void selectGeoidDataFile();
@@ -100,6 +100,7 @@ private:
     void showFrequenciesDialog();
     void showKeyDialog();
     void updateOptions();
+    void updateUi(const prcopt_t &prcopt, const solopt_t &solopt, const filopt_t &filopt);
     QString stripped(const QString input, const QString suffix) const;
     int options;
     Ui::OptDialog *ui;

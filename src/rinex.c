@@ -157,15 +157,6 @@ typedef struct {                        /* signal index type */
     double shift[MAXOBSTYPE];           /* phase shift (cycle) */
 } sigind_t;
 
-/* set string without tail space ---------------------------------------------*/
-static void setstr(char *dst, const char *src, int n)
-{
-    char *p=dst;
-    const char *q=src;
-    while (*q&&q<src+n) *p++=*q++;
-    *p--='\0';
-    while (p>=dst&&*p==' ') *p--='\0';
-}
 /* adjust time considering week handover -------------------------------------*/
 static gtime_t adjweek(gtime_t t, gtime_t t0)
 {
@@ -362,19 +353,8 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
                         char tobs[][MAXOBSTYPE][4], nav_t *nav, sta_t *sta)
 {
     /* default codes for unknown code */
-    const char frqcodes[]="1256789";
-    const char *defcodes[]={
-        "CWX    ",  /* GPS: L125____ */
-        "CCXX X ",  /* GLO: L1234_6_ */
-        "CXXXXX ",  /* GAL: L125678_ */ /* FIXME: Galileo should not have L2! */
-        "CXXX   ",  /* QZS: L1256___ */
-        "C X    ",  /* SBS: L1_5____ */
-        "XIXIIX ",  /* BDS: L125678_ */
-        "  A   A"   /* IRN: L__5___9 */
-    };
     double del[3];
     int i,j,k,n,nt,prn,fcn;
-    const char *p;
     char *label=buff+60,str[4];
 
     trace(4,"decode_obsh: ver=%.2f\n",ver);
@@ -427,7 +407,8 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
     else if (strstr(label,"ANTENNA: ZERODIR XYZ")) ; /* opt ver.3 */
     else if (strstr(label,"CENTER OF MASS: XYZ" )) ; /* opt ver.3 */
     else if (strstr(label,"SYS / # / OBS TYPES" )) { /* ver.3 */
-        if (!(p=strchr(syscodes,buff[0]))) {
+        const char *p = strchr(syscodes,buff[0]);
+        if (!p) {
             trace(2,"invalid system code: sys=%c\n",buff[0]);
             return;
         }
@@ -446,14 +427,26 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
         if (i==RNX_SYS_CMP&&fabs(ver-3.02)<1e-3) {
             for (j=0;j<nt;j++) if (tobs[i][j][1]=='1') tobs[i][j][1]='2';
         }
-        /* uncomment this code to convert unknown codes to defaults */
-        /* for (j=0;j<nt;j++) {
-            if (tobs[i][j][2]) continue;
-            if (!(p=strchr(frqcodes,tobs[i][j][1]))) continue;
-            tobs[i][j][2]=defcodes[i][(int)(p-frqcodes)];
-            trace(2,"set default for unknown code: sys=%c code=%s\n",buff[0],
-                  tobs[i][j]);
-        }  */
+#ifdef RTK_DISABLED
+        // Uncomment this code to convert unknown codes to defaults.
+        const char frqcodes[] = "1256789";
+        const char *defcodes[] = {
+          "CWX    ",  // GPS: L125____
+          "CCXX X ",  // GLO: L1234_6_
+          "CXXXXX ",  // GAL: L125678_ FIXME: Galileo should not have L2!
+          "CXXX   ",  // QZS: L1256___
+          "C X    ",  // SBS: L1_5____
+          "XIXIIX ",  // BDS: L125678_
+          "  A   A"   // IRN: L__5___9
+        };
+        for (int j = 0; j < nt; j++) {
+          if (tobs[i][j][2]) continue;
+          const char *p = strchr(frqcodes, tobs[i][j][1]);
+          if (!p) continue;
+          tobs[i][j][2] = defcodes[i][(int)(p - frqcodes)];
+          trace(2, "set default for unknown code: sys=%c code=%s\n", buff[0], tobs[i][j]);
+        }
+#endif
     }
     else if (strstr(label,"WAVELENGTH FACT L1/2")) ; /* opt ver.2 */
     else if (strstr(label,"# / TYPES OF OBSERV" )) { /* ver.2 */
@@ -640,6 +633,7 @@ static void decode_navh(char *buff, nav_t *nav)
 /* decode GNAV header --------------------------------------------------------*/
 static void decode_gnavh(char *buff, nav_t *nav)
 {
+    (void)nav;
     char *label=buff+60;
 
     trace(4,"decode_gnavh:\n");
@@ -650,6 +644,7 @@ static void decode_gnavh(char *buff, nav_t *nav)
 /* decode GEO NAV header -----------------------------------------------------*/
 static void decode_hnavh(char *buff, nav_t *nav)
 {
+    (void)nav;
     char *label=buff+60;
 
     trace(4,"decode_hnavh:\n");
@@ -781,7 +776,7 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
     sigind_t *ind;
     double val[MAXOBSTYPE]={0};
     uint8_t lli[MAXOBSTYPE]={0};
-    uint8_t std[MAXOBSTYPE]={0};
+    double std[MAXOBSTYPE]={0};
     char satid[8]="";
     int i,j,n,m,q,stat=1,p[MAXOBSTYPE],k[16],l[16],r[16];
 
@@ -817,15 +812,17 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         if (stat) {
             val[i]=str2num(buff,j,14)+ind->shift[i];
             lli[i]=(uint8_t)str2num(buff,j+14,1)&3;
-            /* measurement std from receiver */
-            std[i]=(uint8_t)str2num(buff,j+15,1);
+            /* measurement std from receiver, encoded */
+            std[i]=str2num(buff,j+15,1);
         }
     }
     if (!stat) return 0;
 
     for (i=0;i<NFREQ+NEXOBS;i++) {
-        obs->P[i]=obs->L[i]=0.0; obs->D[i]=0.0f;
-        obs->SNR[i]=obs->LLI[i]=obs->Lstd[i]=obs->Pstd[i]=obs->code[i]=0;
+        obs->P[i]=obs->L[i]=0.0;
+        obs->D[i]=obs->SNR[i]=0.0;
+        obs->LLI[i]=obs->code[i]=0;
+        obs->Lstd[i]=obs->Pstd[i]=0.0;
     }
     /* assign position in observation data */
     for (i=n=m=q=0;i<ind->n;i++) {
@@ -898,14 +895,14 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         switch (ind->type[i]) {
             case 0: obs->P[p[i]]=val[i];
                     obs->code[p[i]]=ind->code[i];
-                    obs->Pstd[p[i]]=std[i]>0?std[i]:0;
+                    obs->Pstd[p[i]] = std[i] > 0 ? 0.01 * pow(2, std[i] + 5) : 0;
                     break;
             case 1: obs->L[p[i]]=val[i];
                     obs->LLI[p[i]]=lli[i];
-                    obs->Lstd[p[i]]=std[i]>0?std[i]:0;
+                    obs->Lstd[p[i]] = std[i] > 0 ? std[i] * 0.004 : 0;
                     break;
-            case 2: obs->D[p[i]]=(float)val[i];                     break;
-            case 3: obs->SNR[p[i]]=(uint16_t)(val[i]/SNR_UNIT+0.5); break;
+            case 2: obs->D[p[i]]=(float)val[i]; break;
+            case 3: obs->SNR[p[i]]=val[i]; break;
         }
         trace(4, "obs: i=%d f=%d P=%14.3f L=%14.3f LLI=%d code=%d\n",i,p[i],obs->P[p[i]],
         obs->L[p[i]],obs->LLI[p[i]],obs->code[p[i]]);
@@ -973,6 +970,7 @@ static int set_sysmask(const char *opt)
 static void set_index(double ver, int sys, const char *opt,
                       char tobs[MAXOBSTYPE][4], sigind_t *ind)
 {
+    (void)ver;
     const char *p;
     char str[8],*optstr="";
     double shift;
@@ -1034,9 +1032,9 @@ static void set_index(double ver, int sys, const char *opt,
         trace(4,"reject obs type: sys=%2d, obs=%s\n",sys,tobs[i]);
     }
     ind->n=n;
-
-#if 0 /* for debug */
-    for (i=0;i<n;i++) {
+    
+#ifdef RTK_DISABLED /* for debug */
+    for (int i=0;i<n;i++) {
         trace(2,"set_index: sys=%2d,tobs=%s code=%2d pri=%2d idx=%d pos=%d shift=%5.2f\n",
               sys,tobs[i],ind->code[i],ind->pri[i],ind->idx[i],ind->pos[i],
               ind->shift[i]);
@@ -1392,6 +1390,9 @@ static int readrnxnavb(FILE *fp, const char *opt, double ver, int sys,
     /* set system mask */
     mask=set_sysmask(opt);
 
+    // Number of elements for GLONASS.
+    int nglo = ver >= 3.05 ? 19 : 15;
+
     while (fgets(buff,MAXRNXLEN,fp)) {
 
         if (i==0) {
@@ -1438,7 +1439,7 @@ static int readrnxnavb(FILE *fp, const char *opt, double ver, int sys,
                 data[i++]=str2num(p,0,19);
             }
             /* decode ephemeris */
-            if (sys==SYS_GLO&&i>=15) {
+            if (sys==SYS_GLO&&i>=nglo) {
                 if (!(mask&sys)) return 0;
                 *type=1;
                 return decode_geph(ver,sat,toc,data,geph);
@@ -1666,7 +1667,7 @@ extern int rnxcomment(rnxopt_t *opt, const char *format, ...) {
         trace(2,"rnxcomment: format error in '%s'\n", format);
         return 0;
     }
-    if (req >= sizeof(buff)) {
+    if ((unsigned)req >= sizeof(buff)) {
         trace(3, "rnxcomment: buffer overflow\n");
     }
     // Don't attempt to leave an empty comment
@@ -1863,7 +1864,6 @@ extern int init_rnxctr(rnxctr_t *rnx)
     gtime_t time0={0};
     obsd_t data0={{0}};
     eph_t  eph0={0,-1,-1};
-    geph_t geph0={0,-1};
     seph_t seph0={0};
     int i,j;
 
@@ -1876,7 +1876,6 @@ extern int init_rnxctr(rnxctr_t *rnx)
 
     if (!(rnx->obs.data=(obsd_t *)malloc(sizeof(obsd_t)*MAXOBS   ))||
         !(rnx->nav.eph =(eph_t  *)malloc(sizeof(eph_t )*MAXSAT*2 ))||
-        !(rnx->nav.geph=(geph_t *)malloc(sizeof(geph_t)*NSATGLO  ))||
         !(rnx->nav.seph=(seph_t *)malloc(sizeof(seph_t)*NSATSBS*2))) {
         free_rnxctr(rnx);
         return 0;
@@ -1888,14 +1887,23 @@ extern int init_rnxctr(rnxctr_t *rnx)
     rnx->obs.n=0;
     rnx->obs.nmax=MAXOBS;
     rnx->nav.n=rnx->nav.nmax=MAXSAT*2;
-    rnx->nav.ng=rnx->nav.ngmax=NSATGLO;
     rnx->nav.ns=rnx->nav.nsmax=NSATSBS*2;
     for (i=0;i<MAXOBS   ;i++) rnx->obs.data[i]=data0;
     for (i=0;i<MAXSAT*2 ;i++) rnx->nav.eph [i]=eph0;
-    for (i=0;i<NSATGLO  ;i++) rnx->nav.geph[i]=geph0;
     for (i=0;i<NSATSBS*2;i++) rnx->nav.seph[i]=seph0;
     rnx->ephsat=rnx->ephset=0;
     rnx->opt[0]='\0';
+
+    if (MAXPRNGLO > 0) {
+      rnx->nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO);
+      if (rnx->nav.geph == NULL) {
+        free_rnxctr(rnx);
+        return 0;
+      }
+      geph_t geph0 = {0, -1};
+      for (int i = 0; i < MAXPRNGLO ; i++) rnx->nav.geph[i] = geph0;
+    }
+    rnx->nav.ng = rnx->nav.ngmax = MAXPRNGLO;
 
     return 1;
 }
@@ -2083,6 +2091,7 @@ static void outobstype_ver3(FILE *fp, const rnxopt_t *opt)
 /* output RINEX phase shift --------------------------------------------------*/
 static void outrnx_phase_shift(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
+    (void)nav;
     static const uint8_t ref_code[RNX_NUMSYS][10]={ /* reference signal [9] table A23 */
         {CODE_L1C,CODE_L2P,CODE_L5I,0},                   /* GPS */
         {CODE_L1C,CODE_L4A,CODE_L2C,CODE_L6A,CODE_L3I,0}, /* GLO */
@@ -2484,22 +2493,33 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
             /* output field */
             switch (opt->tobs[m][j][0]) {
                 case 'C':
-                case 'P': outrnxobsf(fp,obs[ind[i]].P[k],-1,obs[ind[i]].Pstd[k]); break;
-                case 'L': outrnxobsf(fp,obs[ind[i]].L[k]+dL,obs[ind[i]].LLI[k],obs[ind[i]].Lstd[k]); break;
+                case 'P': {
+                  // To RTKLib RINEX encoding
+                  float std = obs[ind[i]].Pstd[k];
+                  int stdi = std > 0.0003125 ? log2(std * 100) - 5 + 0.5 : 0;
+                  outrnxobsf(fp,obs[ind[i]].P[k],-1,stdi);
+                  break;
+                }
+                case 'L': {
+                  // To RTKLib RINEX encoding
+                  int lstdi = obs[ind[i]].Lstd[k] / 0.004 + 0.5;
+                  outrnxobsf(fp,obs[ind[i]].L[k]+dL,obs[ind[i]].LLI[k],lstdi);
+                  break;
+                }
                 case 'D': outrnxobsf(fp,obs[ind[i]].D[k],-1,-1); break;
-                case 'S': outrnxobsf(fp,obs[ind[i]].SNR[k]*SNR_UNIT,-1,-1); break;
+                case 'S': outrnxobsf(fp,obs[ind[i]].SNR[k],-1,-1); break;
             }
         }
 
         /* set trace level to 1 generate CSV file of raw observations   */
 #ifdef TRACE
         if (gettracelevel()==1) {
-            trace(1,",%16.2f,%3d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%1d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%1d\n",
+            trace(1,",%16.2f,%3d,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%3.4f,%13.2f,%13.2f,%9.2f,%2.0f,%1d,%3.4f\n",
                 obs[0].time.time + obs[0].time.sec, obs[ind[i]].sat,
                 obs[ind[i]].P[0], obs[ind[i]].L[0], obs[ind[i]].D[0],
-                obs[ind[i]].SNR[0]*SNR_UNIT, obs[ind[i]].LLI[0], obs[ind[i]].Lstd[0],
+                obs[ind[i]].SNR[0], obs[ind[i]].LLI[0], obs[ind[i]].Lstd[0],
                 obs[ind[i]].P[1], obs[ind[i]].L[1], obs[ind[i]].D[1],
-                obs[ind[i]].SNR[1]*SNR_UNIT, obs[ind[i]].LLI[1], obs[ind[i]].Lstd[1]);
+                obs[ind[i]].SNR[1], obs[ind[i]].LLI[1], obs[ind[i]].Lstd[1]);
         }
 #endif
 

@@ -67,7 +67,7 @@ object ConvOptDialog: TConvOptDialog
     OnClick = BtnOkClick
   end
   object BtnCancel: TButton
-    Left = 339
+    Left = 342
     Top = 350
     Width = 80
     Height = 36
@@ -79,7 +79,7 @@ object ConvOptDialog: TConvOptDialog
   object GroupBox1: TGroupBox
     Left = 1
     Top = 24
-    Width = 417
+    Width = 433
     Height = 204
     TabOrder = 6
     object Label1: TLabel
@@ -270,30 +270,6 @@ object ConvOptDialog: TConvOptDialog
       Height = 21
       TabOrder = 6
     end
-    object OutIono: TCheckBox
-      Left = 187
-      Top = 182
-      Width = 68
-      Height = 18
-      Caption = 'Iono Corr'
-      TabOrder = 22
-    end
-    object OutTime: TCheckBox
-      Left = 263
-      Top = 182
-      Width = 65
-      Height = 18
-      Caption = 'Time Corr'
-      TabOrder = 23
-    end
-    object OutLeaps: TCheckBox
-      Left = 341
-      Top = 182
-      Width = 62
-      Height = 18
-      Caption = 'Leap Sec'
-      TabOrder = 24
-    end
     object AutoPos: TCheckBox
       Left = 109
       Top = 137
@@ -302,21 +278,53 @@ object ConvOptDialog: TConvOptDialog
       TabOrder = 19
       OnClick = AutoPosClick
     end
+    object PhaseShift: TCheckBox
+      Left = 5
+      Top = 182
+      Width = 78
+      Height = 18
+      Caption = 'Phase Shift'
+      TabOrder = 20
+    end
     object HalfCyc: TCheckBox
-      Left = 96
-      Top = 183
-      Width = 82
+      Left = 86
+      Top = 182
+      Width = 85
       Height = 18
       Caption = 'Half Cyc Corr'
       TabOrder = 21
     end
-    object PhaseShift: TCheckBox
-      Left = 10
+    object SortSats: TCheckBox
+      Left = 175
       Top = 182
-      Width = 76
+      Width = 44
       Height = 18
-      Caption = 'Phase Shift'
-      TabOrder = 20
+      Caption = 'Sort'
+      TabOrder = 22
+    end
+    object OutIono: TCheckBox
+      Left = 222
+      Top = 182
+      Width = 71
+      Height = 18
+      Caption = 'Iono Corr'
+      TabOrder = 23
+    end
+    object OutTime: TCheckBox
+      Left = 293
+      Top = 182
+      Width = 68
+      Height = 18
+      Caption = 'Time Corr'
+      TabOrder = 24
+    end
+    object OutLeaps: TCheckBox
+      Left = 364
+      Top = 182
+      Width = 72
+      Height = 18
+      Caption = 'Leap Sec'
+      TabOrder = 25
     end
   end
   object GroupBox3: TGroupBox
@@ -434,6 +442,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 104
       Height = 17
       Caption = 'L5/G3/E5a/B2a'
+      State = cbChecked
       TabOrder = 2
     end
     object Freq4: TCheckBox
@@ -442,6 +451,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 77
       Height = 17
       Caption = 'L6/E6/B3'
+      State = cbChecked
       TabOrder = 4
     end
     object Freq5: TCheckBox
@@ -450,6 +460,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 70
       Height = 17
       Caption = 'E5ab/B1C'
+      State = cbChecked
       TabOrder = 5
     end
     object Freq6: TCheckBox
@@ -458,6 +469,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 43
       Height = 17
       Caption = 'B2ab'
+      State = cbChecked
       TabOrder = 3
     end
   end
@@ -476,7 +488,7 @@ object ConvOptDialog: TConvOptDialog
     Style = csDropDownList
     ItemIndex = 0
     TabOrder = 2
-    Text = '3.03'
+    Text = '3.04'
     OnChange = RnxVerChange
     Items.Strings = (
       '2.10'
@@ -552,6 +564,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 40
       Height = 15
       Caption = 'QZS'
+      State = cbChecked
       TabOrder = 3
     end
     object Nav5: TCheckBox
@@ -560,6 +573,7 @@ object ConvOptDialog: TConvOptDialog
       Width = 48
       Height = 15
       Caption = 'SBS'
+      State = cbChecked
       TabOrder = 6
     end
     object Nav6: TCheckBox

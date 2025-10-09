@@ -84,8 +84,8 @@ static int obsindex(obs_t *obs, gtime_t time, int sat)
     obs->data[i].sat=sat;
     for (j=0;j<NFREQ+NEXOBS;j++) {
         obs->data[i].L[j]=obs->data[i].P[j]=0.0;
-        obs->data[i].D[j]=0.0;
-        obs->data[i].SNR[j]=obs->data[i].LLI[j]=0;
+        obs->data[i].D[j]=obs->data[i].SNR[j]=0.0;
+        obs->data[i].LLI[j]=0;
         obs->data[i].code[j]=CODE_NONE;
     }
     obs->n++;
@@ -279,7 +279,7 @@ static int decode_rangecmpb(raw_t *raw)
         }
 
         if (!parity) lli|=LLI_HALFC;
-#if 0
+#ifdef RTK_DISABLED
         if (halfc  ) lli|=LLI_HALFA;
 #else
         if (halfc!=raw->halfc[sat-1][pos]) lli|=LLI_SLIP;
@@ -299,11 +299,10 @@ static int decode_rangecmpb(raw_t *raw)
             raw->obs.data[index].L  [pos]=adr;
             raw->obs.data[index].P  [pos]=psr;
             raw->obs.data[index].D  [pos]=(float)dop;
-            raw->obs.data[index].SNR[pos]=
-                0.0<=snr&&snr<255.0?(unsigned char)(snr*4.0+0.5):0;
+            raw->obs.data[index].SNR[pos]=0.0<=snr&&snr<255.0?snr:0;
             raw->obs.data[index].LLI[pos]=(unsigned char)lli;
             raw->obs.data[index].code[pos]=code;
-#if 0
+#ifdef RTK_DISABLED
             /* L2C phase shift correction (L2C->L2P) */
             if (code==CODE_L2X) {
                 raw->obs.data[index].L[pos]+=0.25;
@@ -388,11 +387,10 @@ static int decode_rangeb(raw_t *raw)
             raw->obs.data[index].L  [pos]=-adr;
             raw->obs.data[index].P  [pos]=psr;
             raw->obs.data[index].D  [pos]=(float)dop;
-            raw->obs.data[index].SNR[pos]=
-                0.0<=snr&&snr<255.0?(unsigned char)(snr*4.0+0.5):0;
+            raw->obs.data[index].SNR[pos]=0.0<=snr&&snr<255.0?snr:0;
             raw->obs.data[index].LLI[pos]=(unsigned char)lli;
             raw->obs.data[index].code[pos]=code;
-#if 0
+#ifdef RTK_DISABLED
             /* L2C phase shift correction */
             if (code==CODE_L2X) {
                 raw->obs.data[index].L[pos]+=0.25;

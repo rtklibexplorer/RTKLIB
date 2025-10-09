@@ -116,15 +116,16 @@ void RefDialog::loadList(QString filename)
 
         QList<QByteArray> tokens = buff.trimmed().split(' ');
 
-        if (tokens.size() != 5) continue;
+        if (tokens.size() < 3) continue;
 
         ui->tWStationList->setRowCount(++n);
 
         for (int i = 0; i < 3; i++)
             pos[i] = tokens.at(i).toDouble();
 
-        addReference(n, pos, tokens.at(3), tokens.at(4));
-	}
+        addReference(n, pos, tokens.size() > 3 ? tokens.at(3) : "",
+                     tokens.size() > 4 ? tokens.at(4) : "");
+    }
     if (n == 0) ui->tWStationList->setRowCount(0);
 
     updateDistances();
@@ -212,7 +213,7 @@ void RefDialog::updateDistances()
     pos[1] *= D2R;
     pos2ecef(pos, ru);
 
-    for (int i = 1; i < ui->tWStationList->rowCount(); i++) {
+    for (int i = 0; i < ui->tWStationList->rowCount(); i++) {
         if (ui->tWStationList->item(i, 1)->text() == "") continue;
 
         pos[0] = ui->tWStationList->item(i, 1)->text().toDouble(&ok) * D2R;

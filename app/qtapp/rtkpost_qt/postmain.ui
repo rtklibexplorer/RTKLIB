@@ -169,17 +169,17 @@
            </property>
            <property name="dateTime">
             <datetime>
-             <hour>22</hour>
+             <hour>0</hour>
              <minute>0</minute>
              <second>0</second>
-             <year>2020</year>
-             <month>2</month>
+             <year>2025</year>
+             <month>1</month>
              <day>1</day>
             </datetime>
            </property>
            <property name="maximumDateTime">
             <datetime>
-             <hour>22</hour>
+             <hour>0</hour>
              <minute>0</minute>
              <second>0</second>
              <year>9999</year>

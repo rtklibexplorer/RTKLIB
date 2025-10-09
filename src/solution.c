@@ -631,6 +631,7 @@ static int decode_solsss(char *buff, sol_t *sol)
 /* decode GSI F solution -----------------------------------------------------*/
 static int decode_solgsi(char *buff, const solopt_t *opt, sol_t *sol)
 {
+    (void)opt;
     double val[MAXFIELD];
     int i=0,j;
     
@@ -969,16 +970,14 @@ extern sol_t *getsol(solbuf_t *solbuf, int index)
 *-----------------------------------------------------------------------------*/
 extern void initsolbuf(solbuf_t *solbuf, int cyclic, int nmax)
 {
-#if 0
-    gtime_t time0={0};
-#endif
     int i;
     
     trace(3,"initsolbuf: cyclic=%d nmax=%d\n",cyclic,nmax);
     
     solbuf->n=solbuf->nmax=solbuf->start=solbuf->end=solbuf->nb=0;
     solbuf->cyclic=cyclic;
-#if 0
+#ifdef RTK_DISABLED
+    gtime_t time0={0};
     solbuf->time=time0;
 #endif
     solbuf->data=NULL;
@@ -1025,7 +1024,13 @@ static int cmpsolstat(const void *p1, const void *p2)
 {
     solstat_t *q1=(solstat_t *)p1,*q2=(solstat_t *)p2;
     double tt=timediff(q1->time,q2->time);
-    return tt<-0.0?-1:(tt>0.0?1:0);
+    if (tt < -0.0) return -1;
+    if (tt > 0.0) return 1;
+    if (q1->sat < q2->sat) return -1;
+    if (q1->sat > q2->sat) return 1;
+    if (q1->frq < q2->frq) return -1;
+    if (q1->frq > q2->frq) return 1;
+    return 0;
 }
 /* sort solution data --------------------------------------------------------*/
 static int sort_solstat(solstatbuf_t *statbuf)
@@ -1081,7 +1086,7 @@ static int decode_solstat(char *buff, solstat_t *stat)
     stat->resp =(float)resp;
     stat->resc =(float)resc;
     stat->flag =(uint8_t)((vsat<<5)+(slip<<3)+fix);
-    stat->snr  =(uint16_t)(snr/SNR_UNIT+0.5);
+    stat->snr  =(float)snr;
     stat->lock =(uint16_t)lock;
     stat->outc =(uint16_t)outc;
     stat->slipc=(uint16_t)slipc;
@@ -1115,7 +1120,7 @@ static int readsolstatdata(FILE *fp, gtime_t ts, gtime_t te, double tint,
     char buff[MAXSOLLEN+1];
     
     trace(3,"readsolstatdata:\n");
-    
+
     while (fgets(buff,sizeof(buff),fp)) {
         
         /* decode solution status */
@@ -1402,6 +1407,7 @@ extern int outnmea_gsa(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 /* output solution in the form of NMEA GSV sentences -------------------------*/
 extern int outnmea_gsv(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 {
+    (void)sol;
     double az,el,snr;
     int i,j,k,n,nsat,nmsg,prn,sys,sats[MAXSAT];
     char *p=(char *)buff,*q,*s,sum;
@@ -1426,7 +1432,7 @@ extern int outnmea_gsv(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
                     else if (sys==SYS_QZS) prn-=192; /* QZS: 01-10 */
                     az =ssat[sats[n]-1].azel[0]*R2D; if (az<0.0) az+=360.0;
                     el =ssat[sats[n]-1].azel[1]*R2D;
-                    snr=ssat[sats[n]-1].snr_rover[0]*SNR_UNIT;
+                    snr=ssat[sats[n]-1].snr_rover[0];
                 p+=sprintf(p,",%02d,%02.0f,%03.0f,%02.0f",prn,el,az,snr);
             }
             else p+=sprintf(p,",,,,");
@@ -1512,6 +1518,9 @@ extern int outprcopts(uint8_t *buff, const prcopt_t *opt)
         p+=sprintf(p,"%s amb res   : %s\r\n",COMMENTH,s8[opt->modear]);
         if (opt->navsys&SYS_GLO) {
             p+=sprintf(p,"%s amb glo   : %s\r\n",COMMENTH,s9[opt->glomodear]);
+        }
+        if (opt->navsys&SYS_CMP) {
+            p+=sprintf(p,"%s amb bds   : %s\r\n",COMMENTH,opt->bdsmodear?"on":"off");
         }
         if (opt->thresar[0]>0.0) {
             p+=sprintf(p,"%s val thres : %.1f\r\n",COMMENTH,opt->thresar[0]);

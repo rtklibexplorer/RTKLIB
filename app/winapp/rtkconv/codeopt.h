@@ -59,8 +59,10 @@ __published:
 	TCheckBox *J01;
 	TCheckBox *J07;
 	TCheckBox *J08;
-	TCheckBox *J13;
+	TCheckBox *J09;
+	TCheckBox *J11;
 	TCheckBox *J12;
+	TCheckBox *J13;
 	TCheckBox *J16;
 	TCheckBox *J17;
 	TCheckBox *J18;
@@ -76,6 +78,7 @@ __published:
 	TCheckBox *J36;
 	TCheckBox *G21;
 	TCheckBox *G08;
+	TCheckBox *G12;
 	TCheckBox *G23;
 	TCheckBox *E34;
 	TButton *BtnSetAll;
@@ -102,6 +105,9 @@ __published:
 	TCheckBox *I50;
 	TCheckBox *I51;
 	TCheckBox *I55;
+	TCheckBox *I56;
+	TCheckBox *I02;
+	TCheckBox *I12;
 	TCheckBox *R66;
 	TCheckBox *R67;
 	TCheckBox *R68;
@@ -116,8 +122,9 @@ __published:
 	TCheckBox *C56;
 	TCheckBox *C02;
 	TCheckBox *C12;
-	TCheckBox *C10;
-	TCheckBox *C06;
+	TCheckBox *C07;
+	TCheckBox *C08;
+	TCheckBox *C13;
 	TCheckBox *C57;
 	TCheckBox *C58;
 	TCheckBox *C26;
@@ -127,7 +134,9 @@ __published:
 	TCheckBox *C64;
 	TCheckBox *C65;
 	TCheckBox *C39;
-	TCheckBox *C30;
+	TCheckBox *C69;
+	TCheckBox *C70;
+	TCheckBox *C34;
 	void __fastcall FormShow(TObject *Sender);
 	void __fastcall BtnOkClick(TObject *Sender);
 	void __fastcall BtnSetAllClick(TObject *Sender);

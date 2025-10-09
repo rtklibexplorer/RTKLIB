@@ -1,6 +1,6 @@
-A version of RTKLIB optimized for low cost GNSS receivers (single, dual, or triple frequency), especially u-blox receivers.  It is based on RTKLIB 2.4.3 and is kept reasonably closely synced to that branch.   This software is provided “AS IS” without any warranties of any kind so please be careful, especially if using it in any kind of real-time application. 
+RTKLIB-EX (previously RTKLIB demo5): A version of RTKLIB optimized for low cost GNSS receivers (single, dual, or triple frequency), especially u-blox receivers and based on RTKLIB 2.4.3. This software is provided “AS IS” without any warranties of any kind so please be careful, especially if using it in any kind of real-time application. 
 
-Releases with Windows executables are avaiable at https://github.com/rtklibexplorer/RTKLIB/releases 
+Releases and pre-releases for Windows executables are available at https://github.com/rtklibexplorer/RTKLIB/releases 
 
 Tutorials for this code, and sample GPS data sets are available at http://rtkexplorer.com/  
 
@@ -47,3 +47,5 @@ Pre-complied linux packages are available at https://build.opensuse.org/package/
 
 The last step will copy the compiled executables into a new directory RTKLIB_bin next to the rtklib source directory.
 
+
+The CRX2RNX utility needs to be available in the search path for the decompression of CRX compressed RINEX files. For Linux the 'CRX2RNX' command needs to be renamed to 'crx2rnx'. This utility is available at https://terras.gsi.go.jp/ja/crx2rnx.html.

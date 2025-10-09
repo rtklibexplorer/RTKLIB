@@ -4,7 +4,7 @@ object FreqDialog: TFreqDialog
   BorderStyle = bsDialog
   Caption = 'GNSS Signals'
   ClientHeight = 198
-  ClientWidth = 296
+  ClientWidth = 336
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,10 +14,10 @@ object FreqDialog: TFreqDialog
   Position = poMainFormCenter
   TextHeight = 13
   object BtnOk: TButton
-    Left = 216
-    Top = 161
+    Left = 256
+    Top = 168
     Width = 72
-    Height = 29
+    Height = 24
     Caption = '&OK'
     ModalResult = 1
     TabOrder = 0
@@ -25,33 +25,21 @@ object FreqDialog: TFreqDialog
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 280
+    Width = 320
     Height = 22
     BevelOuter = bvNone
     TabOrder = 1
-    object Panel15: TPanel
-      Left = 240
+    object Panel18: TPanel
+      Left = 80
       Top = 0
       Width = 40
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'L5'
+      Caption = 'L1'
       Color = clWhite
       ParentBackground = False
       TabOrder = 0
-    end
-    object Panel16: TPanel
-      Left = 200
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'L4'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 1
     end
     object Panel17: TPanel
       Left = 120
@@ -63,19 +51,7 @@ object FreqDialog: TFreqDialog
       Caption = 'L2'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 2
-    end
-    object Panel18: TPanel
-      Left = 80
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'L1'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 3
+      TabOrder = 1
     end
     object Panel19: TPanel
       Left = 160
@@ -87,13 +63,49 @@ object FreqDialog: TFreqDialog
       Caption = 'L3'
       Color = clWhite
       ParentBackground = False
+      TabOrder = 2
+    end
+    object Panel16: TPanel
+      Left = 200
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'L4'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 3
+    end
+    object Panel15: TPanel
+      Left = 240
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'L5'
+      Color = clWhite
+      ParentBackground = False
       TabOrder = 4
+    end
+    object Panel55: TPanel
+      Left = 280
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'L6'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 5
     end
   end
   object Panel2: TPanel
     Left = 0
     Top = 26
-    Width = 280
+    Width = 320
     Height = 22
     BevelOuter = bvNone
     TabOrder = 2
@@ -103,18 +115,6 @@ object FreqDialog: TFreqDialog
       Width = 19
       Height = 13
       Caption = 'GPS'
-    end
-    object Panel10: TPanel
-      Left = 240
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = '-'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 0
     end
     object Panel11: TPanel
       Left = 80
@@ -126,7 +126,7 @@ object FreqDialog: TFreqDialog
       Caption = 'L1'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 1
+      TabOrder = 0
     end
     object Panel12: TPanel
       Left = 120
@@ -138,7 +138,7 @@ object FreqDialog: TFreqDialog
       Caption = 'L2'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 2
+      TabOrder = 1
     end
     object Panel13: TPanel
       Left = 160
@@ -150,7 +150,7 @@ object FreqDialog: TFreqDialog
       Caption = 'L5'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 3
+      TabOrder = 2
     end
     object Panel14: TPanel
       Left = 200
@@ -162,24 +162,9 @@ object FreqDialog: TFreqDialog
       Caption = '-'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 4
+      TabOrder = 3
     end
-  end
-  object Panel3: TPanel
-    Left = 0
-    Top = 44
-    Width = 280
-    Height = 22
-    BevelOuter = bvNone
-    TabOrder = 3
-    object Label5: TLabel
-      Left = 16
-      Top = 4
-      Width = 46
-      Height = 13
-      Caption = 'GLONASS'
-    end
-    object Panel20: TPanel
+    object Panel10: TPanel
       Left = 240
       Top = 0
       Width = 40
@@ -189,10 +174,10 @@ object FreqDialog: TFreqDialog
       Caption = '-'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 0
+      TabOrder = 4
     end
-    object Panel21: TPanel
-      Left = 200
+    object Panel56: TPanel
+      Left = 280
       Top = 0
       Width = 40
       Height = 22
@@ -201,19 +186,22 @@ object FreqDialog: TFreqDialog
       Caption = '-'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 1
+      TabOrder = 5
     end
-    object Panel22: TPanel
-      Left = 120
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'G2/a'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 2
+  end
+  object Panel3: TPanel
+    Left = 0
+    Top = 44
+    Width = 320
+    Height = 22
+    BevelOuter = bvNone
+    TabOrder = 3
+    object Label5: TLabel
+      Left = 16
+      Top = 4
+      Width = 46
+      Height = 13
+      Caption = 'GLONASS'
     end
     object Panel23: TPanel
       Left = 80
@@ -225,7 +213,19 @@ object FreqDialog: TFreqDialog
       Caption = 'G1/a'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 3
+      TabOrder = 0
+    end
+    object Panel22: TPanel
+      Left = 120
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'G2/a'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 1
     end
     object Panel24: TPanel
       Left = 160
@@ -237,13 +237,49 @@ object FreqDialog: TFreqDialog
       Caption = 'G3'
       Color = clWhite
       ParentBackground = False
+      TabOrder = 2
+    end
+    object Panel21: TPanel
+      Left = 200
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 3
+    end
+    object Panel20: TPanel
+      Left = 240
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
       TabOrder = 4
+    end
+    object Panel57: TPanel
+      Left = 280
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 5
     end
   end
   object Panel4: TPanel
     Left = -1
     Top = 64
-    Width = 280
+    Width = 320
     Height = 22
     BevelOuter = bvNone
     TabOrder = 4
@@ -253,42 +289,6 @@ object FreqDialog: TFreqDialog
       Width = 31
       Height = 13
       Caption = 'Galileo'
-    end
-    object Panel25: TPanel
-      Left = 240
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'E5a+b'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 0
-    end
-    object Panel26: TPanel
-      Left = 200
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'E6'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 1
-    end
-    object Panel27: TPanel
-      Left = 120
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'E5b'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 2
     end
     object Panel28: TPanel
       Left = 80
@@ -300,7 +300,19 @@ object FreqDialog: TFreqDialog
       Caption = 'E1'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 3
+      TabOrder = 0
+    end
+    object Panel27: TPanel
+      Left = 120
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'E5b'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 1
     end
     object Panel29: TPanel
       Left = 160
@@ -312,13 +324,49 @@ object FreqDialog: TFreqDialog
       Caption = 'E5a'
       Color = clWhite
       ParentBackground = False
+      TabOrder = 2
+    end
+    object Panel26: TPanel
+      Left = 200
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'E6'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 3
+    end
+    object Panel25: TPanel
+      Left = 240
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'E5a+b'
+      Color = clWhite
+      ParentBackground = False
       TabOrder = 4
+    end
+    object Panel58: TPanel
+      Left = 280
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 5
     end
   end
   object Panel5: TPanel
     Left = 0
     Top = 84
-    Width = 280
+    Width = 320
     Height = 22
     BevelOuter = bvNone
     TabOrder = 5
@@ -328,42 +376,6 @@ object FreqDialog: TFreqDialog
       Width = 26
       Height = 13
       Caption = 'QZSS'
-    end
-    object Panel30: TPanel
-      Left = 240
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = '-'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 0
-    end
-    object Panel31: TPanel
-      Left = 200
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'L6'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 1
-    end
-    object Panel32: TPanel
-      Left = 120
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'L2'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 2
     end
     object Panel33: TPanel
       Left = 80
@@ -375,7 +387,19 @@ object FreqDialog: TFreqDialog
       Caption = 'L1'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 3
+      TabOrder = 0
+    end
+    object Panel32: TPanel
+      Left = 120
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'L2'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 1
     end
     object Panel34: TPanel
       Left = 160
@@ -387,13 +411,49 @@ object FreqDialog: TFreqDialog
       Caption = 'L5'
       Color = clWhite
       ParentBackground = False
+      TabOrder = 2
+    end
+    object Panel31: TPanel
+      Left = 200
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'L6'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 3
+    end
+    object Panel30: TPanel
+      Left = 240
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
       TabOrder = 4
+    end
+    object Panel59: TPanel
+      Left = 280
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 5
     end
   end
   object Panel6: TPanel
     Left = 0
     Top = 104
-    Width = 280
+    Width = 320
     Height = 22
     BevelOuter = bvNone
     TabOrder = 6
@@ -403,42 +463,6 @@ object FreqDialog: TFreqDialog
       Width = 19
       Height = 13
       Caption = 'BDS'
-    end
-    object Panel35: TPanel
-      Left = 240
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'B1C'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 0
-    end
-    object Panel36: TPanel
-      Left = 200
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'B3'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 1
-    end
-    object Panel37: TPanel
-      Left = 120
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = 'B2b'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 2
     end
     object Panel38: TPanel
       Left = 80
@@ -450,7 +474,19 @@ object FreqDialog: TFreqDialog
       Caption = 'B1'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 3
+      TabOrder = 0
+    end
+    object Panel37: TPanel
+      Left = 120
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'B2b'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 1
     end
     object Panel39: TPanel
       Left = 160
@@ -462,58 +498,58 @@ object FreqDialog: TFreqDialog
       Caption = 'B2a'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 4
+      TabOrder = 2
     end
-  end
-  object Panel8: TPanel
-    Left = 0
-    Top = 124
-    Width = 280
-    Height = 22
-    BevelOuter = bvNone
-    TabOrder = 8
-    object Label1: TLabel
-      Left = 16
-      Top = 4
-      Width = 30
-      Height = 13
-      Caption = 'NavIC'
-    end
-    object Panel45: TPanel
-      Left = 240
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = '-'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 0
-    end
-    object Panel46: TPanel
+    object Panel36: TPanel
       Left = 200
       Top = 0
       Width = 40
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = '-'
+      Caption = 'B3'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 1
+      TabOrder = 3
     end
-    object Panel47: TPanel
-      Left = 120
+    object Panel35: TPanel
+      Left = 240
       Top = 0
       Width = 40
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'S'
+      Caption = 'B1C'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 2
+      TabOrder = 4
+    end
+    object Panel60: TPanel
+      Left = 280
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'B2ab'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 5
+    end
+  end
+  object Panel8: TPanel
+    Left = 0
+    Top = 124
+    Width = 320
+    Height = 22
+    BevelOuter = bvNone
+    TabOrder = 7
+    object Label1: TLabel
+      Left = 16
+      Top = 4
+      Width = 30
+      Height = 13
+      Caption = 'NavIC'
     end
     object Panel48: TPanel
       Left = 80
@@ -525,7 +561,19 @@ object FreqDialog: TFreqDialog
       Caption = 'L5'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 3
+      TabOrder = 0
+    end
+    object Panel47: TPanel
+      Left = 120
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'S'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 1
     end
     object Panel49: TPanel
       Left = 160
@@ -537,36 +585,9 @@ object FreqDialog: TFreqDialog
       Caption = 'L1'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 4
+      TabOrder = 2
     end
-  end
-  object Panel9: TPanel
-    Left = 0
-    Top = 144
-    Width = 280
-    Height = 22
-    BevelOuter = bvNone
-    TabOrder = 9
-    object Label14: TLabel
-      Left = 16
-      Top = 4
-      Width = 25
-      Height = 13
-      Caption = 'SBAS'
-    end
-    object Panel50: TPanel
-      Left = 240
-      Top = 0
-      Width = 40
-      Height = 22
-      Align = alRight
-      BevelOuter = bvNone
-      Caption = '-'
-      Color = clWhite
-      ParentBackground = False
-      TabOrder = 0
-    end
-    object Panel51: TPanel
+    object Panel46: TPanel
       Left = 200
       Top = 0
       Width = 40
@@ -576,19 +597,46 @@ object FreqDialog: TFreqDialog
       Caption = '-'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 1
+      TabOrder = 3
     end
-    object Panel52: TPanel
-      Left = 120
+    object Panel45: TPanel
+      Left = 240
       Top = 0
       Width = 40
       Height = 22
       Align = alRight
       BevelOuter = bvNone
-      Caption = 'L5'
+      Caption = '-'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 2
+      TabOrder = 4
+    end
+    object Panel61: TPanel
+      Left = 280
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 5
+    end
+  end
+  object Panel9: TPanel
+    Left = 0
+    Top = 144
+    Width = 320
+    Height = 22
+    BevelOuter = bvNone
+    TabOrder = 8
+    object Label14: TLabel
+      Left = 16
+      Top = 4
+      Width = 25
+      Height = 13
+      Caption = 'SBAS'
     end
     object Panel53: TPanel
       Left = 80
@@ -600,7 +648,19 @@ object FreqDialog: TFreqDialog
       Caption = 'L1'
       Color = clWhite
       ParentBackground = False
-      TabOrder = 3
+      TabOrder = 0
+    end
+    object Panel52: TPanel
+      Left = 120
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = 'L5'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 1
     end
     object Panel54: TPanel
       Left = 160
@@ -612,15 +672,51 @@ object FreqDialog: TFreqDialog
       Caption = '-'
       Color = clWhite
       ParentBackground = False
+      TabOrder = 2
+    end
+    object Panel51: TPanel
+      Left = 200
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 3
+    end
+    object Panel50: TPanel
+      Left = 240
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
       TabOrder = 4
+    end
+    object Panel62: TPanel
+      Left = 280
+      Top = 0
+      Width = 40
+      Height = 22
+      Align = alRight
+      BevelOuter = bvNone
+      Caption = '-'
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 5
     end
   end
   object Panel7: TPanel
     Left = 12
     Top = 24
-    Width = 270
+    Width = 310
     Height = 2
     BevelInner = bvLowered
-    TabOrder = 7
+    TabOrder = 9
   end
 end

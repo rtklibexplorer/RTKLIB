@@ -67,6 +67,7 @@ void ConvOptDialog::updateUi()
     ui->cBAutoPosition->setChecked(autoPosition);
     ui->cBPhaseShift->setChecked(phaseShift);
     ui->cBHalfCycle->setChecked(halfCycle);
+    ui->cBSortSats->setChecked(sortSats);
     ui->cBOutputIonoCorr->setChecked(outputIonoCorr);
     ui->cBOutputTimeCorr->setChecked(outputTimeCorr);
     ui->cBOutputLeapSecs->setChecked(outputLeapSeconds);
@@ -132,6 +133,7 @@ void ConvOptDialog::accept()
     autoPosition = ui->cBAutoPosition->isChecked();
     phaseShift = ui->cBPhaseShift->isChecked();
     halfCycle = ui->cBHalfCycle->isChecked();
+    sortSats = ui->cBSortSats->isChecked();
     outputIonoCorr = ui->cBOutputIonoCorr->isChecked();
     outputTimeCorr = ui->cBOutputTimeCorr->isChecked();
     outputLeapSeconds = ui->cBOutputLeapSecs->isChecked();
@@ -246,7 +248,7 @@ void ConvOptDialog::loadOptions(QSettings &ini)
 {
     QString mask = "1111111111111111111111111111111111111111111111111111111111111111111111";
 
-    rinexVersion = ini.value("opt/rnxver", 6).toInt();
+    rinexVersion = ini.value("opt/rnxver", 7).toInt();
     rinexFile = ini.value("opt/rnxfile", 0).toInt();
     rinexStationCode = ini.value("opt/rnxcode", "0000").toString();
     runBy = ini.value("opt/runby", "").toString();
@@ -271,8 +273,8 @@ void ConvOptDialog::loadOptions(QSettings &ini)
     comment[1] = ini.value("opt/comment1", "").toString();
     receiverOptions = ini.value("opt/rcvoption", "").toString();
     navSys = ini.value("opt/navsys", 0xff).toInt();
-    observationType = ini.value("opt/obstype", 0xF).toInt();
-    frequencyType = ini.value("opt/freqtype", 0x7).toInt();
+    observationType = ini.value("opt/obstype", OBSTYPE_ALL).toInt();
+    frequencyType = ini.value("opt/freqtype", FREQTYPE_ALL).toInt();
     excludedSatellites = ini.value("opt/exsats", "").toString();
     traceLevel = ini.value("opt/tracelevel", 0).toInt();
     rinexTime.time = ini.value("opt/rnxtime", 0).toInt();
@@ -286,6 +288,7 @@ void ConvOptDialog::loadOptions(QSettings &ini)
     autoPosition = ini.value("opt/autopos", 0).toInt();
     phaseShift = ini.value("opt/phaseShift", 0).toInt();
     halfCycle = ini.value("opt/halfcyc", 0).toInt();
+    sortSats = ini.value("opt/sortsats", 0).toInt();
     outputIonoCorr = ini.value("opt/outiono", 0).toInt();
     outputTimeCorr = ini.value("opt/outtime", 0).toInt();
     outputLeapSeconds = ini.value("opt/outleaps", 0).toInt();
@@ -340,6 +343,7 @@ void ConvOptDialog::saveOptions(QSettings &ini)
     ini.setValue("opt/autopos", autoPosition);
     ini.setValue("opt/phasewhift", phaseShift);
     ini.setValue("opt/halfcyc", halfCycle);
+    ini.setValue("opt/sortsats", sortSats);
     ini.setValue("opt/outiono", outputIonoCorr);
     ini.setValue("opt/outtime", outputTimeCorr);
     ini.setValue("opt/outleaps", outputLeapSeconds);

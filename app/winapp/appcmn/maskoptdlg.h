@@ -59,6 +59,17 @@ __published:
 	TEdit *Mask_3_8;
 	TEdit *Mask_3_9;
 	TCheckBox *MaskEna2;
+    TPanel *Panel4;
+    TLabel *Label15;
+    TEdit *Mask_4_1;
+    TEdit *Mask_4_2;
+    TEdit *Mask_4_3;
+    TEdit *Mask_4_4;
+    TEdit *Mask_4_5;
+    TEdit *Mask_4_6;
+    TEdit *Mask_4_7;
+    TEdit *Mask_4_8;
+    TEdit *Mask_4_9;
 	void __fastcall FormShow(TObject *Sender);
 	void __fastcall BtnOkClick(TObject *Sender);
 	void __fastcall MaskEna1Click(TObject *Sender);

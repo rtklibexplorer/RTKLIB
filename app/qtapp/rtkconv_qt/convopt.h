@@ -32,7 +32,7 @@ public:
     QString codeMask[7];
     double approxPosition[3], antennaDelta[3], timeTolerance;
     int rinexVersion, rinexFile, navSys, observationType, frequencyType, traceLevel;
-    int autoPosition, phaseShift, halfCycle, outputIonoCorr, outputTimeCorr, outputLeapSeconds, separateNavigation;
+    int autoPosition, phaseShift, halfCycle, sortSats, outputIonoCorr, outputTimeCorr, outputLeapSeconds, separateNavigation;
     int enableGlonassFrequency, glonassFrequency[27];
 
 protected slots:

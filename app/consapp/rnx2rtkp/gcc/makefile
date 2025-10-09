@@ -106,7 +106,7 @@ OPTS1   = -r -3978241.958 3382840.234 3649900.853
 
 test : test1 test2 test3 test4 test5 test6 test7 test8 test9 test10
 test : test11 test12 test13 test14 test15 test16 test17 test18 test19 test20
-test : test21 test22 test23 test24
+test : test21 test22 test23 test24 test25
 
 test1 :
 	$(CMD1) $(INPUT11) -x 5 -o test1.pos
@@ -151,13 +151,13 @@ test20 :
 test21 :
 	$(CMD1) $(INPUT11) $(INPUT12) > test21.pos
 test22 :
-	$(CMD1) -k opts1.conf $(INPUT11) $(INPUT12) > test22.pos
+	$(CMD1) -k ../test/opts1.conf $(INPUT11) $(INPUT12) > test22.pos
 test23 :
-	$(CMD1) -k opts2.conf $(INPUT11) $(INPUT12) > test23.pos
+	$(CMD1) -k ../test/opts2.conf $(INPUT11) $(INPUT12) > test23.pos
 test24 :
-	$(CMD1) -k opts3.conf $(INPUT11) $(INPUT12) -y 2 -o test24.pos
+	$(CMD1) -k ../test/opts3.conf $(INPUT11) $(INPUT12) -y 2 -o test24.pos
 test25 :
-	$(CMD1) -k opts4.conf $(INPUT11) $(INPUT12) -y 2 -o test25.pos
+	$(CMD1) -k ../test/opts4.conf $(INPUT11) $(INPUT12) -y 2 -o test25.pos
 
 clean :
 	rm -f rnx2rtkp rnx2rtkp.exe *.o *.pos *.trace

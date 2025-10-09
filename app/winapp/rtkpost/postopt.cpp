@@ -25,17 +25,15 @@ __fastcall TOptDialog::TOptDialog(TComponent* Owner)
     : TForm(Owner)
 {
     AnsiString label,s;
-    const char *freqs[]={"L1","L2","E5b","L5","E6","E5ab"};
     int nglo=MAXPRNGLO,ngal=MAXPRNGAL,nqzs=MAXPRNQZS,ncmp=MAXPRNCMP;
     int nirn=MAXPRNIRN;
     
-#if 0
     Freq->Items->Clear();
     for (int i=0;i<NFREQ;i++) {
-        label=label+(i>0?"+":"")+s.sprintf("%s",freqs[i]);
-        Freq->Items->Add(label);
+      label=label+(i>0?"+":"")+s.sprintf("L%d",i + 1);
+      Freq->Items->Add(label);
     }
-#endif
+
     if (nglo<=0) NavSys2->Enabled=false;
     if (ngal<=0) NavSys3->Enabled=false;
     if (nqzs<=0) NavSys4->Enabled=false;
@@ -428,6 +426,7 @@ void __fastcall TOptDialog::GetOpt(void)
 	MeasErrR1	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR1);
 	MeasErrR2	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR2);
 	MeasErrR5	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR5);
+	MeasErrR6	 ->Text			=s.sprintf("%.1f",MainForm->MeasErrR6);
 	MeasErr2	 ->Text			=s.sprintf("%.3f",MainForm->MeasErr2);
 	MeasErr3	 ->Text			=s.sprintf("%.3f",MainForm->MeasErr3);
 	MeasErr4	 ->Text			=s.sprintf("%.3f",MainForm->MeasErr4);
@@ -562,6 +561,7 @@ void __fastcall TOptDialog::SetOpt(void)
 	MainForm->MeasErrR1	  =str2dbl(MeasErrR1  ->Text);
 	MainForm->MeasErrR2	  =str2dbl(MeasErrR2  ->Text);
 	MainForm->MeasErrR5	  =str2dbl(MeasErrR5  ->Text);
+	MainForm->MeasErrR6	  =str2dbl(MeasErrR6  ->Text);
 	MainForm->MeasErr2	  =str2dbl(MeasErr2   ->Text);
 	MainForm->MeasErr3	  =str2dbl(MeasErr3   ->Text);
 	MainForm->MeasErr4	  =str2dbl(MeasErr4   ->Text);
@@ -615,7 +615,7 @@ void __fastcall TOptDialog::SetOpt(void)
 void __fastcall TOptDialog::LoadOpt(AnsiString file)
 {
 
-int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
+        int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 
 	TEdit *editu[]={RovPos1,RovPos2,RovPos3};
 	TEdit *editr[]={RefPos1,RefPos2,RefPos3};
@@ -713,6 +713,7 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	MeasErrR1	 ->Text			=s.sprintf("%.1f",prcopt.eratio[0]);
 	MeasErrR2	 ->Text			=s.sprintf("%.1f",prcopt.eratio[1]);
 	MeasErrR5	 ->Text			=s.sprintf("%.1f",prcopt.eratio[2]);
+	MeasErrR6	 ->Text			=s.sprintf("%.1f",prcopt.eratio[3]);
 	MeasErr2	 ->Text			=s.sprintf("%.3f",prcopt.err[1]);
 	MeasErr3	 ->Text			=s.sprintf("%.3f",prcopt.err[2]);
 	MeasErr4	 ->Text			=s.sprintf("%.3f",prcopt.err[3]);
@@ -877,6 +878,7 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	prcopt.eratio[0]=str2dbl(MeasErrR1->Text);
 	prcopt.eratio[1]=str2dbl(MeasErrR2->Text);
 	prcopt.eratio[2]=str2dbl(MeasErrR5->Text);
+	prcopt.eratio[3]=str2dbl(MeasErrR6->Text);
 	prcopt.err[1]	=str2dbl(MeasErr2->Text);
 	prcopt.err[2]	=str2dbl(MeasErr3->Text);
 	prcopt.err[3]	=str2dbl(MeasErr4->Text);
@@ -923,7 +925,7 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	strcpy(filopt.iono,   IonoFile_Text.c_str());
 	
 	time2str(utc2gpst(timeget()),s,0);
-	sprintf(comment,"rtkpost options (%s, v.%s %s)",s,VER_RTKLIB,PATCH_LEVEL);
+	sprintf(comment,"rtkpost options (%s-%s %s)",s,VER_RTKLIB,PATCH_LEVEL);
 	setsysopts(&prcopt,&solopt,&filopt);
 	if (!saveopts(file.c_str(),"w",comment,sysopts)) return;
 }
@@ -941,8 +943,8 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	                         PosMode->ItemIndex==PMODE_PPP_KINEMA;
 	TideCorr       ->Enabled=rel||ppp;
 	//IonoOpt        ->Enabled=!ppp;
-	PosOpt1        ->Enabled=ppp;
-	PosOpt2        ->Enabled=ppp;
+	PosOpt1        ->Enabled=rel||ppp;
+	PosOpt2        ->Enabled=rel||ppp;
 	PosOpt3        ->Enabled=ppp;
 	PosOpt4        ->Enabled=ppp;
 	PosOpt6        ->Enabled=ppp;
@@ -991,18 +993,23 @@ void __fastcall TOptDialog::UpdateEnable(void)
 	SolStatic      ->Enabled=PosMode->ItemIndex==PMODE_STATIC||
 	PosMode        ->ItemIndex==PMODE_PPP_STATIC;
 	
+        // For rtkpost, and when setting the antenna and delta automatically,
+        // this should occur before processing, so disable the delta setting
+        // here in that case.
 	RovAntPcv      ->Enabled=rel||ppp;
 	RovAnt         ->Enabled=(rel||ppp)&&RovAntPcv->Checked;
-	RovAntE        ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
-	RovAntN        ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
-	RovAntU        ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
-	LabelRovAntD   ->Enabled=(rel||ppp)&&RovAntPcv->Checked&&RovAnt->Text!="*";
+        int rovp = !RovAntPcv->Checked || RovAnt->Text != "*";
+	RovAntE        ->Enabled=(rel||ppp)&&rovp;
+	RovAntN        ->Enabled=(rel||ppp)&&rovp;
+	RovAntU        ->Enabled=(rel||ppp)&&rovp;
+	LabelRovAntD   ->Enabled=(rel||ppp)&&rovp;
 	RefAntPcv      ->Enabled=rel;
 	RefAnt         ->Enabled=rel&&RefAntPcv->Checked;
-	RefAntE        ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
-	RefAntN        ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
-	RefAntU        ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
-	LabelRefAntD   ->Enabled=rel&&RefAntPcv->Checked&&RefAnt->Text!="*";
+        int refp = !RefAntPcv->Checked || RefAnt->Text != "*";
+	RefAntE        ->Enabled=rel&&refp;
+	RefAntN        ->Enabled=rel&&refp;
+	RefAntU        ->Enabled=rel&&refp;
+	LabelRefAntD   ->Enabled=rel&&refp;
 	
 	RovPosType     ->Enabled=PosMode->ItemIndex==PMODE_FIXED||PosMode->ItemIndex==PMODE_PPP_FIXED;
 	RovPos1        ->Enabled=RovPosType->Enabled&&RovPosType->ItemIndex<=2;
@@ -1080,22 +1087,21 @@ void __fastcall TOptDialog::ReadAntList(void)
 	pcvs_t pcvs={0};
 	char *p;
 	
-	if (!readpcv(AntPcvFile_Text.c_str(),&pcvs)) return;
-	
 	list=new TStringList;
 	list->Add("");
 	list->Add("*");
 	
-	for (int i=0;i<pcvs.n;i++) {
-		if (pcvs.pcv[i].sat) continue;
-		if ((p=strchr(pcvs.pcv[i].type,' '))) *p='\0';
-		if (i>0&&!strcmp(pcvs.pcv[i].type,pcvs.pcv[i-1].type)) continue;
-		list->Add(pcvs.pcv[i].type);
-	}
+	if (readpcv(AntPcvFile_Text.c_str(),&pcvs)) {
+          for (int i=0;i<pcvs.n;i++) {
+            if (pcvs.pcv[i].sat) continue;
+            if ((p=strchr(pcvs.pcv[i].type,' '))) *p='\0';
+            if (i>0&&!strcmp(pcvs.pcv[i].type,pcvs.pcv[i-1].type)) continue;
+            list->Add(pcvs.pcv[i].type);
+          }
+          free_pcvs(&pcvs);
+        }
 	RovAnt->Items=list;
 	RefAnt->Items=list;
-	
-	free(pcvs.pcv);
 }
 //---------------------------------------------------------------------------
 void __fastcall TOptDialog::BtnHelpClick(TObject *Sender)
@@ -1119,7 +1125,7 @@ void __fastcall TOptDialog::ExtEna2Click(TObject *Sender)
 	UpdateEnable();
 }
 //---------------------------------------------------------------------------
-void __fastcall TOptDialog::BtnMaskClick(TObject *Sender)
+void __fastcall TOptDialog::BtnSnrMaskClick(TObject *Sender)
 {
 	MaskOptDialog->Mask=SnrMask;
 	if (MaskOptDialog->ShowModal()!=mrOk) return;

@@ -15,6 +15,7 @@ SOURCES += \
     rtkpost.cpp \
     ../widgets_qt/doubleunitvalidator.cpp \
     ../widgets_qt/scientificspinbox.cpp \
+    ../widgets_qt/excludedsatellitevalidator.cpp \
     ../appcmn_qt/navi_post_opt.cpp \
     ../appcmn_qt/aboutdlg.cpp \
     ../appcmn_qt/freqdlg.cpp \

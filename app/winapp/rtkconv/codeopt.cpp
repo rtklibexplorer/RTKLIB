@@ -28,6 +28,7 @@ void __fastcall TCodeOptDialog::FormShow(TObject *Sender)
 	G06->Checked=mask[0][ 5]=='1';
 	G07->Checked=mask[0][ 6]=='1';
 	G08->Checked=mask[0][ 7]=='1';
+	G12->Checked=mask[0][11]=='1';
 	G14->Checked=mask[0][13]=='1';
 	G15->Checked=mask[0][14]=='1';
 	G16->Checked=mask[0][15]=='1';
@@ -76,8 +77,10 @@ void __fastcall TCodeOptDialog::FormShow(TObject *Sender)
 	J01->Checked=mask[3][ 0]=='1';
 	J07->Checked=mask[3][ 6]=='1';
 	J08->Checked=mask[3][ 7]=='1';
-	J13->Checked=mask[3][12]=='1';
+	J09->Checked=mask[3][ 8]=='1';
+	J11->Checked=mask[3][10]=='1';
 	J12->Checked=mask[3][11]=='1';
+	J13->Checked=mask[3][12]=='1';
 	J16->Checked=mask[3][15]=='1';
 	J17->Checked=mask[3][16]=='1';
 	J18->Checked=mask[3][17]=='1';
@@ -104,8 +107,9 @@ void __fastcall TCodeOptDialog::FormShow(TObject *Sender)
 	C56->Checked=mask[5][55]=='1'; //
 	C02->Checked=mask[5][ 1]=='1'; //
 	C12->Checked=mask[5][11]=='1'; //
-	C10->Checked=mask[5][ 9]=='1'; //
-	C06->Checked=mask[5][ 5]=='1'; //
+	C07->Checked=mask[5][ 6]=='1'; //
+	C08->Checked=mask[5][ 7]=='1'; //
+	C13->Checked=mask[5][12]=='1'; //
 	C57->Checked=mask[5][56]=='1'; //
 	C58->Checked=mask[5][57]=='1'; //
 	C26->Checked=mask[5][25]=='1'; //
@@ -115,7 +119,9 @@ void __fastcall TCodeOptDialog::FormShow(TObject *Sender)
 	C64->Checked=mask[5][63]=='1'; //
 	C65->Checked=mask[5][64]=='1'; //
 	C39->Checked=mask[5][38]=='1'; //
-	C30->Checked=mask[5][29]=='1'; //
+	C69->Checked=mask[5][68]=='1'; //
+	C70->Checked=mask[5][69]=='1'; //
+	C34->Checked=mask[5][33]=='1'; //
 	I49->Checked=mask[6][48]=='1';
 	I50->Checked=mask[6][49]=='1';
 	I51->Checked=mask[6][50]=='1';
@@ -124,6 +130,9 @@ void __fastcall TCodeOptDialog::FormShow(TObject *Sender)
 	I53->Checked=mask[6][52]=='1';
 	I54->Checked=mask[6][53]=='1';
 	I55->Checked=mask[6][54]=='1';
+	I56->Checked=mask[6][55]=='1';
+	I02->Checked=mask[6][1]=='1';
+	I12->Checked=mask[6][11]=='1';
 	S01->Checked=mask[4][ 0]=='1';
 	S24->Checked=mask[4][23]=='1';
 	S25->Checked=mask[4][24]=='1';
@@ -145,6 +154,7 @@ void __fastcall TCodeOptDialog::BtnOkClick(TObject *Sender)
 	if (G06->Checked) mask[0][ 5]='1';
 	if (G07->Checked) mask[0][ 6]='1';
 	if (G08->Checked) mask[0][ 7]='1';
+	if (G12->Checked) mask[0][11]='1';
 	if (G14->Checked) mask[0][13]='1';
 	if (G15->Checked) mask[0][14]='1';
 	if (G16->Checked) mask[0][15]='1';
@@ -193,8 +203,10 @@ void __fastcall TCodeOptDialog::BtnOkClick(TObject *Sender)
 	if (J01->Checked) mask[3][ 0]='1';
 	if (J07->Checked) mask[3][ 6]='1';
 	if (J08->Checked) mask[3][ 7]='1';
-	if (J13->Checked) mask[3][12]='1';
+	if (J09->Checked) mask[3][ 8]='1';
+	if (J11->Checked) mask[3][10]='1';
 	if (J12->Checked) mask[3][11]='1';
+	if (J13->Checked) mask[3][12]='1';
 	if (J16->Checked) mask[3][15]='1';
 	if (J17->Checked) mask[3][16]='1';
 	if (J18->Checked) mask[3][17]='1';
@@ -221,8 +233,9 @@ void __fastcall TCodeOptDialog::BtnOkClick(TObject *Sender)
 	if (C56->Checked) mask[5][55]='1'; //
 	if (C02->Checked) mask[5][ 1]='1'; //
 	if (C12->Checked) mask[5][11]='1'; //
-	if (C10->Checked) mask[5][ 9]='1'; //
-	if (C06->Checked) mask[5][ 5]='1'; //
+	if (C07->Checked) mask[5][ 6]='1'; //
+	if (C08->Checked) mask[5][ 7]='1'; //
+	if (C13->Checked) mask[5][12]='1'; //
 	if (C57->Checked) mask[5][56]='1'; //
 	if (C58->Checked) mask[5][57]='1'; //
 	if (C26->Checked) mask[5][25]='1'; //
@@ -232,7 +245,9 @@ void __fastcall TCodeOptDialog::BtnOkClick(TObject *Sender)
 	if (C64->Checked) mask[5][63]='1'; //
 	if (C65->Checked) mask[5][64]='1'; //
 	if (C39->Checked) mask[5][38]='1'; //
-	if (C30->Checked) mask[5][29]='1'; //
+	if (C69->Checked) mask[5][68]='1'; //
+	if (C70->Checked) mask[5][69]='1'; //
+	if (C34->Checked) mask[5][33]='1'; //
 	if (I49->Checked) mask[6][48]='1';
 	if (I50->Checked) mask[6][49]='1';
 	if (I51->Checked) mask[6][50]='1';
@@ -241,6 +256,9 @@ void __fastcall TCodeOptDialog::BtnOkClick(TObject *Sender)
 	if (I53->Checked) mask[6][52]='1';
 	if (I54->Checked) mask[6][53]='1';
 	if (I55->Checked) mask[6][54]='1';
+	if (I56->Checked) mask[6][55]='1';
+	if (I02->Checked) mask[6][ 1]='1';
+	if (I12->Checked) mask[6][11]='1';
 	if (S01->Checked) mask[4][ 0]='1';
 	if (S24->Checked) mask[4][23]='1';
 	if (S25->Checked) mask[4][24]='1';
@@ -260,6 +278,7 @@ void __fastcall TCodeOptDialog::BtnSetAllClick(TObject *Sender)
 	G06->Checked=set;
 	G07->Checked=set;
 	G08->Checked=set;
+	G12->Checked=set;
 	G14->Checked=set;
 	G15->Checked=set;
 	G16->Checked=set;
@@ -308,8 +327,10 @@ void __fastcall TCodeOptDialog::BtnSetAllClick(TObject *Sender)
 	J01->Checked=set;
 	J07->Checked=set;
 	J08->Checked=set;
-	J13->Checked=set;
+	J09->Checked=set;
+	J11->Checked=set;
 	J12->Checked=set;
+	J13->Checked=set;
 	J16->Checked=set;
 	J17->Checked=set;
 	J18->Checked=set;
@@ -336,8 +357,9 @@ void __fastcall TCodeOptDialog::BtnSetAllClick(TObject *Sender)
 	C56->Checked=set; //
 	C02->Checked=set; //
 	C12->Checked=set; //
-	C10->Checked=set; //
-	C06->Checked=set; //
+	C07->Checked=set; //
+	C08->Checked=set; //
+	C13->Checked=set; //
 	C57->Checked=set; //
 	C58->Checked=set; //
 	C26->Checked=set; //
@@ -347,7 +369,9 @@ void __fastcall TCodeOptDialog::BtnSetAllClick(TObject *Sender)
 	C64->Checked=set; //
 	C65->Checked=set; //
 	C39->Checked=set; //
-	C30->Checked=set; //
+	C69->Checked=set; //
+	C70->Checked=set; //
+	C34->Checked=set; //
 	I49->Checked=set;
 	I50->Checked=set;
 	I51->Checked=set;
@@ -356,6 +380,9 @@ void __fastcall TCodeOptDialog::BtnSetAllClick(TObject *Sender)
 	I53->Checked=set;
 	I54->Checked=set;
 	I55->Checked=set;
+	I56->Checked=set;
+	I02->Checked=set;
+	I12->Checked=set;
 	S01->Checked=set;
 	S24->Checked=set;
 	S25->Checked=set;
@@ -373,6 +400,7 @@ void __fastcall TCodeOptDialog::UpdateEnable(void)
 	G06->Enabled=(NavSys&SYS_GPS)&&(FreqType&FREQTYPE_L1);
 	G07->Enabled=(NavSys&SYS_GPS)&&(FreqType&FREQTYPE_L1);
 	G08->Enabled=(NavSys&SYS_GPS)&&(FreqType&FREQTYPE_L1);
+	G12->Enabled=(NavSys&SYS_GPS)&&(FreqType&FREQTYPE_L1);
 	G14->Enabled=(NavSys&SYS_GPS)&&(FreqType&FREQTYPE_L2);
 	G15->Enabled=(NavSys&SYS_GPS)&&(FreqType&FREQTYPE_L2);
 	G16->Enabled=(NavSys&SYS_GPS)&&(FreqType&FREQTYPE_L2);
@@ -421,8 +449,10 @@ void __fastcall TCodeOptDialog::UpdateEnable(void)
 	J01->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L1);
 	J07->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L1);
 	J08->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L1);
-	J13->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L1);
+	J09->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L1);
+	J11->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L1);
 	J12->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L1);
+	J13->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L1);
 	J16->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L2);
 	J17->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L2);
 	J18->Enabled=(NavSys&SYS_QZS)&&(FreqType&FREQTYPE_L2);
@@ -449,8 +479,9 @@ void __fastcall TCodeOptDialog::UpdateEnable(void)
 	C56->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L5); //
 	C02->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L5); //
 	C12->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L5); //
-	C10->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L5); //
-	C06->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L5); //
+	C07->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L5); //
+	C08->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L5); //
+	C13->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L5); //
 	C57->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L3); //
 	C58->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L3); //
 	C26->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L3); //
@@ -460,7 +491,9 @@ void __fastcall TCodeOptDialog::UpdateEnable(void)
 	C64->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L6); //
 	C65->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L6); //
 	C39->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L6); //
-	C30->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L4); //
+	C69->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L4); //
+	C70->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L4); //
+	C34->Enabled=(NavSys&SYS_CMP)&&(FreqType&FREQTYPE_L4); //
 	I49->Enabled=(NavSys&SYS_IRN)&&(FreqType&FREQTYPE_L1);
 	I50->Enabled=(NavSys&SYS_IRN)&&(FreqType&FREQTYPE_L1);
 	I51->Enabled=(NavSys&SYS_IRN)&&(FreqType&FREQTYPE_L1);
@@ -469,6 +502,9 @@ void __fastcall TCodeOptDialog::UpdateEnable(void)
 	I53->Enabled=(NavSys&SYS_IRN)&&(FreqType&FREQTYPE_L2);
 	I54->Enabled=(NavSys&SYS_IRN)&&(FreqType&FREQTYPE_L2);
 	I55->Enabled=(NavSys&SYS_IRN)&&(FreqType&FREQTYPE_L2);
+	I56->Enabled=(NavSys&SYS_IRN)&&(FreqType&FREQTYPE_L2);
+	I02->Enabled=(NavSys&SYS_IRN)&&(FreqType&FREQTYPE_L3);
+	I12->Enabled=(NavSys&SYS_IRN)&&(FreqType&FREQTYPE_L3);
 	S01->Enabled=(NavSys&SYS_SBS)&&(FreqType&FREQTYPE_L1);
 	S24->Enabled=(NavSys&SYS_SBS)&&(FreqType&FREQTYPE_L3);
 	S25->Enabled=(NavSys&SYS_SBS)&&(FreqType&FREQTYPE_L3);

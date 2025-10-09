@@ -190,17 +190,13 @@ MainForm::MainForm(QWidget *parent)
     textViewer = new TextViewer(this);
 
     // setup completers
-    QCompleter *fileCompleter = new QCompleter(this);
-    QFileSystemModel *fileModel = new QFileSystemModel(fileCompleter);
+    QComboBox *cBinputFiles[] = {ui->cBInputFile1, ui->cBInputFile2, ui->cBInputFile3, ui->cBInputFile4, ui->cBInputFile5, ui->cBInputFile6};
+    QFileSystemModel *fileModel = new QFileSystemModel(this);
     fileModel->setRootPath("");
-    fileCompleter->setModel(fileModel);
-    ui->cBInputFile1->setCompleter(fileCompleter);
-    ui->cBInputFile2->setCompleter(fileCompleter);
-    ui->cBInputFile3->setCompleter(fileCompleter);
-    ui->cBInputFile4->setCompleter(fileCompleter);
-    ui->cBInputFile5->setCompleter(fileCompleter);
-    ui->cBInputFile6->setCompleter(fileCompleter);
-    ui->cBOutputFile->setCompleter(fileCompleter);
+    for (int i=0; i<6; i++)
+    {
+      cBinputFiles[i]->setCompleter(new QCompleter(fileModel, this));
+    }
 
     QCompleter *dirCompleter = new QCompleter(this);
     QFileSystemModel *dirModel = new QFileSystemModel(dirCompleter);

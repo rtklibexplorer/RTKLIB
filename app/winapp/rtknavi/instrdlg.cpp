@@ -38,6 +38,7 @@ __fastcall TInputStrDialog::TInputStrDialog(TComponent* Owner)
 		NRcv++;
 	}
 	Format3->Items->Add("SP3");
+	Format3->Items->Add("CLK");
 }
 //---------------------------------------------------------------------------
 void __fastcall TInputStrDialog::FormShow(TObject *Sender)

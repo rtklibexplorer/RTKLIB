@@ -12,8 +12,9 @@ int showmsg(const char *format,...) {return 0;}
 }
 //---------------------------------------------------------------------------
 const char *PTypes[]={
-    "Gnd Trk","Position","Velocity","Accel","NSat","Residuals","Resid-EL",
-    "Sat Vis","Skyplot","DOP/NSat","SNR/MP/EL","SNR/MP-EL","MP-Skyplot",""
+  "Gnd Trk","Position","Velocity","Accel","NSat","Skyplot","DOP/NSat",
+  "Residuals","Resid-EL","Sat Vis","Skyplot obs","DOP/NSat obs","SNR/MP/EL",
+  "SNR/MP-EL","MP-Skyplot",""
 };
 // show message in status-bar -----------------------------------------------
 void __fastcall TPlot::ShowMsg(UTF8String msg)
@@ -56,10 +57,10 @@ double __fastcall TPlot::TimePos(gtime_t time)
     if (TimeLabel<=1) { // www/ssss or gpst
         tow=time2gpst(time,&week);
     }
-    else if (TimeLabel==2) { // utc
+    else if (TimeLabel==2) { // UTC
         tow=time2gpst(gpst2utc(time),&week);
     }
-    else { // jst
+    else { // JST
         tow=time2gpst(timeadd(gpst2utc(time),9*3600.0),&week);
     }
     return tow+(week-Week)*86400.0*7;
@@ -342,7 +343,7 @@ TColor __fastcall TPlot::ObsColor(const obsd_t *obs, double az, double el)
         if (obs->L[freq-1]==0.0&&obs->P[freq-1]==0.0) {
             return clBlack;
         }
-        color=SnrColor(obs->SNR[freq-1]*SNR_UNIT);
+        color=SnrColor(obs->SNR[freq-1]);
     }
     else {
         for (i=0;i<NFREQ+NEXOBS;i++) {
@@ -354,7 +355,7 @@ TColor __fastcall TPlot::ObsColor(const obsd_t *obs, double az, double el)
         if (obs->L[i]==0.0&&obs->P[i]==0.0) {
             return clBlack;
         }
-        color=SnrColor(obs->SNR[i]*SNR_UNIT);
+        color=SnrColor(obs->SNR[i]);
     }
     if (el<ElMask*D2R||(ElMaskP&&el<ElMaskData[(int)(az*R2D+0.5)])) {
         return HideLowSat?clBlack:MColor[0][0];
@@ -450,11 +451,11 @@ void __fastcall TPlot::TimeStr(gtime_t time, int n, int tsys, char str[48])
         tow=time2gpst(time,&week);
         snprintf(tstr,sizeof(tstr),"%4d/%*.*fs",week,(n>0?6:5)+n,n,tow);
     }
-    else if (TimeLabel==1) { // gpst
+    else if (TimeLabel==1) { // GPST
         time2str(time,tstr,n);
         label=" GPST";
     }
-    else if (TimeLabel==2) { // utc
+    else if (TimeLabel==2) { // UTC
         time2str(gpst2utc(time),tstr,n);
         label=" UTC";
     }

@@ -73,6 +73,8 @@ static const char *help[]={
 "           rover latitude/longitude/height for fixed or ppp-fixed mode",
 " -y level  output solution status (0:off,1:states,2:residuals) [0]",
 " -x level  debug trace level (0:off) [0]",
+" --rover list rover names for processing, separated by a space",
+" --base list  base names for processing, separated by a space",
 " --version display release version",
 };
 /* show message --------------------------------------------------------------*/
@@ -103,6 +105,7 @@ int main(int argc, char **argv)
     double tint=0.0,es[]={2000,1,1,0,0,0},ee[]={2000,12,31,23,59,59},pos[3];
     int i,j,n,ret;
     const char *infile[MAXFILE],*outfile="",*p;
+    const char *rover = "", *base = "";
 
     prcopt.mode  =PMODE_KINEMA;
     prcopt.navsys=0;
@@ -178,6 +181,8 @@ int main(int argc, char **argv)
             pos2ecef(pos,prcopt.rb);
             matcpy(prcopt.ru,prcopt.rb,3,1);
         }
+        else if (!strcmp(argv[i],"--rover")&&i+1<argc) rover=argv[++i];
+        else if (!strcmp(argv[i],"--base")&&i+1<argc) base=argv[++i];
         else if (!strcmp(argv[i],"-y")&&i+1<argc) solopt.sstat=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-x")&&i+1<argc) solopt.trace=atoi(argv[++i]);
         else if (!strcmp(argv[i], "--version")) {
@@ -200,7 +205,7 @@ int main(int argc, char **argv)
         traceopen(filopt.trace);
         tracelevel(solopt.trace);
     }
-    ret=postpos(ts,te,tint,0.0,&prcopt,&solopt,&filopt,infile,n,outfile,"","");
+    ret=postpos(ts,te,tint,0.0,&prcopt,&solopt,&filopt,infile,n,outfile,rover,base);
 
     if (!ret) fprintf(stderr,"%40s\r","");
     return ret?EXIT_FAILURE:0;

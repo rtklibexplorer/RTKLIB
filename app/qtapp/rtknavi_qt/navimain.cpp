@@ -94,7 +94,7 @@ static int strfmt[] = {                         /* stream formats */
 #define FLGOPT  "0:off,1:std+2:age/ratio/ns"
 #define ISTOPT  "0:off,1:serial,2:file,3:tcpsvr,4:tcpcli,6:ntripcli,7:ftp,8:http"
 #define OSTOPT  "0:off,1:serial,2:file,3:tcpsvr,4:tcpcli,5:ntripsvr,9:ntripcas"
-#define FMTOPT  "0:rtcm2,1:rtcm3,2:oem4,3:oem3,4:ubx,5:ss2,6:hemis,7:skytraq,8:javad,9:nvs,10:binex,11:rt17,12:sbf,13:tersus,14:rinex,15:sp3,16:clk,17:sbas,18:nmea"
+#define FMTOPT  "0:rtcm2,1:rtcm3,2:oem4,4:ubx,5:swift,6:hemis,7:skytraq,8:javad,9:nvs,10:binex,11:rt17,12:sbf,14:unicore,15:rinex,16:sp3,17:clk"
 #define NMEOPT  "0:off,1:latlon,2:single"
 #define SOLOPT  "0:llh,1:xyz,2:enu,3:nmea,4:stat"
 
@@ -1118,8 +1118,6 @@ void MainWindow::serverStart()
     char errmsg[20148];
     gtime_t time = timeget();
     pcvs_t pcvs;
-    pcv_t *pcv;
-
     trace(3, "serverStart\n");
 
     memset(&pcvs, 0, sizeof(pcvs_t));
@@ -1131,16 +1129,29 @@ void MainWindow::serverStart()
         tracelevel(optDialog->solutionOptions.trace);
     }
 
-    if (optDialog->processingOptions.sateph == EPHOPT_PREC || optDialog->processingOptions.sateph == EPHOPT_SSRCOM) {
-        if (!readpcv(optDialog->fileOptions.satantp, &pcvs)) {
+    if (optDialog->fileOptions.rcvantp[0] != '\0' &&
+        !readpcv(optDialog->fileOptions.rcvantp, &rtksvr->pcvsr)) {
+        if (optDialog->solutionOptions.trace > 0) traceclose();
+        ui->lblMessage->setText(tr("Receiver antenna file read error: %1").arg(optDialog->fileOptions.rcvantp));
+        return;
+    }
+
+    if (optDialog->processingOptions.sateph == EPHOPT_PREC ||
+        optDialog->processingOptions.sateph == EPHOPT_SSRCOM ||
+        optDialog->processingOptions.mode >= PMODE_PPP_KINEMA) {
+        if (optDialog->fileOptions.satantp[0] != '\0' &&
+            !readpcv(optDialog->fileOptions.satantp, &pcvs)) {
+            if (optDialog->solutionOptions.trace > 0) traceclose();
+            free_pcvs(&rtksvr->pcvsr);
             ui->lblMessage->setText(tr("Satellite antenna file read error: %1").arg(optDialog->fileOptions.satantp));
             return;
         }
         for (i = 0; i < MAXSAT; i++) {
-            if (!(pcv = searchpcv(i + 1, "", time, &pcvs))) continue;
+            pcv_t *pcv = searchpcv(i + 1, "", time, &pcvs);
+            if (!pcv) continue;
             rtksvr->nav.pcvs[i] = *pcv;
         }
-        free(pcvs.pcv);
+        free_pcvs(&pcvs);
     }
 
     for (i = 0; i < 3; i++) streamTypes[i] = streamEnabled[i] ? itype[streamType[i]] : STR_NONE;  // input stream
@@ -1188,6 +1199,8 @@ void MainWindow::serverStart()
 
     for (i = 3; i < 8; i++)
         if (streamTypes[i] == STR_FILE && !confirmOverwrite(serverPaths[i])) {
+            if (optDialog->solutionOptions.trace > 0) traceclose();
+            free_pcvs(&rtksvr->pcvsr);
             for (j = 0; j < 8; j++) delete[] serverPaths[j];
             for (j = 0; j < 3; j++) delete[] rcvopts[j];
             for (j = 0; j < 3; j++)
@@ -1223,7 +1236,8 @@ void MainWindow::serverStart()
                      &optDialog->processingOptions, solopt, &monistr, errmsg)) {
 
         trace(2, "rtksvrstart error %s\n", errmsg);
-        traceclose();
+        if (optDialog->solutionOptions.trace > 0) traceclose();
+        free_pcvs(&rtksvr->pcvsr);
         for (i = 0; i < 8; i++) delete[] serverPaths[i];
         for (i = 0; i < 3; i++) delete[] rcvopts[i];
         for (i = 0; i < 3; i++)
@@ -1253,6 +1267,7 @@ void MainWindow::serverStart()
     updatePlot();
 
     ui->btnStart->setVisible(false);
+    ui->btnStart->setEnabled(false);
     ui->btnOptions->setEnabled(false);
     ui->btnExit->setEnabled(false);
     ui->btnInputStream->setEnabled(false);
@@ -1290,9 +1305,12 @@ void MainWindow::serverStop()
     }
     rtksvrstop(rtksvr, (const char **)cmds);
 
+    free_pcvs(&rtksvr->pcvsr);
+
     for (i = 0; i < 3; i++) delete[] cmds[i];
 
     ui->btnStart->setVisible(true);
+    ui->btnStart->setEnabled(true);
     ui->btnOptions->setEnabled(true);
     ui->btnExit->setEnabled(true);
     ui->btnInputStream->setEnabled(true);
@@ -2303,8 +2321,7 @@ void MainWindow::saveLogs()
 
         data = tr("%% program : %1 ver. %2 %3\n").arg(PRGNAME, VER_RTKLIB, PATCH_LEVEL);
         str << data;
-        if (optDialog->processingOptions.mode == PMODE_DGPS || optDialog->processingOptions.mode == PMODE_KINEMA ||
-            optDialog->processingOptions.mode == PMODE_STATIC) {
+        if (optDialog->processingOptions.mode >= PMODE_DGPS && optDialog->processingOptions.mode <= PMODE_FIXED) {
             ecef2pos(optDialog->processingOptions.rb, pos);
             data = QStringLiteral("%% ref pos   :%1 %2 %3\n").arg(pos[0] * R2D, 13, 'f', 9)
                    .arg(pos[1] * R2D, 14, 'f', 9).arg(pos[2], 10, 'f', 4);
@@ -2450,7 +2467,7 @@ void MainWindow::saveNavigation(nav_t *nav)
     settings.setValue("navi/ion", str);
 
     str = "";
-    for (i = 0; i < 4; i++) str = str + QString("%1,").arg(nav->utc_gps[i], 0, 'E', 14);
+    for (i = 0; i < 8; i++) str = str + QString("%1,").arg(nav->utc_gps[i], 0, 'E', 14);
     settings.setValue("navi/utc", str);
 }
 // set tray icon ------------------------------------------------------------

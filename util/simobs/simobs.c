@@ -281,7 +281,7 @@ static int simobs(simopt_t simopt, rnxopt_t rnxopt, nav_t *nav, obs_t *obs) {
 
         data[j].L[m]   = cp/CLIGHT*fk;
         data[j].P[m]   = pr;
-        data[j].SNR[m] = (uint16_t)(snr/SNR_UNIT + 0.5);
+        data[j].SNR[m] = snr;
         data[j].LLI[m] = 0; /* (data[j].SNR[m]<slipthres? 1 : 0); */
 
         m++;

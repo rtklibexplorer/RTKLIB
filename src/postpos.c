@@ -180,7 +180,7 @@ static void outheader(FILE *fp, const char **file, int n, const prcopt_t *popt,
         outprcopt(fp,popt);
     }
     if (PMODE_DGPS<=popt->mode&&popt->mode<=PMODE_FIXED&&popt->mode!=PMODE_MOVEB) {
-        fprintf(fp,"%s ref pos   :",COMMENTH);
+        fprintf(fp,"%s ref pos   : ",COMMENTH);
         outrpos(fp,popt->rb,sopt);
         fprintf(fp,"\n");
     }
@@ -467,7 +467,7 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
         if (!rtkpos(rtk, obs_ptr,n,&navs)) {
             if (rtk->sol.eventime.time != 0) {
                 if (mode == SOLMODE_SINGLE_DIR) {
-                    outinvalidtm(fptm, sopt, rtk->sol.eventime);
+                    if (fptm) outinvalidtm(fptm, sopt, rtk->sol.eventime);
                 } else if (!reverse&&nitm<MAXINVALIDTM) {
                     invalidtm[nitm++] = rtk->sol.eventime;
                 }
@@ -492,7 +492,7 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
                 newsol = fillsoltm(oldsol,rtk->sol,rtk->sol.eventime);
                 num++;
                 if (!solstatic&&mode==SOLMODE_SINGLE_DIR) {
-                    outsol(fptm,&newsol,rb,sopt);
+                    if (fptm) outsol(fptm,&newsol,rb,sopt);
                 }
             }
             oldsol = rtk->sol;
@@ -810,13 +810,18 @@ static void freeobsnav(obs_t *obs, nav_t *nav)
 static int avepos(double *ra, int rcv, const obs_t *obs, const nav_t *nav,
                   const prcopt_t *opt)
 {
-    obsd_t data[MAXOBS];
     gtime_t ts={0};
     sol_t sol={{0}};
     int i,j,n=0,m,iobs;
     char msg[128];
 
     trace(3,"avepos: rcv=%d obs.n=%d\n",rcv,obs->n);
+
+    obsd_t *data = (obsd_t *)calloc(MAXOBS, sizeof(obsd_t));
+    if (data == NULL) {
+      trace(1, "avepos: obsd_t alloc failed\n");
+      return 0;
+    }
 
     for (i=0;i<3;i++) ra[i]=0.0;
 
@@ -834,6 +839,7 @@ static int avepos(double *ra, int rcv, const obs_t *obs, const nav_t *nav,
         for (i=0;i<3;i++) ra[i]+=sol.rr[i];
         n++;
     }
+    free(data);
     if (n<=0) {
         trace(1,"no average of base station position\n");
         return 0;
@@ -841,47 +847,14 @@ static int avepos(double *ra, int rcv, const obs_t *obs, const nav_t *nav,
     for (i=0;i<3;i++) ra[i]/=n;
     return 1;
 }
-/* station position from file ------------------------------------------------*/
-static int getstapos(const char *file, const char *name, double *r)
-{
-    FILE *fp;
-    char buff[256],sname[256],*p;
-    const char *q;
-    double pos[3];
 
-    trace(3,"getstapos: file=%s name=%s\n",file,name);
-
-    if (!(fp=fopen(file,"r"))) {
-        trace(1,"station position file open error: %s\n",file);
-        return 0;
-    }
-    while (fgets(buff,sizeof(buff),fp)) {
-        if ((p=strchr(buff,'%'))) *p='\0';
-        
-        if (sscanf(buff,"%lf %lf %lf %255s",pos,pos+1,pos+2,sname)<4) continue;
-        
-        for (p=sname,q=name;*p&&*q;p++,q++) {
-            if (toupper((int)*p)!=toupper((int)*q)) break;
-        }
-        if (!*p) {
-            pos[0]*=D2R;
-            pos[1]*=D2R;
-            pos2ecef(pos,r);
-            fclose(fp);
-            return 1;
-        }
-    }
-    fclose(fp);
-    trace(1,"no station position: %s %s\n",name,file);
-    return 0;
-}
 /* antenna phase center position ---------------------------------------------*/
 static int antpos(prcopt_t *opt, int rcvno, const obs_t *obs, const nav_t *nav,
-                  const sta_t *sta, const char *posfile)
+                  const sta_t *stas, const char *posfile)
 {
     double *rr=rcvno==1?opt->ru:opt->rb,del[3],pos[3],dr[3]={0};
     int i,postype=rcvno==1?opt->rovpos:opt->refpos;
-    char *name;
+    const char *name;
 
     trace(3,"antpos  : rcvno=%d\n",rcvno);
 
@@ -923,6 +896,7 @@ static int antpos(prcopt_t *opt, int rcvno, const obs_t *obs, const nav_t *nav,
 static int openses(const prcopt_t *popt, const solopt_t *sopt,
                    const filopt_t *fopt, nav_t *nav, pcvs_t *pcvs, pcvs_t *pcvr)
 {
+    (void)popt; (void)nav;
     trace(3,"openses :\n");
 
     /* read satellite antenna parameters */
@@ -952,8 +926,8 @@ static void closeses(nav_t *nav, pcvs_t *pcvs, pcvs_t *pcvr)
     trace(3,"closeses:\n");
 
     /* free antenna parameters */
-    free(pcvs->pcv); pcvs->pcv=NULL; pcvs->n=pcvs->nmax=0;
-    free(pcvr->pcv); pcvr->pcv=NULL; pcvr->n=pcvr->nmax=0;
+    free_pcvs(pcvs);
+    free_pcvs(pcvr);
 
     /* close geoid data */
     closegeoid();

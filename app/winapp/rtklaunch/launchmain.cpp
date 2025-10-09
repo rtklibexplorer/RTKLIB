@@ -68,8 +68,8 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 	if (Left<0) Left=0;
 	if (Left+Width>rect.Width()) Left=rect.Width()-Width;
 
-    Caption="RTKLIB v." VER_RTKLIB " " PATCH_LEVEL;
-    BtnRtklib->Hint="RTKLIB v." VER_RTKLIB " " PATCH_LEVEL;
+    Caption="RTKLIB-" VER_RTKLIB " " PATCH_LEVEL;
+    BtnRtklib->Hint="RTKLIB-" VER_RTKLIB " " PATCH_LEVEL;
     TrayIcon->Hint=Caption;
     Panel1->Constraints->MinWidth=BTN_SIZE+2;
     Panel1->Constraints->MaxWidth=BTN_SIZE*BTN_COUNT+2;
