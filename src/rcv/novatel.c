@@ -180,8 +180,8 @@ static int obsindex(obs_t *obs, gtime_t time, int sat)
     obs->data[i].sat=sat;
     for (j=0;j<NFREQ+NEXOBS;j++) {
         obs->data[i].L[j]=obs->data[i].P[j]=0.0;
-        obs->data[i].D[j]=0.0;
-        obs->data[i].SNR[j]=obs->data[i].LLI[j]=0;
+        obs->data[i].D[j]=obs->data[i].SNR[j]=0.0;
+        obs->data[i].LLI[j]=0;
         obs->data[i].code[j]=CODE_NONE;
     }
     obs->n++;
@@ -438,7 +438,7 @@ static int decode_rangecmpb(raw_t *raw)
             raw->obs.data[index].L  [idx]=adr;
             raw->obs.data[index].P  [idx]=psr;
             raw->obs.data[index].D  [idx]=(float)dop;
-            raw->obs.data[index].SNR[idx]=(uint16_t)(snr/SNR_UNIT+0.5);
+            raw->obs.data[index].SNR[idx]=snr;
             raw->obs.data[index].LLI[idx]=(uint8_t)lli;
             raw->obs.data[index].code[idx]=(uint8_t)code;
         }
@@ -521,7 +521,7 @@ static int decode_rangeb(raw_t *raw)
             raw->obs.data[index].L  [idx]=-adr;
             raw->obs.data[index].P  [idx]=psr;
             raw->obs.data[index].D  [idx]=(float)dop;
-            raw->obs.data[index].SNR[idx]=(uint16_t)(snr/SNR_UNIT+0.5);
+            raw->obs.data[index].SNR[idx]=snr;
             raw->obs.data[index].LLI[idx]=(uint8_t)lli;
             raw->obs.data[index].code[idx]=(uint8_t)code;
         }
@@ -1113,8 +1113,7 @@ static int decode_rgeb(raw_t *raw)
             raw->obs.data[index].L  [freq]=-adr; /* flip sign */
             raw->obs.data[index].P  [freq]=psr;
             raw->obs.data[index].D  [freq]=(float)dop;
-            raw->obs.data[index].SNR[freq]=
-                0.0<=snr&&snr<255.0?(uint16_t)(snr/SNR_UNIT+0.5):0;
+            raw->obs.data[index].SNR[freq]=0.0<=snr&&snr<255.0?snr:0;
             raw->obs.data[index].LLI[freq]=(uint8_t)lli;
             raw->obs.data[index].code[freq]=freq==0?CODE_L1C:CODE_L2P;
         }
@@ -1179,7 +1178,7 @@ static int decode_rged(raw_t *raw)
             raw->obs.data[index].L  [freq]=adr;
             raw->obs.data[index].P  [freq]=psr;
             raw->obs.data[index].D  [freq]=(float)dop;
-            raw->obs.data[index].SNR[freq]=(uint16_t)(snr/SNR_UNIT+0.5);
+            raw->obs.data[index].SNR[freq]=snr;
             raw->obs.data[index].LLI[freq]=(uint8_t)lli;
             raw->obs.data[index].code[freq]=freq==0?CODE_L1C:CODE_L2P;
         }

@@ -44,7 +44,7 @@ void __fastcall TSkyImgDialog::BtnSaveClick(TObject *Sender)
 		if (ConfDialog->ShowModal()!=mrOk) return;
 	}
 	if (!(fp=fopen(file.c_str(),"w"))) return;
-	fprintf(fp,"%% sky image tag file: rtkplot %s %s\n\n",VER_RTKLIB,PATCH_LEVEL);
+	fprintf(fp,"%% sky image tag file: rtkplot-%s %s\n\n",VER_RTKLIB,PATCH_LEVEL);
 	fprintf(fp,"centx   = %.6g\n",Plot->SkyCent[0]);
 	fprintf(fp,"centy   = %.6g\n",Plot->SkyCent[1]);
 	fprintf(fp,"scale   = %.6g\n",Plot->SkyScale  );

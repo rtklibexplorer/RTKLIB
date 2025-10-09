@@ -396,8 +396,8 @@ static int flushobuf(raw_t *raw) {
     raw->obuf.data[i].time = time0;
     for (j = 0; j < NFREQ + NEXOBS; j++) {
       raw->obuf.data[i].L[j] = raw->obuf.data[i].P[j] = 0.0;
-      raw->obuf.data[i].D[j] = 0.0;
-      raw->obuf.data[i].SNR[j] = raw->obuf.data[i].LLI[j] = 0;
+      raw->obuf.data[i].D[j] = raw->obuf.data[i].SNR[j] = 0.0;
+      raw->obuf.data[i].LLI[j] = 0;
       raw->obuf.data[i].code[j] = CODE_NONE;
     }
   }
@@ -533,7 +533,7 @@ static int decode_msgobs(raw_t *raw) {
       raw->obuf.data[ii].P[freq] = (flags & 0x1) ? pseudorange : 0.0;
       raw->obuf.data[ii].L[freq] = (flags & 0x2) ? carr_phase : 0.0;
       raw->obuf.data[ii].D[freq] = (flags & 0x8) ? (float)freq_doppler : 0.0f;
-      raw->obuf.data[ii].SNR[freq] = (cn0_int*0.25/SNR_UNIT+0.5);
+      raw->obuf.data[ii].SNR[freq] = cn0_int * 0.25;
       raw->obuf.data[ii].code[freq] = code;
 
       if (flags & 0x2) {

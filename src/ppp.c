@@ -243,6 +243,9 @@ static double yaw_nominal(double beta, double mu)
 extern int yaw_angle(int sat, const char *type, int opt, double beta, double mu,
                      double *yaw)
 {
+    (void)sat;
+    (void)type;
+    (void)opt;
     *yaw=yaw_nominal(beta,mu);
     return 1;
 }
@@ -327,6 +330,7 @@ static int model_phw(gtime_t time, int sat, const char *type, int opt,
 static double varerr(int sat, int sys, double el, double snr_rover,
                      int f, const prcopt_t *opt, const obsd_t *obs)
 {
+    (void)sat;
     double a,b,e;
     double snr_max=opt->err[5];
     double fact=1.0;
@@ -361,8 +365,8 @@ static double varerr(int sat, int sys, double el, double snr_rover,
         var+=e*e*(pow(10,0.1*MAX(snr_max-snr_rover,0)));
     }
     if (opt->err[7]>0.0) {   /* add rcvr stdevs term */
-        if (code) var+=SQR(opt->err[7]*0.01*(1<<(obs->Pstd[frq]+5))); /* 0.01*2^(n+5) */
-        else var+=SQR(opt->err[7]*obs->Lstd[frq]*0.004*0.2); /* 0.004 cycles -> m) */
+        if (code) var+=SQR(opt->err[7]*obs->Pstd[frq]);
+        else var+=SQR(opt->err[7]*obs->Lstd[frq]*0.2);
     }
     /* FIXME: the scaling factor is not 3 for other signals/constellations than GPS L1/L2 */
     var*=(opt->ionoopt==IONOOPT_IFLC)?SQR(3.0):1.0;
@@ -415,7 +419,7 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
         /* skip if low SNR or missing observations */
         freq[i]=sat2freq(obs->sat,obs->code[i],nav);
         if (freq[i]==0.0||obs->L[i]==0.0||obs->P[i]==0.0) continue;
-        if (testsnr(0,0,azel[1],obs->SNR[i]*SNR_UNIT,&opt->snrmask)) continue;
+        if (testsnr(0,0,azel[1],obs->SNR[i],&opt->snrmask)) continue;
 
         /* antenna phase center and phase windup correction */
         L[i]=obs->L[i]*CLIGHT/freq[i]-dants[i]-dantr[i]-phw*CLIGHT/freq[i];
@@ -459,6 +463,7 @@ static void detslp_ll(rtk_t *rtk, const obsd_t *obs, int n)
 
     trace(3,"detslp_ll: n=%d\n",n);
 
+    if (nf > NFREQ) nf = NFREQ; // Quieten compiler warnings on slip[] write.
     for (i=0;i<n&&i<MAXOBS;i++) for (j=0;j<nf;j++) {
         if (obs[i].L[j]==0.0||!(obs[i].LLI[j]&(LLI_SLIP|LLI_HALFC))) continue;
 
@@ -716,7 +721,7 @@ static void uddcb_ppp(rtk_t *rtk)
 /* temporal update of phase biases -------------------------------------------*/
 static void udbias_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
 {
-    double L[NFREQ],P[NFREQ],Lc,Pc,bias[MAXOBS],offset=0.0,pos[3]={0};
+    double L[NFREQ],P[NFREQ],Lc,Pc,bias[MAXOBS],offset=0.0;
     double freq1,freq2,ion,dantr[NFREQ]={0},dants[NFREQ]={0};
     int i,j,k,f,sat,slip[MAXOBS]={0},clk_jump=0;
 
@@ -737,8 +742,6 @@ static void udbias_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
 
     /* detect slip by Melbourne-Wubbena linear combination jump */
     detslp_mw(rtk,obs,n,nav);
-
-    ecef2pos(rtk->sol.rr,pos);
 
     for (f=0;f<NF(&rtk->opt);f++) {
 
@@ -882,6 +885,7 @@ static int model_trop(gtime_t time, const double *pos, const double *azel,
                       const prcopt_t *opt, const double *x, double *dtdx,
                       const nav_t *nav, double *dtrp, double *var)
 {
+    (void)nav;
     double trp[3]={0};
 
     if (opt->tropopt==TROPOPT_SAAS) {
@@ -1047,7 +1051,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
 
             /* variance */
             var[nv]=varerr(sat,sys,azel[1+i*2],
-                    SNR_UNIT*rtk->ssat[sat-1].snr_rover[frq],
+                    rtk->ssat[sat-1].snr_rover[frq],
                     j,opt,obs+i);
             var[nv] +=vart+SQR(C)*vari+var_rs[i];
             if (sys==SYS_GLO&&code==1) var[nv]+=VAR_GLO_IFB;

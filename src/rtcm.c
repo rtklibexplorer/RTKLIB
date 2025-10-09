@@ -68,7 +68,6 @@ extern int init_rtcm(rtcm_t *rtcm)
     gtime_t time0={0};
     obsd_t data0={{0}};
     eph_t  eph0 ={0,-1,-1};
-    geph_t geph0={0,-1};
     ssr_t ssr0={{{0}}};
     int i,j;
     
@@ -107,20 +106,29 @@ extern int init_rtcm(rtcm_t *rtcm)
     rtcm->nav.geph=NULL;
     rtcm->nav.seph=NULL;
     
-    /* reallocate memory for observation and ephemeris buffer */
+    // Allocate memory for observation and ephemeris buffer.
     if (!(rtcm->obs.data=(obsd_t *)malloc(sizeof(obsd_t)*MAXOBS))||
-        !(rtcm->nav.eph =(eph_t  *)malloc(sizeof(eph_t )*MAXSAT*2))||
-        !(rtcm->nav.geph=(geph_t *)malloc(sizeof(geph_t)*MAXPRNGLO))) {
+        !(rtcm->nav.eph =(eph_t  *)malloc(sizeof(eph_t )*MAXSAT*2))) {
         free_rtcm(rtcm);
         return 0;
     }
     rtcm->obs.n=0;
     rtcm->nav.n=rtcm->nav.nmax=MAXSAT*2;
-    rtcm->nav.ng=rtcm->nav.ngmax=MAXPRNGLO;
     rtcm->nav.ns=rtcm->nav.nsmax=0;
     for (i=0;i<MAXOBS   ;i++) rtcm->obs.data[i]=data0;
     for (i=0;i<MAXSAT*2 ;i++) rtcm->nav.eph [i]=eph0;
-    for (i=0;i<MAXPRNGLO;i++) rtcm->nav.geph[i]=geph0;
+
+    if (MAXPRNGLO > 0) {
+      rtcm->nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO);
+      if (rtcm->nav.geph == NULL) {
+        free_rtcm(rtcm);
+        return 0;
+      }
+      geph_t geph0 = {0, -1};
+      for (int i = 0; i < MAXPRNGLO; i++) rtcm->nav.geph[i] = geph0;
+    }
+    rtcm->nav.ng = rtcm->nav.ngmax = MAXPRNGLO;
+
     return 1;
 }
 /* free rtcm control ----------------------------------------------------------

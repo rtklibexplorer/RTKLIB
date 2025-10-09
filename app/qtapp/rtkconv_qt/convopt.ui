@@ -310,7 +310,10 @@
          <number>4</number>
         </property>
         <property name="maximum">
-         <double>1000000.000000000000000</double>
+         <double>10000000.000000000000000</double>
+        </property>
+        <property name="minimum">
+         <double>-10000000.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -326,7 +329,10 @@
          <number>4</number>
         </property>
         <property name="maximum">
-         <double>1000000.000000000000000</double>
+         <double>10000000.000000000000000</double>
+        </property>
+        <property name="minimum">
+         <double>-10000000.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -436,7 +442,10 @@
          <number>4</number>
         </property>
         <property name="maximum">
-         <double>1000000.000000000000000</double>
+         <double>10000000.000000000000000</double>
+        </property>
+        <property name="minimum">
+         <double>-10000000.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -486,6 +495,16 @@
         </property>
         <property name="text">
          <string>Half Cycle Correction</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="cBSortSats">
+        <property name="toolTip">
+         <string>Sort observations by their internal satellite number</string>
+        </property>
+        <property name="text">
+         <string>Sort Satellites</string>
         </property>
        </widget>
       </item>
@@ -754,12 +773,18 @@
            <property name="text">
             <string>L3</string>
            </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="cBFreq4">
            <property name="text">
             <string>L4</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -768,12 +793,18 @@
            <property name="text">
             <string>L5</string>
            </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="cBFreq6">
            <property name="text">
             <string>L6</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>

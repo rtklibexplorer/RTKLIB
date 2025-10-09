@@ -55,7 +55,7 @@ static void utest1(void)
         assert(stat);
         assert(tle.n==114);
 
-#if 0 /* for debug */
+#if RTK_DISABLED /* for debug */
     dumptle(OUT,&tle);
 #endif
 

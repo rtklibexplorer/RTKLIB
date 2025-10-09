@@ -564,7 +564,7 @@ static int test_local(gtime_t ts, gtime_t te, double ti, const char *path,
                       FILE *fp)
 {
     gtime_t time;
-    char remot[1024],remot_p[1024],dir_t[1024],local[1024],str[1024];
+    char remot[1024],dir_t[1024],local[1024],str[1024];
     int stat,abort=0;
     
     for (time=ts;timediff(time,te)<=1E-3;time=timeadd(time,ti)) {
@@ -844,7 +844,6 @@ extern void dl_test(gtime_t ts, gtime_t te, double ti, const url_t *urls,
                     int ncol, int datefmt, FILE *fp)
 {
     gtime_t time;
-    double tow;
     char year[32],date[32],date_p[32];
     int i,j,n,m,*nc,*nt,week,flag,abort=0;
     

@@ -591,9 +591,9 @@ void MainForm::loadOptions()
     QSettings settings(iniFilename, QSettings::IniFormat);
     QStringList stas;
 
-    ui->dateTimeStart->setDate(settings.value("opt/startd", "2020/01/01").toDate());
+    ui->dateTimeStart->setDate(settings.value("opt/startd", "2025/01/01").toDate());
     ui->dateTimeStart->setTime(settings.value("opt/starth", "00:00").toTime());
-    ui->dateTimeStop->setDate(settings.value("opt/endd", "2020/01/01").toDate());
+    ui->dateTimeStop->setDate(settings.value("opt/endd", "2025/01/01").toDate());
     ui->dateTimeStop->setTime(settings.value("opt/endh", "00:00").toTime());
     ui->cBTimeInterval->setCurrentText(settings.value("opt/timeint", "24 H").toString());
     ui->lENumber->setText(settings.value("opt/number", "0").toString());

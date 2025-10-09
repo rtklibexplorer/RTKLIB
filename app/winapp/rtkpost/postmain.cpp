@@ -119,7 +119,8 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
     RovPosType=RefPosType=0;
     OutCntResetAmb=5; LockCntFixAmb=5; FixCntHoldAmb=10;
     MaxAgeDiff=30.0; RejectPhase=30.0; RejectCode=30.0;
-    MeasErrR1=MeasErrR2=MeasErrR5=100.0; MeasErr2=0.004; MeasErr3=0.003; MeasErr4=1.0;
+    MeasErrR1=MeasErrR2=MeasErrR5=MeasErrR6=100.0;
+    MeasErr2=0.004;MeasErr3=0.003; MeasErr4=1.0;
     SatClkStab=1E-11; ValidThresAR=3.0; ValidThresARMin=3.0; ValidThresARMax=3.0;
     RovAntE=RovAntN=RovAntU=RefAntE=RefAntN=RefAntU=0.0;
     for (i=0;i<3;i++) RovPos[i]=0.0;
@@ -132,14 +133,15 @@ void __fastcall TMainForm::FormCreate(TObject *Sender)
 {
     AnsiString s;
     
-    Caption=s.sprintf("%s %s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
+    Caption=s.sprintf("%s-%s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
     
     ::DragAcceptFiles(Handle,true);
 }
 // callback on form show ----------------------------------------------------
 void __fastcall TMainForm::FormShow(TObject *Sender)
 {
-    TComboBox *ifile[]={InputFile3,InputFile4,InputFile5,InputFile6};
+    TComboBox *ifile[]={InputFile3,InputFile4,InputFile5,InputFile6,
+      InputFile7,InputFile8,InputFile9,InputFile10};
     char *p,*argv[32],buff[1024];
     int argc=0,n=0,inputflag=0;;
     
@@ -175,7 +177,7 @@ void __fastcall TMainForm::FormShow(TObject *Sender)
         }
         else if (!strcmp(argv[i],"-o")&&i+1<argc) OutputFile->Text=argv[++i];
         else if (!strcmp(argv[i],"-n")&&i+1<argc) {
-            if (n<4) ifile[n++]->Text=argv[++i];
+            if (n<8) ifile[n++]->Text=argv[++i];
         }
         else if (!strcmp(argv[i],"-ts")&&i+2<argc) {
             TimeStart->Checked=true;
@@ -235,6 +237,18 @@ void __fastcall TMainForm::DropFiles(TWMDropFiles msg)
     }
     else if (y<=top+InputFile6->Top+InputFile6->Height) {
         InputFile6->Text=file;
+    }
+    else if (y<=top+InputFile7->Top+InputFile7->Height) {
+        InputFile7->Text=file;
+    }
+    else if (y<=top+InputFile8->Top+InputFile8->Height) {
+        InputFile8->Text=file;
+    }
+    else if (y<=top+InputFile9->Top+InputFile9->Height) {
+        InputFile9->Text=file;
+    }
+    else if (y<=top+InputFile10->Top+InputFile10->Height) {
+        InputFile10->Text=file;
     }
 }
 // callback on button-plot --------------------------------------------------
@@ -320,6 +334,10 @@ void __fastcall TMainForm::BtnExecClick(TObject *Sender)
         AddHist(InputFile4);
         AddHist(InputFile5);
         AddHist(InputFile6);
+        AddHist(InputFile7);
+        AddHist(InputFile8);
+        AddHist(InputFile9);
+        AddHist(InputFile10);
         AddHist(OutputFile);
     }
     AnsiString Message_Caption=Message->Caption;
@@ -430,6 +448,42 @@ void __fastcall TMainForm::BtnInputFile6Click(TObject *Sender)
     if (!OpenDialog->Execute()) return;
     InputFile6->Text=OpenDialog->FileName;
 }
+// callback on button-inputfile-7 -------------------------------------------
+void __fastcall TMainForm::BtnInputFile7Click(TObject *Sender)
+{
+    OpenDialog->Title="File";
+    OpenDialog->FileName="";
+    OpenDialog->FilterIndex=1;
+    if (!OpenDialog->Execute()) return;
+    InputFile7->Text=OpenDialog->FileName;
+}
+// callback on button-inputfile-8 -------------------------------------------
+void __fastcall TMainForm::BtnInputFile8Click(TObject *Sender)
+{
+    OpenDialog->Title="File";
+    OpenDialog->FileName="";
+    OpenDialog->FilterIndex=1;
+    if (!OpenDialog->Execute()) return;
+    InputFile8->Text=OpenDialog->FileName;
+}
+// callback on button-inputfile-9 -------------------------------------------
+void __fastcall TMainForm::BtnInputFile9Click(TObject *Sender)
+{
+    OpenDialog->Title="File";
+    OpenDialog->FileName="";
+    OpenDialog->FilterIndex=1;
+    if (!OpenDialog->Execute()) return;
+    InputFile9->Text=OpenDialog->FileName;
+}
+// callback on button-inputfile-10 ------------------------------------------
+void __fastcall TMainForm::BtnInputFile10Click(TObject *Sender)
+{
+    OpenDialog->Title="File";
+    OpenDialog->FileName="";
+    OpenDialog->FilterIndex=1;
+    if (!OpenDialog->Execute()) return;
+    InputFile10->Text=OpenDialog->FileName;
+}
 // callback on button-outputfile --------------------------------------------
 void __fastcall TMainForm::BtnOutputFileClick(TObject *Sender)
 {
@@ -483,6 +537,30 @@ void __fastcall TMainForm::BtnInputView6Click(TObject *Sender)
     AnsiString InputFile6_Text=InputFile6->Text;
     ViewFile(FilePath(InputFile6_Text));
 }
+// callback on button-inputview-7 -------------------------------------------
+void __fastcall TMainForm::BtnInputView7Click(TObject *Sender)
+{
+    AnsiString InputFile7_Text=InputFile7->Text;
+    ViewFile(FilePath(InputFile7_Text));
+}
+// callback on button-inputview-8 -------------------------------------------
+void __fastcall TMainForm::BtnInputView8Click(TObject *Sender)
+{
+    AnsiString InputFile8_Text=InputFile8->Text;
+    ViewFile(FilePath(InputFile8_Text));
+}
+// callback on button-inputview-9 -------------------------------------------
+void __fastcall TMainForm::BtnInputView9Click(TObject *Sender)
+{
+    AnsiString InputFile9_Text=InputFile9->Text;
+    ViewFile(FilePath(InputFile9_Text));
+}
+// callback on button-inputview-10 ------------------------------------------
+void __fastcall TMainForm::BtnInputView10Click(TObject *Sender)
+{
+    AnsiString InputFile10_Text=InputFile10->Text;
+    ViewFile(FilePath(InputFile10_Text));
+}
 // callback on button-outputview-1 ------------------------------------------
 void __fastcall TMainForm::BtnOutputView1Click(TObject *Sender)
 {
@@ -510,7 +588,11 @@ void __fastcall TMainForm::BtnInputPlot1Click(TObject *Sender)
     AnsiString InputFile4_Text=InputFile4->Text;
     AnsiString InputFile5_Text=InputFile5->Text;
     AnsiString InputFile6_Text=InputFile6->Text;
-    AnsiString files[6];
+    AnsiString InputFile7_Text=InputFile7->Text;
+    AnsiString InputFile8_Text=InputFile8->Text;
+    AnsiString InputFile9_Text=InputFile9->Text;
+    AnsiString InputFile10_Text=InputFile10->Text;
+    AnsiString files[10];
     AnsiString cmd1="rtkplot",cmd2="..\\..\\..\\bin\\rtkplot",opts="";
     char navfile[1024];
     
@@ -520,12 +602,17 @@ void __fastcall TMainForm::BtnInputPlot1Click(TObject *Sender)
     files[3]=FilePath(InputFile4_Text);
     files[4]=FilePath(InputFile5_Text);
     files[5]=FilePath(InputFile6_Text);
+    files[6]=FilePath(InputFile7_Text);
+    files[7]=FilePath(InputFile8_Text);
+    files[8]=FilePath(InputFile9_Text);
+    files[9]=FilePath(InputFile10_Text);
     
     if (files[2]=="") {
         if (ObsToNav(files[0].c_str(),navfile)) files[2]=navfile;
     }
     opts=" -r \""+files[0]+"\" \""+files[2]+"\" \""+files[3]+"\" \""+
-        files[4]+"\" \""+files[5]+"\"";
+        files[4]+"\" \""+files[5]+"\" \""+files[6]+"\" \""+files[7]+
+        "\" \""+files[8]+"\" \""+files[9]+"\"";
     
     if (!ExecCmd(cmd1+opts,1)&&!ExecCmd(cmd2+opts,1)) {
         ShowMsg((char *)"error : rtkplot execution");
@@ -540,7 +627,11 @@ void __fastcall TMainForm::BtnInputPlot2Click(TObject *Sender)
     AnsiString InputFile4_Text=InputFile4->Text;
     AnsiString InputFile5_Text=InputFile5->Text;
     AnsiString InputFile6_Text=InputFile6->Text;
-    AnsiString files[6];
+    AnsiString InputFile7_Text=InputFile7->Text;
+    AnsiString InputFile8_Text=InputFile8->Text;
+    AnsiString InputFile9_Text=InputFile9->Text;
+    AnsiString InputFile10_Text=InputFile10->Text;
+    AnsiString files[10];
     AnsiString cmd1="rtkplot",cmd2="..\\..\\..\\bin\\rtkplot",opts="";
     char navfile[1024],gnavfile[1024];
     
@@ -550,12 +641,17 @@ void __fastcall TMainForm::BtnInputPlot2Click(TObject *Sender)
     files[3]=FilePath(InputFile4_Text);
     files[4]=FilePath(InputFile5_Text);
     files[5]=FilePath(InputFile6_Text);
+    files[6]=FilePath(InputFile7_Text);
+    files[7]=FilePath(InputFile8_Text);
+    files[8]=FilePath(InputFile9_Text);
+    files[9]=FilePath(InputFile10_Text);
     
     if (files[2]=="") {
         if (ObsToNav(files[0].c_str(),navfile)) files[2]=navfile;
     }
     opts=" -r \""+files[1]+"\" \""+files[2]+"\" \""+files[3]+"\" \""+
-         files[4]+"\" \""+files[5]+"\"";
+         files[4]+"\" \""+files[5]+"\" \""+files[6]+"\" \""+files[7]+
+        "\" \""+files[8]+"\" \""+files[9]+"\"";
     
     if (!ExecCmd(cmd1+opts,1)&&!ExecCmd(cmd2+opts,1)) {
         ShowMsg((char *)"error : rtkplot execution");
@@ -584,6 +680,28 @@ void __fastcall TMainForm::BtnKeywordClick(TObject *Sender)
 // callback on time-start/end check -----------------------------------------
 void __fastcall TMainForm::TimeStartClick(TObject *Sender)
 {
+    if (TimeStart->Checked && TimeEnd->Checked) {
+      // Initialize the start time to the end time if the start time
+      // has just been enabled and is out of order.
+      gtime_t ts=GetTime1(), te=GetTime2();
+      if (timediff(te, ts) < 0.0) {
+        TimeY1->Text = TimeY2->Text;
+        TimeH1->Text = TimeH2->Text;
+      }
+    }
+    UpdateEnable();
+}
+void __fastcall TMainForm::TimeEndClick(TObject *Sender)
+{
+    if (TimeStart->Checked && TimeEnd->Checked) {
+      // Initialize the end time to the start time if the end time has
+      // just been enabled and is out of order.
+      gtime_t ts=GetTime1(), te=GetTime2();
+      if (timediff(te, ts) < 0.0) {
+        TimeY2->Text = TimeY1->Text;
+        TimeH2->Text = TimeH1->Text;
+      }
+    }
     UpdateEnable();
 }
 // callback on time-interval check ------------------------------------------
@@ -747,6 +865,8 @@ int __fastcall TMainForm::ExecProc(void)
     AnsiString InputFile1_Text=InputFile1->Text,InputFile2_Text=InputFile2->Text;
     AnsiString InputFile3_Text=InputFile3->Text,InputFile4_Text=InputFile4->Text;
     AnsiString InputFile5_Text=InputFile5->Text,InputFile6_Text=InputFile6->Text;
+    AnsiString InputFile7_Text=InputFile7->Text,InputFile8_Text=InputFile8->Text;
+    AnsiString InputFile9_Text=InputFile9->Text,InputFile10_Text=InputFile10->Text;
     AnsiString OutputFile_Text=OutputFile->Text;
     FILE *fp;
     prcopt_t prcopt=prcopt_default;
@@ -755,7 +875,7 @@ int __fastcall TMainForm::ExecProc(void)
     gtime_t ts={0},te={0};
     double ti=0.0,tu=0.0;
     int i,n=0,stat;
-    char infile_[6][1024]={""},*infile[6],outfile[1024];
+    char infile_[10][1024]={""},*infile[10],outfile[1024];
     char *rov,*base,*p,*q,*r;
     
     // get processing options
@@ -767,7 +887,7 @@ int __fastcall TMainForm::ExecProc(void)
     if (!GetOption(prcopt,solopt,filopt)) return 0;
     
     // set input/output files
-    for (i=0;i<6;i++) infile[i]=infile_[i];
+    for (i=0;i<10;i++) infile[i]=infile_[i];
     
     strcpy(infile[n++],InputFile1_Text.c_str());
     
@@ -789,6 +909,18 @@ int __fastcall TMainForm::ExecProc(void)
     }
     if (InputFile6_Text!="") {
         strcpy(infile[n++],InputFile6_Text.c_str());
+    }
+    if (InputFile7_Text!="") {
+        strcpy(infile[n++],InputFile7_Text.c_str());
+    }
+    if (InputFile8_Text!="") {
+        strcpy(infile[n++],InputFile8_Text.c_str());
+    }
+    if (InputFile9_Text!="") {
+        strcpy(infile[n++],InputFile9_Text.c_str());
+    }
+    if (InputFile10_Text!="") {
+        strcpy(infile[n++],InputFile10_Text.c_str());
     }
     strcpy(outfile,OutputFile_Text.c_str());
     
@@ -881,6 +1013,7 @@ int __fastcall TMainForm::GetOption(prcopt_t &prcopt, solopt_t &solopt,
     prcopt.eratio[0]=MeasErrR1;
     prcopt.eratio[1]=MeasErrR2;
     prcopt.eratio[2]=MeasErrR5;
+    prcopt.eratio[3]=MeasErrR6;
     prcopt.err[1]   =MeasErr2;
     prcopt.err[2]   =MeasErr3;
     prcopt.err[3]   =MeasErr4;
@@ -931,17 +1064,17 @@ int __fastcall TMainForm::GetOption(prcopt_t &prcopt, solopt_t &solopt,
     }
     else prcopt.refpos=RefPosType-1;
     
+    prcopt.antdel[0][0]=RovAntE;
+    prcopt.antdel[0][1]=RovAntN;
+    prcopt.antdel[0][2]=RovAntU;
     if (RovAntPcv) {
         strcpy(prcopt.anttype[0],RovAnt.c_str());
-        prcopt.antdel[0][0]=RovAntE;
-        prcopt.antdel[0][1]=RovAntN;
-        prcopt.antdel[0][2]=RovAntU;
     }
+    prcopt.antdel[1][0]=RefAntE;
+    prcopt.antdel[1][1]=RefAntN;
+    prcopt.antdel[1][2]=RefAntU;
     if (RefAntPcv) {
         strcpy(prcopt.anttype[1],RefAnt.c_str());
-        prcopt.antdel[1][0]=RefAntE;
-        prcopt.antdel[1][1]=RefAntN;
-        prcopt.antdel[1][2]=RefAntU;
     }
     if (ExSats!="") { // excluded satellites
         strcpy(buff,ExSats.c_str());
@@ -972,7 +1105,7 @@ int __fastcall TMainForm::GetOption(prcopt_t &prcopt, solopt_t &solopt,
     solopt.sstat    =DebugStatus;
     solopt.trace    =DebugTrace;
     strcpy(solopt.sep,FieldSep!=""?FieldSep.c_str():" ");
-    sprintf(solopt.prog,"%s %s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
+    sprintf(solopt.prog,"%s-%s %s",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
     
     // file options
     strcpy(filopt.satantp,SatPcvFile.c_str());
@@ -1201,6 +1334,10 @@ void __fastcall TMainForm::LoadOpt(void)
     InputFile4->Text   =ini->ReadString ("set","inputfile4",  "");
     InputFile5->Text   =ini->ReadString ("set","inputfile5",  "");
     InputFile6->Text   =ini->ReadString ("set","inputfile6",  "");
+    InputFile7->Text   =ini->ReadString ("set","inputfile7",  "");
+    InputFile8->Text   =ini->ReadString ("set","inputfile8",  "");
+    InputFile9->Text   =ini->ReadString ("set","inputfile9",  "");
+    InputFile10->Text  =ini->ReadString ("set","inputfile10", "");
     OutDirEna->Checked =ini->ReadInteger("set","outputdirena", 0);
     OutDir->Text       =ini->ReadString ("set","outputdir",   "");
     OutputFile->Text   =ini->ReadString ("set","outputfile",  "");
@@ -1211,17 +1348,21 @@ void __fastcall TMainForm::LoadOpt(void)
     InputFile4->Items  =ReadList(ini,"hist","inputfile4");
     InputFile5->Items  =ReadList(ini,"hist","inputfile5");
     InputFile6->Items  =ReadList(ini,"hist","inputfile6");
+    InputFile7->Items  =ReadList(ini,"hist","inputfile7");
+    InputFile8->Items  =ReadList(ini,"hist","inputfile8");
+    InputFile9->Items  =ReadList(ini,"hist","inputfile9");
+    InputFile10->Items =ReadList(ini,"hist","inputfile10");
     OutputFile->Items  =ReadList(ini,"hist","outputfile");
     
     PosMode            =ini->ReadInteger("opt","posmode",        2);
-    Freq               =ini->ReadInteger("opt","freq",           1);
+    Freq               =ini->ReadInteger("opt","freq",     NFREQ-1);
     Solution           =ini->ReadInteger("opt","solution",       0);
     ElMask             =ini->ReadFloat  ("opt","elmask",      15.0);
     SnrMask.ena[0]     =ini->ReadInteger("opt","snrmask_ena1",   0);
     SnrMask.ena[1]     =ini->ReadInteger("opt","snrmask_ena2",   0);
-    for (int i=0;i<3;i++) for (int j=0;j<9;j++) {
+    for (int i=0;i<NFREQ;i++) for (int j=0;j<9;j++) {
         SnrMask.mask[i][j]=
-            ini->ReadFloat("opt",s.sprintf("snrmask_%d_%d",i+1,j+1),0.0);
+            ini->ReadFloat("opt",s.sprintf("snrmask_%d_%d",i+1,j+1),35.0);
     }
     IonoOpt            =ini->ReadInteger("opt","ionoopt",     IONOOPT_BRDC);
     TropOpt            =ini->ReadInteger("opt","tropopt",     TROPOPT_SAAS);
@@ -1230,7 +1371,7 @@ void __fastcall TMainForm::LoadOpt(void)
     TideCorr           =ini->ReadInteger("opt","tidecorr",       0);
     SatEphem           =ini->ReadInteger("opt","satephem",       0);
     ExSats             =ini->ReadString ("opt","exsats",        "");
-    NavSys             =ini->ReadInteger("opt","navsys",   SYS_GPS|SYS_GLO|SYS_GAL);
+    NavSys             =ini->ReadInteger("opt","navsys", SYS_GPS|SYS_GLO|SYS_GAL|SYS_QZS|SYS_CMP);
     PosOpt[0]          =ini->ReadInteger("opt","posopt1",        0);
     PosOpt[1]          =ini->ReadInteger("opt","posopt2",        0);
     PosOpt[2]          =ini->ReadInteger("opt","posopt3",        0);
@@ -1239,9 +1380,9 @@ void __fastcall TMainForm::LoadOpt(void)
     PosOpt[5]          =ini->ReadInteger("opt","posopt6",        0);
     MapFunc            =ini->ReadInteger("opt","mapfunc",        0);
     
-    AmbRes             =ini->ReadInteger("opt","ambres",         3);
-    GloAmbRes          =ini->ReadInteger("opt","gloambres",      3);
-    BdsAmbRes          =ini->ReadInteger("opt","bdsambres",      0);
+    AmbRes             =ini->ReadInteger("opt","ambres",         1);
+    GloAmbRes          =ini->ReadInteger("opt","gloambres",      0);
+    BdsAmbRes          =ini->ReadInteger("opt","bdsambres",      1);
     ValidThresAR       =ini->ReadFloat  ("opt","validthresar", 3.0);
     MaxPosVarAR        =ini->ReadFloat  ("opt","maxposvarar", 0.10);
     GloHwBias          =ini->ReadFloat  ("opt","glohwbias",   0.00);
@@ -1292,6 +1433,7 @@ void __fastcall TMainForm::LoadOpt(void)
     MeasErrR1          =ini->ReadFloat  ("opt","measeratio1",300.0);
     MeasErrR2          =ini->ReadFloat  ("opt","measeratio2",300.0);
     MeasErrR5          =ini->ReadFloat  ("opt","measeratio5",300.0);
+    MeasErrR6          =ini->ReadFloat  ("opt","measeratio6",300.0);
     MeasErr2           =ini->ReadFloat  ("opt","measerr2",   0.003);
     MeasErr3           =ini->ReadFloat  ("opt","measerr3",   0.003);
     MeasErr4           =ini->ReadFloat  ("opt","measerr4",   0.000);
@@ -1330,7 +1472,7 @@ void __fastcall TMainForm::LoadOpt(void)
     PPPOpts            =ini->ReadString ("opt","pppopts",       "");
     
     AntPcvFile         =ini->ReadString ("opt","antpcvfile",    "");
-    IntpRefObs         =ini->ReadInteger("opt","intprefobs",     0);
+    IntpRefObs         =ini->ReadInteger("opt","intprefobs",     1);
     SbasSat            =ini->ReadInteger("opt","sbassat",        0);
     NetRSCorr          =ini->ReadInteger("opt","netrscorr",      0);
     SatClkCorr         =ini->ReadInteger("opt","satclkcorr",     0);
@@ -1399,6 +1541,10 @@ void __fastcall TMainForm::DisableHighlight(void)
     ::PostMessage(InputFile4->Handle,CB_SETEDITSEL,-1,0);
     ::PostMessage(InputFile5->Handle,CB_SETEDITSEL,-1,0);
     ::PostMessage(InputFile6->Handle,CB_SETEDITSEL,-1,0);
+    ::PostMessage(InputFile7->Handle,CB_SETEDITSEL,-1,0);
+    ::PostMessage(InputFile8->Handle,CB_SETEDITSEL,-1,0);
+    ::PostMessage(InputFile9->Handle,CB_SETEDITSEL,-1,0);
+    ::PostMessage(InputFile10->Handle,CB_SETEDITSEL,-1,0);
     ::PostMessage(OutputFile->Handle,CB_SETEDITSEL,-1,0);
     ::PostMessage(TimeInt   ->Handle,CB_SETEDITSEL,-1,0);
 }
@@ -1425,6 +1571,10 @@ void __fastcall TMainForm::SaveOpt(void)
     ini->WriteString ("set","inputfile4",  InputFile4->Text);
     ini->WriteString ("set","inputfile5",  InputFile5->Text);
     ini->WriteString ("set","inputfile6",  InputFile6->Text);
+    ini->WriteString ("set","inputfile7",  InputFile7->Text);
+    ini->WriteString ("set","inputfile8",  InputFile8->Text);
+    ini->WriteString ("set","inputfile9",  InputFile9->Text);
+    ini->WriteString ("set","inputfile10", InputFile10->Text);
     ini->WriteInteger("set","outputdirena",OutDirEna ->Checked);
     ini->WriteString ("set","outputdir",   OutDir    ->Text);
     ini->WriteString ("set","outputfile",  OutputFile->Text);
@@ -1435,6 +1585,10 @@ void __fastcall TMainForm::SaveOpt(void)
     WriteList(ini,"hist","inputfile4",     InputFile4->Items);
     WriteList(ini,"hist","inputfile5",     InputFile5->Items);
     WriteList(ini,"hist","inputfile6",     InputFile6->Items);
+    WriteList(ini,"hist","inputfile7",     InputFile7->Items);
+    WriteList(ini,"hist","inputfile8",     InputFile8->Items);
+    WriteList(ini,"hist","inputfile9",     InputFile9->Items);
+    WriteList(ini,"hist","inputfile10",    InputFile10->Items);
     WriteList(ini,"hist","outputfile",     OutputFile->Items);
     
     ini->WriteInteger("opt","posmode",     PosMode     );
@@ -1443,7 +1597,7 @@ void __fastcall TMainForm::SaveOpt(void)
     ini->WriteFloat  ("opt","elmask",      ElMask      );
     ini->WriteInteger("opt","snrmask_ena1",SnrMask.ena[0]);
     ini->WriteInteger("opt","snrmask_ena2",SnrMask.ena[1]);
-    for (int i=0;i<3;i++) for (int j=0;j<9;j++) {
+    for (int i=0;i<NFREQ;i++) for (int j=0;j<9;j++) {
         ini->WriteFloat("opt",s.sprintf("snrmask_%d_%d",i+1,j+1),
                         SnrMask.mask[i][j]);
     }
@@ -1516,6 +1670,7 @@ void __fastcall TMainForm::SaveOpt(void)
     ini->WriteFloat  ("opt","measeratio1", MeasErrR1   );
     ini->WriteFloat  ("opt","measeratio2", MeasErrR2   );
     ini->WriteFloat  ("opt","measeratio5", MeasErrR5   );
+    ini->WriteFloat  ("opt","measeratio6", MeasErrR6   );
     ini->WriteFloat  ("opt","measerr2",    MeasErr2    );
     ini->WriteFloat  ("opt","measerr3",    MeasErr3    );
     ini->WriteFloat  ("opt","measerr4",    MeasErr4    );
@@ -1617,14 +1772,16 @@ void __fastcall TMainForm::Panel4Resize(TObject *Sender)
 {
 	TButton *btns[]={
 		BtnInputFile1,BtnInputFile2,BtnInputFile3,BtnInputFile4,
-		BtnInputFile5,BtnInputFile6
+		BtnInputFile5,BtnInputFile6,BtnInputFile7,BtnInputFile8,
+                BtnInputFile9,BtnInputFile10
 	};
 	TComboBox *boxes[]={
-		InputFile1,InputFile2,InputFile3,InputFile4,InputFile5,InputFile6
+		InputFile1,InputFile2,InputFile3,InputFile4,InputFile5,
+                InputFile6,InputFile7,InputFile8,InputFile9,InputFile10
 	};
 	int w=Panel4->Width;
 	
-	for (int i=0;i<6;i++) {
+	for (int i=0;i<10;i++) {
 		btns[i]->Left=w-btns[i]->Width-5;
 		boxes[i]->Width=w-btns[i]->Width-boxes[i]->Left-6;
 	}
@@ -1632,7 +1789,11 @@ void __fastcall TMainForm::Panel4Resize(TObject *Sender)
 	BtnInputPlot1->Left=BtnInputView1->Left-BtnInputPlot1->Width;
 	BtnInputView2->Left=InputFile2->Left+InputFile2->Width-BtnInputView2->Width;
 	BtnInputPlot2->Left=BtnInputView2->Left-BtnInputPlot2->Width;
-	BtnInputView6->Left=InputFile3->Left+InputFile3->Width-BtnInputView6->Width;
+	BtnInputView10->Left=InputFile3->Left+InputFile3->Width-BtnInputView10->Width;
+	BtnInputView9->Left=BtnInputView10->Left-BtnInputView9->Width;
+	BtnInputView8->Left=BtnInputView9->Left-BtnInputView8->Width;
+	BtnInputView7->Left=BtnInputView8->Left-BtnInputView7->Width;
+	BtnInputView6->Left=BtnInputView7->Left-BtnInputView6->Width;
 	BtnInputView5->Left=BtnInputView6->Left-BtnInputView5->Width;
 	BtnInputView4->Left=BtnInputView5->Left-BtnInputView4->Width;
 	BtnInputView3->Left=BtnInputView4->Left-BtnInputView3->Width;

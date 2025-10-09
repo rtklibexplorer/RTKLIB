@@ -24,7 +24,9 @@
 //                           fix bug on unable deselecting antenna PCV
 //                           fix bug on unable saving TGD2 of ephemeris
 //---------------------------------------------------------------------------
+// clang-format off
 #include <vcl.h>
+// clang-format on
 #include <inifiles.hpp>
 #include <mmsystem.h>
 #include <stdio.h>
@@ -73,7 +75,7 @@ TMainForm *MainForm;
 #define TIMEOUT     10000               // inactive timeout time (ms)
 #define DEFAULTPORT 52001               // default monitor port number
 #define MAXPORTOFF  9                   // max port number offset
-#define MAXTRKSCALE 23                  // track scale
+#define MAXTRKSCALE 26                  // track scale
 #define SPLITTER_WIDTH 6                // splitter width
 #define MAXPANELMODE 7                  // max panel mode
 
@@ -121,6 +123,9 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
     for (int i=0;i<8;i++) {
         StreamC[i]=Stream[i]=Format[i]=CmdEna[i][0]=CmdEna[i][1]=CmdEna[i][2]=0;
     }
+    for (int i=0;i<3;i++) {
+        CmdEna[i][0]=CmdEna[i][1]=CmdEna[i][2]=0;
+    }
     TimeSys=SolType=PlotType1=PlotType2=FreqType1=FreqType2=0;
     TrkType1=TrkType2=0;
     TrkScale1=TrkScale2=5;
@@ -146,7 +151,7 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
     strinit(&monistr);
     
     Caption=PRGNAME;
-    Caption=Caption+" ver."+VER_RTKLIB+" "+PATCH_LEVEL;
+    Caption=Caption+"-"+VER_RTKLIB+" "+PATCH_LEVEL;
     DoubleBuffered=true;
     
     PanelStack=PanelMode=0;
@@ -493,8 +498,6 @@ void __fastcall TMainForm::BtnOptClick(TObject *Sender)
     
     OptDialog->PrcOpt     =PrcOpt;
     OptDialog->SolOpt     =SolOpt;
-    OptDialog->DebugStatusF=DebugStatusF;
-    OptDialog->DebugTraceF=DebugTraceF;
     OptDialog->BaselineC  =BaselineC;
     OptDialog->Baseline[0]=Baseline[0];
     OptDialog->Baseline[1]=Baseline[1];
@@ -543,8 +546,6 @@ void __fastcall TMainForm::BtnOptClick(TObject *Sender)
     
     PrcOpt     =OptDialog->PrcOpt;
     SolOpt     =OptDialog->SolOpt;
-    DebugStatusF=OptDialog->DebugStatusF;
-    DebugTraceF=OptDialog->DebugTraceF;
     BaselineC  =OptDialog->BaselineC;
     Baseline[0]=OptDialog->Baseline[0];
     Baseline[1]=OptDialog->Baseline[1];
@@ -1127,16 +1128,16 @@ void __fastcall TMainForm::SvrStart(void)
     char file[1024],*type,errmsg[20148];
     FILE *fp;
     gtime_t time=timeget();
-    pcvs_t pcvr={0},pcvs={0};
-    pcv_t *pcv,pcv0={0};
+    pcvs_t pcvs={0};
+    pcv_t pcv0={0};
     
     trace(3,"SvrStart\n");
     
     Message->Caption=""; Message->Hint="";
     
-    if (DebugTraceF>0) {
+    if (SolOpt.trace>0) {
         traceopen(TRACEFILE);
-        tracelevel(DebugTraceF);
+        tracelevel(SolOpt.trace);
     }
     if (RovPosTypeF<=2) { // LLH,XYZ
         PrcOpt.rovpos = RovPosTypeF < 2 ? POSOPT_POS_LLH : POSOPT_POS_XYZ;
@@ -1173,49 +1174,56 @@ void __fastcall TMainForm::SvrStart(void)
             PrcOpt.exsats[sat-1]=ex;
         }
     }
-    if ((RovAntPcvF||RefAntPcvF)&&!readpcv(AntPcvFileF.c_str(),&pcvr)) {
+    if ((RovAntPcvF||RefAntPcvF)&&AntPcvFileF!=""&&!readpcv(AntPcvFileF.c_str(),&rtksvr.pcvsr)) {
+        if (SolOpt.trace>0) traceclose();
         Message->Caption=s.sprintf("rcv ant file read error %s",AntPcvFileF.c_str());
         Message->Hint=Message->Caption;
         return;
     }
     PrcOpt.pcvr[0]=PrcOpt.pcvr[1]=pcv0; // initialize antenna PCV
 
-    if (RovAntPcvF) {
+    for (i=0;i<3;i++) PrcOpt.antdel[0][i]=RovAntDel[i];
+    if (RovAntPcvF) strcpy(PrcOpt.anttype[0], RovAntF.c_str());
+    if (RovAntPcvF && RovAntF != "" && RovAntF != "*") {
         type=RovAntF.c_str();
-        if ((pcv=searchpcv(0,type,time,&pcvr))) {
+        pcv_t *pcv=searchpcv(0,type,time,&rtksvr.pcvsr);
+        if (pcv) {
             PrcOpt.pcvr[0]=*pcv;
         }
         else {
             Message->Caption=s.sprintf("no antenna pcv %s",type);
             Message->Hint=Message->Caption;
         }
-        for (i=0;i<3;i++) PrcOpt.antdel[0][i]=RovAntDel[i];
     }
-    if (RefAntPcvF) {
+
+    for (i=0;i<3;i++) PrcOpt.antdel[1][i]=RefAntDel[i];
+    if (RefAntPcvF) strcpy(PrcOpt.anttype[1], RefAntF.c_str());
+    if (RefAntPcvF && RefAntF != "" && RefAntF != "*") {
         type=RefAntF.c_str();
-        if ((pcv=searchpcv(0,type,time,&pcvr))) {
+        pcv_t *pcv=searchpcv(0,type,time,&rtksvr.pcvsr);
+        if (pcv) {
             PrcOpt.pcvr[1]=*pcv;
         }
         else {
             Message->Caption=s.sprintf("no antenna pcv %s",type);
             Message->Hint=Message->Caption;
         }
-        for (i=0;i<3;i++) PrcOpt.antdel[1][i]=RefAntDel[i];
     }
-    if (RovAntPcvF||RefAntPcvF) {
-        free(pcvr.pcv);
-    }
-    if (PrcOpt.sateph==EPHOPT_PREC||PrcOpt.sateph==EPHOPT_SSRCOM) {
-        if (!readpcv(SatPcvFileF.c_str(),&pcvs)) {
+
+    if (PrcOpt.sateph==EPHOPT_PREC||PrcOpt.sateph==EPHOPT_SSRCOM||PrcOpt.mode>=PMODE_PPP_KINEMA) {
+        if (SatPcvFileF!=""&&!readpcv(SatPcvFileF.c_str(),&pcvs)) {
+            if (SolOpt.trace>0) traceclose();
+            free_pcvs(&rtksvr.pcvsr);
             Message->Caption=s.sprintf("sat ant file read error %s",SatPcvFileF.c_str());
             Message->Hint=Message->Caption;
             return;
         }
         for (i=0;i<MAXSAT;i++) {
-            if (!(pcv=searchpcv(i+1,"",time,&pcvs))) continue;
+            pcv_t *pcv=searchpcv(i+1,"",time,&pcvs);
+            if (!pcv) continue;
             rtksvr.nav.pcvs[i]=*pcv;
         }
-        free(pcvs.pcv);
+        free_pcvs(&pcvs);
     }
     if (BaselineC) {
         PrcOpt.baseline[0]=Baseline[0];
@@ -1257,10 +1265,14 @@ void __fastcall TMainForm::SvrStart(void)
     strsetproxy(ProxyAddr.c_str());
     
     for (i=3;i<8;i++) {
-        if (strs[i]==STR_FILE&&!ConfOverwrite(paths[i])) return;
+      if (strs[i]==STR_FILE&&!ConfOverwrite(paths[i])) {
+        if (SolOpt.trace>0) traceclose();
+        free_pcvs(&rtksvr.pcvsr);
+        return;
+      }
     }
-    if (DebugStatusF>0) {
-        rtkopenstat(STATFILE,DebugStatusF);
+    if (SolOpt.sstat>0) {
+        rtkopenstat(STATFILE,SolOpt.sstat);
     }
     if (SolOpt.geoid>0&&GeoidDataFileF!="") {
         opengeoid(SolOpt.geoid,GeoidDataFileF.c_str());
@@ -1287,7 +1299,8 @@ void __fastcall TMainForm::SvrStart(void)
                      (const char **)rcvopts,NmeaCycle,NmeaReq,nmeapos,&PrcOpt,
                      solopt,&monistr,errmsg)) {
         trace(2,"rtksvrstart error %s\n",errmsg);
-        traceclose();
+        if (SolOpt.trace>0) traceclose();
+        free_pcvs(&rtksvr.pcvsr);
         return;
     }
     PSol=PSolS=PSolE=0;
@@ -1299,6 +1312,7 @@ void __fastcall TMainForm::SvrStart(void)
     UpdatePos();
     UpdatePlot();
     BtnStart    ->Visible=false;
+    BtnStart    ->Enabled=false;
     BtnOpt      ->Enabled=false;
     BtnExit     ->Enabled=false;
     BtnInputStr ->Enabled=false;
@@ -1330,7 +1344,10 @@ void __fastcall TMainForm::SvrStop(void)
     }
     rtksvrstop(&rtksvr,(const char **)cmds);
     
+    free_pcvs(&rtksvr.pcvsr);
+
     BtnStart    ->Visible=true;
+    BtnStart    ->Enabled=true;
     BtnOpt      ->Enabled=true;
     BtnExit     ->Enabled=true;
     BtnInputStr ->Enabled=true;
@@ -1351,8 +1368,8 @@ void __fastcall TMainForm::SvrStop(void)
     }
     Message->Caption=""; Message->Hint="";
     
-    if (DebugTraceF>0) traceclose();
-    if (DebugStatusF>0) rtkclosestat();
+    if (SolOpt.trace>0) traceclose();
+    if (SolOpt.sstat>0) rtkclosestat();
     if (OutputGeoidF>0&&GeoidDataFileF!="") closegeoid();
 }
 // callback on interval timer -----------------------------------------------
@@ -2015,7 +2032,7 @@ void __fastcall TMainForm::DrawTrk(TImage *plot)
     TPoint p1,p2;
     UTF8String label;
     double scale[]={
-        0.00021,0.00047,0.001,0.0021,0.0047,0.01,0.021,0.047,0.1,0.21,0.47,
+        0.000021,0.000047,0.0001,0.00021,0.00047,0.001,0.0021,0.0047,0.01,0.021,0.047,0.1,0.21,0.47,
         1.0,2.1,4.7,10.0,21.0,47.0,100.0,210.0,470.0,1000.0,2100.0,4700.0,
         10000.0
     };
@@ -2182,7 +2199,7 @@ void __fastcall TMainForm::OpenMoniPort(int port)
         
         if (stropen(&monistr,STR_TCPSVR,STR_MODE_RW,path)) {
             strsettimeout(&monistr,TimeoutTime,ReconTime);
-            if (i>0) Caption=s.sprintf("%s ver.%s %s (%d)",PRGNAME,VER_RTKLIB,PATCH_LEVEL,i+1);
+            if (i>0) Caption=s.sprintf("%s-%s %s (%d)",PRGNAME,VER_RTKLIB,PATCH_LEVEL,i+1);
             OpenPort=port+i;
             return;
         }
@@ -2249,9 +2266,8 @@ void __fastcall TMainForm::SaveLog(void)
     opt=SolOpt;
     opt.posf=posf[SolType];
     if (SolOpt.outhead) {
-        fprintf(fp,"%% program   : %s ver.%s %s\n",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
-        if (PrcOpt.mode==PMODE_DGPS||PrcOpt.mode==PMODE_KINEMA||
-            PrcOpt.mode==PMODE_STATIC) {
+        fprintf(fp,"%% program   : %s-%s %s\n",PRGNAME,VER_RTKLIB,PATCH_LEVEL);
+        if (PrcOpt.mode>=PMODE_DGPS && PrcOpt.mode<=PMODE_FIXED) {
             ecef2pos(PrcOpt.rb,pos);
             fprintf(fp,"%% ref pos   :%13.9f %14.9f %10.4f\n",pos[0]*R2D,
                     pos[1]*R2D,pos[2]);
@@ -2443,19 +2459,19 @@ void __fastcall TMainForm::LoadOpt(void)
         }
     }
     PrcOpt.mode     =ini->ReadInteger("prcopt", "mode",            2);
-    PrcOpt.nf       =ini->ReadInteger("prcopt", "nf",              2);
+    PrcOpt.nf       =ini->ReadInteger("prcopt", "nf",          NFREQ);
     PrcOpt.elmin    =ini->ReadFloat  ("prcopt", "elmin",    15.0*D2R);
     PrcOpt.snrmask.ena[0]=ini->ReadInteger("prcopt","snrmask_ena1",0);
     PrcOpt.snrmask.ena[1]=ini->ReadInteger("prcopt","snrmask_ena2",0);
     for (i=0;i<NFREQ;i++) for (j=0;j<9;j++) {
         PrcOpt.snrmask.mask[i][j]=
-            ini->ReadFloat("prcopt",s.sprintf("snrmask_%d_%d",i+1,j+1),0.0);
+            ini->ReadFloat("prcopt",s.sprintf("snrmask_%d_%d",i+1,j+1),35.0);
     }
     PrcOpt.dynamics =ini->ReadInteger("prcopt", "dynamics",        1);
     PrcOpt.tidecorr =ini->ReadInteger("prcopt", "tidecorr",        0);
-    PrcOpt.modear   =ini->ReadInteger("prcopt", "modear",          3);
-    PrcOpt.glomodear=ini->ReadInteger("prcopt", "glomodear",       3);
-    PrcOpt.bdsmodear=ini->ReadInteger("prcopt", "bdsmodear",       0);
+    PrcOpt.modear   =ini->ReadInteger("prcopt", "modear",          1);
+    PrcOpt.glomodear=ini->ReadInteger("prcopt", "glomodear",       0);
+    PrcOpt.bdsmodear=ini->ReadInteger("prcopt", "bdsmodear",       1);
     PrcOpt.maxout   =ini->ReadInteger("prcopt", "maxout",         20);
     PrcOpt.minlock  =ini->ReadInteger("prcopt", "minlock",         0);
     PrcOpt.minfix   =ini->ReadInteger("prcopt", "minfix",         20);
@@ -2469,6 +2485,8 @@ void __fastcall TMainForm::LoadOpt(void)
     PrcOpt.niter    =ini->ReadInteger("prcopt", "niter",           1);
     PrcOpt.eratio[0]=ini->ReadFloat  ("prcopt", "eratio0",     300.0);
     PrcOpt.eratio[1]=ini->ReadFloat  ("prcopt", "eratio1",     300.0);
+    PrcOpt.eratio[2]=ini->ReadFloat  ("prcopt", "eratio2",     300.0);
+    PrcOpt.eratio[3]=ini->ReadFloat  ("prcopt", "eratio3",     300.0);
     PrcOpt.err[1]   =ini->ReadFloat  ("prcopt", "err1",        0.003);
     PrcOpt.err[2]   =ini->ReadFloat  ("prcopt", "err2",        0.003);
     PrcOpt.err[3]   =ini->ReadFloat  ("prcopt", "err3",          0.0);
@@ -2501,7 +2519,7 @@ void __fastcall TMainForm::LoadOpt(void)
     PrcOpt.syncsol  =ini->ReadInteger("prcopt", "syncsol",          0);
     PrcOpt.arfilter =ini->ReadInteger("prcopt", "arfilter",         1);
     ExSats          =ini->ReadString ("prcopt", "exsats",          "");
-    PrcOpt.navsys   =ini->ReadInteger("prcopt", "navsys",SYS_GPS|SYS_GLO);
+    PrcOpt.navsys   =ini->ReadInteger("prcopt", "navsys",SYS_GPS|SYS_GLO|SYS_GAL|SYS_QZS|SYS_CMP);
     PrcOpt.posopt[0]=ini->ReadInteger("prcopt", "posopt1",         0);
     PrcOpt.posopt[1]=ini->ReadInteger("prcopt", "posopt2",         0);
     PrcOpt.posopt[2]=ini->ReadInteger("prcopt", "posopt3",         0);
@@ -2532,8 +2550,8 @@ void __fastcall TMainForm::LoadOpt(void)
     SolOpt.geoid    =ini->ReadInteger("solopt", "geoid",           0);
     SolOpt.nmeaintv[0]=ini->ReadFloat("solopt", "nmeaintv1",     0.0);
     SolOpt.nmeaintv[1]=ini->ReadFloat("solopt", "nmeaintv2",     0.0);
-    DebugStatusF    =ini->ReadInteger("setting","debugstatus",     2);
-    DebugTraceF     =ini->ReadInteger("setting","debugtrace",      0);
+    SolOpt.sstat    =ini->ReadInteger("setting","debugstatus",     2);
+    SolOpt.trace    =ini->ReadInteger("setting","debugtrace",      0);
 
     RovPosTypeF     =ini->ReadInteger("setting","rovpostype",      0);
     RefPosTypeF     =ini->ReadInteger("setting","refpostype",      5);
@@ -2733,6 +2751,8 @@ void __fastcall TMainForm::SaveOpt(void)
     ini->WriteInteger("prcopt", "niter",      PrcOpt.niter       );
     ini->WriteFloat  ("prcopt", "eratio0",    PrcOpt.eratio[0]   );
     ini->WriteFloat  ("prcopt", "eratio1",    PrcOpt.eratio[1]   );
+    ini->WriteFloat  ("prcopt", "eratio2",    PrcOpt.eratio[2]   );
+    ini->WriteFloat  ("prcopt", "eratio3",    PrcOpt.eratio[3]   );
     ini->WriteFloat  ("prcopt", "err1",       PrcOpt.err[1]      );
     ini->WriteFloat  ("prcopt", "err2",       PrcOpt.err[2]      );
     ini->WriteFloat  ("prcopt", "err3",       PrcOpt.err[3]      );
@@ -2792,8 +2812,8 @@ void __fastcall TMainForm::SaveOpt(void)
     ini->WriteInteger("solopt", "geoid",      SolOpt.geoid       );
     ini->WriteFloat  ("solopt", "nmeaintv1",  SolOpt.nmeaintv[0] );
     ini->WriteFloat  ("solopt", "nmeaintv2",  SolOpt.nmeaintv[1] );
-    ini->WriteInteger("setting","debugstatus",DebugStatusF       );
-    ini->WriteInteger("setting","debugtrace", DebugTraceF        );
+    ini->WriteInteger("setting","debugstatus",SolOpt.sstat       );
+    ini->WriteInteger("setting","debugtrace", SolOpt.trace       );
     
     ini->WriteInteger("setting","rovpostype", RovPosTypeF        );
     ini->WriteInteger("setting","refpostype", RefPosTypeF        );

@@ -37,13 +37,11 @@ ConvDialog::ConvDialog(QWidget *parent)
 
     viewer = new TextViewer(this);
 
-    QCompleter *fileCompleter = new QCompleter(this);
-    QFileSystemModel *fileModel = new QFileSystemModel(fileCompleter);
+    QFileSystemModel *fileModel = new QFileSystemModel(this);
     fileModel->setRootPath("");
-    fileCompleter->setModel(fileModel);
-    ui->lEInputFile->setCompleter(fileCompleter);
-    ui->lEOutputFile->setCompleter(fileCompleter);
-    ui->lEGoogleEarthFile->setCompleter(fileCompleter);
+    ui->lEInputFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lEGoogleEarthFile->setCompleter(new QCompleter(fileModel, this));
 
     // Google Earth file line edit actions
     QAction *acGoogleEarthFileSelect = ui->lEGoogleEarthFile->addAction(QIcon(":/buttons/folder"), QLineEdit::TrailingPosition);

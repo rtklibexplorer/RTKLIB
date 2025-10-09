@@ -281,8 +281,8 @@ static void gen_obs_gps(rtcm_t *rtcm, const obsd_t *data, int *code1, int *pr1,
     
     if (lock1) *lock1=to_lock(lt1);
     if (lock2) *lock2=to_lock(lt2);
-    if (cnr1 ) *cnr1=ROUND(data->SNR[0]*SNR_UNIT/0.25);
-    if (cnr2 ) *cnr2=ROUND(data->SNR[1]*SNR_UNIT/0.25);
+    if (cnr1 ) *cnr1=ROUND(data->SNR[0]/0.25);
+    if (cnr2 ) *cnr2=ROUND(data->SNR[1]/0.25);
     if (code1) *code1=to_code1_gps(data->code[0]);
     if (code2) *code2=to_code2_gps(data->code[1]);
 }
@@ -330,8 +330,8 @@ static void gen_obs_glo(rtcm_t *rtcm, const obsd_t *data, int fcn, int *code1,
     
     if (lock1) *lock1=to_lock(lt1);
     if (lock2) *lock2=to_lock(lt2);
-    if (cnr1 ) *cnr1=ROUND(data->SNR[0]*SNR_UNIT/0.25);
-    if (cnr2 ) *cnr2=ROUND(data->SNR[1]*SNR_UNIT/0.25);
+    if (cnr1 ) *cnr1=ROUND(data->SNR[0]/0.25);
+    if (cnr2 ) *cnr2=ROUND(data->SNR[1]/0.25);
     if (code1) *code1=to_code1_glo(data->code[0]);
     if (code2) *code2=to_code2_glo(data->code[1]);
 }
@@ -1974,6 +1974,7 @@ static void gen_msm_index(const rtcm_t *rtcm, int sys, int *nsat, int *nsig,
 static void gen_msm_sat(rtcm_t *rtcm, int sys, int nsat, const uint8_t *sat_ind,
                         double *rrng, double *rrate, uint8_t *info)
 {
+    (void)nsat;
     obsd_t *data;
     double freq;
     int i,j,k,sat,sig,fcn;
@@ -2010,6 +2011,7 @@ static void gen_msm_sig(rtcm_t *rtcm, int sys, int nsat, int nsig, int ncell,
                         const double *rrate, double *psrng, double *phrng,
                         double *rate, double *lock, uint8_t *half, float *cnr)
 {
+    (void)nsat;
     obsd_t *data;
     double freq,lambda,psrng_s,phrng_s,rate_s,lt;
     int i,j,k,sat,sig,fcn,cell,LLI;
@@ -2052,7 +2054,7 @@ static void gen_msm_sig(rtcm_t *rtcm, int sys, int nsat, int nsig, int ncell,
             if (rate &&rate_s !=0.0) rate [cell-1]=rate_s;
             if (lock) lock[cell-1]=lt;
             if (half) half[cell-1]=(data->LLI[j]&2)?1:0;
-            if (cnr ) cnr [cell-1]=(float)(data->SNR[j]*SNR_UNIT);
+            if (cnr ) cnr [cell-1]=data->SNR[j];
         }
     }
 }
@@ -2588,6 +2590,8 @@ static int encode_type1230(rtcm_t *rtcm, int sync)
 /* encode type 4073: proprietary message Mitsubishi Electric -----------------*/
 static int encode_type4073(rtcm_t *rtcm, int subtype, int sync)
 {
+    (void)rtcm;
+    (void)sync;
     trace(2,"rtcm3 4073: unsupported message subtype=%d\n",subtype);
     return 0;
 }

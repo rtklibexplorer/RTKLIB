@@ -726,10 +726,12 @@ object PlotOptDialog: TPlotOptDialog
       TabOrder = 20
       Text = '1m'
       Items.Strings = (
+        '1cm'
+        '2cm'
         '5cm'
         '10cm'
         '20cm'
-        '5cm'
+        '50cm'
         '1m'
         '2m'
         '5m'
@@ -996,6 +998,7 @@ object PlotOptDialog: TPlotOptDialog
       Items.Strings = (
         '10'
         '30'
+        '40'
         '50'
         '80'
         '100')

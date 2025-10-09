@@ -263,14 +263,14 @@ public:
 	prcopt_t PrcOpt;
 	solopt_t SolOpt;
 	TFont *PanelFont,*PosFont;
-	int DebugTraceF,DebugStatusF,OutputGeoidF,BaselineC;
+	int OutputGeoidF,BaselineC;
 	int RovPosTypeF,RefPosTypeF,RovAntPcvF,RefAntPcvF;
 	AnsiString RovAntF,RefAntF,SatPcvFileF,AntPcvFileF;
 	double RovAntDel[3],RefAntDel[3],RovPos[3],RefPos[3],NmeaPos[3];
 	double Baseline[2];
 	AnsiString History[10],MntpHist[10];
 	
-	AnsiString GeoidDataFileF,StaPosFileF,DCBFileF,EOPFileF;
+        AnsiString GeoidDataFileF,StaPosFileF,DCBFileF,EOPFileF,BLQFileF;
 	AnsiString LocalDirectory,PntName[MAXMAPPNT];
 	double PntPos[MAXMAPPNT][3];
 	int NMapPnt;

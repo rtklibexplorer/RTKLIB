@@ -1714,6 +1714,8 @@ object Plot: TPlot
     BorderStyle = bsNone
     ItemHeight = 13
     Items.Strings = (
+      '1cm'
+      '2cm'
       '5cm'
       '10cm'
       '20cm'

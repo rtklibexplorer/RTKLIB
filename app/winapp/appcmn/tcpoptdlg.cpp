@@ -35,7 +35,6 @@ void __fastcall TTcpOptDialog::FormShow(TObject *Sender)
 					  "NTRIP Caster Options",
 					  "NTRIP Caster Server Options", "UDP Server Options",
 					  "UDP Client Options"};
-	int i;
 
 	strcpy(buff,Path.c_str());
 	

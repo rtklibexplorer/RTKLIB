@@ -54,7 +54,9 @@ void __fastcall TPlot::UpdateDisp(void)
             case  PLOT_NSAT: DrawNsat(level);   break;
             case  PLOT_OBS : DrawObs (level);   break;
             case  PLOT_SKY : DrawSky (level);   break;
+            case  PLOT_SSKY : DrawSolSky (level);   break;
             case  PLOT_DOP : DrawDop (level);   break;
+            case  PLOT_SDOP : DrawSolDop (level);   break;
             case  PLOT_RES : DrawRes (level);   break;
             case  PLOT_RESE: DrawResE(level);   break;
             case  PLOT_SNR : DrawSnr (level);   break;
@@ -1349,7 +1351,7 @@ void __fastcall TPlot::DrawSky(int level)
                 ustr+=" ";
                 for (j=0;j<NFREQ;j++) {
                     if (obs->P[j]==0.0&&obs->L[j]==0.0) ustr+="-- ";
-                    else ustr+=ss.sprintf("%02.0f ",obs->SNR[j]*SNR_UNIT);
+                    else ustr+=ss.sprintf("%02.0f ",obs->SNR[j]);
                 }
                 for (j=0;j<NFREQ;j++) {
                     if (obs->L[j]==0.0) ustr+="-";
@@ -1363,7 +1365,7 @@ void __fastcall TPlot::DrawSky(int level)
                               obs->P[freq-1]==0.0?"-":"C",obs->L[freq-1]==0.0?"-":"L",
                               obs->D[freq-1]==0.0?"-":"D");
                 if (obs->P[freq-1]==0.0&&obs->L[freq-1]==0.0) ustr+="---- ";
-                else ustr+=ss.sprintf("%4.1f ",obs->SNR[freq-1]*SNR_UNIT);
+                else ustr+=ss.sprintf("%4.1f ",obs->SNR[freq-1]);
                 if (obs->L[freq-1]==0.0) ustr+=" -";
                 else ustr+=ss.sprintf("%2d",obs->LLI[freq-1]);
             }
@@ -1376,7 +1378,7 @@ void __fastcall TPlot::DrawSky(int level)
                                  obs->P[j]==0.0?"-":"C",obs->L[j]==0.0?"-":"L",
                                  obs->D[j]==0.0?"-":"D");
                 if (obs->P[j]==0.0&&obs->L[j]==0.0) ustr+="---- ";
-                else ustr+=ss.sprintf("%4.1f ",obs->SNR[j]*SNR_UNIT);
+                else ustr+=ss.sprintf("%4.1f ",obs->SNR[j]);
                 if (obs->L[j]==0.0) ustr+=" -";
                 else ustr+=ss.sprintf("%2d",obs->LLI[j]);
             }
@@ -1391,6 +1393,155 @@ void __fastcall TPlot::DrawSky(int level)
         p2.y-=3;
         DrawLabel(GraphS,p2,"No Navigation Data",2,1);
     }
+}
+// Draw sky-plot ------------------------------------------------------------
+void __fastcall TPlot::DrawSolSky(int level) {
+  trace(3, "DrawSolSky: level=%d\n", level);
+
+  int sel = !BtnSol1->Down && BtnSol2->Down ? 1 : 0, ind = SolIndex[sel];
+  int frq = FrqType->ItemIndex + 1, sn = SolStat[sel].n;
+
+  double xl[2], yl[2];
+  GraphS->GetLim(xl, yl);
+  double r = (xl[1] - xl[0] < yl[1] - yl[0] ? xl[1] - xl[0] : yl[1] - yl[0]) * 0.45;
+
+  if (BtnShowImg->Down) DrawSkyImage(level);
+
+  if (BtnShowSkyplot->Down) GraphS->DrawSkyPlot(0.0, 0.0, CColor[1], CColor[2], CColor[0], r * 2.0);
+
+  if (!BtnSol1->Down && !BtnSol2->Down) return;
+
+  double xs, ys;
+  GraphS->GetScale(xs, ys);
+
+  double p0[MAXSAT][2] = {{0}};
+  if (PlotStyle <= 2) {
+    double p[MAXSAT][2]={{0}};
+    for (int i = 0; i < sn; i++) {
+      solstat_t *solstat = SolStat[sel].data + i;
+      if (SatMask[solstat->sat - 1] || !SatSel[solstat->sat - 1]) continue;
+      if (solstat->frq != frq || solstat->el <= 0.0) continue;
+
+      TColor col = SnrColor(solstat->snr);
+      // Include satellites with invalid data but note this in the color.
+      if ((solstat->flag & 0x20) == 0) col = MColor[0][7];
+      double azel[2];
+      azel[0] = solstat->az;
+      azel[1] = solstat->el;
+      if (solstat->el < ElMask * D2R ||
+          (ElMaskP && solstat->el < ElMaskData[(int)(solstat->az * R2D + 0.5)])) {
+        if (HideLowSat) continue;
+        col = MColor[0][0];
+      }
+
+      double x = r * sin(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double y = r * cos(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double xp = p[solstat->sat - 1][0];
+      double yp = p[solstat->sat - 1][1];
+
+      if ((x - xp) * (x - xp) + (y - yp) * (y - yp) >= xs * xs) {
+        int siz = PlotStyle < 2 ? MarkSize : 1;
+        if (PlotStyle >= 2) col = CColor[3];
+        GraphS->DrawMark(x, y, 0, col, siz, 0);
+        p[solstat->sat - 1][0] = x;
+        p[solstat->sat - 1][1] = y;
+      }
+      if (xp == 0.0 && yp == 0.0) {
+        // Save first point.
+        p0[solstat->sat - 1][0] = x;
+        p0[solstat->sat - 1][1] = y;
+      }
+    }
+  }
+  if ((PlotStyle == 0 || PlotStyle == 2) && !BtnShowTrack->Down) {
+    // Plot style with lines.
+    for (int i = 0; i < MAXSAT; i++) {
+      if (p0[i][0] != 0.0 || p0[i][1] != 0.0) {
+        TPoint pnt;
+        if (GraphS->ToPoint(p0[i][0], p0[i][1], pnt)) {
+          char id[8];
+          satno2id(i + 1, id);
+          UTF8String ustr = id;
+          DrawLabel(GraphS, pnt, ustr, 1, 0);
+        }
+      }
+    }
+  }
+  if (!level) return;
+
+  if (ShowSlip && PlotStyle <= 2) {
+    // Plot style not "none".
+    gtime_t t[MAXSAT] = {{0}};
+    double p[MAXSAT][2] = {{0}};
+
+    for (int i = 0; i < sn; i++) {
+      solstat_t *solstat = SolStat[sel].data + i;
+      if (SatMask[solstat->sat - 1] || !SatSel[solstat->sat - 1]) continue;
+      if (solstat->frq != frq || solstat->el <= 0.0) continue;
+
+      int slip = (solstat->flag >> 3) & 3;
+      if (slip == 0) continue;
+      double x = r * sin(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double y = r * cos(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double dt = timediff(solstat->time, t[solstat->sat - 1]);
+      double dx = x - p[solstat->sat - 1][0];
+      double dy = y - p[solstat->sat - 1][1];
+      t[solstat->sat - 1] = solstat->time;
+      p[solstat->sat - 1][0] = x;
+      p[solstat->sat - 1][1] = y;
+      if (fabs(dt) > 300.0) continue;
+      GraphS->DrawMark(x, y, 4, MColor[0][5], MarkSize * 3 + 2, ATAN2(dy, dx) * R2D + 90);
+    }
+  }
+  // Draw elevation mask.
+  if (ElMaskP) {
+    double *x = new double[361];
+    double *y = new double[361];
+    for (int i = 0; i <= 360; i++) {
+      x[i] = r * sin(i * D2R) * (1.0 - 2.0 * ElMaskData[i] / PI);
+      y[i] = r * cos(i * D2R) * (1.0 - 2.0 * ElMaskData[i] / PI);
+    }
+    Disp->Canvas->Pen->Width = 2;
+    GraphS->DrawPoly(x, y, 361, COL_ELMASK, 0);
+    Disp->Canvas->Pen->Width = 1;
+    delete[] x;
+    delete[] y;
+  }
+  // Draw current solution.
+  if (BtnShowTrack->Down && 0 <= ind && ind < SolData[sel].n) {
+    gtime_t t = SolData[sel].data[ind].time;
+
+    for (int i = 0; i < sn; i++) {
+      solstat_t *solstat = SolStat[sel].data + i;
+      if (timediff(solstat->time, t) < -DTTOL) continue;
+      if (timediff(solstat->time, t) > DTTOL) break;
+      if (SatMask[solstat->sat - 1] || !SatSel[solstat->sat - 1]) continue;
+      if (solstat->frq != frq || solstat->el <= 0.0) continue;
+
+      TColor col = SnrColor(solstat->snr);
+      // Include satellites with invalid data but note this in the color.
+      if ((solstat->flag & 0x20) == 0) col = MColor[0][7];
+      double azel[2];
+      azel[0] = solstat->az;
+      azel[1] = solstat->el;
+      if (solstat->el < ElMask * D2R ||
+          (ElMaskP && solstat->el < ElMaskData[(int)(solstat->az * R2D + 0.5)])) {
+        if (HideLowSat) continue;
+        col = MColor[0][0];
+      }
+
+      double x = r * sin(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+      double y = r * cos(solstat->az) * (1.0 - 2.0 * solstat->el / PI);
+
+      char id[8];
+      satno2id(solstat->sat, id);
+      UTF8String ustr = id;
+      GraphS->DrawMark(x, y, 0, col, Disp->Font->Size * 2 + 5, 0);
+      GraphS->DrawMark(x, y, 1, col == clBlack ? MColor[0][0] : CColor[2], Disp->Font->Size * 2 + 5,
+                       0);
+      GraphS->DrawText(x, y, ustr, CColor[0], 0, 0, 0);
+    }
+  }
 }
 // draw DOP and number-of-satellite plot ------------------------------------
 void __fastcall TPlot::DrawDop(int level)
@@ -1527,6 +1678,163 @@ void __fastcall TPlot::DrawDop(int level)
     delete [] dop;
     delete [] ns;
 }
+// Draw DOP and number-of-satellite plot ------------------------------------
+void __fastcall TPlot::DrawSolDop(int level) {
+  trace(3, "DrawSolDop: level=%d\n", level);
+
+  int sel = !BtnSol1->Down && BtnSol2->Down ? 1 : 0, ind = SolIndex[sel];
+  int sn = SolStat[sel].n;
+
+  GraphR->XLPos = TimeLabel ? 6 : 1;
+  GraphR->YLPos = 1;
+  GraphR->Week = Week;
+
+  // Adjust plot limits.
+  double xl[2], yl[2];
+  GraphR->GetLim(xl, yl);
+  yl[0] = 0.0;
+  yl[1] = MaxDop;
+  GraphR->SetLim(xl, yl);
+  GraphR->SetTick(0.0, 0.0);
+
+  // Update plot center to current position.
+  if (0 <= ind && ind < SolData[sel].n && BtnShowTrack->Down && BtnFixHoriz->Down) {
+    double xl[2], yl[2], off;
+    GraphR->GetLim(xl, yl);
+    off = Xcent * (xl[1] - xl[0]) / 2.0;
+    gtime_t t = SolData[sel].data[ind].time;
+    double xp = TimePos(t);
+    double xc, yc;
+    GraphR->GetCent(xc, yc);
+    GraphR->SetCent(xp - off, yc);
+  }
+  GraphR->DrawAxis(1, 1);
+
+  // Draw title.
+  TPoint p1, p2;
+  GraphR->GetPos(p1, p2);
+  p1.x = Disp->Font->Size;
+  p1.y = (p1.y + p2.y) / 2;
+  UTF8String label;
+  int doptype = DopType->ItemIndex;
+  if (doptype == 0) {  // All
+    label.sprintf("# OF SATELLITES / DOP %s 10 (EL %s %.0f%s)", CHARMUL, CHARGTE, ElMask, CHARDEG);
+  } else if (doptype == 1) {  // NSAT
+    label.sprintf("# OF SATELLITES (EL %s %.0f%s)", CHARGTE, ElMask, CHARDEG);
+  } else {
+    label.sprintf("DOP %s 10 (EL %s %.0f%s)", CHARMUL, CHARGTE, ElMask, CHARDEG);
+  }
+  GraphR->DrawText(p1, label, CColor[2], 0, 0, 90);
+
+  if (!BtnSol1->Down && !BtnSol2->Down) return;
+
+  double *x = new double[sn];
+  double *y = new double[sn];
+  double *dop = new double[sn * 4];
+  int *ns = new int[sn];
+
+  // Calculate DOP. Collecting the azimuth and elevation for all the
+  // satellites, and counting the number of satellites.
+  gtime_t time = {0, 0};
+  int nsat = 0, n = 0, prev_sat = 0;
+  double azel[MAXSAT * 2];
+  for (int i = 0; i < sn; i++) {
+    solstat_t *solstat = SolStat[sel].data + i;
+    if (timediff(solstat->time, time) > DTTOL) {
+      if (nsat > 0) {
+        dops(nsat, azel, ElMask * D2R, dop + n * 4);
+        ns[n] = nsat;
+        x[n] = TimePos(time);
+        n++;
+      }
+      time = solstat->time;
+      nsat = 0;
+      prev_sat = 0;
+    }
+    if (SatMask[solstat->sat - 1] || !SatSel[solstat->sat - 1]) continue;
+    if (solstat->el < ElMask * D2R) continue;
+    if (ElMaskP && solstat->el < ElMaskData[(int)(solstat->az * R2D + 0.5)]) continue;
+    if (solstat->sat != prev_sat && (solstat->flag & 0x20) != 0) {
+      azel[nsat * 2] = solstat->az;
+      azel[nsat * 2 + 1] = solstat->el;
+      prev_sat = solstat->sat;
+      nsat++;
+    }
+  }
+  for (int i = 0; i < 4; i++) {  // For all DOP type (GDOP, PDOP, HDOP, VDOP).
+    if (doptype != 0 && doptype != i + 2) continue;
+
+    for (int j = 0; j < n; j++) y[j] = dop[i + j * 4] * 10.0;
+
+    if (!(PlotStyle % 2)) {  // Line style.
+      DrawPolyS(GraphR, x, y, n, CColor[3], 0);
+    }
+    if (level && PlotStyle < 2) {  // Marker style.
+      for (int j = 0; j < n; j++) {
+        if (y[j] == 0.0) continue;
+        GraphR->DrawMark(x[j], y[j], 0, MColor[0][i + 2], MarkSize, 0);
+      }
+    }
+  }
+  // Draw number of satellites.
+  if (doptype == 0 || doptype == 1) {  // ALL or NSAT.
+    for (int i = 0; i < n; i++) y[i] = ns[i];
+
+    if (!(PlotStyle % 2)) {  // Line style.
+      DrawPolyS(GraphR, x, y, n, CColor[3], 1);
+    }
+    if (level && PlotStyle < 2) {  // Marker style.
+      for (int i = 0; i < n; i++) {
+        GraphR->DrawMark(x[i], y[i], 0, MColor[0][1], MarkSize, 0);
+      }
+    }
+  }
+
+  // Draw currently selected data.
+  if (BtnShowTrack->Down && 0 <= ind && ind < SolData[sel].n && n > 0) {
+    GraphR->GetLim(xl, yl);
+    double xp = TimePos(SolData[sel].data[ind].time);
+    xl[0] = xl[1] = xp;
+
+    // Vertical line at current position.
+    GraphR->DrawPoly(xl, yl, 2, CColor[2], 0);
+
+    int xi = 0;
+    for (; xi < n; xi++)
+      if (fabs(x[xi] - xp) < DTTOL) break;
+    if (xi >= n) xi = n - 1;
+
+    for (int i = 0; i < 4; i++) {  // For all DOP type (GDOP, PDOP, HDOP, VDOP).
+      if ((doptype != 0 && doptype != i + 2) || dop[i + xi * 4] <= 0.0) continue;
+      GraphR->DrawMark(xl[0], dop[i + xi * 4] * 10.0, 0, MColor[0][i + 2], MarkSize * 2 + 2, 0);
+    }
+    if (doptype == 0 || doptype == 1) {  // ALL or NSAT.
+      GraphR->DrawMark(xl[0], ns[xi], 0, MColor[0][1], MarkSize * 2 + 2, 0);
+    }
+    GraphR->DrawMark(xl[0], yl[1] - 1E-6, 0, CColor[2], 5, 0);
+    if (!BtnFixHoriz->Down) {
+      GraphR->DrawMark(xl[0], yl[1] - 1E-6, 1, CColor[2], 9, 0);
+    }
+
+    if (ShowStats) {
+      AnsiString s0;
+      s0.sprintf("NSAT:%d, GDOP:%4.1f PDOP:%4.1f HDOP:%4.1f VDOP:%4.1f", ns[xi], dop[0 + xi * 4],
+                 dop[1 + xi * 4], dop[2 + xi * 4], dop[3 + xi * 4]);
+      TPoint p1, p2, p3, p4;
+      int fonth = (int)(Disp->Font->Size * 1.5);
+      GraphR->GetPos(p1, p2);
+      p1.x = p2.x - 10;
+      p1.y += 8;
+      DrawLabel(GraphR, p1, s0, 2, 2);
+    }
+  } else {
+    DrawDopStat(dop, ns, n);
+  }
+  delete[] x;
+  delete[] y;
+  delete[] dop;
+  delete[] ns;
+}
 // draw statistics on DOP and number-of-satellite plot ----------------------
 void __fastcall TPlot::DrawDopStat(double *dop, int *ns, int n)
 {
@@ -1647,11 +1955,11 @@ void __fastcall TPlot::DrawSnr(int level)
                         }
                         if (k>=NFREQ+NEXOBS) continue;
                     }
-                    if (obs->SNR[k]*SNR_UNIT<=0.0) continue;
+                    if (obs->SNR[k]<=0.0) continue;
                     
                     x[n]=TimePos(obs->time);
                     if (i==0) {
-                        y[n]=obs->SNR[k]*SNR_UNIT;
+                        y[n]=obs->SNR[k];
                         col[n]=MColor[0][4];
                     }
                     else if (i==1) {
@@ -1662,7 +1970,7 @@ void __fastcall TPlot::DrawSnr(int level)
                     else {
                         y[n]=El[j]*R2D;
                         if (SimObs) col[n]=SysColor(obs->sat);
-                        else col[n]=SnrColor(obs->SNR[k]*SNR_UNIT);
+                        else col[n]=SnrColor(obs->SNR[k]);
                         if (El[j]>0.0&&El[j]<ElMask*D2R) col[n]=MColor[0][0];
                     }
                     if (timediff(time,obs->time)==0.0&&np<MAXSAT) {
@@ -1804,10 +2112,10 @@ void __fastcall TPlot::DrawSnrE(int level)
                     }
                     if (k>=NFREQ+NEXOBS) continue;
                 }
-                if (obs->SNR[k]*SNR_UNIT<=0.0) continue;
+                if (obs->SNR[k]<=0.0) continue;
 
                 x[0][n[0]]=x[1][n[1]]=El[j]*R2D;
-                y[0][n[0]]=obs->SNR[k]*SNR_UNIT;
+                y[0][n[0]]=obs->SNR[k];
                 y[1][n[1]]=!Mp[k]?0.0:Mp[k][j];
                 
                 col[0][n[0]]=col[1][n[1]]=
@@ -2045,7 +2353,7 @@ void __fastcall TPlot::DrawRes(int level)
                 y[0][m[0]]=p->resp;
                 y[1][m[1]]=p->resc;
                 y[2][m[2]]=p->el*R2D;
-                y[3][m[3]]=p->snr*SNR_UNIT;
+                y[3][m[3]]=p->snr;
                 if      (!(p->flag>>5))  q=0; // invalid
                 else if ((p->flag&7)<=1) q=2; // float
                 else if ((p->flag&7)<=3) q=1; // fixed

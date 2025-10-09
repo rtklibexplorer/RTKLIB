@@ -291,15 +291,17 @@ void Plot::updatePlotTypeMenu()
         ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_NSAT]), PLOT_NSAT);
     }
 
+    if (solutionStat[0].n > 0 || solutionStat[1].n > 0) {
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_SSKY]), PLOT_SSKY);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_SDOP]), PLOT_SDOP);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_RES]), PLOT_RES);
+        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_RESE]), PLOT_RESE);
+    }
+
     if (nObservation > 0) {
         ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_OBS]), PLOT_OBS);
         ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_SKY]), PLOT_SKY);
         ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_DOP]), PLOT_DOP);
-    }
-
-    if (solutionStat[0].n > 0 || solutionStat[1].n > 0) {
-        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_RES]), PLOT_RES);
-        ui->cBPlotTypeSelection->addItem(tr(PTypes[PLOT_RESE]), PLOT_RESE);
     }
 
     if ((nObservation > 0)  && (!simulatedObservation)) {
@@ -450,7 +452,8 @@ void Plot::updatePoint(int x, int y)
 
             msg = latLonString(pos, 8);
         }
-    } else if (plotType == PLOT_SKY || plotType == PLOT_MPS || plotType == PLOT_IONOS) { // sky-plot
+    } else if (plotType == PLOT_SKY || plotType == PLOT_SSKY || plotType == PLOT_MPS ||
+               plotType == PLOT_IONOS) { // sky-plot
         graphSky->getLimits(xl, yl);
         graphSky->toPos(p, q[0], q[1]);
         r = (xl[1] - xl[0] < yl[1] - yl[0] ? xl[1] - xl[0] : yl[1] - yl[0]) * 0.45;

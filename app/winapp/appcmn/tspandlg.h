@@ -9,6 +9,7 @@
 #include <ComCtrls.hpp>
 #include <ExtCtrls.hpp>
 #include <Buttons.hpp>
+#include "rtklib.h"
 //---------------------------------------------------------------------------
 class TSpanDialog : public TForm
 {

@@ -51,21 +51,29 @@ void __fastcall TGloFcnDialog::BtnOkClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TGloFcnDialog::BtnReadClick(TObject *Sender)
 {
-	AnsiString file,text;
-	nav_t nav={0};
-	int prn;
+        if (!OpenDialog->Execute()) return;
+	
+        nav_t *nav = static_cast<nav_t *>(calloc(1, sizeof(nav_t)));
+        if (nav == NULL) {
+          trace(1, "TGloFcnDialog::BtnReadClick nav alloc failed\n");
+          return;
+        }
 
-    if (!OpenDialog->Execute()) return;
-	
-	file=OpenDialog->FileName;
+        AnsiString file=OpenDialog->FileName;
     
-	if (!readrnx(file.c_str(),0,"",NULL,&nav,NULL)) return;
+	if (!readrnx(file.c_str(),0,"",NULL,nav,NULL)) {
+          free(nav);
+          return;
+        }
 	
-	for (int i=0;i<nav.ng;i++) {
-		if (satsys(nav.geph[i].sat,&prn)!=SYS_GLO) continue;
-        GetFcn(prn)->Text=text.sprintf("%d",nav.geph[i].frq);
+	for (int i=0;i<nav->ng;i++) {
+          int prn;
+          if (satsys(nav->geph[i].sat,&prn)!=SYS_GLO) continue;
+          AnsiString text;
+          GetFcn(prn)->Text=text.sprintf("%d",nav->geph[i].frq);
 	}
-	freenav(&nav,0xFF);
+	freenav(nav,0xFF);
+        free(nav);
 }
 //---------------------------------------------------------------------------
 void __fastcall TGloFcnDialog::BtnClearClick(TObject *Sender)

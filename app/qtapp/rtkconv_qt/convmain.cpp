@@ -109,20 +109,18 @@ MainWindow::MainWindow(QWidget *parent)
     ui->cBFormat->addItem(formatstrs[STRFMT_RINEX], STRFMT_RINEX);
 
     // set up completers to propose the user valid paths
-    QCompleter *fileCompleter = new QCompleter(this);
-    QFileSystemModel *fileModel = new QFileSystemModel(fileCompleter);
+    QFileSystemModel *fileModel = new QFileSystemModel(this);
     fileModel->setRootPath("");
-    fileCompleter->setModel(fileModel);
-    ui->lEOutputFile1->setCompleter(fileCompleter);
-    ui->lEOutputFile2->setCompleter(fileCompleter);
-    ui->lEOutputFile3->setCompleter(fileCompleter);
-    ui->lEOutputFile4->setCompleter(fileCompleter);
-    ui->lEOutputFile5->setCompleter(fileCompleter);
-    ui->lEOutputFile6->setCompleter(fileCompleter);
-    ui->lEOutputFile7->setCompleter(fileCompleter);
-    ui->lEOutputFile8->setCompleter(fileCompleter);
-    ui->lEOutputFile9->setCompleter(fileCompleter);
-    ui->cBInputFile->setCompleter(fileCompleter);
+    ui->lEOutputFile1->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile2->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile3->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile4->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile5->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile6->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile7->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile8->setCompleter(new QCompleter(fileModel, this));
+    ui->lEOutputFile9->setCompleter(new QCompleter(fileModel, this));
+    ui->cBInputFile->setCompleter(new QCompleter(fileModel, this));
 
     ui->comboTimeInterval->setValidator(new QDoubleValidator());
 
@@ -916,6 +914,7 @@ void MainWindow::convertFile()
     conversionThread->rnxopt.autopos = convOptDialog->autoPosition;
     conversionThread->rnxopt.phshift = convOptDialog->phaseShift;
     conversionThread->rnxopt.halfcyc = convOptDialog->halfCycle;
+    conversionThread->rnxopt.sortsats = convOptDialog->sortSats;
     conversionThread->rnxopt.outiono = convOptDialog->outputIonoCorr;
     conversionThread->rnxopt.outtime = convOptDialog->outputTimeCorr;
     conversionThread->rnxopt.outleaps = convOptDialog->outputLeapSeconds;
@@ -1000,9 +999,9 @@ void MainWindow::loadOptions()
     ui->cBTimeStart->setChecked(ini.value("set/timestartf", false).toBool());
     ui->cBTimeEnd->setChecked(ini.value("set/timeendf", false).toBool());
     ui->cBTimeInterval->setChecked(ini.value("set/timeintf", false).toBool());
-    ui->dateTimeStart->setDate(ini.value("set/timey1", "2020/01/01").value<QDate>());
+    ui->dateTimeStart->setDate(ini.value("set/timey1", "2025/01/01").value<QDate>());
     ui->dateTimeStart->setTime(ini.value("set/timeh1", "00:00:00").value<QTime>());
-    ui->dateTimeStop->setDate(ini.value("set/timey2", "2020/01/02").value<QDate>());
+    ui->dateTimeStop->setDate(ini.value("set/timey2", "2025/01/01").value<QDate>());
     ui->dateTimeStop->setTime(ini.value("set/timeh2", "00:00:00").value<QTime>());
     ui->comboTimeInterval->setCurrentText(ini.value("set/timeint", "1").toString());
     ui->cBTimeUnit->setChecked(ini.value("set/timeunitf", false).toBool());

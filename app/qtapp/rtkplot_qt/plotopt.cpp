@@ -45,13 +45,11 @@ PlotOptDialog::PlotOptDialog(QWidget *parent)
 
     refDialog = new RefDialog(this, 1);
 
-    QCompleter *fileCompleter = new QCompleter(this);
-    QFileSystemModel *fileModel = new QFileSystemModel(fileCompleter);
+    QFileSystemModel *fileModel = new QFileSystemModel(this);
     fileModel->setRootPath("");
-    fileCompleter->setModel(fileModel);
-    ui->lETLEFile->setCompleter(fileCompleter);
-    ui->lETLESatelliteFile->setCompleter(fileCompleter);
-    ui->lEShapeFile->setCompleter(fileCompleter);
+    ui->lETLEFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lETLESatelliteFile->setCompleter(new QCompleter(fileModel, this));
+    ui->lEShapeFile->setCompleter(new QCompleter(fileModel, this));
 
     QAction * acTLEFileOpen = ui->lETLEFile->addAction(QIcon(":/buttons/folder"), QLineEdit::TrailingPosition);
     acTLEFileOpen->setToolTip(tr("Select TLE file"));
@@ -533,7 +531,7 @@ void PlotOptDialog::loadOptions(QSettings & settings)
     ui->cBElevationMaskPattern->setCurrentText(QString::number(settings.value("plot/elmaskp", 0).toInt()));
     ui->lEExcludedSatellites->setText(settings.value("plot/exsats", "").toString());
     ui->sBBufferSize->setValue(settings.value("plot/rtbuffsize", 10800).toInt());
-    ui->cBTimeSync->setChecked(settings.value("plot/timesyncout", 0).toInt());
+    ui->cBTimeSync->setChecked(settings.value("plot/timesyncout", 0).toBool());
     ui->sBTimeSyncPort->setValue(settings.value("plot/timesyncport", 10071).toInt());
     ui->lERinexOptions->setText(settings.value("plot/rnxopts", "").toString());
     ui->lEShapeFile->setText(settings.value("plot/shapefile", "").toString());
