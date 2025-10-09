@@ -732,7 +732,7 @@ static int decode_type1013(rtcm_t *rtcm)
 static int decode_type1019(rtcm_t *rtcm)
 {
     eph_t eph={0};
-    double toc,sqrtA,tt;
+    double toc,sqrtA;
     char *msg;
     int i=24+12,prn,sat,week,sys=SYS_GPS;
     
@@ -788,10 +788,7 @@ static int decode_type1019(rtcm_t *rtcm)
     }
     eph.sat=sat;
     eph.week=adjgpsweek(week);
-    if (rtcm->time.time==0) rtcm->time=utc2gpst(timeget());
-    tt=timediff(gpst2time(eph.week,eph.toes),rtcm->time);
-    if      (tt<-302400.0) eph.week++;
-    else if (tt>=302400.0) eph.week--;
+    rtcm->time=gpst2time(eph.week,eph.toes);
     eph.toe=gpst2time(eph.week,eph.toes);
     eph.toc=gpst2time(eph.week,toc);
     eph.ttr=rtcm->time;
@@ -1081,7 +1078,7 @@ static int decode_type1039(rtcm_t *rtcm)
 static int decode_type1041(rtcm_t *rtcm)
 {
     eph_t eph={0};
-    double toc,sqrtA,tt;
+    double toc,sqrtA;
     char *msg;
     int i=24+12,prn,sat,week,sys=SYS_IRN;
     
@@ -1130,10 +1127,7 @@ static int decode_type1041(rtcm_t *rtcm)
     }
     eph.sat=sat;
     eph.week=adjgpsweek(week);
-    if (rtcm->time.time==0) rtcm->time=utc2gpst(timeget());
-    tt=timediff(gpst2time(eph.week,eph.toes),rtcm->time);
-    if      (tt<-302400.0) eph.week++;
-    else if (tt>=302400.0) eph.week--;
+    rtcm->time=gpst2time(eph.week,eph.toes);
     eph.toe=gpst2time(eph.week,eph.toes);
     eph.toc=gpst2time(eph.week,toc);
     eph.ttr=rtcm->time;
@@ -1151,7 +1145,7 @@ static int decode_type1041(rtcm_t *rtcm)
 static int decode_type1044(rtcm_t *rtcm)
 {
     eph_t eph={0};
-    double toc,sqrtA,tt;
+    double toc,sqrtA;
     char *msg;
     int i=24+12,prn,sat,week,sys=SYS_QZS;
     
@@ -1203,10 +1197,7 @@ static int decode_type1044(rtcm_t *rtcm)
     }
     eph.sat=sat;
     eph.week=adjgpsweek(week);
-    if (rtcm->time.time==0) rtcm->time=utc2gpst(timeget());
-    tt=timediff(gpst2time(eph.week,eph.toes),rtcm->time);
-    if      (tt<-302400.0) eph.week++;
-    else if (tt>=302400.0) eph.week--;
+    rtcm->time=gpst2time(eph.week,eph.toes);
     eph.toe=gpst2time(eph.week,eph.toes);
     eph.toc=gpst2time(eph.week,toc);
     eph.ttr=rtcm->time;
@@ -1225,7 +1216,7 @@ static int decode_type1044(rtcm_t *rtcm)
 static int decode_type1045(rtcm_t *rtcm)
 {
     eph_t eph={0};
-    double toc,sqrtA,tt;
+    double toc,sqrtA;
     char *msg;
     int i=24+12,prn,sat,week,e5a_hs,e5a_dvs,rsv,sys=SYS_GAL;
     
@@ -1281,10 +1272,7 @@ static int decode_type1045(rtcm_t *rtcm)
     }
     eph.sat=sat;
     eph.week=week+1024; /* gal-week = gst-week + 1024 */
-    if (rtcm->time.time==0) rtcm->time=utc2gpst(timeget());
-    tt=timediff(gpst2time(eph.week,eph.toes),rtcm->time);
-    if      (tt<-302400.0) eph.week++;
-    else if (tt>=302400.0) eph.week--;
+    rtcm->time=gpst2time(eph.week,eph.toes);
     eph.toe=gpst2time(eph.week,eph.toes);
     eph.toc=gpst2time(eph.week,toc);
     eph.ttr=rtcm->time;
@@ -1304,7 +1292,7 @@ static int decode_type1045(rtcm_t *rtcm)
 static int decode_type1046(rtcm_t *rtcm)
 {
     eph_t eph={0};
-    double toc,sqrtA,tt;
+    double toc,sqrtA;
     char *msg;
     int i=24+12,prn,sat,week,e5b_hs,e5b_dvs,e1_hs,e1_dvs,sys=SYS_GAL;
     
@@ -1362,10 +1350,7 @@ static int decode_type1046(rtcm_t *rtcm)
     }
     eph.sat=sat;
     eph.week=week+1024; /* gal-week = gst-week + 1024 */
-    if (rtcm->time.time==0) rtcm->time=utc2gpst(timeget());
-    tt=timediff(gpst2time(eph.week,eph.toes),rtcm->time);
-    if      (tt<-302400.0) eph.week++;
-    else if (tt>=302400.0) eph.week--;
+    rtcm->time=gpst2time(eph.week,eph.toes);
     eph.toe=gpst2time(eph.week,eph.toes);
     eph.toc=gpst2time(eph.week,toc);
     eph.ttr=rtcm->time;
@@ -1385,7 +1370,7 @@ static int decode_type1046(rtcm_t *rtcm)
 static int decode_type1042(rtcm_t *rtcm)
 {
     eph_t eph={0};
-    double toc,sqrtA,tt;
+    double toc,sqrtA;
     char *msg;
     int i=24+12,prn,sat,week,sys=SYS_CMP;
     
@@ -1436,10 +1421,7 @@ static int decode_type1042(rtcm_t *rtcm)
     }
     eph.sat=sat;
     eph.week=adjbdtweek(week);
-    if (rtcm->time.time==0) rtcm->time=utc2gpst(timeget());
-    tt=timediff(bdt2gpst(bdt2time(eph.week,eph.toes)),rtcm->time);
-    if      (tt<-302400.0) eph.week++;
-    else if (tt>=302400.0) eph.week--;
+    rtcm->time=bdt2time(eph.week,eph.toes);
     eph.toe=bdt2gpst(bdt2time(eph.week,eph.toes)); /* bdt -> gpst */
     eph.toc=bdt2gpst(bdt2time(eph.week,toc));      /* bdt -> gpst */
     eph.ttr=rtcm->time;
