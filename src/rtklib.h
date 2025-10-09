@@ -869,6 +869,11 @@ typedef struct {        /* navigation data type */
     double ion_cmp[8];  /* BeiDou iono model parameters {a0,a1,a2,a3,b0,b1,b2,b3} */
     double ion_irn[8];  /* IRNSS iono model parameters {a0,a1,a2,a3,b0,b1,b2,b3} */
     int glo_fcn[32];    /* GLONASS FCN + 8 */
+    int bias_type;      /* Type of biases [-1:unknown, 0:relative, 1:absolute] */
+    double osbias[MAXSAT][NFREQ][MAX_CODE_BIASES+1]; /* satellite OSBs (m) */
+    int    osbvld[MAXSAT][NFREQ][MAX_CODE_BIASES+1]; /* bias validity [0:invalid,1:valid] */
+    double fcbias[MAXSAT][NFREQ][MAX_CODE_BIASES+1]; /* satellite FCBs (m) */
+    int    fcbvld[MAXSAT][NFREQ][MAX_CODE_BIASES+1]; /* bias validity [0:invalid,1:valid] */
     double cbias[MAXSAT][MAX_CODE_BIAS_FREQS][MAX_CODE_BIASES]; /* satellite DCB [0:P1-C1,1:P2-C2][code] (m) */
     double rbias[MAXRCV][MAX_CODE_BIAS_FREQS][MAX_CODE_BIASES]; /* receiver DCB (0:P1-P2,1:P1-C1,2:P2-C2) (m) */
     pcv_t pcvs[MAXSAT]; /* satellite antenna pcv */
@@ -1628,6 +1633,8 @@ EXPORT int  open_rnxctr (rnxctr_t *rnx, FILE *fp);
 EXPORT int  input_rnxctr(rnxctr_t *rnx, FILE *fp);
 
 /* ephemeris and clock functions ---------------------------------------------*/
+EXPORT int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
+                   double *varc);
 EXPORT double eph2clk (gtime_t time, const eph_t  *eph);
 EXPORT double geph2clk(gtime_t time, const geph_t *geph);
 EXPORT double seph2clk(gtime_t time, const seph_t *seph);
@@ -1637,10 +1644,12 @@ EXPORT void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts,
                      double *var);
 EXPORT void seph2pos(gtime_t time, const seph_t *seph, double *rs, double *dts,
                      double *var);
-EXPORT int  peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
+EXPORT int  peph2pos(gtime_t time, int sat, const nav_t *nav,
                      double *rs, double *dts, double *var);
 EXPORT void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
                       double *dant);
+EXPORT void satantoff_s(gtime_t time, const double *rs, int sat, const nav_t *nav,
+                        double *dant);
 EXPORT int  satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
                    const nav_t *nav, double *rs, double *dts, double *var,
                    int *svh);

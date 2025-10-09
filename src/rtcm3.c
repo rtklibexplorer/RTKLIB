@@ -2710,10 +2710,12 @@ extern int decode_rtcm3(rtcm_t *rtcm)
         case 1261: ret=decode_ssr4(rtcm,SYS_CMP,0); break; /* draft */
         case 1262: ret=decode_ssr5(rtcm,SYS_CMP,0); break; /* draft */
         case 1263: ret=decode_ssr6(rtcm,SYS_CMP,0); break; /* draft */
-        case   11: ret=decode_ssr7(rtcm,SYS_GPS,0); break; /* tentative */
-        case   12: ret=decode_ssr7(rtcm,SYS_GAL,0); break; /* tentative */
-        case   13: ret=decode_ssr7(rtcm,SYS_QZS,0); break; /* tentative */
-        case   14: ret=decode_ssr7(rtcm,SYS_CMP,0); break; /* tentative */
+        case 1265: ret=decode_ssr7(rtcm,SYS_GPS,0); break; /* tentative */
+        case 1266: ret=decode_ssr7(rtcm,SYS_GLO,0); break; /* tentative */
+        case 1267: ret=decode_ssr7(rtcm,SYS_GAL,0); break; /* tentative */
+        case 1268: ret=decode_ssr7(rtcm,SYS_QZS,0); break; /* tentative */
+        case 1269: ret=decode_ssr7(rtcm,SYS_SBS,0); break; /* tentative */
+        case 1270: ret=decode_ssr7(rtcm,SYS_CMP,0); break; /* tentative */
         case 4073: ret=decode_type4073(rtcm); break;
         case 4076: ret=decode_type4076(rtcm); break;
     }
