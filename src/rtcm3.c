@@ -180,7 +180,7 @@ static int adjbdtweek(int week)
     int w;
     (void)time2bdt(gpst2bdt(utc2gpst(timeget())),&w);
     if (w<1) w=1; /* use 2006/1/1 if time is earlier than 2006/1/1 */
-    return week+(w-week+512)/1024*1024;
+    return week+(w-week+4095)/8192*8192;
 }
 /* adjust daily rollover of GLONASS time -------------------------------------*/
 static void adjday_glot(rtcm_t *rtcm, double tod)
