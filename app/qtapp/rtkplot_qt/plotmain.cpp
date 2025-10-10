@@ -670,14 +670,14 @@ void Plot::openSolution1()
 {
     trace(3, "openSolution1\n");
 
-    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 1"), solutionFiles[0].value(0), tr("Solution File (*.pos *.stat *.nmea *.txt *.ubx);;All (*.*)")))), 0);
+    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 1"), solutionFiles[0].value(0), tr("Solution File (*.pos *.stat *.nmea *.nma *.txt *.ubx);;All (*.*)")))), 0);
 }
 // callback on menu-open-solution-2 -----------------------------------------
 void Plot::openSolution2()
 {
     trace(3, "openSolution2\n");
 
-    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 2"), solutionFiles[1].value(0), tr("Solution File (*.pos *.stat *.nmea *.txt *.ubx);;All (*.*)")))), 1);
+    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 2"), solutionFiles[1].value(0), tr("Solution File (*.pos *.stat *.nmea *.nma *.txt *.ubx);;All (*.*)")))), 1);
 }
 // callback on menu-open-map-image ------------------------------------------
 void Plot::openMapImage()
