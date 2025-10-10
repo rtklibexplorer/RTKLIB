@@ -984,7 +984,7 @@
                <widget class="QComboBox" name="cBFilter">
                 <item>
                  <property name="text">
-                  <string>Position File (*.pos *.nmea)</string>
+                  <string>Position File (*.pos *.nmea *.nma)</string>
                  </property>
                 </item>
                 <item>
