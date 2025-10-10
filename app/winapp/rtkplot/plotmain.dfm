@@ -192,7 +192,7 @@ object Plot: TPlot
           OnChange = FileMaskChange
           Items.Strings = (
             'Solution (*.pos)'
-            'NMEA (*.nmea)'
+            'NMEA (*.nmea *.nma)'
             'Solution Status (*.stat)'
             'All (*.*)')
         end
@@ -1745,8 +1745,8 @@ object Plot: TPlot
   end
   object OpenSolDialog: TOpenDialog
     Filter = 
-      'Solution File (*.pos, *.stat, *.nmea, *.txt, *.ubx))|*.pos;*.sta' +
-      't;*.nmea;*.txt;*.ubx|All (*.*)|*.*'
+      'Solution File (*.pos, *.stat, *.nmea, *.nma, *.txt, *.ubx))|*.pos;*.sta' +
+      't;*.nmea;*.nma;*.txt;*.ubx|All (*.*)|*.*'
     Options = [ofHideReadOnly, ofNoChangeDir, ofAllowMultiSelect, ofEnableSizing]
     Title = 'Open Solution'
     Left = 274
