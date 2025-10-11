@@ -53,7 +53,7 @@ static int is_navmsg(int msg)
 /* test station info message -------------------------------------------------*/
 static int is_stamsg(int msg)
 {
-    return msg==1005||msg==1006||msg==1007||msg==1008||msg==1033||msg==1230;
+    return msg==1005||msg==1006||msg==1007||msg==1008||msg==1013||msg==1033||msg==1230;
 }
 /* test time interval --------------------------------------------------------*/
 static int is_tint(gtime_t time, double tint)
@@ -81,19 +81,19 @@ extern strconv_t *strconvnew(int itype, int otype, const char *msgs, int staid,
     
     if (!(conv=(strconv_t *)malloc(sizeof(strconv_t)))) return NULL;
     
-    conv->nmsg=0;
+    conv->out.nmsg=0;
     strcpy(buff,msgs);
     char *q;
     for (p=strtok_r(buff,",",&q);p;p=strtok_r(NULL,",",&q)) {
        tint=0.0;
        if (sscanf(p,"%d(%lf)",&msg,&tint)<1) continue;
-       conv->msgs[conv->nmsg]=msg;
-       conv->tint[conv->nmsg]=tint;
-       conv->tick[conv->nmsg]=tickget();
-       conv->ephsat[conv->nmsg++]=0;
-       if (conv->nmsg>=32) break;
+       conv->out.msgs[conv->out.nmsg]=msg;
+       conv->out.tint[conv->out.nmsg]=tint;
+       conv->tick[conv->out.nmsg]=tickget();
+       conv->ephsat[conv->out.nmsg++]=0;
+       if (conv->out.nmsg>=32) break;
     }
-    if (conv->nmsg<=0) {
+    if (conv->out.nmsg<=0) {
         free(conv);
         return NULL;
     }
@@ -281,28 +281,28 @@ static void write_obs(gtime_t time, stream_t *str, strconv_t *conv)
 {
     int i,j=0;
     
-    for (i=0;i<conv->nmsg;i++) {
-        if (!is_obsmsg(conv->msgs[i])||!is_tint(time,conv->tint[i])) continue;
+    for (i=0;i<conv->out.nmsg;i++) {
+        if (!is_obsmsg(conv->out.msgs[i])||!is_tint(time,conv->out.tint[i])) continue;
         
         j=i; /* index of last message */
     }
-    for (i=0;i<conv->nmsg;i++) {
-        if (!is_obsmsg(conv->msgs[i])||!is_tint(time,conv->tint[i])) continue;
+    for (i=0;i<conv->out.nmsg;i++) {
+        if (!is_obsmsg(conv->out.msgs[i])||!is_tint(time,conv->out.tint[i])) continue;
         
         /* generate messages */
         if (conv->otype==STRFMT_RTCM2) {
-            if (!gen_rtcm2(&conv->out,conv->msgs[i],i!=j)) continue;
+            if (!gen_rtcm2(&conv->out,conv->out.msgs[i],i!=j)) continue;
             
             /* write messages to stream */
             strwrite(str,conv->out.buff,conv->out.nbyte);
         }
         else if (conv->otype==STRFMT_RTCM3) {
-            if (conv->msgs[i]<=1012) {
-                if (!gen_rtcm3(&conv->out,conv->msgs[i],0,i!=j)) continue;
+            if (conv->out.msgs[i]<=1012) {
+                if (!gen_rtcm3(&conv->out,conv->out.msgs[i],0,i!=j)) continue;
                 strwrite(str,conv->out.buff,conv->out.nbyte);
             }
             else { /* write rtcm3 msm to stream */
-                write_rtcm3_msm(str,&conv->out,conv->msgs[i],i!=j);
+                write_rtcm3_msm(str,&conv->out,conv->out.msgs[i],i!=j);
             }
         }
     }
@@ -313,15 +313,15 @@ static void write_nav(gtime_t time, stream_t *str, strconv_t *conv)
     (void)time;
     int i;
     
-    for (i=0;i<conv->nmsg;i++) {
-        if (!is_navmsg(conv->msgs[i])||conv->tint[i]>0.0) continue;
+    for (i=0;i<conv->out.nmsg;i++) {
+        if (!is_navmsg(conv->out.msgs[i])||conv->out.tint[i]>0.0) continue;
         
         /* generate messages */
         if (conv->otype==STRFMT_RTCM2) {
-            if (!gen_rtcm2(&conv->out,conv->msgs[i],0)) continue;
+            if (!gen_rtcm2(&conv->out,conv->out.msgs[i],0)) continue;
         }
         else if (conv->otype==STRFMT_RTCM3) {
-            if (!gen_rtcm3(&conv->out,conv->msgs[i],0,0)) continue;
+            if (!gen_rtcm3(&conv->out,conv->out.msgs[i],0,0)) continue;
         }
         else continue;
         
@@ -367,26 +367,26 @@ static void write_nav_cycle(stream_t *str, strconv_t *conv)
     uint32_t tick=tickget();
     int i,sat,tint;
     
-    for (i=0;i<conv->nmsg;i++) {
-        if (!is_navmsg(conv->msgs[i])||conv->tint[i]<=0.0) continue;
+    for (i=0;i<conv->out.nmsg;i++) {
+        if (!is_navmsg(conv->out.msgs[i])||conv->out.tint[i]<=0.0) continue;
         
         /* output cycle */
-        tint=(int)(conv->tint[i]*1000.0);
+        tint=(int)(conv->out.tint[i]*1000.0);
         if ((int)(tick-conv->tick[i])<tint) continue;
         conv->tick[i]=tick;
         
         /* next satellite */
-        if (!(sat=nextsat(&conv->out.nav,conv->ephsat[i],conv->msgs[i]))) {
+        if (!(sat=nextsat(&conv->out.nav,conv->ephsat[i],conv->out.msgs[i]))) {
             continue;
         }
         conv->out.ephsat=conv->ephsat[i]=sat;
         
         /* generate messages */
         if (conv->otype==STRFMT_RTCM2) {
-            if (!gen_rtcm2(&conv->out,conv->msgs[i],0)) continue;
+            if (!gen_rtcm2(&conv->out,conv->out.msgs[i],0)) continue;
         }
         else if (conv->otype==STRFMT_RTCM3) {
-            if (!gen_rtcm3(&conv->out,conv->msgs[i],0,0)) continue;
+            if (!gen_rtcm3(&conv->out,conv->out.msgs[i],0,0)) continue;
         }
         else continue;
         
@@ -399,21 +399,21 @@ static void write_sta_cycle(stream_t *str, strconv_t *conv)
 {
     uint32_t tick=tickget();
     int i,tint;
-    
-    for (i=0;i<conv->nmsg;i++) {
-        if (!is_stamsg(conv->msgs[i])) continue;
+
+    for (i=0;i<conv->out.nmsg;i++) {
+        if (!is_stamsg(conv->out.msgs[i])) continue;
         
         /* output cycle */
-        tint=conv->tint[i]==0.0?30000:(int)(conv->tint[i]*1000.0);
+        tint=conv->out.tint[i]==0.0?30000:(int)(conv->out.tint[i]*1000.0);
         if ((int)(tick-conv->tick[i])<tint) continue;
         conv->tick[i]=tick;
         
         /* generate messages */
         if (conv->otype==STRFMT_RTCM2) {
-            if (!gen_rtcm2(&conv->out,conv->msgs[i],0)) continue;
+            if (!gen_rtcm2(&conv->out,conv->out.msgs[i],0)) continue;
         }
         else if (conv->otype==STRFMT_RTCM3) {
-            if (!gen_rtcm3(&conv->out,conv->msgs[i],0,0)) continue;
+            if (!gen_rtcm3(&conv->out,conv->out.msgs[i],0,0)) continue;
         }
         else continue;
         

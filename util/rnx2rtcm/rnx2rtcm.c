@@ -106,11 +106,15 @@ static void gen_rtcm_obs(rtcm_t *rtcm, const int *type, int n, FILE *fp) {
   int j = 0;
 
   for (int i = 0; i < n; i++) {
-    if (is_nav(type[i]) || is_gnav(type[i]) || is_ant(type[i])) continue;
+    if (is_nav(type[i]) || is_gnav(type[i]) || is_ant(type[i]) || type[i] == 1013 ||
+        type[i] == 1230)
+      continue;
     j = i;  // Index of last message
   }
   for (int i = 0; i < n; i++) {
-    if (is_nav(type[i]) || is_gnav(type[i]) || is_ant(type[i])) continue;
+    if (is_nav(type[i]) || is_gnav(type[i]) || is_ant(type[i]) || type[i] == 1013 ||
+        type[i] == 1230)
+      continue;
 
     int msg = type[i];
     int sync = i != j;
@@ -173,9 +177,26 @@ static void gen_rtcm_ant(rtcm_t *rtcm, const int *type, int n, FILE *fp) {
     if (fwrite(rtcm->buff, rtcm->nbyte, 1, fp) < 1) break;
   }
 }
+// Generate RTCM system parameters -------------------------------------------
+static void gen_rtcm_sysparams(rtcm_t *rtcm, const int *type, int n, FILE *fp) {
+  for (int i = 0; i < n; i++) {
+    if (type[i] != 1013) continue;
+    if (!gen_rtcm3(rtcm, type[i], 0, 0)) continue;
+    if (fwrite(rtcm->buff, rtcm->nbyte, 1, fp) < 1) break;
+  }
+}
+// Generate RTCM GLONASS L1 and L2 code-phase biases -------------------------
+static void gen_glo_biases(rtcm_t *rtcm, const int *type, int n, FILE *fp) {
+  for (int i = 0; i < n; i++) {
+    if (type[i] != 1230) continue;
+    if (!gen_rtcm3(rtcm, type[i], 0, 0)) continue;
+    if (fwrite(rtcm->buff, rtcm->nbyte, 1, fp) < 1) break;
+  }
+}
 // Convert to RTCM messages --------------------------------------------------
-static int conv_rtcm(const int *type, int n, const char *opt, const char *outfile,
-                     const obs_t *obs, const nav_t *nav, const sta_t *sta, int staid) {
+static int conv_rtcm(const int *type, const double *tint, int n, const char *opt,
+                     const char *outfile, const obs_t *obs, const nav_t *nav, const sta_t *sta,
+                     int staid) {
   rtcm_t rtcm = {0};
 
   strcpy(rtcm.opt, opt);
@@ -209,13 +230,26 @@ static int conv_rtcm(const int *type, int n, const char *opt, const char *outfil
   rtcm.staid = staid;
   rtcm.sta = *sta;
 
+  rtcm.nmsg = n;
+  for (int i = 0; i < n; i++) {
+    rtcm.msgs[i] = type[i];
+    rtcm.tint[i] = tint[i];
+  }
+
   FILE *fp = stdout;
   if (*outfile && !(fp = fopen(outfile, "wb"))) {
     fprintf(stderr, "file open error: %s\n", outfile);
     return 0;
   }
+
+  rtcm.time = obs->data[0].time;
+
+  // Generate RTCM system paramaters message.
+  gen_rtcm_sysparams(&rtcm, type, n, fp);
   // Generate RTCM antenna info messages
   gen_rtcm_ant(&rtcm, type, n, fp);
+  // Generate RTCM GLONASS L1 and L2 code-phase biases.
+  gen_glo_biases(&rtcm, type, n, fp);
 
   int index[3] = {0};
   int j = -1;
@@ -261,8 +295,9 @@ int main(int argc, char **argv) {
   double es[6] = {0}, ee[6] = {0}, tint = 0.0;
   char *infile[16] = {0}, *outfile = "";
   int n = 0, trlevel = 0, staid = 0;
-  int type[16], m = 0;
+  int type[32], m = 0;
   char *rnxopt = "", *rtcmopt = "";
+  double otint[32];
 
   for (int i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "-ts") && i + 2 < argc) {
@@ -281,7 +316,22 @@ int main(int argc, char **argv) {
       char buff[1024];
       strcpy(buff, argv[++i]);
       char *p;
-      for (p = strtok(buff, ","); p; p = strtok(NULL, ",")) type[m++] = atoi(p);
+      for (p = strtok(buff, ","); p && m < 32; p = strtok(NULL, ",")) {
+        double interval = 0.0;
+        int msg, r = sscanf(p, "%d(%lf)", &msg, &interval);
+        if (r < 1) continue;
+        if (r < 2) {
+          // Default the interval.
+          if (is_nav(msg) || is_gnav(msg))
+            interval = 60;
+          else if (is_ant(msg) || msg == 1013 || msg == 1230)
+            interval = 10;
+          else
+            interval = tint;
+        }
+        type[m] = msg;
+        otint[m++] = interval;
+      }
     } else if (!strcmp(argv[i], "-opt") && i + 1 < argc) {
       rtcmopt = argv[++i];
     } else if (!strcmp(argv[i], "-rnxopt") && i + 1 < argc) {
@@ -309,11 +359,11 @@ int main(int argc, char **argv) {
     readrnxt(infile[i], 0, ts, te, tint, rnxopt, &obs, &nav, &sta);
   }
   sortobs(&obs);
-  uniqnav(&nav); // To sort them for gen_rtcm_nav()
+  uniqnav(&nav);  // To sort them for gen_rtcm_nav()
 
   // Convert to RTCM messages
   int ret = 0;
-  if (!conv_rtcm(type, m, rtcmopt, outfile, &obs, &nav, &sta, staid)) ret = -1;
+  if (!conv_rtcm(type, otint, m, rtcmopt, outfile, &obs, &nav, &sta, staid)) ret = -1;
 
   free(obs.data);
   freenav(&nav, 0xFF);
