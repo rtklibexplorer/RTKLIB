@@ -286,7 +286,7 @@ int main(int argc, char **argv)
     const char ss[]={'E','-','W','C','C'};
     strconv_t *conv[MAXSTR]={NULL};
     double pos[3],stapos[3]={0},stadel[3]={0};
-    static char s1[MAXSTR][MAXSTRPATH]={{0}},s2[MAXSTR][MAXSTRPATH]={{0}};
+    static char s1[MAXSTR][MAXSTRPATH]={{0}};
     char *paths[MAXSTR];
     char *cmdfile[MAXSTR]={"","","","",""},*cmds[MAXSTR],*cmds_periodic[MAXSTR];
     char *local="",*proxy="",*opt="",buff[256],*p;
@@ -298,12 +298,12 @@ int main(int argc, char **argv)
     int deamon=0;
     const char *msg = "1004,1019"; // Current messages.
     const char *msgs[MAXSTR];      // Messages per output stream.
-    const char *log = NULL;        // Log for the next input or output stream.
+    const char *log = "";          // Log for the next input or output stream.
     const char *logs[MAXSTR];
     
     for (i=0;i<MAXSTR;i++) {
         paths[i]=s1[i];
-        logs[i]=s2[i];
+        logs[i]="";
         cmds[i]=cmd_strs[i];
         cmds_periodic[i]=cmd_periodic_strs[i];
         msgs[i] = msg;
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
             if (!decodepath(argv[++i],types,paths[0],fmts)) return EXIT_FAILURE;
             // Use the previous specified log file.
             logs[0] = log;
-            log = NULL;
+            log = "";
         }
         else if (!strcmp(argv[i],"-msg")&&i+1<argc) msg=argv[++i];
         else if (!strcmp(argv[i],"-out")&&i+1<argc&&n<MAXSTR-1) {
@@ -322,11 +322,11 @@ int main(int argc, char **argv)
             msgs[n + 1] = msg;
             // Use the previous specified log file.
             logs[n + 1] = log;
-            log = NULL;
+            log = "";
             n++;
         }
         else if (!strcmp(argv[i], "-log") && i + 1 < argc) {
-          if (log != NULL) fprintf(stderr, "Warning log '%s' ignored.\n", log);
+          if (log != NULL && *log) fprintf(stderr, "Warning log '%s' ignored.\n", log);
           log = argv[++i];
         }
         else if (!strcmp(argv[i],"-p")&&i+3<argc) {
@@ -374,9 +374,9 @@ int main(int argc, char **argv)
     if (n <= 0) {
       n = 1; // stdout
       logs[1] = log;
-      log = NULL;
+      log = "";
     }
-    if (log != NULL) fprintf(stderr, "Warning log '%s' ignored.\n", log);
+    if (log != NULL && *log) fprintf(stderr, "Warning log '%s' ignored.\n", log);
 
     for (i=0;i<n;i++) {
         if (fmts[i+1]<=0) continue;

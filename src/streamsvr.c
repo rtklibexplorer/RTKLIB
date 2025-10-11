@@ -696,7 +696,7 @@ extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
     }
     /* open log streams */
     for (i=0;i<svr->nstr;i++) {
-        if (strs[i]==STR_NONE||strs[i]==STR_FILE||!*logs[i]) continue;
+        if (strs[i]==STR_NONE||strs[i]==STR_FILE||!logs[i]||!*logs[i]) continue;
         stropen(svr->strlog+i,STR_FILE,STR_MODE_W,logs[i]);
     }
     /* write start commands to input/output streams */
