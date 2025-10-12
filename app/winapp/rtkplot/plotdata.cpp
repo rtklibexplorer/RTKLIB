@@ -87,7 +87,8 @@ void __fastcall TPlot::ReadSol(TStrings *files, int sel)
     else        BtnSol2->Down=true;
     
     if (sel==0||SolData[0].n<=0) {
-        time2gpst(SolData[sel].data[0].time,&Week);
+        if (SolData[sel].n > 0)
+          time2gpst(SolData[sel].data[0].time,&Week);
         UpdateOrigin();
     }
     SolIndex[0]=SolIndex[1]=ObsIndex=0;

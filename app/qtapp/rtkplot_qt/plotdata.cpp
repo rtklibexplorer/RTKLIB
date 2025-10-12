@@ -98,7 +98,7 @@ void Plot::readSolution(const QStringList &files, int sel)
         ui->btnSolution2->setChecked(true);
 
     if (sel == 0 || solutionData[0].n <= 0) {
-        time2gpst(solutionData[sel].data[0].time, &week);
+        if (solutionData[sel].n > 0) time2gpst(solutionData[sel].data[0].time, &startWeek);
         updateOrigin();
     }
     solutionIndex[0] = solutionIndex[1] = observationIndex = 0;
@@ -197,7 +197,7 @@ void Plot::readObservation(const QStringList &files)
 
     ui->btnSolution1->setChecked(true);
 
-    time2gpst(observation.data[0].time, &week);
+    time2gpst(observation.data[0].time, &startWeek);
     solutionIndex[0] = solutionIndex[1] = observationIndex = 0;
 
     if (plotType < PLOT_OBS || PLOT_DOP < plotType)
@@ -462,7 +462,7 @@ void Plot::generateVisibilityData()
 
     setWindowTitle(tr("Satellite Visibility (Predicted)"));
     ui->btnSolution1->setChecked(true);
-    time2gpst(observation.data[0].time, &week);
+    time2gpst(observation.data[0].time, &startWeek);
     solutionIndex[0] = solutionIndex[1] = observationIndex = 0;
     if (plotType < PLOT_OBS || PLOT_DOP < plotType)
         updatePlotType(PLOT_OBS);
@@ -1464,7 +1464,7 @@ void Plot::clear()
 
     trace(3, "clear\n");
 
-    week = 0;
+    startWeek = 0;
 
     clearObservation();
     clearSolution();
