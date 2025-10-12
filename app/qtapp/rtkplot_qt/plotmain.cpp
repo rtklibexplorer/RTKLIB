@@ -124,7 +124,7 @@ Plot::Plot(QWidget *parent) : QMainWindow(parent), ui(new Ui::Plot)
     dragCurrentX = dragCurrentY = -1;
     nObservation = 0;
     indexObservation = NULL;
-    week = flush = plotType = 0;
+    startWeek = flush = plotType = 0;
 
     for (int i = 0; i < 2; i++) {
         initsolbuf(solutionData + i, 0, 0);
@@ -1921,10 +1921,10 @@ void Plot::timerTimer()
                         disconnectStream();
                         return;
                     }
-                    if (week == 0 && solutionData[streamNo].n == 1) { // first data
+                    if (startWeek == 0 && solutionData[streamNo].n == 1) { // first data
                         if (plotType > PLOT_NSAT)
                             updatePlotType(PLOT_TRK);
-                        time2gpst(solutionData[streamNo].time, &week);
+                        time2gpst(solutionData[streamNo].time, &startWeek);
                         updateOrigin();
                         ecef2pos(solutionData[streamNo].data[0].rr, pos);
                         mapView->setCenter(pos[0] * R2D, pos[1] * R2D);

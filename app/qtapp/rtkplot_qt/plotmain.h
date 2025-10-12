@@ -260,7 +260,7 @@ private:
     int formWidth, formHeight;
     int connectState, openRaw;
     int nObservation, *indexObservation, observationIndex;
-    int week;
+    int startWeek;
     int flush, plotType;
     int satelliteMask[MAXSAT];
     bool satelliteSelection[MAXSAT];
