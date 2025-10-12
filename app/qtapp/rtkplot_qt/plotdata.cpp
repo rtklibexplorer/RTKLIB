@@ -44,11 +44,16 @@ void Plot::readSolution(const QStringList &files, int sel)
 
     if (files.count() <= 0) return;
 
+    for (i = 0; i < files.count() && n < MAXNFILE; i++) {
+      if (files.at(i).isEmpty()) continue;
+      paths[n] = path_str[n];
+      strncpy(paths[n++], qPrintable(files.at(i)), 1023);
+    }
+    if (n == 0) return;
+
     setlocale(LC_NUMERIC, "C"); // use point as decimal separator in formatted output
 
     memset(&sol, 0, sizeof(solbuf_t));
-
-    for (i = 0; i < MAXNFILE; i++) paths[i] = path_str[i];
 
     readWaitStart();
     /* Set default to current date in case no date info in solution  (e.g. GGA msgs)*/
@@ -62,8 +67,6 @@ void Plot::readSolution(const QStringList &files, int sel)
     ep[5] = st.time().second();
     sol.time = utc2gpst(epoch2time(ep));
 
-    for (i = 0; i < files.count() && n < MAXNFILE; i++)
-        strncpy(paths[n++], qPrintable(files.at(i)), 1023);
     timeSpan(&ts, &te, &tint);
 
     showMessage(tr("Reading %1...").arg(files.first()));
