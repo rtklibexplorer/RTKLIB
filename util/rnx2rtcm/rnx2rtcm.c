@@ -193,7 +193,7 @@ static int conv_rtcm(const int *type, int n, const char *opt, const char *outfil
     rtcm.nav.geph = (geph_t *)malloc(sizeof(geph_t) * MAXPRNGLO);
     if (!rtcm.nav.geph) return 0;
     rtcm.nav.ng = rtcm.nav.ngmax = 1;
-    for (int i = 0; i < MAPRNGLO; i++) rtcm.nav.geph[i] = geph0;
+    for (int i = 0; i < MAXPRNGLO; i++) rtcm.nav.geph[i] = geph0;
 
     // Update GLONASS freq channel number
     for (int i = 0; i < nav->ng; i++) {
