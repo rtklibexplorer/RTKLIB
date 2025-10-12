@@ -1743,7 +1743,7 @@ EXPORT sol_t *getsol(solbuf_t *solbuf, int index);
 EXPORT int addsol(solbuf_t *solbuf, const sol_t *sol);
 EXPORT int readsol (const char *files[], int nfile, solbuf_t *sol);
 EXPORT int readsolt(const char *files[], int nfile, gtime_t ts, gtime_t te,
-                    double tint, int qflag, solbuf_t *sol);
+                    double tint, int qflag, int mean, solbuf_t *sol);
 EXPORT int readsolstat(const char *files[], int nfile, solstatbuf_t *statbuf);
 EXPORT int readsolstatt(const char *files[], int nfile, gtime_t ts, gtime_t te,
                         double tint, solstatbuf_t *statbuf);
@@ -1771,13 +1771,18 @@ EXPORT int outnmea_gsv(uint8_t *buff, const sol_t *sol,
 
 /* google earth kml converter ------------------------------------------------*/
 EXPORT int convkml(const char *infile, const char *outfile, gtime_t ts,
-                   gtime_t te, double tint, int qflg, double *offset,
-                   int tcolor, int pcolor, int outalt, int outtime);
+                   gtime_t te, double tint, int qflg, int mean, const char *name,
+                   double *offset, int tcolor, int pcolor, int outalt, int outtime);
 
 /* gpx converter -------------------------------------------------------------*/
 EXPORT int convgpx(const char *infile, const char *outfile, gtime_t ts,
-                   gtime_t te, double tint, int qflg, double *offset,
-                   int outtrk, int outpnt, int outalt, int outtime);
+                   gtime_t te, double tint, int qflg, int mean, const char *name,
+                   double *offset, int outtrk, int outpnt, int outalt, int outtime);
+
+// CSV converter -------------------------------------------------------------
+EXPORT int convcsv(const char *infile, const char *outfile, gtime_t ts,
+                   gtime_t te, double tint, int qflg, int mean, const char *name,
+                   double *offset, int outalt, int outtime, int outorder);
 
 /* sbas functions ------------------------------------------------------------*/
 EXPORT int  sbsreadmsg (const char *file, int sel, sbs_t *sbs);

@@ -45,27 +45,28 @@ static void outpoint(FILE *fp, gtime_t time, const double *pos,
     if (stat>=1&&stat<=6) {
         fprintf(fp," <fix>%s</fix>\n",fix_label[stat-1]);
     }
-    if (*label) {
+    if (label && *label) {
         fprintf(fp," <name>%s</name>\n",label);
     }
     fprintf(fp,"</wpt>\n");
 }
 /* output track --------------------------------------------------------------*/
-static void outtrack(FILE *fp, const solbuf_t *solbuf, int outalt, int outtime)
+static void outtrack(FILE *fp, const solbuf_t *solbuf, const char *name,
+                     int outalt, int outtime)
 {
     gtime_t time;
     double pos[3],ep[6];
     int i;
     
     fprintf(fp,"<trk>\n");
+    if (name && *name) fprintf(fp," <name>%s</name>\n",name);
     fprintf(fp," <trkseg>\n");
     for (i=0;i<solbuf->n;i++) {
         ecef2pos(solbuf->data[i].rr,pos);
         fprintf(fp,"  <trkpt lat=\"%.9f\" lon=\"%.9f\">\n",pos[0]*R2D,
                 pos[1]*R2D);
-        if (outalt) {
+        if (outalt)
             fprintf(fp,"   <ele>%.4f</ele>\n",pos[2]-(outalt==2?geoidh(pos):0.0));
-        }
         if (outtime) {
             time=solbuf->data[i].time;
             if      (outtime==2) time=gpst2utc(time);
@@ -83,8 +84,8 @@ static void outtrack(FILE *fp, const solbuf_t *solbuf, int outalt, int outtime)
     fprintf(fp,"</trk>\n");
 }
 /* save gpx file -------------------------------------------------------------*/
-static int savegpx(const char *file, const solbuf_t *solbuf, int outtrk,
-                   int outpnt, int outalt, int outtime)
+static int savegpx(const char *file, const solbuf_t *solbuf, const char *name,
+                   int outtrk, int outpnt, int outalt, int outtime)
 {
     FILE *fp;
     double pos[3];
@@ -101,8 +102,8 @@ static int savegpx(const char *file, const solbuf_t *solbuf, int outtrk,
     if (outpnt) {
         for (i=0;i<solbuf->n;i++) {
             ecef2pos(solbuf->data[i].rr,pos);
-            outpoint(fp,solbuf->data[i].time,pos,"",solbuf->data[i].stat,outalt,
-                     outtime);
+            outpoint(fp,solbuf->data[i].time,pos, solbuf->n == 1 ? name : "",
+                     solbuf->data[i].stat,outalt, outtime);
         }
     }
     /* output waypoint of ref position */
@@ -112,7 +113,7 @@ static int savegpx(const char *file, const solbuf_t *solbuf, int outtrk,
     }
     /* output track */
     if (outtrk) {
-        outtrack(fp,solbuf,outalt,outtime);
+        outtrack(fp,solbuf,name,outalt,outtime);
     }
     fprintf(fp,"%s\n",TAILGPX);
     fclose(fp);
@@ -125,6 +126,8 @@ static int savegpx(const char *file, const solbuf_t *solbuf, int outtrk,
 *          gtime_t ts,te    I   start/end time (gpst)
 *          int    tint      I   time interval (s) (0.0:all)
 *          int    qflg      I   quality flag (0:all)
+*          int    mean      I   calculate the mean when true.
+*          char   *name     I   point name.
 *          double *offset   I   add offset {east,north,up} (m)
 *          int    outtrk    I   output track    (0:off,1:on)
 *          int    outpnt    I   output waypoint (0:off,1:on)
@@ -133,8 +136,8 @@ static int savegpx(const char *file, const solbuf_t *solbuf, int outtrk,
 * return : status (0:ok,-1:file read,-2:file format,-3:no data,-4:file write)
 *-----------------------------------------------------------------------------*/
 extern int convgpx(const char *infile, const char *outfile, gtime_t ts,
-                   gtime_t te, double tint, int qflg, double *offset,
-                   int outtrk, int outpnt, int outalt, int outtime)
+                   gtime_t te, double tint, int qflg, int mean, const char *name,
+                   double *offset, int outtrk, int outpnt, int outalt, int outtime)
 {
     solbuf_t solbuf={0};
     double rr[3]={0},pos[3],dr[3];
@@ -153,7 +156,7 @@ extern int convgpx(const char *infile, const char *outfile, gtime_t ts,
     else strcpy(file,outfile);
     
     /* read solution file */
-    if (!readsolt(&infile,1,ts,te,tint,qflg,&solbuf)) return -1;
+    if (!readsolt(&infile,1,ts,te,tint,qflg,mean,&solbuf)) return -1;
     
     /* mean position */
     for (i=0;i<3;i++) {
@@ -170,7 +173,7 @@ extern int convgpx(const char *infile, const char *outfile, gtime_t ts,
         for (i=0;i<3;i++) solbuf.rb[i]+=dr[i];
     }
     /* save gpx file */
-    int r = savegpx(file,&solbuf,outtrk,outpnt,outalt,outtime)?0:-4;
+    int r = savegpx(file,&solbuf,name,outtrk,outpnt,outalt,outtime)?0:-4;
     freesolbuf(&solbuf);
     return r;
 }
