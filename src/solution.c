@@ -1377,6 +1377,71 @@ extern int outnmea_gga(uint8_t *buff, const sol_t *sol)
     p+=sprintf(p,"*%02X\r\n",sum);
     return (int)(p-(char *)buff);
 }
+// Output NMEA GST sentence (Estimated error in position) ----------------------
+extern int outnmea_gst(uint8_t *buff, const sol_t *sol)
+{
+    trace(3,"outnmea_gst:\n");
+
+    if (sol->stat <= SOLQ_NONE) return 0;
+    gtime_t time = gpst2utc(sol->time);
+    if (time.sec >= 0.995) {time.time++; time.sec=0.0;}
+    double ep[6];
+    time2epoch(time,ep);
+
+    // TODO RMS of std of range inputs.
+    double rms = 0.0;
+
+    double pos[3];
+    ecef2pos(sol->rr, pos);
+    double P[9];
+    soltocov(sol, P);
+    double Q[9];
+    covenu(pos, P, Q);
+    double lat_std = SQRT(Q[4]), lon_std = SQRT(Q[0]), height_std = SQRT(Q[8]);
+
+    // Error ellipse std of semi-major and minor axis (m) and angle from north.
+    double angle = 0, smajor = 0, sminor = 0;
+    if (Q[0] == 0) {
+      angle = 0;
+      smajor = SQRT(Q[4]);
+      sminor = 0;
+    } else if (Q[4] == 0) {
+      angle = PI / 2;
+      smajor = SQRT(Q[0]);
+      sminor = 0;
+    } else if (fabs(Q[0] - Q[4]) < 1e-6) {
+      angle = 0;
+      smajor = SQRT(Q[4]);
+      sminor = SQRT(Q[0]);
+    } else {
+      // Jacobi method.
+      double tau = (Q[4] - Q[0])/ Q[1] / 2;
+      double t = copysign(1, tau) / (fabs(tau) + SQRT(1 + tau * tau));
+      double c = 1 / SQRT(1 + t * t), s = t * c;
+      double l1 = Q[0] - t * Q[1], l2 = Q[4] + t * Q[1];
+      // Largest eigen value defines the orientation, an angle from north.
+      if (fabs(l1) > fabs(l2)) {
+        angle = atan2(c, -s);
+        smajor = SQRT(l1);
+        sminor = SQRT(l2);
+      }
+      else {
+        angle = atan2(s, c);
+        smajor = SQRT(l2);
+        sminor = SQRT(l1);
+      }
+    }
+
+    char *p = (char *)buff;
+    p += sprintf(p,"$%sGST,%02.0f%02.0f%05.2f,%.3f,%.4f,%.4f,%.3f,%.4f,%.4f,%.4f",
+                 NMEA_TID, ep[3], ep[4], ep[5],
+                 rms, smajor, sminor, angle * R2D,
+                 lat_std, lon_std, height_std);
+    char sum = 0;
+    for (char *q = (char *)buff + 1; *q; q++) sum ^= *q; // Check-sum.
+    p += sprintf(p, "*%02X\r\n", sum);
+    return (int)(p - (char *)buff);
+}
 /* output solution in the form of NMEA GSA sentences -------------------------*/
 extern int outnmea_gsa(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 {
@@ -1700,7 +1765,9 @@ extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
         case SOLF_XYZ:  p+=outecef(p,s,sol,opt);   break;
         case SOLF_ENU:  p+=outenu(p,s,sol,rb,opt); break;
         case SOLF_NMEA: p+=outnmea_rmc(p,sol);
-                        p+=outnmea_gga(p,sol); break;
+                        p+=outnmea_gga(p,sol);
+                        p+=outnmea_gst(p,sol);
+                        break;
     }
     return (int)(p-buff);
 }
@@ -1728,8 +1795,6 @@ extern int outsolexs(uint8_t *buff, const sol_t *sol, const ssat_t *ssat,
     if (opt->posf==SOLF_NMEA) {
         if (opt->nmeaintv[1]<0.0) return 0;
         if (!screent(sol->time,ts,ts,opt->nmeaintv[1])) return 0;
-    }
-    if (opt->posf==SOLF_NMEA) {
         p+=outnmea_gsa(p,sol,ssat);
         p+=outnmea_gsv(p,sol,ssat);
     }
