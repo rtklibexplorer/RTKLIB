@@ -44,11 +44,16 @@ void Plot::readSolution(const QStringList &files, int sel)
 
     if (files.count() <= 0) return;
 
+    for (i = 0; i < files.count() && n < MAXNFILE; i++) {
+      if (files.at(i).isEmpty()) continue;
+      paths[n] = path_str[n];
+      strncpy(paths[n++], qPrintable(files.at(i)), 1023);
+    }
+    if (n == 0) return;
+
     setlocale(LC_NUMERIC, "C"); // use point as decimal separator in formatted output
 
     memset(&sol, 0, sizeof(solbuf_t));
-
-    for (i = 0; i < MAXNFILE; i++) paths[i] = path_str[i];
 
     readWaitStart();
     /* Set default to current date in case no date info in solution  (e.g. GGA msgs)*/
@@ -62,14 +67,12 @@ void Plot::readSolution(const QStringList &files, int sel)
     ep[5] = st.time().second();
     sol.time = utc2gpst(epoch2time(ep));
 
-    for (i = 0; i < files.count() && n < MAXNFILE; i++)
-        strncpy(paths[n++], qPrintable(files.at(i)), 1023);
     timeSpan(&ts, &te, &tint);
 
     showMessage(tr("Reading %1...").arg(files.first()));
     showLegend(QStringList());
 
-    if (!readsolt((const char **)paths, n, ts, te, tint, SOLQ_NONE, &sol)) {
+    if (!readsolt((const char **)paths, n, ts, te, tint, SOLQ_NONE, 0, &sol)) {
         showMessage(tr("No solution data: %1...").arg(files.first()));
         showLegend(QStringList());
         readWaitEnd();
@@ -95,7 +98,7 @@ void Plot::readSolution(const QStringList &files, int sel)
         ui->btnSolution2->setChecked(true);
 
     if (sel == 0 || solutionData[0].n <= 0) {
-        time2gpst(solutionData[sel].data[0].time, &week);
+        if (solutionData[sel].n > 0) time2gpst(solutionData[sel].data[0].time, &startWeek);
         updateOrigin();
     }
     solutionIndex[0] = solutionIndex[1] = observationIndex = 0;
@@ -194,7 +197,7 @@ void Plot::readObservation(const QStringList &files)
 
     ui->btnSolution1->setChecked(true);
 
-    time2gpst(observation.data[0].time, &week);
+    time2gpst(observation.data[0].time, &startWeek);
     solutionIndex[0] = solutionIndex[1] = observationIndex = 0;
 
     if (plotType < PLOT_OBS || PLOT_DOP < plotType)
@@ -459,7 +462,7 @@ void Plot::generateVisibilityData()
 
     setWindowTitle(tr("Satellite Visibility (Predicted)"));
     ui->btnSolution1->setChecked(true);
-    time2gpst(observation.data[0].time, &week);
+    time2gpst(observation.data[0].time, &startWeek);
     solutionIndex[0] = solutionIndex[1] = observationIndex = 0;
     if (plotType < PLOT_OBS || PLOT_DOP < plotType)
         updatePlotType(PLOT_OBS);
@@ -1461,7 +1464,7 @@ void Plot::clear()
 
     trace(3, "clear\n");
 
-    week = 0;
+    startWeek = 0;
 
     clearObservation();
     clearSolution();

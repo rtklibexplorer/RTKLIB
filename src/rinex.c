@@ -2419,10 +2419,9 @@ static void outrinexevent(FILE *fp, const rnxopt_t *opt, const obsd_t *obs,
 extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
                       int flag)
 {
-    const char *mask;
     double epdiff,ep[6],dL;
     char sats[MAXOBS][4]={""};
-    int i,j,k,m,ns,sys,ind[MAXOBS],s[MAXOBS]={0};
+    int i,k,ns,sys,ind[MAXOBS],s[MAXOBS]={0};
 
     trace(3,"outrnxobsb: n=%d\n",n);
 
@@ -2442,8 +2441,13 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
             case SYS_IRN: s[ns]=RNX_SYS_IRN; break;
             default: continue;
         }
-        if (!opt->nobs[(opt->rnxver<=299)?RNX_SYS_GPS:s[ns]]) continue;
-        ind[ns++]=i;
+        int m = (opt->rnxver <= 299) ? RNX_SYS_GPS : s[ns];
+        const char *mask = opt->mask[m];
+        int nobs = 0;
+        for (int j = 0; j < opt->nobs[m]; j++)
+          if (obsindex(opt->rnxver, sys, obs[i].code, opt->tobs[m][j], mask) >= 0) nobs++;
+        if (nobs == 0) continue;
+        ind[ns++] = i;
     }
     if (ns<=0) return 1;
     /* if epoch of event less than epoch of observation, then first output
@@ -2467,6 +2471,8 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
     for (i=0;i<ns;i++) {
         sys=satsys(obs[ind[i]].sat,NULL);
 
+        int m;
+        const char *mask;
         if (opt->rnxver<=299) { /* ver.2 */
             m=RNX_SYS_GPS;
             mask=opt->mask[s[i]];
@@ -2476,7 +2482,7 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
             m=s[i];
             mask=opt->mask[m];
         }
-        for (j=0;j<opt->nobs[m];j++) {
+        for (int j=0;j<opt->nobs[m];j++) {
 
             if (opt->rnxver<=299) { /* ver.2 */
                 if (j%5==0) fprintf(fp,"\n");

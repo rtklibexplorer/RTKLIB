@@ -470,7 +470,7 @@ void Plot::updatePoint(int x, int y)
         msg = tr("El: %1°").arg(q[0], 4, 'f', 1);
     } else {
         graphTriple[0]->toPos(p, xx, yy);
-        time = gpst2time(week, xx);
+        time = gpst2time(startWeek, xx);
         if (plotOptDialog->getTimeFormat() == 2)
             time = utc2gpst(time);                         // UTC
         else if (plotOptDialog->getTimeFormat() == 3)
@@ -519,7 +519,7 @@ QString Plot::plotDetails(const QPoint &globalPos) {
                     int sat = static_cast<int>((yy/ys) / (p2.y() - p1.y()) * nSats - 0.5);
                     satno2id(yp[sat] + 1, id);
 
-                    time = gpst2time(week, xx);
+                    time = gpst2time(startWeek, xx);
                     if (plotOptDialog->getTimeFormat() == 2)
                         time = utc2gpst(time);                         // UTC
                     else if (plotOptDialog->getTimeFormat() == 3)
