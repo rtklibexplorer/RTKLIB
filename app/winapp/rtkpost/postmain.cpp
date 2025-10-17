@@ -1513,6 +1513,7 @@ void __fastcall TMainForm::LoadOpt(void)
     ConvDialog->TimeY2    ->Text     =ini->ReadString ("conv","timey2","2000/01/01");
     ConvDialog->TimeH2    ->Text     =ini->ReadString ("conv","timeh2","00:00:00"  );
     ConvDialog->TimeInt   ->Text     =ini->ReadString ("conv","timeint", "0");
+    ConvDialog->SingleMeanF->Checked =ini->ReadInteger("conv","mean",  0);
     ConvDialog->TrackColor->ItemIndex=ini->ReadInteger("conv","trackcolor",5);
     ConvDialog->PointColor->ItemIndex=ini->ReadInteger("conv","pointcolor",5);
     ConvDialog->OutputAlt ->ItemIndex=ini->ReadInteger("conv","outputalt", 0);
@@ -1522,7 +1523,10 @@ void __fastcall TMainForm::LoadOpt(void)
     ConvDialog->Offset2   ->Text     =ini->ReadString ("conv","offset2", "0");
     ConvDialog->Offset3   ->Text     =ini->ReadString ("conv","offset3", "0");
     ConvDialog->Compress  ->Checked  =ini->ReadInteger("conv","compress",  0);
-    ConvDialog->FormatKML ->Checked  =ini->ReadInteger("conv","format",    0);
+    int format = ini->ReadInteger("conv","format", 0);
+    ConvDialog->FormatKML ->Checked = format == 0;
+    ConvDialog->FormatCSV ->Checked = format == 1;
+    ConvDialog->FormatGPX ->Checked = format != 0 && format != 1;
     
     TTextViewer::Color1=(TColor)ini->ReadInteger("viewer","color1",(int)clBlack);
     TTextViewer::Color2=(TColor)ini->ReadInteger("viewer","color2",(int)clWhite);
@@ -1748,6 +1752,7 @@ void __fastcall TMainForm::SaveOpt(void)
     ini->WriteString ("conv","timeh2",     ConvDialog->TimeH2    ->Text     );
     ini->WriteInteger("conv","timeintf",   ConvDialog->TimeIntF  ->Checked  );
     ini->WriteString ("conv","timeint",    ConvDialog->TimeInt   ->Text     );
+    ini->WriteInteger("conv","mean",       ConvDialog->SingleMeanF->Checked  );
     ini->WriteInteger("conv","trackcolor", ConvDialog->TrackColor->ItemIndex);
     ini->WriteInteger("conv","pointcolor", ConvDialog->PointColor->ItemIndex);
     ini->WriteInteger("conv","outputalt",  ConvDialog->OutputAlt ->ItemIndex);
@@ -1757,7 +1762,7 @@ void __fastcall TMainForm::SaveOpt(void)
     ini->WriteString ("conv","offset2",    ConvDialog->Offset2   ->Text     );
     ini->WriteString ("conv","offset3",    ConvDialog->Offset3   ->Text     );
     ini->WriteInteger("conv","compress",   ConvDialog->Compress  ->Checked  );
-    ini->WriteInteger("conv","format",     ConvDialog->FormatKML ->Checked  );
+    ini->WriteInteger("conv","format",     ConvDialog->FormatKML ->Checked ? 0 : (ConvDialog->FormatCSV ->Checked ? 1 : 2));
     
     ini->WriteInteger("viewer","color1",(int)TTextViewer::Color1  );
     ini->WriteInteger("viewer","color2",(int)TTextViewer::Color2  );

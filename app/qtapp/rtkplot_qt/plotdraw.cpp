@@ -705,7 +705,7 @@ void Plot::drawSolution(QPainter &c, int level, int type)
         graphTriple[panel]->setLabelUnits("", " " + unit[type]);
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) : \
             (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
-        graphTriple[panel]->week = week;
+        graphTriple[panel]->week = startWeek;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
 
@@ -949,7 +949,7 @@ void Plot::drawNsat(QPainter &c, int level)
         graphTriple[panel]->setLabelUnits("", panel == 1 ? tr(" s") : "" );
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) :
                                                  (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
-        graphTriple[panel]->week = week;
+        graphTriple[panel]->week = startWeek;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
 
@@ -1025,7 +1025,7 @@ void Plot::drawObservation(QPainter &c, int level)
     
     graphSingle->xLabelPosition = plotOptDialog->getTimeFormat() ? Graph::LabelPosition::Time : Graph::LabelPosition::Outer;
     graphSingle->yLabelPosition = Graph::LabelPosition::Off;
-    graphSingle->week = week;
+    graphSingle->week = startWeek;
 
     graphSingle->getLimits(xl, yl);
     yl[0] = 0.5;
@@ -1884,7 +1884,7 @@ void Plot::drawDop(QPainter &c, int level)
     
     graphSingle->xLabelPosition = plotOptDialog->getTimeFormat() ? Graph::LabelPosition::Time : Graph::LabelPosition::Outer;
     graphSingle->yLabelPosition = Graph::LabelPosition::Outer;
-    graphSingle->week = week;
+    graphSingle->week = startWeek;
 
     // adjest plot limits
     graphSingle->getLimits(xl, yl);
@@ -2027,7 +2027,7 @@ void Plot::drawSolDop(QPainter &c, int level) {
   graphSingle->xLabelPosition =
       plotOptDialog->getTimeFormat() ? Graph::LabelPosition::Time : Graph::LabelPosition::Outer;
   graphSingle->yLabelPosition = Graph::LabelPosition::Outer;
-  graphSingle->week = week;
+  graphSingle->week = startWeek;
 
   // Adjust plot limits.
   double xl[2], yl[2];
@@ -2312,7 +2312,7 @@ void Plot::drawSnr(QPainter &c, int level)
         graphTriple[panel]->setLabelUnits("", " " + unit[panel]);
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) :
                                         (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
-        graphTriple[panel]->week = week;
+        graphTriple[panel]->week = startWeek;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
 
@@ -2915,7 +2915,7 @@ void Plot::drawResidual(QPainter &c, int level)
         graphTriple[panel]->setLabelUnits("", panel == 2 ? tr("") : tr(" m"));
         graphTriple[panel]->xLabelPosition = plotOptDialog->getTimeFormat() ? (panel == bottomPanel ? Graph::LabelPosition::Time : Graph::LabelPosition::None) :
                                         (panel == bottomPanel ? Graph::LabelPosition::Outer : Graph::LabelPosition::Off);
-        graphTriple[panel]->week = week;
+        graphTriple[panel]->week = startWeek;
         graphTriple[panel]->drawAxis(c, plotOptDialog->getShowGridLabel(), plotOptDialog->getShowGridLabel());
     }
 

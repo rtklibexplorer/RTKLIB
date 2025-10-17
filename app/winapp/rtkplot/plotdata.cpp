@@ -62,7 +62,7 @@ void __fastcall TPlot::ReadSol(TStrings *files, int sel)
     ShowMsg(s.sprintf("reading %s...",paths[0]));
     ShowLegend(NULL);
     
-    if (!readsolt((const char **)paths,n,ts,te,tint,SOLQ_NONE,&sol)) {
+    if (!readsolt((const char **)paths,n,ts,te,tint,SOLQ_NONE,0,&sol)) {
         ShowMsg(s.sprintf("no solution data : %s...",paths[0]));
         ShowLegend(NULL);
         ReadWaitEnd();
@@ -87,7 +87,8 @@ void __fastcall TPlot::ReadSol(TStrings *files, int sel)
     else        BtnSol2->Down=true;
     
     if (sel==0||SolData[0].n<=0) {
-        time2gpst(SolData[sel].data[0].time,&Week);
+        if (SolData[sel].n > 0)
+          time2gpst(SolData[sel].data[0].time,&Week);
         UpdateOrigin();
     }
     SolIndex[0]=SolIndex[1]=ObsIndex=0;

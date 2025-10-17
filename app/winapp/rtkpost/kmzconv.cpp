@@ -22,7 +22,7 @@ static double str2dbl(AnsiString str)
 //---------------------------------------------------------------------------
 void __fastcall TConvDialog::FormShow(TObject *Sender)
 {
-	FormatGPX->Checked=!FormatKML->Checked;
+	FormatGPX->Checked=!FormatKML->Checked && !FormatCSV->Checked;
 	GoogleEarthFile->Text=MainForm->GoogleEarthFile;
 }
 //---------------------------------------------------------------------------
@@ -40,17 +40,22 @@ void __fastcall TConvDialog::SetInput(AnsiString File)
 //---------------------------------------------------------------------------
 void __fastcall TConvDialog::TimeSpanClick(TObject *Sender)
 {
-	UpdateEnable();	
+	UpdateEnable();
 }
 //---------------------------------------------------------------------------
 void __fastcall TConvDialog::AddOffsetClick(TObject *Sender)
 {
-	UpdateEnable();	
+	UpdateEnable();
 }
 //---------------------------------------------------------------------------
 void __fastcall TConvDialog::TimeIntFClick(TObject *Sender)
 {
-	UpdateEnable();	
+	UpdateEnable();
+}
+//---------------------------------------------------------------------------
+void __fastcall TConvDialog::SingleMeanFClick(TObject *Sender)
+{
+	UpdateEnable();
 }
 //---------------------------------------------------------------------------
 void __fastcall TConvDialog::BtnInputFileClick(TObject *Sender)
@@ -95,6 +100,9 @@ void __fastcall TConvDialog::BtnConvertClick(TObject *Sender)
 		offset[2]=str2dbl(Offset3->Text);
 	}
 	if (TimeIntF->Checked) tint=str2dbl(TimeInt->Text);
+	int mean = SingleMeanF->Checked ? 1 : 0;
+        char *name = NULL; // TODO
+        int csvorder = 0; // TODO
 	strcpy(file,InputFile_Text.c_str());
 	if (FormatKML->Checked) {
 		if (Compress->Checked) {
@@ -103,13 +111,19 @@ void __fastcall TConvDialog::BtnConvertClick(TObject *Sender)
 			strcpy(p,".kml");
 		}
 		stat=convkml(file,Compress->Checked?kmlfile:OutputFile_Text.c_str(),
-		             ts,te,tint,QFlags->ItemIndex,offset,
+		             ts,te,tint,QFlags->ItemIndex,mean,name,offset,
 		             TrackColor->ItemIndex,PointColor->ItemIndex,
 		             OutputAlt->ItemIndex,OutputTime->ItemIndex);
 	}
+	else if (FormatCSV->Checked) {
+		stat=convcsv(file,Compress->Checked?kmlfile:OutputFile_Text.c_str(),
+		             ts,te,tint,QFlags->ItemIndex,mean,name,offset,
+		             OutputAlt->ItemIndex,OutputTime->ItemIndex,
+                             csvorder);
+	}
 	else {
 		stat=convgpx(file,Compress->Checked?kmlfile:OutputFile_Text.c_str(),
-		             ts,te,tint,QFlags->ItemIndex,offset,
+		             ts,te,tint,QFlags->ItemIndex,mean,name,offset,
 		             TrackColor->ItemIndex,PointColor->ItemIndex,
 		             OutputAlt->ItemIndex,OutputTime->ItemIndex);
 	}
@@ -154,6 +168,8 @@ void __fastcall TConvDialog::UpdateEnable(void)
 	TimeY2UD->Enabled=TimeSpan->Checked;
 	TimeH2UD->Enabled=TimeSpan->Checked;
 	TimeInt->Enabled=TimeIntF->Checked;
+	TrackColor->Enabled=!FormatCSV->Checked;
+        PointColor->Enabled=!FormatCSV->Checked;
 	BtnGoogle->Visible=FormatKML->Checked;
 	Compress->Visible=FormatKML->Checked;
 	GoogleEarthFile->Enabled=FormatKML->Checked;
@@ -192,7 +208,7 @@ void __fastcall TConvDialog::UpdateOutFile(void)
 	if (InputFile->Text=="") return;
 	strcpy(file,InputFile_Text.c_str());
 	if (!(p=strrchr(file,'.'))) p=file+strlen(file);
-	strcpy(p,FormatGPX->Checked?".gpx":(Compress->Checked?".kmz":".kml"));
+	strcpy(p,FormatGPX->Checked?".gpx":(FormatCSV->Checked?".csv":(Compress->Checked?".kmz":".kml")));
 	OutputFile->Text=file;
 }
 //---------------------------------------------------------------------------
@@ -272,6 +288,12 @@ void __fastcall TConvDialog::BtnGoogleEarthFileClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 void __fastcall TConvDialog::FormatKMLClick(TObject *Sender)
+{
+	UpdateOutFile();
+	UpdateEnable();
+}
+//---------------------------------------------------------------------------
+void __fastcall TConvDialog::FormatCSVClick(TObject *Sender)
 {
 	UpdateOutFile();
 	UpdateEnable();

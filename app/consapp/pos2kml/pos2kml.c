@@ -38,8 +38,12 @@ static const char *help[]={
 " -tu       output time stamp of utc [gpst]",
 " -i tint   output time interval (s) (0:all) [0]",
 " -q qflg   output q-flags (0:all) [0]",
+" -m        output a single mean position [false]",
+" -n        output point name [none]",
+" -lonlat   CSV format order longitude / latitude [latitude/longitude]",
 " -f n e h  add north/east/height offset to position (m) [0 0 0]",
 " -gpx      output GPX file"
+" -csv      output CSV file"
 };
 /* print help ----------------------------------------------------------------*/
 static void printhelp(void)
@@ -51,8 +55,9 @@ static void printhelp(void)
 /* pos2kml main --------------------------------------------------------------*/
 int main(int argc, char **argv)
 {
-    int i,j,n,outalt=0,outtime=0,qflg=0,tcolor=5,pcolor=5,gpx=0,stat;
-    char *infile[32],*outfile="";
+    int i,j,n,outalt=0,outtime=0,qflg=0,tcolor=5,pcolor=5,gpx=0,csv=0,stat;
+    int mean=0,csvorder=0;
+    char *infile[32],*outfile="",*name=NULL;
     double offset[3]={0.0},tint=0.0,es[6]={2000,1,1},ee[6]={2000,1,1};
     gtime_t ts={0},te={0};
     
@@ -77,9 +82,13 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-ag")) outalt=2;
         else if (!strcmp(argv[i],"-tg")) outtime=1;
         else if (!strcmp(argv[i],"-tu")) outtime=2;
+        else if (!strcmp(argv[i],"-lonlat")) csvorder=1;
         else if (!strcmp(argv[i],"-i")&&i+i<argc) tint=atof(argv[++i]);
         else if (!strcmp(argv[i],"-q")&&i+i<argc) qflg=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-m")) mean=1;
+        else if (!strcmp(argv[i],"-n")&&i+1<argc) name=argv[++i];
         else if (!strcmp(argv[i],"-gpx")) gpx=1;
+        else if (!strcmp(argv[i],"-csv")) csv=1;
         else if (!strcmp(argv[i], "--version")) {
             fprintf(stderr, "pos2kml RTKLIB %s %s\n", VER_RTKLIB, PATCH_LEVEL);
             exit(0);
@@ -97,11 +106,14 @@ int main(int argc, char **argv)
     }
     for (i=0;i<n;i++) {
         if (gpx) {
-            stat=convgpx(infile[i],outfile,ts,te,tint,qflg,offset,tcolor,pcolor,
+            stat=convgpx(infile[i],outfile,ts,te,tint,qflg,mean,name,offset,tcolor,pcolor,
                          outalt,outtime);
         }
+        else if (csv) {
+            stat=convcsv(infile[i],outfile,ts,te,tint,qflg,mean,name,offset,outalt,outtime,csvorder);
+        }
         else {
-            stat=convkml(infile[i],outfile,ts,te,tint,qflg,offset,tcolor,pcolor,
+            stat=convkml(infile[i],outfile,ts,te,tint,qflg,mean,name,offset,tcolor,pcolor,
                          outalt,outtime);
         }
         switch (stat) {
