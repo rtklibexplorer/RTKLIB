@@ -13,9 +13,7 @@ object StrMonDialog: TStrMonDialog
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   OnResize = FormResize
-  PixelsPerInch = 96
   TextHeight = 13
   object Console: TPaintBox
     Left = 0
@@ -144,21 +142,32 @@ object StrMonDialog: TStrMonDialog
       OnClick = BtnStopClick
     end
     object Panel2: TPanel
-      Left = 556
+      Left = 484
       Top = 1
-      Width = 66
+      Width = 138
       Height = 22
       Align = alRight
       BevelOuter = bvNone
       TabOrder = 0
-      object BtnClose: TButton
+      object BtnCopy: TButton
         Left = 0
         Top = 0
         Width = 66
         Height = 22
-        Align = alClient
-        Caption = '&Close'
+        Margins.Right = 6
+        Align = alLeft
+        Caption = '&Copy'
         TabOrder = 0
+        OnClick = BtnCopyClick
+      end
+      object BtnClose: TButton
+        Left = 72
+        Top = 0
+        Width = 66
+        Height = 22
+        Align = alRight
+        Caption = '&Close'
+        TabOrder = 1
         OnClick = BtnCloseClick
       end
     end
