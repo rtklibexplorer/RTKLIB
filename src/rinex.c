@@ -936,7 +936,7 @@ static int addobsdata(obs_t *obs, const obsd_t *data)
     if (obs->nmax<=obs->n) {
         if (obs->nmax<=0) obs->nmax=NINCOBS; else obs->nmax*=2;
         if (!(obs_data=(obsd_t *)realloc(obs->data,sizeof(obsd_t)*obs->nmax))) {
-            trace(1,"addobsdata: malloc error n=%dx%d\n",sizeof(obsd_t),obs->nmax);
+            trace(1,"addobsdata: malloc error n=%zdx%d\n",sizeof(obsd_t),obs->nmax);
             free(obs->data); obs->data=NULL; obs->n=obs->nmax=0;
             return -1;
         }
