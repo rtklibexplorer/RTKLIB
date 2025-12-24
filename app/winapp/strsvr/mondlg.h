@@ -26,6 +26,7 @@ __published:
 	TSpeedButton *BtnStop;
 	TComboBox *SelFmt;
 	void __fastcall BtnCloseClick(TObject *Sender);
+	void __fastcall BtnCopyClick(TObject *Sender);
 	void __fastcall BtnClearClick(TObject *Sender);
 	void __fastcall ConsolePaint(TObject *Sender);
 	void __fastcall ScrollChange(TObject *Sender);
