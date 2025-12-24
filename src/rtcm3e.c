@@ -788,6 +788,31 @@ static int encode_type1012(rtcm_t *rtcm, int sync)
     rtcm->nbit=i;
     return 1;
 }
+// Encode type 1013: system parameters -----------------------------------------
+static int encode_type1013(rtcm_t *rtcm, int sync)
+{
+    trace(3,"encode_type1013: sync=%d\n", sync);
+    int i = 24;
+    const double ep[] = {2000, 1, 1, 12, 0, 0};
+    gtime_t utc = gpst2utc(rtcm->time);
+    int leaps = timediff(rtcm->time, utc);
+    double mjd = 51544.5 + (timediff(utc, epoch2time(ep))) / 86400.0;
+    uint32_t mjdi = floor(mjd);
+    uint32_t tod = round((mjd - mjdi) * 86400.0);
+    setbitu(rtcm->buff, i, 12, 1013      ); i += 12; // Message no.
+    setbitu(rtcm->buff, i, 12, 0         ); i += 12; // Ref station id.
+    setbitu(rtcm->buff, i, 16, mjd       ); i += 16; // MJD.
+    setbitu(rtcm->buff, i, 17, tod       ); i += 17; // Time of day, seconds.
+    setbitu(rtcm->buff, i,  5, rtcm->nmsg); i +=  5; // Number of messages.
+    setbitu(rtcm->buff, i,  8, leaps     ); i +=  8; // Leap seconds, GPST-UTC.
+    for (int n = 0; n < rtcm->nmsg; n++) {
+      setbitu(rtcm->buff, i, 12, rtcm->msgs[n]); i+=12; // Message ID.
+      setbitu(rtcm->buff, i,  1, 1            ); i+= 1; // Synchronous.
+      setbitu(rtcm->buff, i, 16, round(rtcm->tint[n] * 10.0)); i+= 16; // Interval.
+    }
+    rtcm->nbit=i;
+    return 1;
+}
 /* encode type 1019: GPS ephemerides -----------------------------------------*/
 static int encode_type1019(rtcm_t *rtcm, int sync)
 {
@@ -2665,6 +2690,7 @@ extern int encode_rtcm3(rtcm_t *rtcm, int type, int subtype, int sync)
         case 1010: ret=encode_type1010(rtcm,sync);     break;
         case 1011: ret=encode_type1011(rtcm,sync);     break;
         case 1012: ret=encode_type1012(rtcm,sync);     break;
+        case 1013: ret=encode_type1013(rtcm,sync);     break;
         case 1019: ret=encode_type1019(rtcm,sync);     break;
         case 1020: ret=encode_type1020(rtcm,sync);     break;
         case 1033: ret=encode_type1033(rtcm,sync);     break;
