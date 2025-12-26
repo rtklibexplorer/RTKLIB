@@ -1575,10 +1575,10 @@ void MonitorDialog::setStream()
     header	<< tr("STR") << tr("Stream") << tr("Type") << tr("Format") << tr("Mode") << tr("State") << tr("Input (bytes)") << tr("Input (bps)")
         << tr("Output (bytes)") << tr("Output (bps)") << tr("Path") << tr("Message");
 
-    int i, width[] = {40, 150, 120, 110, 50, 50, 140, 140, 140, 140, 220, 220};
+    int i, width[] = {45, 170, 120, 150, 60, 55, 120, 110, 135, 120, 220, 220};
 
     ui->tWConsole->setColumnCount(12);
-    ui->tWConsole->setRowCount(9);
+    ui->tWConsole->setRowCount(MAXSTRRTK + 1);
     ui->tWConsole->setHorizontalHeaderLabels(header);
 
     for (i = 0; i < ui->tWConsole->columnCount(); i++)
@@ -1593,9 +1593,10 @@ void MonitorDialog::setStream()
 //---------------------------------------------------------------------------
 void MonitorDialog::showStream()
 {
-    const QString ch[] = {
-        tr("Input Rover"), tr("Input Base"), tr("Input Correction"), tr("Output Solution 1"),
-        tr("Output Solution 2"), tr("Log Rover"), tr("Log Base"), tr("Log Correction"),
+    const QString ch[MAXSTRRTK + 1] = {
+        tr("Input Rover"), tr("Input Base"), tr("Input Correction"),
+        tr("Log Rover"), tr("Log Base"), tr("Log Correction"),
+        tr("Output Solution 1"), tr("Output Solution 2"), tr("Output Solution 3"),
         tr("Monitor")
 	};
     const QString type[] = {
@@ -1608,26 +1609,26 @@ void MonitorDialog::showStream()
         tr("Solution stats"), tr("GSI F1/F2")};
     const QString state[] = {tr("Error"), tr("-"), tr("OK")};
     QString mode, form;
-	stream_t stream[9];
-    int i, format[9] = {0};
+	stream_t stream[MAXSTRRTK + 1];
+    int i, format[MAXSTRRTK + 1] = {0};
     char path[MAXSTRPATH] = "", *p, *q;
 
     rtksvrlock(rtksvr); // lock
-    for (i = 0; i < 8; i++) stream[i] = rtksvr->stream[i];
+    for (i = 0; i < MAXSTRRTK; i++) stream[i] = rtksvr->stream[i];
     for (i = 0; i < 3; i++) format[i] = rtksvr->format[i];
-    for (i = 3; i < 5; i++) format[i] = rtksvr->solopt[i - 3].posf;
-    stream[8] = *monistr;
-    format[8] = SOLF_LLH;
+    for (i = 0; i < RTKSVRNSOL; i++) format[6+i] = rtksvr->solopt[i].posf;
+    stream[MAXSTRRTK] = *monistr;
+    format[MAXSTRRTK] = SOLF_LLH;
     rtksvrunlock(rtksvr); // unlock
 
-    for (i = 0; i < 9; i++) {
+    for (i = 0; i < MAXSTRRTK + 1; i++) {
         int j = 0;
         ui->tWConsole->item(i, j++)->setText(QString("(%1)").arg(i+1));
         ui->tWConsole->item(i, j++)->setText(ch[i]);
         ui->tWConsole->item(i, j++)->setText(type[stream[i].type]);
         if (!stream[i].type) form = "-";
         else if (i < 3) form = formatstrs[format[i]];
-        else if (i < 5 || i == 8) form = outformat[format[i]];
+        else if (i >= 6) form = outformat[format[i]];
         else form = "-";
         ui->tWConsole->item(i, j++)->setText(form);
         if (stream[i].mode & STR_MODE_R) mode = tr("R"); else mode = "";

@@ -277,7 +277,10 @@ extern "C" {
 #define MAXCOMMENT  100                 /* max number of RINEX comments */
 #define MAXSTRPATH  1024                /* max length of stream path */
 #define MAXSTRMSG   1024                /* max length of stream message */
-#define MAXSTRRTK   8                   /* max number of stream in RTK server */
+#ifndef RTKSVRNSOL
+#define RTKSVRNSOL  3                   // Number of RTK server output streams.
+#endif
+#define MAXSTRRTK   (6 + RTKSVRNSOL)    // Max number of stream in RTK server.
 #define MAXSBSMSG   32                  /* max number of SBAS msg in RTK server */
 #define MAXSOLLEN   512                 /* max line length of solution message */
 #define MAXSOLMSG   32768               /* max length of solution messages */
@@ -1311,16 +1314,16 @@ typedef struct {        /* RTK server type */
     double nmeapos[3];  /* NMEA request position (ecef) (m) */
     int buffsize;       /* input buffer size (bytes) */
     int format[3];      /* input format {rov,base,corr} */
-    solopt_t solopt[2]; /* output solution options {sol1,sol2} */
+    solopt_t solopt[RTKSVRNSOL]; /* output solution options {sol1,sol2,sol3} */
     int navsel;         /* ephemeris select (0:all,1:rover,2:base,3:corr) */
     int nsbs;           /* number of sbas message */
     int nsol;           /* number of solution buffer */
     rtk_t rtk;          /* RTK control/result struct */
     int nb [3];         /* bytes in input buffers {rov,base} */
-    int nsb[2];         /* bytes in solution buffers */
+    int nsb[RTKSVRNSOL]; /* bytes in solution buffers */
     int npb[3];         /* bytes in input peek buffers */
     uint8_t *buff[3];   /* input buffers {rov,base,corr} */
-    uint8_t *sbuf[2];   /* output buffers {sol1,sol2} */
+    uint8_t *sbuf[RTKSVRNSOL]; /* output buffers {sol1,sol2} */
     uint8_t *pbuf[3];   /* peek buffers {rov,base,corr} */
     sol_t solbuf[MAXSOLBUF]; /* solution line buffer */
     uint32_t nmsg[3][10]; /* input message counts */
@@ -1331,7 +1334,7 @@ typedef struct {        /* RTK server type */
     obs_t obs[3][MAXOBSBUF]; /* observation data {rov,base,corr} */
     nav_t nav;          /* navigation data */
     sbsmsg_t sbsmsg[MAXSBSMSG]; /* SBAS message buffer */
-    stream_t stream[8]; /* streams {rov,base,corr,sol1,sol2,logr,logb,logc} */
+    stream_t stream[MAXSTRRTK]; /* streams {rov,base,corr,logr,logb,logc,sol1,sol2,sol3} */
     stream_t *moni;     /* monitor stream */
     uint32_t tick;      /* start tick */
     rtklib_thread_t thread; /* server thread */

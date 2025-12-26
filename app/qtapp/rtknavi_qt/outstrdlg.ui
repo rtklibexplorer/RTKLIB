@@ -165,6 +165,13 @@
         </property>
        </widget>
       </item>
+      <item row="3" column="0" colspan="2">
+       <widget class="QLineEdit" name="lEFilePath3">
+        <property name="toolTip">
+         <string>Specify file name for third solution data stream</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -183,70 +190,6 @@
       <property name="bottomMargin">
        <number>0</number>
       </property>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="cBStream1C">
-        <property name="toolTip">
-         <string>Enable first output stream for solution data</string>
-        </property>
-        <property name="text">
-         <string>(4) Solution 1</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QPushButton" name="btnStream2">
-        <property name="toolTip">
-         <string>Select options for the second solution data stream</string>
-        </property>
-        <property name="text">
-         <string>...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="cBStream2">
-        <property name="toolTip">
-         <string>Select stream type for second solution output stream</string>
-        </property>
-        <item>
-         <property name="text">
-          <string>Serial</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>TCP Client</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>TCP Server</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>NTRIP Server</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>NTRIP Caster</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>File</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="Label5">
-        <property name="text">
-         <string>Type</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="0">
        <widget class="QLabel" name="Label10">
         <property name="sizePolicy">
@@ -257,6 +200,38 @@
         </property>
         <property name="text">
          <string>Output Stream</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="Label5">
+        <property name="text">
+         <string>Type</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="Label6">
+        <property name="text">
+         <string>Options</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="Label7">
+        <property name="text">
+         <string>Format</string>
+        </property>
+       </widget>
+      </item>
+
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="cBStream1C">
+        <property name="toolTip">
+         <string>Enable first output stream for solution data</string>
+        </property>
+        <property name="text">
+         <string>(7) Solution 1</string>
         </property>
        </widget>
       </item>
@@ -297,23 +272,6 @@
         </item>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="cBStream2C">
-        <property name="toolTip">
-         <string>Enable second output stream for solution data</string>
-        </property>
-        <property name="text">
-         <string>(5) Solution 2</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="Label6">
-        <property name="text">
-         <string>Options</string>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="2">
        <widget class="QPushButton" name="btnStream1">
         <property name="toolTip">
@@ -321,13 +279,6 @@
         </property>
         <property name="text">
          <string>...</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="Label7">
-        <property name="text">
-         <string>Format</string>
         </property>
        </widget>
       </item>
@@ -363,6 +314,64 @@
         </item>
        </widget>
       </item>
+
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="cBStream2C">
+        <property name="toolTip">
+         <string>Enable second output stream for solution data</string>
+        </property>
+        <property name="text">
+         <string>(8) Solution 2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="cBStream2">
+        <property name="toolTip">
+         <string>Select stream type for second solution output stream</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>Serial</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>TCP Client</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>TCP Server</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NTRIP Server</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NTRIP Caster</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>File</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="btnStream2">
+        <property name="toolTip">
+         <string>Select options for the second solution data stream</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
       <item row="2" column="3">
        <widget class="QComboBox" name="cBFormat2">
         <property name="toolTip">
@@ -395,6 +404,97 @@
         </item>
        </widget>
       </item>
+
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="cBStream3C">
+        <property name="toolTip">
+         <string>Enable third output stream for solution data</string>
+        </property>
+        <property name="text">
+         <string>(9) Solution 3</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="cBStream3">
+        <property name="toolTip">
+         <string>Select stream type for third solution output stream</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>Serial</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>TCP Client</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>TCP Server</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NTRIP Server</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NTRIP Caster</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>File</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QPushButton" name="btnStream3">
+        <property name="toolTip">
+         <string>Select options for the third solution data stream</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QComboBox" name="cBFormat3">
+        <property name="toolTip">
+         <string>Select time and position format for data stream</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>Lat/Lon/Height</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>X/Y/Z-ECEF</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>E/N/U-Baseline</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>NMEA0183</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Solution Status</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+
      </layout>
     </widget>
    </item>
@@ -409,9 +509,14 @@
   <tabstop>cBStream2</tabstop>
   <tabstop>btnStream2</tabstop>
   <tabstop>cBFormat2</tabstop>
+  <tabstop>cBStream3C</tabstop>
+  <tabstop>cBStream3</tabstop>
+  <tabstop>btnStream3</tabstop>
+  <tabstop>cBFormat3</tabstop>
   <tabstop>btnKey</tabstop>
   <tabstop>lEFilePath1</tabstop>
   <tabstop>lEFilePath2</tabstop>
+  <tabstop>lEFilePath3</tabstop>
   <tabstop>cBTimeTag</tabstop>
   <tabstop>cBSwapInterval</tabstop>
  </tabstops>
