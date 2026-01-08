@@ -13,10 +13,8 @@ object MonitorDialog: TMonitorDialog
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   OnClose = FormClose
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object Console: TPaintBox
     Left = 0
@@ -314,6 +312,21 @@ object MonitorDialog: TMonitorDialog
       Items.Strings = (
         '(4) Solution 1'
         '(5) Solution 2')
+    end
+    object BtnCopy: TButton
+      AlignWithMargins = True
+      Left = 748
+      Top = 1
+      Width = 70
+      Height = 22
+      Margins.Left = 2
+      Margins.Top = 0
+      Margins.Right = 1
+      Margins.Bottom = 0
+      Align = alRight
+      Caption = '&Copy'
+      TabOrder = 11
+      OnClick = BtnCopyClick
     end
     object BtnClose: TButton
       AlignWithMargins = True
