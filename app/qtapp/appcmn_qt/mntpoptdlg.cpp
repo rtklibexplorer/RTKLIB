@@ -30,7 +30,7 @@ void MntpOptDialog::setOption(int option)
 //---------------------------------------------------------------------------
 QString MntpOptDialog::getMountPointString()
 {
-    return "STR;" + getMountPoint() +
+    return "STR;" + getMountPoint() + ";" +
            ui->lESourceTable3->text() + ";" +
            ui->lESourceTable4->text() + ";" +
            ui->lESourceTable5->text() + ";" +
