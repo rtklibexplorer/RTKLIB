@@ -526,7 +526,7 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
                       double *Lc, double *Pc)
 {
     double freq[NFREQ]={0},C1,C2,biasCode,biasPhase;
-    int i,ix=0,frq,frq2,bias_ix,sys=satsys(obs->sat,NULL);
+    int i,frq2,sys=satsys(obs->sat,NULL);
 
     for (i=0;i<opt->nf;i++) {
         L[i]=P[i]=0.0;
@@ -546,10 +546,10 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
             L[i]+=nav->ssr[obs->sat-1].pbias[bias_code-1];
         }
         else {   /* apply osb corrections from file */
-            if ( !get_osb_corr(nav, obs->sat, obs->code, 0, obs->time, &biasCode) ||
-                (!get_osb_corr(nav, obs->sat, obs->code, 1, obs->time, &biasPhase) && opt->modear!=ARMODE_OFF)) {
+            if ( !get_osb_corr(nav, obs->sat, obs->code[i], 0, obs->time, &biasCode) ||
+                (!get_osb_corr(nav, obs->sat, obs->code[i], 1, obs->time, &biasPhase) && opt->modear!=ARMODE_OFF)) {
                 trace(3,"corr_meas: invalid bias sat=%2d f=%d c=%d\n",
-                      obs->sat,frq,code2obs(obs->code[i]));
+                      obs->sat,i,code2obs(obs->code[i]));
                 P[i]=L[i]=0.0;
                 continue;
             }
