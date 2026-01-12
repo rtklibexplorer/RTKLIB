@@ -840,6 +840,15 @@ typedef struct {        /* SSR correction type */
     uint8_t update;     /* update flag (0:no update,1:update) */
 } ssr_t;
 
+typedef struct {           /* bias data type */
+    int     sat;           /* satellite number */
+    uint8_t code;          /* code indicator (CODE_???) */
+    int     isPhase;       /* code or phase bias indicator */
+    gtime_t ts,te;         /* valid time start and end */
+    double  value;         /* bias value (m) */
+    double  sigma;         /* bias sigma (m) */
+} osb_t;
+
 typedef struct {        /* navigation data type */
     int n,nmax;         /* number of broadcast ephemeris */
     int ng,ngmax;       /* number of glonass ephemeris */
@@ -848,6 +857,7 @@ typedef struct {        /* navigation data type */
     int nc,ncmax;       /* number of precise clock */
     int na,namax;       /* number of almanac data */
     int nt,ntmax;       /* number of tec grid data */
+    int nb,nbmax;       /* number of bias data */
     eph_t *eph;         /* GPS/QZS/GAL/BDS/IRN ephemeris */
     geph_t *geph;       /* GLONASS ephemeris */
     seph_t *seph;       /* SBAS ephemeris */
@@ -856,6 +866,7 @@ typedef struct {        /* navigation data type */
     alm_t *alm;         /* almanac data */
     tec_t *tec;         /* tec grid data */
     erp_t  erp;         /* earth rotation parameters */
+    osb_t *osb;         /* observable-specific signal biases for satellites */
     double utc_gps[8];  /* GPS delta-UTC parameters {A0,A1,Tot,WNt,dt_LS,WN_LSF,DN,dt_LSF} */
     double utc_glo[8];  /* GLONASS UTC time parameters {tau_C,tau_GPS} */
     double utc_gal[8];  /* Galileo UTC parameters */
@@ -869,11 +880,6 @@ typedef struct {        /* navigation data type */
     double ion_cmp[8];  /* BeiDou iono model parameters {a0,a1,a2,a3,b0,b1,b2,b3} */
     double ion_irn[8];  /* IRNSS iono model parameters {a0,a1,a2,a3,b0,b1,b2,b3} */
     int glo_fcn[32];    /* GLONASS FCN + 8 */
-    int bias_type;      /* Type of biases [-1:unknown, 0:relative, 1:absolute] */
-    double osbias[MAXSAT][NFREQ][MAX_CODE_BIASES+1]; /* satellite OSBs (m) */
-    int    osbvld[MAXSAT][NFREQ][MAX_CODE_BIASES+1]; /* bias validity [0:invalid,1:valid] */
-    double fcbias[MAXSAT][NFREQ][MAX_CODE_BIASES+1]; /* satellite FCBs (m) */
-    int    fcbvld[MAXSAT][NFREQ][MAX_CODE_BIASES+1]; /* bias validity [0:invalid,1:valid] */
     double cbias[MAXSAT][MAX_CODE_BIAS_FREQS][MAX_CODE_BIASES]; /* satellite DCB [0:P1-C1,1:P2-C2][code] (m) */
     double rbias[MAXRCV][MAX_CODE_BIAS_FREQS][MAX_CODE_BIASES]; /* receiver DCB (0:P1-P2,1:P1-C1,2:P2-C2) (m) */
     pcv_t pcvs[MAXSAT]; /* satellite antenna pcv */

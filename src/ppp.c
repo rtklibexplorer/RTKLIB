@@ -418,7 +418,8 @@ static double mwmeas(const obsd_t *obs, const nav_t *nav)
            (freq1*obs->P[0]+freq2*obs->P[1])/(freq1+freq2);
 }
 /* substitute mixed-mode signals -----------------------------------*/
-static uint8_t obsCode2biasCode(int sys, uint8_t obs_code) {
+static uint8_t obsCode2biasCode(int sys, uint8_t obs_code)
+{
   uint8_t bias_code;
   if (sys==SYS_GPS) {
     switch(obs_code) {
@@ -467,14 +468,65 @@ static uint8_t obsCode2biasCode(int sys, uint8_t obs_code) {
   }
   return bias_code;
 }
+/*
+ * find OSB correction
+ * return 1 if found, 0 if not
+ * corr: output correction in meters
+ */
+static int get_osb_corr(const nav_t *nav, int sat, int code, int isPhase,
+                        gtime_t t, double *corr)
+{
+
+    int low = 0, high = nav->nb - 1;
+
+    /* binary search by (sat, code, isPhase) */
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        const osb_t *p = &nav->osb[mid];
+
+        if (p->sat < sat) { low = mid + 1; continue; }
+        if (p->sat > sat) { high = mid - 1; continue; }
+
+        if (p->code < code) { low = mid + 1; continue; }
+        if (p->code > code) { high = mid - 1; continue; }
+
+        if (p->isPhase < isPhase) { low = mid + 1; continue; }
+        if (p->isPhase > isPhase) { high = mid - 1; continue; }
+
+        /* rewind to first matching entry */
+        while (mid > 0) {
+            const osb_t *q = &nav->osb[mid - 1];
+            if (q->sat != sat || q->code != code || q->isPhase != isPhase)
+                break;
+            mid--;
+        }
+
+        /* scan validity intervals */
+        for (; mid < nav->nb; mid++) {
+            const osb_t *q = &nav->osb[mid];
+
+            if (q->sat != sat || q->code != code || q->isPhase != isPhase)
+                break;
+
+            if (timediff(t, q->ts) < 0.0) continue;
+            if (timediff(t, q->te) > 0.0) continue;
+
+            /* found valid OSB */
+            *corr = q->value;
+            return 1;
+        }
+        return 0;
+    }
+    return 0;
+}
 /* antenna and bias corrected measurements -----------------------------------*/
 static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
                       const prcopt_t *opt, const double *dantr,
                       const double *dants, double phw, double *L, double *P,
                       double *Lc, double *Pc)
 {
-    double freq[NFREQ]={0},C1,C2;
-    int i,ix=0,frq,frq2,bias_ix,sys=satsys(obs->sat,NULL);
+    double freq[NFREQ]={0},C1,C2,biasCode,biasPhase;
+    int i,frq2,sys=satsys(obs->sat,NULL);
 
     for (i=0;i<opt->nf;i++) {
         L[i]=P[i]=0.0;
@@ -493,28 +545,16 @@ static void corr_meas(const obsd_t *obs, const nav_t *nav, const double *azel,
             P[i]+=nav->ssr[obs->sat-1].cbias[bias_code-1];
             L[i]+=nav->ssr[obs->sat-1].pbias[bias_code-1];
         }
-        else {   /* apply code bias corrections from file */
-            bias_ix=code2bias_ix(sys,obs->code[i]); /* look up bias index in table */
-            if (nav->bias_type==0) { /* relative biases (DCB) */
-                if (sys==SYS_GAL&&(i==1||i==2)) frq=3-i;  /* GAL biases are L1/L5 */
-                else frq=i;  /* other biases are L1/L2 */
-                if (frq>=MAX_CODE_BIAS_FREQS) continue;  /* only 2 freqs per system supported in code bias table */
-                if (bias_ix>0) {  /*  0=ref code */
-                    P[i]+=nav->cbias[obs->sat-1][frq][bias_ix-1]; /* code bias */
-                }
+        else {   /* apply osb corrections from file */
+            if ( !get_osb_corr(nav, obs->sat, obs->code[i], 0, obs->time, &biasCode) ||
+                (!get_osb_corr(nav, obs->sat, obs->code[i], 1, obs->time, &biasPhase) && opt->modear!=ARMODE_OFF)) {
+                trace(3,"corr_meas: invalid bias sat=%2d f=%d c=%d\n",
+                      obs->sat,i,code2obs(obs->code[i]));
+                P[i]=L[i]=0.0;
+                continue;
             }
-            else if (nav->bias_type==1) { /* absolute biases (OSB,FCB) */
-              frq=i;
-              if ( !nav->osbvld[obs->sat-1][frq][bias_ix] ||
-                  (!nav->fcbvld[obs->sat-1][frq][bias_ix] && opt->modear!=ARMODE_OFF)) {
-                  trace(3,"corr_meas: invalid bias sat=%2d f=%d c=%d\n",
-                        obs->sat,frq,code2obs(obs->code[i]));
-                  P[i]=L[i]=0.0;
-                  continue;
-              }
-              P[i]-=nav->osbias[obs->sat-1][frq][bias_ix]; /* code bias */
-              L[i]-=nav->fcbias[obs->sat-1][frq][bias_ix]; /* phase bias */
-            }
+            P[i]-=biasCode;
+            L[i]-=biasPhase;
         }
     }
     /* choose freqs for iono-free LC */

@@ -456,123 +456,142 @@ extern int code2bias_ix(int sys, int code) {
     else
         return 0;
 }
-/* read DCB parameters from BIA or BSX file ------------------------------------
-*    - supports satellite code biases only
+/* Parse time in Bias-SINEX file -----------------------------------------------*/
+static gtime_t str2time_bsx(const char *s)
+{
+    double ep[6] = {0};
+
+    /* YYYY:DOY:SSSSS */
+    int year = atoi(s);
+    int doy  = atoi(s + 5);
+    int sod  = atoi(s + 9);
+
+    ep[0] = year;
+    ep[1] = 1;
+    ep[2] = 1;
+    ep[3] = 0;
+    ep[4] = 0;
+    ep[5] = sod;
+
+    gtime_t t = epoch2time(ep);
+    t.time += (doy - 1) * 86400;
+
+    return t;
+}
+/* Bias comparator -----------------------------------------------*/
+static int cmp_osb(const void *p1, const void *p2)
+{
+    const osb_t *a = (const osb_t *)p1;
+    const osb_t *b = (const osb_t *)p2;
+
+    if (a->sat != b->sat)       return a->sat - b->sat;
+    if (a->code != b->code)     return a->code - b->code;
+    if (a->isPhase != b->isPhase)
+        return a->isPhase - b->isPhase;
+
+    /* earlier start time first */
+    if (timediff(a->ts, b->ts) < 0.0) return -1;
+    if (timediff(a->ts, b->ts) > 0.0) return  1;
+
+    return 0;
+}
+/* read Bias-SINEX data line -------------------------------------------------*/
+static int readbsxb(const char *line, osb_t *osb)
+{
+    char prn[4] = "", obs[4] = "", ts[16] = "", te[16] = "";
+
+    if (strncmp(line + 1, "OSB", 3)!=0) return 0;
+    if (strncmp(line +65, "ns",  2)!=0) return 0;
+
+    sscanf(line+11,"%3s",prn);
+    sscanf(line+25,"%3s",obs); obs[3] = '\0';
+    sscanf(line+35,"%15s",ts); ts[15] = '\0';
+    sscanf(line+50,"%15s",te); te[15] = '\0';
+
+    osb->sat = satid2no(prn);
+    if (osb->sat==0) return 0;
+
+    osb->code = obs2code(obs+1);
+    if (!osb->code) return 0;
+
+    osb->isPhase = (obs[0]=='L');
+    osb->ts = str2time_bsx(ts);
+    osb->te = str2time_bsx(te);
+    osb->value = str2num(line, 70, 21)*1e-9*CLIGHT;
+    osb->sigma = str2num(line, 92, 11)*1e-9*CLIGHT;
+
+    return 1;
+}
+/* add new bias data and re-allocate memory if necessary */
+static int add_osb(nav_t *nav, const osb_t *osb)
+{
+    if (nav->nb >= nav->nbmax) {
+
+        int nbmax = nav->nbmax <= 0 ? 1024 : nav->nbmax + 1024;
+        osb_t *tmp = (osb_t *)realloc(nav->osb, nbmax * sizeof(osb_t));
+
+        if (!tmp) return 0;
+
+        nav->osb  = tmp;
+        nav->nbmax = nbmax;
+    }
+
+    nav->osb[nav->nb++] = *osb;
+    return 1;
+}
+/* read bias values from Bias-SINEX file ------------------------------------
+*    - supports satellite code and phase biases only
 *-----------------------------------------------------------------------------*/
 static int readbiaf(const char *file, nav_t *nav)
 {
     FILE *fp;
-    double cbias;
-    char buff[256],bias[6]="",svn[6]="",prn[6]="",obs1[6]="",obs2[6];
-    int i,sat,freq,code1,code2,bias_ix1,bias_ix2,sys;
+    char buff[256],str[15]="";
+    osb_t osb;
 
-    trace(3,"readbiaf: file=%s\n",file);
+    trace(3, "readbiaf: file=%s\n", file);
 
-    if (!(fp=fopen(file,"r"))) {
-        trace(2,"dcb parameters file open error: %s\n",file);
+    if (!(fp = fopen(file, "r"))) {
+        trace(2, "Bias-SINEX file open error: %s\n", file);
         return 0;
     }
+
     /* read first line of file and check for '%=BIA' identifier */
     fgets(buff,sizeof(buff),fp);
-    sscanf(buff,"%5s",bias);
-    if (strcmp(bias,"%=BIA")!=0) {
-      trace(3,"readbiaf: wrong format %s of file=%s\n",bias,file);
-      return 0;
+    sscanf(buff,"%5s",str);
+    if (strncmp(str,"%=BIA",5)!=0) {
+        trace(3,"readbiaf: wrong format %s of file=%s\n",str,file);
+        return 0;
     }
-    /* read rest of file */ 
+
+    /* search for start of BIAS/SOLUTION block */
     while (fgets(buff,sizeof(buff),fp)) {
-        if (sscanf(buff,"%4s %5s %4s %4s %4s",bias,svn,prn,obs1,obs2)<5) continue;
-        cbias=str2num(buff,82,10);
-        sat=satid2no(prn);
-        sys=satsys(sat,NULL);
-        /* skip if code not valid */
-        if (!(code1=obs2code(&obs1[1]))) continue;
-        /* skip GPS C1P biases */
-        if (sys==SYS_GPS&&strcmp(obs1,"C1P")==0) continue;
-        bias_ix1=code2bias_ix(sys,code1);
-        if (strcmp(bias,"OSB")==0) {
-            /* absolute biases are used */
-            if (nav->bias_type==-1 || nav->bias_type==1) {
-              nav->bias_type = 1;
-            }
-            else {
-              trace(0,"readbiaf: error, mix of absolute and relative biases!\n");
-              return 0;
-            };
-            /* Select frequency slot */
-            if ((sys!=SYS_CMP && obs1[1]=='1') ||
-                (sys==SYS_CMP && obs1[1]=='2')) /* TODO: check!! */
-                freq = 0;
-            else if ((sys==SYS_GPS && obs1[1]=='2') ||
-                     (sys==SYS_GLO && obs1[1]=='2') ||
-                     (sys==SYS_GAL && obs1[1]=='7') ||
-                     (sys==SYS_CMP && obs1[1]=='6') || /* TODO: check!! */
-                     (sys==SYS_QZS && obs1[1]=='2'))
-                freq = 1;
-            else if (obs1[1]=='5')
-                freq = 2;
-            else
-              continue;
-
-            /* check if max number of frequencies is exceeded */
-            if (freq>=NFREQ) continue;
-
-            if (obs1[0]=='C') {
-              nav->osbvld[sat-1][freq][bias_ix1]=1;
-              nav->osbias[sat-1][freq][bias_ix1]=cbias*1E-9*CLIGHT; /* ns -> m */
-            }
-            else if (obs1[0]=='L') {
-              nav->fcbvld[sat-1][freq][bias_ix1]=1;
-              nav->fcbias[sat-1][freq][bias_ix1]=cbias*1E-9*CLIGHT; /* ns -> m */
-            }
-            else {
-              continue;
-            }
-            /* ------------------- start obsolete --------------------------- */
-        /* other code biases are L1/L2, Galileo is L1/L5 */
-        if (obs1[1]=='1')
-            freq=0;
-        else if ((sys!=SYS_GAL&&obs1[1]=='2')||(sys==SYS_GAL&&obs1[1]=='5'))
-            freq=1;
-        else continue;
-        
-            /* observed signal bias */
-            if (obs1[0]!='C') continue;  /* skip phase biases for now */
-            if (cbias==0.0) continue;
-            if (bias_ix1==0) { /* this is ref code */
-                for (i=0;i<MAX_CODE_BIASES;i++)
-                    /* adjust all other codes by ref code bias */
-                    nav->cbias[sat-1][freq][i]+=cbias*1E-9*CLIGHT; /* ns -> m */
-            } else {
-                nav->cbias[sat-1][freq][bias_ix1-1]-=cbias*1E-9*CLIGHT; /* ns -> m */
-            }
-            /* ------------------- end obsolete --------------------------- */
-        }
-        /* ------------------- start obsolete --------------------------- */
-        else if (strcmp(bias,"DSB")==0) {
-            /* differential signal bias */
-            if (obs1[1]!=obs2[1]) continue; /* skip biases between freqs for now */
-            if (!(code2=obs2code(&obs2[1]))) continue; /* skip if code not valid */
-            bias_ix2=code2bias_ix(sys,code2);
-            if (bias_ix1==0) /* this is ref code */
-                nav->cbias[sat-1][freq][bias_ix2-1]=cbias*1E-9*CLIGHT; /* ns -> m */
-            else if (bias_ix2==0) /* this is ref code */
-                nav->cbias[sat-1][freq][bias_ix1-1]=-cbias*1E-9*CLIGHT; /* ns -> m */
-            /* relative biases are used */
-            if (nav->bias_type==-1 || nav->bias_type==0) {
-              nav->bias_type = 0;
-        }
-            else {
-              trace(0,"readbiaf: error, mix of absolute and relative biases!\n");
-              return 0;
-            };
-        }
-        /* ------------------- end obsolete --------------------------- */
-
+        if (strncmp(buff,"+BIAS/SOLUTION",14)==0) break;
     }
+
+    if (strncmp(buff,"+BIAS/SOLUTION",14)!=0) {
+        trace(3,"readbiaf: no BIAS/SOLUTION block in file=%s\n",file);
+        return 0;
+    }
+
+    /* read BIAS/SOLUTION block */
+    while (fgets(buff, sizeof(buff), fp)) {
+        if (strncmp(buff,"-BIAS/SOLUTION",14)==0) break;
+        /* skip comment lines */
+        if (strncmp(buff,"*",1)==0) continue;
+        if (readbsxb(buff, &osb)==0) continue;
+        if (!add_osb(nav, &osb)) {
+            trace(3, "readbiaf: memory allocation error\n");
+            return 0;
+        }
+    }
+
     fclose(fp);
 
-    return 1;
+    qsort(nav->osb, nav->nb, sizeof(osb_t), cmp_osb);
+
+    trace(3, "readbiaf: n=%d\n", nav->nb);
+    return nav->nb;
+
 }
 /* read DCB parameters ---------------------------------------------------------
 * read differential code bias (DCB) parameters
@@ -594,7 +613,6 @@ extern int readdcb(const char *file, nav_t *nav, const sta_t *sta)
 
     init_bias_ix(); /* init translation table from code to table column */
 
-    nav->bias_type = -1;
     for (i=0;i<MAXSAT;i++) for (j=0;j<MAX_CODE_BIAS_FREQS;j++) for (k=0;k<MAX_CODE_BIASES;k++) {
         nav->cbias[i][j][k]=0.0;
     }
