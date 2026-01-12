@@ -1886,7 +1886,7 @@ void Plot::drawDop(QPainter &c, int level)
     graphSingle->yLabelPosition = Graph::LabelPosition::Outer;
     graphSingle->week = startWeek;
 
-    // adjest plot limits
+    // adjust plot limits
     graphSingle->getLimits(xl, yl);
     yl[0] = 0.0;
     yl[1] = plotOptDialog->getMaxDop();
@@ -1910,7 +1910,7 @@ void Plot::drawDop(QPainter &c, int level)
     p1.setX((int)(QFontMetrics(plotOptDialog->getFont()).height()));
     p1.setY((p1.y() + p2.y()) / 2);    
     if (doptype == 0)  // ALL
-        label = tr("# of Satellites / DOP (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
+        label = tr("# of Satellites / DOP x 10 (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
     else if (doptype == 1)  // NSAT
         label = tr("# of Satellites (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
     else
@@ -2068,7 +2068,7 @@ void Plot::drawSolDop(QPainter &c, int level) {
   QString label;
   int doptype = ui->cBDopType->currentIndex();
   if (doptype == 0)  // ALL
-    label = tr("# of Satellites / DOP (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
+    label = tr("# of Satellites / DOP x 10 (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
   else if (doptype == 1)  // NSAT
     label = tr("# of Satellites (El>=%1°)").arg(plotOptDialog->getElevationMask(), 0, 'f', 0);
   else
