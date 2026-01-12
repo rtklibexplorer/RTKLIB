@@ -1094,7 +1094,7 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
         antmodel(opt->pcvr,opt->antdel[0],azel+i*2,opt->posopt[1],dantr);
 
         /* Compute satellite PCO corrections for orbits in CoM */
-        /* TODO: handle PCO for different frequencies for EPHOPT_SSRCOM */
+        /* TODO: handle PCO for different frequencies for EPHOPT_SSRAPC */
         if (opt->sateph==EPHOPT_PREC||opt->sateph==EPHOPT_SSRCOM) {
             if (opt->ionoopt==IONOOPT_IFLC) {
                 double danto[3];
