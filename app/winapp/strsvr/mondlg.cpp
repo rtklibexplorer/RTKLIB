@@ -2,6 +2,7 @@
 #include <vcl.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <Clipbrd.hpp>
 #pragma hdrstop
 
 #include "mondlg.h"
@@ -42,6 +43,11 @@ void __fastcall TStrMonDialog::FormResize(TObject *Sender)
 void __fastcall TStrMonDialog::BtnCloseClick(TObject *Sender)
 {
 	Close();
+}
+
+void __fastcall TStrMonDialog::BtnCopyClick(TObject *Sender)
+{
+    Clipboard()->AsText = ConBuff->Text;
 }
 //---------------------------------------------------------------------------
 void __fastcall TStrMonDialog::SelFmtChange(TObject *Sender)

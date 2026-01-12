@@ -79,7 +79,7 @@ double Plot::timePosition(gtime_t time)
     else                                                 // jst
         tow = time2gpst(timeadd(gpst2utc(time), 9 * 3600.0), &week);
 
-    return tow + (week - week) * 86400.0 * 7;
+    return tow + (week - startWeek) * 86400.0 * 7;
 }
 // show legand in status-bar ------------------------------------------------
 void Plot::showLegend(const QStringList &msgs)

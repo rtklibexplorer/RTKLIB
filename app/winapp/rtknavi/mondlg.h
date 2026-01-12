@@ -48,6 +48,7 @@ __published:
 	void __fastcall SelFmtChange(TObject *Sender);
 	void __fastcall SelStrChange(TObject *Sender);
 	void __fastcall SelStr2Change(TObject *Sender);
+	void __fastcall BtnCopyClick(TObject *Sender);
 private:
 	int TypeF,ConFmt,Str1,Str2,ScrollPos,FontScale,ObsMode;
 	TStringList *ConBuff;

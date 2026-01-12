@@ -48,7 +48,7 @@ static double geoidh_emb(const double *pos)
     return interpb(y,a,b);
 }
 /* get 2 byte signed integer from file ---------------------------------------*/
-static int16_t fget2b(FILE *fp, int32_t off)
+static int16_t fget2b(FILE *fp, long off)
 {
     uint8_t v[2]={0x00};
     if (fseek(fp,off,SEEK_SET)==EOF||fread(v,2,1,fp)<1) {
@@ -81,7 +81,7 @@ static float fget4f(FILE *fp, int off)
 {
     float v=0.0;
     if (fseek(fp,(long)off,SEEK_SET)==EOF||fread(&v,4,1,fp)<1) {
-        trace(2,"geoid data file range error: off=%ld\n",off);
+        trace(2,"geoid data file range error: off=%d\n",off);
     }
     return v; /* small-endian */
 }

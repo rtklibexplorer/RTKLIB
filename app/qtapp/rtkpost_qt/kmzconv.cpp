@@ -64,8 +64,9 @@ ConvDialog::ConvDialog(QWidget *parent)
     connect(ui->cBCompress, &QCheckBox::clicked, this, &ConvDialog::updateOutputFile);
     connect(ui->rBFormatKML, &QRadioButton::clicked, this, &ConvDialog::formatChanged);
     connect(ui->rBFormatGPX, &QRadioButton::clicked, this, &ConvDialog::formatChanged);
+    connect(ui->rBFormatCSV, &QRadioButton::clicked, this, &ConvDialog::formatChanged);
 
-    ui->rBFormatGPX->setChecked(!ui->rBFormatKML->isChecked());
+    ui->rBFormatGPX->setChecked(!ui->rBFormatKML->isChecked()&&!ui->rBFormatCSV->isChecked());
 
     updateEnable();
 }
@@ -80,6 +81,7 @@ void ConvDialog::setInput(const QString &filename)
 void ConvDialog::selectInputFile()
 {
     ui->lEInputFile->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open..."), ui->lEInputFile->text(), tr("All (*.*)"))));
+    updateOutputFile();
 }
 //---------------------------------------------------------------------------
 void ConvDialog::convert()
@@ -114,7 +116,13 @@ void ConvDialog::convert()
     if (ui->cBTimeInterval->isChecked())
         tint = ui->sBTimeInterval->value();
 
+    int mean = ui->cBSingleMean->isChecked();
+    char *name = NULL; // TODO
+    int csvorder = 0; // TODO
+
     strncpy(file, qPrintable(ui->lEInputFile->text()), 1023);
+
+    QCoreApplication::processEvents();
 
     if (ui->rBFormatKML->isChecked()) {
         if (ui->cBCompress->isChecked()) { // generate .kml file and compress it afterwards
@@ -123,12 +131,17 @@ void ConvDialog::convert()
             strncpy(p, ".kml", 5);
         }
         stat = convkml(file, ui->cBCompress->isChecked() ? kmlfile : qPrintable(OutputFilename),
-                   ts, te, tint, ui->cBQFlags->currentIndex(), offset,
+                       ts, te, tint, ui->cBQFlags->currentIndex(), mean, name, offset,
                    ui->cBTrackColor->currentIndex(), ui->cBPointColor->currentIndex(),
                    ui->cBOutputAltitude->currentIndex(), ui->cBOutputTime->currentIndex());
+    } if (ui->rBFormatCSV->isChecked()) {
+        stat = convcsv(file, ui->cBCompress->isChecked() ? kmlfile : qPrintable(OutputFilename),
+                   ts, te, tint, ui->cBQFlags->currentIndex(), mean, name, offset,
+                   ui->cBOutputAltitude->currentIndex(), ui->cBOutputTime->currentIndex(),
+                   csvorder);
     } else {
         stat = convgpx(file, ui->cBCompress->isChecked() ? kmlfile : qPrintable(OutputFilename),
-                   ts, te, tint, ui->cBQFlags->currentIndex(), offset,
+                   ts, te, tint, ui->cBQFlags->currentIndex(), mean, name, offset,
                    ui->cBTrackColor->currentIndex(), ui->cBPointColor->currentIndex(),
                    ui->cBOutputAltitude->currentIndex(), ui->cBOutputTime->currentIndex());
     }
@@ -182,6 +195,11 @@ void ConvDialog::updateEnable()
 #endif
     } else
         ui->cBCompress->setEnabled(false);
+
+    ui->lblOutputTrack->setEnabled(!ui->rBFormatCSV->isChecked());
+    ui->cBTrackColor->setEnabled(!ui->rBFormatCSV->isChecked());
+    ui->lblOutputWaypoint->setEnabled(!ui->rBFormatCSV->isChecked());
+    ui->cBPointColor->setEnabled(!ui->rBFormatCSV->isChecked());
 }
 //---------------------------------------------------------------------------
 int ConvDialog::execCommand(const QString &cmd, const QStringList &opt)
@@ -207,7 +225,7 @@ void ConvDialog::updateOutputFile()
     QFileInfo fi(inputFilename);
     if (fi.suffix().isEmpty()) return;
 
-    QString filename = fi.baseName() + (ui->rBFormatGPX->isChecked() ? ".gpx" : (ui->cBCompress->isChecked() ? ".kmz" : ".kml"));
+    QString filename = fi.baseName() + (ui->rBFormatGPX->isChecked() ? ".gpx" : (ui->rBFormatCSV->isChecked() ? ".csv" : (ui->cBCompress->isChecked() ? ".kmz" : ".kml")));
 
     ui->lEOutputFile->setText(fi.absoluteDir().absoluteFilePath(filename));
 }
@@ -250,27 +268,32 @@ void ConvDialog::viewOutputFile()
 //---------------------------------------------------------------------------
 void ConvDialog::loadOptions(QSettings &ini)
 {
-    ui->cBTimeSpan->setChecked(ini.value("conv/timespan", 0).toInt());
-    ui->cBTimeInterval->setChecked(ini.value("conv/timeintf", 0).toInt());
+    ui->cBTimeSpan->setChecked(ini.value("conv/timespan", 0).toBool());
+    ui->cBTimeInterval->setChecked(ini.value("conv/timeintf", 0).toBool());
     ui->dateTimeStart->setDate(ini.value("conv/timey1", QDate(2000, 1, 1)).toDate());
     ui->dateTimeStart->setTime(ini.value("conv/timeh1", QTime(0, 0, 0)).toTime());
     ui->dateTimeStop->setDate(ini.value("conv/timey2", QDate(2000, 1, 1)).toDate());
     ui->dateTimeStop->setTime(ini.value("conv/timeh2", QTime(0, 0, 0)).toTime());
     ui->sBTimeInterval->setValue(ini.value ("conv/timeint", 0.0).toDouble());
+    ui->cBSingleMean->setChecked(ini.value("conv/mean", 0).toBool());
     ui->cBTrackColor->setCurrentIndex(ini.value("conv/trackcolor", 5).toInt());
     ui->cBPointColor->setCurrentIndex(ini.value("conv/pointcolor", 5).toInt());
     ui->cBOutputAltitude->setCurrentIndex(ini.value("conv/outputalt", 0).toInt());
     ui->cBOutputTime->setCurrentIndex(ini.value("conv/outputtime",0).toInt());
-    ui->cBAddOffset->setChecked(ini.value("conv/addoffset", 0).toInt());
+    ui->cBAddOffset->setChecked(ini.value("conv/addoffset", 0).toBool());
     ui->sBOffset1->setValue(ini.value("conv/offset1", 0).toDouble());
     ui->sBOffset2->setValue(ini.value("conv/offset2", 0).toDouble());
     ui->sBOffset3->setValue(ini.value("conv/offset3", 0).toDouble());
-    ui->cBCompress->setChecked(ini.value("conv/compress", 0).toInt());
-    ui->rBFormatKML->setChecked(ini.value("conv/format", 0).toInt());
+    ui->cBCompress->setChecked(ini.value("conv/compress", 0).toBool());
+    int format = ini.value("conv/format", 0).toInt();
+    ui->rBFormatKML->setChecked(format == 0);
+    ui->rBFormatCSV->setChecked(format == 1);
+    ui->rBFormatGPX->setChecked(format != 0 && format != 1);
 
     ui->lEGoogleEarthFile->setText(ini.value("opt/googleearthfile", GOOGLE_EARTH).toString());
 
     viewer->loadOptions(ini);
+    updateEnable();
 }
 //---------------------------------------------------------------------------
 void ConvDialog::saveOptions(QSettings &ini)
@@ -282,6 +305,7 @@ void ConvDialog::saveOptions(QSettings &ini)
     ini.setValue ("conv/timeh2", ui->dateTimeStop->time());
     ini.setValue ("conv/timeintf", ui->cBTimeInterval->isChecked());
     ini.setValue ("conv/timeint", ui->sBTimeInterval->text());
+    ini.setValue ("conv/mean", ui->cBSingleMean->isChecked());
     ini.setValue ("conv/trackcolor", ui->cBTrackColor->currentIndex());
     ini.setValue ("conv/pointcolor", ui->cBPointColor->currentIndex());
     ini.setValue ("conv/outputalt", ui->cBOutputAltitude->currentIndex());
@@ -291,7 +315,7 @@ void ConvDialog::saveOptions(QSettings &ini)
     ini.setValue ("conv/offset2", ui->sBOffset2->text());
     ini.setValue ("conv/offset3", ui->sBOffset3->text());
     ini.setValue ("conv/compress", ui->cBCompress->isChecked());
-    ini.setValue ("conv/format", ui->rBFormatKML->isChecked());
+    ini.setValue ("conv/format", ui->rBFormatKML->isChecked() ? 0 : ui->rBFormatCSV->isChecked() ? 1 : 2);
 
     ini.setValue("opt/googleearthfile", ui->lEGoogleEarthFile->text());
 

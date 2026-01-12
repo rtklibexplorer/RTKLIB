@@ -32,15 +32,16 @@ static const char *head2="<kml xmlns=\"http://earth.google.com/kml/2.1\">";
 static const char *mark="http://maps.google.com/mapfiles/kml/pal2/icon18.png";
 
 /* output track --------------------------------------------------------------*/
-static void outtrack(FILE *f, const solbuf_t *solbuf, const char *color,
-                     int outalt, int outtime)
+static void outtrack(FILE *f, const solbuf_t *solbuf, const char *name,
+                     const char *color, int outalt, int outtime)
 {
     (void)outtime;
     double pos[3];
     int i;
     
     fprintf(f,"<Placemark>\n");
-    fprintf(f,"<name>Rover Track</name>\n");
+    if (name == NULL) name = "Rover Track";
+    fprintf(f,"<name>%s</name>\n", name);
     fprintf(f,"<Style>\n");
     fprintf(f,"<LineStyle>\n");
     fprintf(f,"<color>%s</color>\n",color);
@@ -61,13 +62,13 @@ static void outtrack(FILE *f, const solbuf_t *solbuf, const char *color,
 }
 /* output point --------------------------------------------------------------*/
 static void outpoint(FILE *fp, gtime_t time, const double *pos,
-                     const char *label, int style, int outalt, int outtime)
+                     const char *label, const char *name, int style, int outalt, int outtime)
 {
     double ep[6],alt=0.0;
     char str[256]="";
     
     fprintf(fp,"<Placemark>\n");
-    if (*label) fprintf(fp,"<name>%s</name>\n",label);
+    if (label && *label) fprintf(fp,"<name>%s</name>\n",label);
     fprintf(fp,"<styleUrl>#P%d</styleUrl>\n",style);
     if (outtime) {
         if      (outtime==2) time=gpst2utc(time);
@@ -75,7 +76,10 @@ static void outpoint(FILE *fp, gtime_t time, const double *pos,
         time2epoch(time,ep);
         if (!*label&&fmod(ep[5]+0.005,TINT)<0.01) {
             sprintf(str,"%02.0f:%02.0f",ep[3],ep[4]);
-            fprintf(fp,"<name>%s</name>\n",str);
+            if (name)
+              fprintf(fp,"<name>%s %s</name>\n", name, str);
+            else
+              fprintf(fp,"<name>%s</name>\n", str);
         }
         sprintf(str,"%04.0f-%02.0f-%02.0fT%02.0f:%02.0f:%05.2fZ",
                 ep[0],ep[1],ep[2],ep[3],ep[4],ep[5]);
@@ -93,8 +97,8 @@ static void outpoint(FILE *fp, gtime_t time, const double *pos,
     fprintf(fp,"</Placemark>\n");
 }
 /* save kml file -------------------------------------------------------------*/
-static int savekml(const char *file, const solbuf_t *solbuf, int tcolor,
-                   int pcolor, int outalt, int outtime)
+static int savekml(const char *file, const solbuf_t *solbuf, const char *name,
+                   int tcolor, int pcolor, int outalt, int outtime)
 {
     FILE *fp;
     double pos[3];
@@ -118,21 +122,22 @@ static int savekml(const char *file, const solbuf_t *solbuf, int tcolor,
         fprintf(fp,"</Style>\n");
     }
     if (tcolor>0) {
-        outtrack(fp,solbuf,color[tcolor-1],outalt,outtime);
+        outtrack(fp,solbuf,name,color[tcolor-1],outalt,outtime);
     }
     if (pcolor>0) {
         fprintf(fp,"<Folder>\n");
         fprintf(fp,"  <name>Rover Position</name>\n");
         for (i=0;i<solbuf->n;i++) {
             ecef2pos(solbuf->data[i].rr,pos);
-            outpoint(fp,solbuf->data[i].time,pos,"",
+            // If there is only one point then use the point name as the label.
+            outpoint(fp,solbuf->data[i].time,pos, solbuf->n == 1 ? name : "", name,
                      pcolor==5?qcolor[solbuf->data[i].stat]:pcolor-1,outalt,outtime);
         }
         fprintf(fp,"</Folder>\n");
     }
     if (norm(solbuf->rb,3)>0.0) {
         ecef2pos(solbuf->rb,pos);
-        outpoint(fp,solbuf->data[0].time,pos,"Reference Position",0,outalt,0);
+        outpoint(fp,solbuf->data[0].time,pos,"Reference Position", NULL,0,outalt,0);
     }
     fprintf(fp,"</Document>\n");
     fprintf(fp,"</kml>\n");
@@ -146,6 +151,8 @@ static int savekml(const char *file, const solbuf_t *solbuf, int tcolor,
 *          gtime_t ts,te    I   start/end time (gpst)
 *          int    tint      I   time interval (s) (0.0:all)
 *          int    qflg      I   quality flag (0:all)
+*          int    mean      I   calculate the mean when true.
+*          char   *name     I   point name.
 *          double *offset   I   add offset {east,north,up} (m)
 *          int    tcolor    I   track color
 *                               (0:none,1:white,2:green,3:orange,4:red,5:yellow)
@@ -157,8 +164,8 @@ static int savekml(const char *file, const solbuf_t *solbuf, int tcolor,
 * notes  : see ref [1] for google earth kml file format
 *-----------------------------------------------------------------------------*/
 extern int convkml(const char *infile, const char *outfile, gtime_t ts,
-                   gtime_t te, double tint, int qflg, double *offset,
-                   int tcolor, int pcolor, int outalt, int outtime)
+                   gtime_t te, double tint, int qflg, int mean, const char *name,
+                   double *offset, int tcolor, int pcolor, int outalt, int outtime)
 {
     solbuf_t solbuf={0};
     double rr[3]={0},pos[3],dr[3];
@@ -188,7 +195,7 @@ extern int convkml(const char *infile, const char *outfile, gtime_t ts,
     else strcpy(file,outfile);
     
     /* read solution file */
-    stat=readsolt((const char **)files,nfile,ts,te,tint,qflg,&solbuf);
+    stat=readsolt((const char **)files,nfile,ts,te,tint,qflg,mean,&solbuf);
     
     for (i=0;i<MAXEXFILE;i++) free(files[i]);
     
@@ -210,7 +217,118 @@ extern int convkml(const char *infile, const char *outfile, gtime_t ts,
         for (i=0;i<3;i++) solbuf.rb[i]+=dr[i];
     }
     /* save kml file */
-    int r = savekml(file,&solbuf,tcolor,pcolor,outalt,outtime)?0:-4;
+    int r = savekml(file,&solbuf,name,tcolor,pcolor,outalt,outtime)?0:-4;
     freesolbuf(&solbuf);
     return r;
+}
+
+// Save CSV file ----------------------------------------------------------------
+static int savecsv(const char *file, const solbuf_t *solbuf, const char *name,
+                   int outalt, int outtime, int outorder) {
+  FILE *fp = fopen(file, "w");
+  if (!fp) {
+    fprintf(stderr, "file open error : %s\n", file);
+    return 0;
+  }
+  for (int i = 0; i < solbuf->n; i++) {
+    if (name && *name) fprintf(fp, "%s,", name);
+    double pos[3];
+    ecef2pos(solbuf->data[i].rr, pos);
+    gtime_t time = solbuf->data[i].time;
+    if (outtime) {
+      if (outtime == 2)
+        time = gpst2utc(time);
+      else if (outtime == 3)
+        time = timeadd(gpst2utc(time), 9 * 3600.0);
+      double ep[6];
+      time2epoch(time, ep);
+      fprintf(fp, "%04.0f-%02.0f-%02.0fT%02.0f:%02.0f:%05.2fZ,", ep[0], ep[1], ep[2], ep[3], ep[4],
+              ep[5]);
+    }
+    if (outorder == 0) {
+      // Lat/lon
+      fprintf(fp, "%14.9f,%14.9f", pos[0] * R2D, pos[1] * R2D);
+    } else {
+      // Lon/lat
+      fprintf(fp, "%14.9f,%14.9f", pos[1] * R2D, pos[0] * R2D);
+    }
+    if (outalt) {
+      double alt = 0.0;
+      alt = pos[2] - (outalt == 2 ? geoidh(pos) : 0.0);
+      fprintf(fp, ",%10.4f", alt);
+    }
+    fprintf(fp, "\n");
+  }
+  fclose(fp);
+  return 1;
+}
+// Convert to CSV file ---------------------------------------------------------
+// Convert solutions to CSV file
+// Args   : char   *infile   I   input solutions file (wild-card (*) is expanded)
+//          char   *outfile  I   output CSV file ("":<infile>.csv)
+//          gtime_t ts,te    I   start/end time (gpst)
+//          int    tint      I   time interval (s) (0.0:all)
+//          int    qflg      I   quality flag (0:all)
+//          int    mean      I   calculate the mean when true.
+//          char   *name     I   point name.
+//          double *offset   I   add offset {east,north,up} (m)
+//          int    outalt    I   output altitude (0:off,1:elipsoidal,2:geodetic)
+//          int    outtime   I   output time (0:off,1:gpst,2:utc,3:jst)
+//          int    outorder  I   output order (0:lat/lon,1:lon/lat)
+// Return : status (0:ok,-1:file read,-2:file format,-3:no data,-4:file write)
+//------------------------------------------------------------------------------
+extern int convcsv(const char *infile, const char *outfile, gtime_t ts, gtime_t te, double tint,
+                   int qflg, int mean, const char *name, double *offset,
+                   int outalt, int outtime, int outorder) {
+  trace(3, "convcsv : infile=%s outfile=%s\n", infile, outfile);
+
+  // Expand wild-card of infile.
+  char *files[MAXEXFILE] = {0};
+  for (int i = 0; i < MAXEXFILE; i++) {
+    if (!(files[i] = (char *)malloc(1024))) {
+      for (i--; i >= 0; i--) free(files[i]);
+      return -4;
+    }
+  }
+
+  int nfile = expath(infile, files, MAXEXFILE);
+  if (nfile <= 0) {
+    for (int i = 0; i < MAXEXFILE; i++) free(files[i]);
+    return -3;
+  }
+  char file[1024];
+  if (!*outfile) {
+    char *p = strrchr(infile, '.');
+    if (p) {
+      strncpy(file, infile, p - infile);
+      strcpy(file + (p - infile), ".csv");
+    } else
+      snprintf(file, sizeof(file), "%s.csv", infile);
+  } else
+    snprintf(file, sizeof(file), "%s", outfile);
+
+  // Read solution file.
+  solbuf_t solbuf = {0};
+  int stat = readsolt((const char **)files, nfile, ts, te, tint, qflg, mean, &solbuf);
+  for (int i = 0; i < MAXEXFILE; i++) free(files[i]);
+  if (!stat) return -1;
+
+  // Mean position.
+  double rr[3] = {0};
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < solbuf.n; j++) rr[i] += solbuf.data[j].rr[i];
+    rr[i] /= solbuf.n;
+  }
+  // Add offset.
+  double pos[3];
+  ecef2pos(rr, pos);
+  double dr[3];
+  enu2ecef(pos, offset, dr);
+  for (int i = 0; i < solbuf.n; i++) {
+    for (int j = 0; j < 3; j++) solbuf.data[i].rr[j] += dr[j];
+  }
+  // Save CSV file.
+  int r = savecsv(file, &solbuf, name, outalt, outtime, outorder) ? 0 : -4;
+  freesolbuf(&solbuf);
+  return r;
 }

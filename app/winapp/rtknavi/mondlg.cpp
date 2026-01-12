@@ -4,6 +4,7 @@
 
 #include "rtklib.h"
 #include "mondlg.h"
+#include <Clipbrd.hpp>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
@@ -2076,9 +2077,44 @@ void __fastcall TMonitorDialog::ShowRefSta(void)
 	
 	Tbl->Cells[0][i  ]="GLONASS Code-Phase Bias C1/P1/C2/P2 (m)";
 	Tbl->Cells[1][i++]=s.sprintf("%.2f, %.2f, %.2f, %.2f",sta.glo_cp_bias[0],
-	                             sta.glo_cp_bias[1],sta.glo_cp_bias[2],
+								 sta.glo_cp_bias[1],sta.glo_cp_bias[2],
 								 sta.glo_cp_bias[3]);
 }
 //---------------------------------------------------------------------------
 
+void __fastcall TMonitorDialog::BtnCopyClick(TObject *Sender)
+{
+	AnsiString text;
+
+	if (Console->Visible) {
+        for (int i = 0; i < ConBuff->Count; i++) {
+            if (i > 0) text += "\r\n";
+            text += ConBuff->Strings[i];
+        }
+	} else {
+
+        for (int col = 0; col < Tbl->ColCount; col++) {
+            if (col > 0) text += "\t";
+            text += Tbl->Cells[col][0];
+        }
+        text += "\r\n";
+
+        for (int row = 1; row < Tbl->RowCount; row++) {
+            for (int col = 0; col < Tbl->ColCount; col++) {
+                if (col > 0) text += "\t";
+                text += Tbl->Cells[col][row];
+            }
+            if (row < Tbl->RowCount - 1) {
+                text += "\r\n";
+            }
+        }
+    }
+
+    if (text.Length() > 0) {
+		Clipboard()->AsText = text;
+        // ShowMessage("Copied to clipboard");
+	}
+
+}
+//---------------------------------------------------------------------------
 
