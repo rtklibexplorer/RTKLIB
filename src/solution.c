@@ -871,11 +871,12 @@ static int sort_solbuf(solbuf_t *solbuf)
 *         (gtime_t te)      I  end time   (te.time==0: to end)
 *         (double tint)     I  time interval (0: all)
 *         (int    qflag)    I  quality flag  (0: all)
+*          int    mean      I  calculate the mean when true.
 *          solbuf_t *solbuf O  solution buffer
 * return : status (1:ok,0:no data or error)
 *-----------------------------------------------------------------------------*/
 extern int readsolt(const char *files[], int nfile, gtime_t ts, gtime_t te,
-                    double tint, int qflag, solbuf_t *solbuf)
+                    double tint, int qflag, int mean, solbuf_t *solbuf)
 {
     FILE *fp;
     solopt_t opt=solopt_default;
@@ -900,6 +901,26 @@ extern int readsolt(const char *files[], int nfile, gtime_t ts, gtime_t te,
         }
         fclose(fp);
     }
+    if (solbuf->n <= 1) return 1;
+    if (mean) {
+      double rr[3]={0};
+      for (int i=0;i<3;i++) {
+        for (int j=0;j<solbuf->n;j++) rr[i]+=solbuf->data[j].rr[i];
+        rr[i]/=solbuf->n;
+      }
+      sol_t *solbuf_data=(sol_t *)malloc(sizeof(sol_t));
+      if (!solbuf_data) {
+        free(solbuf->data); solbuf->data=NULL; solbuf->n=solbuf->nmax=0;
+        return 0;
+      }
+      *solbuf_data = solbuf->data[solbuf->n - 1];
+      solbuf->data = solbuf_data;
+      for (int i = 0; i < 3; i++) solbuf->data[0].rr[i] = rr[i];
+      solbuf->nmax = solbuf->n = 1;
+      solbuf->start = 0;
+      solbuf->end = 1;
+      return 1;
+    }
     return sort_solbuf(solbuf);
 }
 extern int readsol(const char *files[], int nfile, solbuf_t *sol)
@@ -908,7 +929,7 @@ extern int readsol(const char *files[], int nfile, solbuf_t *sol)
     
     trace(3,"readsol: nfile=%d\n",nfile);
     
-    return readsolt(files,nfile,time,time,0.0,0,sol);
+    return readsolt(files,nfile,time,time,0.0,0,0,sol);
 }
 /* add solution data to solution buffer ----------------------------------------
 * add solution data to solution buffer
@@ -1356,6 +1377,71 @@ extern int outnmea_gga(uint8_t *buff, const sol_t *sol)
     p+=sprintf(p,"*%02X\r\n",sum);
     return (int)(p-(char *)buff);
 }
+// Output NMEA GST sentence (Estimated error in position) ----------------------
+extern int outnmea_gst(uint8_t *buff, const sol_t *sol)
+{
+    trace(3,"outnmea_gst:\n");
+
+    if (sol->stat <= SOLQ_NONE) return 0;
+    gtime_t time = gpst2utc(sol->time);
+    if (time.sec >= 0.995) {time.time++; time.sec=0.0;}
+    double ep[6];
+    time2epoch(time,ep);
+
+    // TODO RMS of std of range inputs.
+    double rms = 0.0;
+
+    double pos[3];
+    ecef2pos(sol->rr, pos);
+    double P[9];
+    soltocov(sol, P);
+    double Q[9];
+    covenu(pos, P, Q);
+    double lat_std = SQRT(Q[4]), lon_std = SQRT(Q[0]), height_std = SQRT(Q[8]);
+
+    // Error ellipse std of semi-major and minor axis (m) and angle from north.
+    double angle = 0, smajor = 0, sminor = 0;
+    if (Q[0] == 0) {
+      angle = 0;
+      smajor = SQRT(Q[4]);
+      sminor = 0;
+    } else if (Q[4] == 0) {
+      angle = PI / 2;
+      smajor = SQRT(Q[0]);
+      sminor = 0;
+    } else if (fabs(Q[0] - Q[4]) < 1e-6) {
+      angle = 0;
+      smajor = SQRT(Q[4]);
+      sminor = SQRT(Q[0]);
+    } else {
+      // Jacobi method.
+      double tau = (Q[4] - Q[0])/ Q[1] / 2;
+      double t = copysign(1, tau) / (fabs(tau) + SQRT(1 + tau * tau));
+      double c = 1 / SQRT(1 + t * t), s = t * c;
+      double l1 = Q[0] - t * Q[1], l2 = Q[4] + t * Q[1];
+      // Largest eigen value defines the orientation, an angle from north.
+      if (fabs(l1) > fabs(l2)) {
+        angle = atan2(c, -s);
+        smajor = SQRT(l1);
+        sminor = SQRT(l2);
+      }
+      else {
+        angle = atan2(s, c);
+        smajor = SQRT(l2);
+        sminor = SQRT(l1);
+      }
+    }
+
+    char *p = (char *)buff;
+    p += sprintf(p,"$%sGST,%02.0f%02.0f%05.2f,%.3f,%.4f,%.4f,%.3f,%.4f,%.4f,%.4f",
+                 NMEA_TID, ep[3], ep[4], ep[5],
+                 rms, smajor, sminor, angle * R2D,
+                 lat_std, lon_std, height_std);
+    char sum = 0;
+    for (char *q = (char *)buff + 1; *q; q++) sum ^= *q; // Check-sum.
+    p += sprintf(p, "*%02X\r\n", sum);
+    return (int)(p - (char *)buff);
+}
 /* output solution in the form of NMEA GSA sentences -------------------------*/
 extern int outnmea_gsa(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 {
@@ -1679,7 +1765,9 @@ extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
         case SOLF_XYZ:  p+=outecef(p,s,sol,opt);   break;
         case SOLF_ENU:  p+=outenu(p,s,sol,rb,opt); break;
         case SOLF_NMEA: p+=outnmea_rmc(p,sol);
-                        p+=outnmea_gga(p,sol); break;
+                        p+=outnmea_gga(p,sol);
+                        p+=outnmea_gst(p,sol);
+                        break;
     }
     return (int)(p-buff);
 }
@@ -1707,8 +1795,6 @@ extern int outsolexs(uint8_t *buff, const sol_t *sol, const ssat_t *ssat,
     if (opt->posf==SOLF_NMEA) {
         if (opt->nmeaintv[1]<0.0) return 0;
         if (!screent(sol->time,ts,ts,opt->nmeaintv[1])) return 0;
-    }
-    if (opt->posf==SOLF_NMEA) {
         p+=outnmea_gsa(p,sol,ssat);
         p+=outnmea_gsv(p,sol,ssat);
     }

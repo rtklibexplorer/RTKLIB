@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>KML/GPX Converter</string>
+   <string>KML/CSV/GPX Converter</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -32,7 +32,7 @@
       <property name="bottomMargin">
        <number>0</number>
       </property>
-      <item row="6" column="0">
+      <item row="7" column="0">
        <widget class="QLabel" name="lblOutputWaypoint">
         <property name="toolTip">
          <string/>
@@ -94,7 +94,7 @@
         </property>
        </widget>
       </item>
-      <item row="14" column="0" colspan="5">
+      <item row="15" column="0" colspan="5">
        <widget class="QLineEdit" name="lEOutputFile">
         <property name="toolTip">
          <string>Output filename</string>
@@ -107,7 +107,7 @@
         </property>
        </widget>
       </item>
-      <item row="13" column="4">
+      <item row="14" column="4">
        <widget class="QCheckBox" name="cBCompress">
         <property name="toolTip">
          <string/>
@@ -130,7 +130,7 @@
         </property>
        </widget>
       </item>
-      <item row="13" column="0" colspan="2">
+      <item row="14" column="0" colspan="2">
        <widget class="QLabel" name="lblOutputFile">
         <property name="text">
          <string>&amp;Output File</string>
@@ -140,7 +140,7 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="2">
+      <item row="6" column="2">
        <widget class="QComboBox" name="cBTrackColor">
         <property name="toolTip">
          <string/>
@@ -177,7 +177,7 @@
         </item>
        </widget>
       </item>
-      <item row="8" column="0" colspan="2">
+      <item row="9" column="0" colspan="2">
        <widget class="QCheckBox" name="cBAddOffset">
         <property name="toolTip">
          <string/>
@@ -187,7 +187,7 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="2">
+      <item row="7" column="2">
        <widget class="QComboBox" name="cBPointColor">
         <property name="toolTip">
          <string/>
@@ -234,7 +234,7 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
+      <item row="6" column="0">
        <widget class="QLabel" name="lblOutputTrack">
         <property name="toolTip">
          <string/>
@@ -247,7 +247,7 @@
         </property>
        </widget>
       </item>
-      <item row="9" column="0">
+      <item row="10" column="0">
        <widget class="QLabel" name="lblInputFile">
         <property name="toolTip">
          <string/>
@@ -315,7 +315,7 @@
         </item>
        </widget>
       </item>
-      <item row="5" column="4">
+      <item row="6" column="4">
        <widget class="QComboBox" name="cBOutputAltitude">
         <property name="enabled">
          <bool>true</bool>
@@ -340,7 +340,7 @@
         </item>
        </widget>
       </item>
-      <item row="6" column="4">
+      <item row="7" column="4">
        <widget class="QComboBox" name="cBOutputTime">
         <property name="toolTip">
          <string/>
@@ -367,7 +367,7 @@
         </item>
        </widget>
       </item>
-      <item row="6" column="3">
+      <item row="7" column="3">
        <widget class="QLabel" name="lblOutputTime">
         <property name="toolTip">
          <string/>
@@ -380,7 +380,7 @@
         </property>
        </widget>
       </item>
-      <item row="16" column="0" colspan="2">
+      <item row="17" column="0" colspan="2">
        <widget class="QLabel" name="lblGEExecutable">
         <property name="text">
          <string>Google Earth Executable</string>
@@ -390,7 +390,7 @@
         </property>
        </widget>
       </item>
-      <item row="8" column="2" colspan="3">
+      <item row="9" column="2" colspan="3">
        <widget class="QWidget" name="wgOffset" native="true">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <property name="leftMargin">
@@ -447,7 +447,7 @@
         </layout>
        </widget>
       </item>
-      <item row="18" column="0" colspan="5">
+      <item row="19" column="0" colspan="5">
        <widget class="QLabel" name="lblMessage">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -482,7 +482,7 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="3">
+      <item row="6" column="3">
        <widget class="QLabel" name="lblOutputAltitude">
         <property name="toolTip">
          <string/>
@@ -505,7 +505,17 @@
         </property>
        </widget>
       </item>
-      <item row="17" column="0" colspan="5">
+      <item row="5" column="0" colspan="2">
+       <widget class="QCheckBox" name="cBSingleMean">
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="text">
+         <string>Single mean position</string>
+        </property>
+       </widget>
+      </item>
+      <item row="18" column="0" colspan="5">
        <widget class="QLineEdit" name="lEGoogleEarthFile">
         <property name="toolTip">
          <string/>
@@ -515,7 +525,7 @@
         </property>
        </widget>
       </item>
-      <item row="12" column="0" colspan="5">
+      <item row="13" column="0" colspan="5">
        <widget class="QLineEdit" name="lEInputFile">
         <property name="toolTip">
          <string/>
@@ -539,6 +549,13 @@
           </widget>
          </item>
          <item row="0" column="1">
+          <widget class="QRadioButton" name="rBFormatCSV">
+           <property name="text">
+            <string>CSV</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
           <widget class="QRadioButton" name="rBFormatGPX">
            <property name="text">
             <string>GP&amp;X</string>
@@ -633,6 +650,7 @@
  </widget>
  <tabstops>
   <tabstop>rBFormatKML</tabstop>
+  <tabstop>rBFormatCSV</tabstop>
   <tabstop>rBFormatGPX</tabstop>
   <tabstop>cBTimeSpan</tabstop>
   <tabstop>dateTimeStart</tabstop>

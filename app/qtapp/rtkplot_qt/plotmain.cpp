@@ -124,7 +124,7 @@ Plot::Plot(QWidget *parent) : QMainWindow(parent), ui(new Ui::Plot)
     dragCurrentX = dragCurrentY = -1;
     nObservation = 0;
     indexObservation = NULL;
-    week = flush = plotType = 0;
+    startWeek = flush = plotType = 0;
 
     for (int i = 0; i < 2; i++) {
         initsolbuf(solutionData + i, 0, 0);
@@ -670,14 +670,14 @@ void Plot::openSolution1()
 {
     trace(3, "openSolution1\n");
 
-    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 1"), solutionFiles[0].value(0), tr("Solution File (*.pos *.stat *.nmea *.txt *.ubx);;All (*.*)")))), 0);
+    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 1"), solutionFiles[0].value(0), tr("Solution File (*.pos *.stat *.nmea *.nma *.txt *.ubx);;All (*.*)")))), 0);
 }
 // callback on menu-open-solution-2 -----------------------------------------
 void Plot::openSolution2()
 {
     trace(3, "openSolution2\n");
 
-    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 2"), solutionFiles[1].value(0), tr("Solution File (*.pos *.stat *.nmea *.txt *.ubx);;All (*.*)")))), 1);
+    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 2"), solutionFiles[1].value(0), tr("Solution File (*.pos *.stat *.nmea *.nma *.txt *.ubx);;All (*.*)")))), 1);
 }
 // callback on menu-open-map-image ------------------------------------------
 void Plot::openMapImage()
@@ -1921,10 +1921,10 @@ void Plot::timerTimer()
                         disconnectStream();
                         return;
                     }
-                    if (week == 0 && solutionData[streamNo].n == 1) { // first data
+                    if (startWeek == 0 && solutionData[streamNo].n == 1) { // first data
                         if (plotType > PLOT_NSAT)
                             updatePlotType(PLOT_TRK);
-                        time2gpst(solutionData[streamNo].time, &week);
+                        time2gpst(solutionData[streamNo].time, &startWeek);
                         updateOrigin();
                         ecef2pos(solutionData[streamNo].data[0].rr, pos);
                         mapView->setCenter(pos[0] * R2D, pos[1] * R2D);
