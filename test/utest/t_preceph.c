@@ -249,26 +249,29 @@ void utest7(void)
     FILE *fp;
     char *file1="../data/biassinex/COD0MGXFIN_20242230000_01D_01D_OSB.BIA";
     nav_t nav={0};
-    int i,j,k;
-    char *sat[3];
-    const double ns2m = 1E-9*CLIGHT;
-    double osbias,fcbias;
+    osb_t *osb;
+    int i;
+    char prn[8],*obs,strs[40],stre[40];
+    const double ns2m = 1e-9*CLIGHT;
 
-    assert(readdcb(file1,&nav,0)>0);
-        assert(nav.bias_type==1);
+    assert(readdcb(file1,&nav,NULL)!=0);
 
     fp=fopen("testpeph4.out","w");
 
-    for (i=0;i<MAXSAT;i++) for (j=0;j<NFREQ;j++) for (k=0;k<MAX_CODE_BIASES+1;k++) {
+    for (i=0;i<nav.nb;i++) {
 
-      satno2id(i+1,sat);
+      osb = &nav.osb[i];
 
-      osbias = nav.osbias[i][j][k];
-      fcbias = nav.fcbias[i][j][k];
+      satno2id(osb->sat,prn);
+      obs = code2obs(osb->code);
+      time2str(osb->ts, strs, 0);
+      time2str(osb->te, stre, 0);
 
-      fprintf(fp,"%3s %6d %6d %6d %8.4f %8.4f\n",
-              sat,i,j,k,osbias/ns2m,fcbias/ns2m);
+      fprintf(fp,"% 3d  %3s  %c%2s  %s - %s  %8.4f  %8.4f\n",
+             i,prn,osb->isPhase?'L':'C',obs,
+             strs,stre,osb->value/ns2m,osb->sigma/ns2m);
     }
+
     fclose(fp);
     printf("%s utest7 : OK\n",__FILE__);
 }

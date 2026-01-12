@@ -2581,8 +2581,10 @@ static int readantex(const char *file, pcvs_t *pcvs)
             if (sscanf(buff+4,"%d",&f)<1) continue;
             for (i=0;freqs[i];i++) if (freqs[i]==f) break;
             if (freqs[i]) freq=i+1;
-            /* for Galileo E5b: save to E2, not E7  */
+            /* for Galileo E5b: save to slot 2, not 7  */
             if (satsys(pcv.sat,NULL)==SYS_GAL&&f==7) freq=2;
+            /* TODO: what about Galileo E6 and E5ab? */
+            /* TODO: what about BeiDou */
         }
         else if (strstr(buff+60,"END OF FREQUENCY")) {
             freq=0;
@@ -3263,7 +3265,7 @@ extern void freeobs(obs_t *obs)
 *                               (0x01: gps/qzs ephemeris, 0x02: glonass ephemeris,
 *                                0x04: sbas ephemeris,    0x08: precise ephemeris,
 *                                0x10: precise clock      0x20: almanac,
-*                                0x40: tec data)
+*                                0x40: tec data,          0x80: bias data)
 * return : none
 *-----------------------------------------------------------------------------*/
 extern void freenav(nav_t *nav, int opt)
@@ -3275,6 +3277,7 @@ extern void freenav(nav_t *nav, int opt)
     if (opt&0x10) {free(nav->pclk); nav->pclk=NULL; nav->nc=nav->ncmax=0;}
     if (opt&0x20) {free(nav->alm ); nav->alm =NULL; nav->na=nav->namax=0;}
     if (opt&0x40) {free(nav->tec ); nav->tec =NULL; nav->nt=nav->ntmax=0;}
+    if (opt&0x80) {free(nav->osb ); nav->osb =NULL; nav->nb=nav->nbmax=0;}
 }
 
 /* execute command -------------------------------------------------------------
