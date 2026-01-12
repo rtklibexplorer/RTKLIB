@@ -278,12 +278,12 @@ void utest7(void)
 
 int main(int argc, char **argv)
 {
-    /*utest1();*/
-    /*utest2();*/
-    /*utest3();*/
-    /*utest4();*/
-    /*utest5();*/
-    /*utest6();*/
+    utest1();
+    utest2();
+    utest3();
+    utest4();
+    utest5();
+    utest6();
     utest7();
     return 0;
 }
