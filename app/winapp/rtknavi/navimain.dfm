@@ -1365,9 +1365,9 @@ object MainForm: TMainForm
       end
     end
     object Panel12: TPanel
-      Left = 469
+      Left = 425
       Top = 2
-      Width = 187
+      Width = 198
       Height = 23
       Align = alRight
       BevelOuter = bvNone
@@ -1592,7 +1592,7 @@ object MainForm: TMainForm
         TabOrder = 4
       end
       object Str6: TPanel
-        Left = 105
+        Left = 103
         Top = 5
         Width = 9
         Height = 14
@@ -1624,38 +1624,19 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 7
       end
-      object Panel122: TPanel
-        Left = 134
-        Top = 0
-        Width = 27
-        Height = 22
-        TabOrder = 10
-        object BtnOutputStr: TSpeedButton
-          Left = 1
-          Top = 0
-          Width = 25
-          Height = 21
-          Hint = 'Output Streams'
-          Margins.Left = 2
-          Margins.Top = 2
-          Margins.Right = 2
-          Margins.Bottom = 2
-          Caption = 'O'
-          Flat = True
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = []
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          Spacing = 1
-          OnClick = BtnOutputStrClick
-        end
+      object Str9: TPanel
+        Left = 132
+        Top = 5
+        Width = 9
+        Height = 14
+        BevelInner = bvRaised
+        BevelOuter = bvLowered
+        Color = clWindow
+        ParentBackground = False
+        TabOrder = 7
       end
       object Panel123: TPanel
-        Left = 161
+        Left = 143
         Top = 0
         Width = 27
         Height = 22
@@ -1682,6 +1663,36 @@ object MainForm: TMainForm
           ShowHint = True
           Spacing = 1
           OnClick = BtnLogStrClick
+        end
+      end
+      object Panel122: TPanel
+        Left = 171
+        Top = 0
+        Width = 27
+        Height = 22
+        TabOrder = 10
+        object BtnOutputStr: TSpeedButton
+          Left = 1
+          Top = 0
+          Width = 25
+          Height = 21
+          Hint = 'Output Streams'
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 2
+          Caption = 'O'
+          Flat = True
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clBlack
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          Spacing = 1
+          OnClick = BtnOutputStrClick
         end
       end
     end
