@@ -9,11 +9,11 @@
  * version : $Revision: 1.0 $ $Date: 2017/01/30 09:00:00 $
  *
  * history : 2017/01/30  1.0  begin writing
-  *-----------------------------------------------------------------------------*/
-#include "rtklib.h"
-
+ *-----------------------------------------------------------------------------*/
 #include <math.h>
 #include <stdint.h>
+
+#include "rtklib.h"
 
 #define SBP_SYNC1 0x55 /* SBP message header sync */
 
@@ -21,9 +21,9 @@
 
 #define ID_MSGEPHGPS_DEP_E 0x0081 /* GPS L1 C/A nav message (deprecated) */
 #define ID_MSGEPHGPS_DEP_F 0x0086 /* GPS L1 C/A nav message (deprecated) */
-#define ID_MSGEPHGPS 0x008A      /* GPS L1 C/A nav message */
+#define ID_MSGEPHGPS 0x008A       /* GPS L1 C/A nav message */
 
-#define ID_MSGEPHBDS 0x0089      /* BDS B1/B2 D1 nav message */
+#define ID_MSGEPHBDS 0x0089 /* BDS B1/B2 D1 nav message */
 
 #define ID_MSGEPHQZSS 0x008E /* QZSS nav message */
 
@@ -36,8 +36,8 @@
 #define ID_MSGEPHGLO_DEP_D 0x0088 /* Glonass ephemeris (deprecated) */
 #define ID_MSGEPHGLO 0x008B       /* Glonass L1/L2 ephemeris */
 
-#define ID_MSGIONGPS 0x0090      /* GPS ionospheric parameters */
-#define ID_MSG_SBAS_RAW 0x7777   /* SBAS data */
+#define ID_MSGIONGPS 0x0090    /* GPS ionospheric parameters */
+#define ID_MSG_SBAS_RAW 0x7777 /* SBAS data */
 
 #define SEC_DAY 86400.0
 
@@ -93,12 +93,12 @@ typedef enum code_e {
   CODE_GPS_L2CX = 8, /* combined L2C tracking */
   CODE_GPS_L5I = 9,
   CODE_GPS_L5Q = 10,
-  CODE_GPS_L5X = 11,  /* combined L5 tracking */
+  CODE_GPS_L5X = 11, /* combined L5 tracking */
   CODE_BDS2_B1 = 12, /* data channel at 1526 * 1.023 MHz */
-  CODE_BDS2_B2 = 13,  /* data channel at 1180 * 1.023 MHz */
-  CODE_GAL_E1B = 14,  /* data channel at E1 (1540 * 1.023 MHz) */
-  CODE_GAL_E1C = 15,  /* pilot channel at E1 */
-  CODE_GAL_E1X = 16,  /* combined tracking on E1 */
+  CODE_BDS2_B2 = 13, /* data channel at 1180 * 1.023 MHz */
+  CODE_GAL_E1B = 14, /* data channel at E1 (1540 * 1.023 MHz) */
+  CODE_GAL_E1C = 15, /* pilot channel at E1 */
+  CODE_GAL_E1X = 16, /* combined tracking on E1 */
   CODE_GAL_E6B = 17,
   CODE_GAL_E6C = 18,
   CODE_GAL_E6X = 19, /* combined tracking on E6 */
@@ -155,41 +155,40 @@ typedef struct {
   uint32_t freq;
 } bandcode_t;
 
-static bandcode_t rtklib_bandcode_map[CODE_COUNT] =
-    {{CODE_L1C, SYS_GPS, 0},     /* [CODE_GPS_L1CA] */
-     {CODE_L2S, SYS_GPS, 1},     /* [CODE_GPS_L2CM] */
-     {CODE_L1C, SYS_SBS, 0},     /* [CODE_SBAS_L1CA]*/
-     {CODE_L1C, SYS_GLO, 0},     /* [CODE_GLO_L1OF] */
-     {CODE_L2C, SYS_GLO, 1},     /* [CODE_GLO_L2OF] */
-     {CODE_L1P, SYS_GPS, 0},     /* [CODE_GPS_L1P]  */
-     {CODE_L2P, SYS_GPS, 1},     /* [CODE_GPS_L2P]  */
-     {CODE_L2L, SYS_GPS, 1},     /* [CODE_GPS_L2CL] */
-     {CODE_L2X, SYS_GPS, 1},     /* [CODE_GPS_L2CX] */
-     {CODE_L5I, SYS_GPS, 3},     /* [CODE_GPS_L5I]  */
-     {CODE_L5Q, SYS_GPS, 3},     /* [CODE_GPS_L5Q]  */
-     {CODE_L5X, SYS_GPS, 3},     /* [CODE_GPS_L5X]  */
-     {CODE_L2I, SYS_CMP, 0},     /* [CODE_BDS2_B1]  */
-     {CODE_L7I, SYS_CMP, 1},     /* [CODE_BDS2_B2]  */
-     {CODE_L1B, SYS_GAL, 0},     /* [CODE_GAL_E1B]  */
-     {CODE_L1C, SYS_GAL, 0},     /* [CODE_GAL_E1C]  */
-     {CODE_L1X, SYS_GAL, 0},     /* [CODE_GAL_E1X]  */
-     {CODE_L6B, SYS_GAL, 4},     /* [CODE_GAL_E6B]  */
-     {CODE_L6C, SYS_GAL, 4},     /* [CODE_GAL_E6C]  */
-     {CODE_L6X, SYS_GAL, 4},     /* [CODE_GAL_E6X]  */
-     {CODE_L7I, SYS_GAL, 2},     /* [CODE_GAL_E7I]  */
-     {CODE_L7Q, SYS_GAL, 2},     /* [CODE_GAL_E7Q]  */
-     {CODE_L7X, SYS_GAL, 2},     /* [CODE_GAL_E7X]  */
-     {CODE_L8X, SYS_GAL, 3},     /* [CODE_GAL_E8]   */
-     {CODE_L5I, SYS_GAL, 3},     /* [CODE_GAL_E5I]  */
-     {CODE_L5Q, SYS_GAL, 3},     /* [CODE_GAL_E5Q]  */
-     {CODE_L5X, SYS_GAL, 3},     /* [CODE_GAL_E5X]  */
-     {CODE_L1C, SYS_QZS, 0},     /* [CODE_QZS_L1CA] */
-     {CODE_L2S, SYS_QZS, 1},     /* [CODE_QZS_L2CM] */
-     {CODE_L2L, SYS_QZS, 1},     /* [CODE_QZS_L2CL] */
-     {CODE_L2X, SYS_QZS, 1},     /* [CODE_QZS_L2CX] */
-     {CODE_L5I, SYS_QZS, 3},     /* [CODE_QZS_L5I]  */
-     {CODE_L5Q, SYS_QZS, 3},     /* [CODE_QZS_L5Q]  */
-     {CODE_L5X, SYS_QZS, 3}};    /* [CODE_QZS_L5X]  */
+static bandcode_t rtklib_bandcode_map[CODE_COUNT] = {{CODE_L1C, SYS_GPS, 0},  /* [CODE_GPS_L1CA] */
+                                                     {CODE_L2S, SYS_GPS, 1},  /* [CODE_GPS_L2CM] */
+                                                     {CODE_L1C, SYS_SBS, 0},  /* [CODE_SBAS_L1CA]*/
+                                                     {CODE_L1C, SYS_GLO, 0},  /* [CODE_GLO_L1OF] */
+                                                     {CODE_L2C, SYS_GLO, 1},  /* [CODE_GLO_L2OF] */
+                                                     {CODE_L1P, SYS_GPS, 0},  /* [CODE_GPS_L1P]  */
+                                                     {CODE_L2P, SYS_GPS, 1},  /* [CODE_GPS_L2P]  */
+                                                     {CODE_L2L, SYS_GPS, 1},  /* [CODE_GPS_L2CL] */
+                                                     {CODE_L2X, SYS_GPS, 1},  /* [CODE_GPS_L2CX] */
+                                                     {CODE_L5I, SYS_GPS, 3},  /* [CODE_GPS_L5I]  */
+                                                     {CODE_L5Q, SYS_GPS, 3},  /* [CODE_GPS_L5Q]  */
+                                                     {CODE_L5X, SYS_GPS, 3},  /* [CODE_GPS_L5X]  */
+                                                     {CODE_L2I, SYS_CMP, 0},  /* [CODE_BDS2_B1]  */
+                                                     {CODE_L7I, SYS_CMP, 1},  /* [CODE_BDS2_B2]  */
+                                                     {CODE_L1B, SYS_GAL, 0},  /* [CODE_GAL_E1B]  */
+                                                     {CODE_L1C, SYS_GAL, 0},  /* [CODE_GAL_E1C]  */
+                                                     {CODE_L1X, SYS_GAL, 0},  /* [CODE_GAL_E1X]  */
+                                                     {CODE_L6B, SYS_GAL, 4},  /* [CODE_GAL_E6B]  */
+                                                     {CODE_L6C, SYS_GAL, 4},  /* [CODE_GAL_E6C]  */
+                                                     {CODE_L6X, SYS_GAL, 4},  /* [CODE_GAL_E6X]  */
+                                                     {CODE_L7I, SYS_GAL, 2},  /* [CODE_GAL_E7I]  */
+                                                     {CODE_L7Q, SYS_GAL, 2},  /* [CODE_GAL_E7Q]  */
+                                                     {CODE_L7X, SYS_GAL, 2},  /* [CODE_GAL_E7X]  */
+                                                     {CODE_L8X, SYS_GAL, 3},  /* [CODE_GAL_E8]   */
+                                                     {CODE_L5I, SYS_GAL, 3},  /* [CODE_GAL_E5I]  */
+                                                     {CODE_L5Q, SYS_GAL, 3},  /* [CODE_GAL_E5Q]  */
+                                                     {CODE_L5X, SYS_GAL, 3},  /* [CODE_GAL_E5X]  */
+                                                     {CODE_L1C, SYS_QZS, 0},  /* [CODE_QZS_L1CA] */
+                                                     {CODE_L2S, SYS_QZS, 1},  /* [CODE_QZS_L2CM] */
+                                                     {CODE_L2L, SYS_QZS, 1},  /* [CODE_QZS_L2CL] */
+                                                     {CODE_L2X, SYS_QZS, 1},  /* [CODE_QZS_L2CX] */
+                                                     {CODE_L5I, SYS_QZS, 3},  /* [CODE_QZS_L5I]  */
+                                                     {CODE_L5Q, SYS_QZS, 3},  /* [CODE_QZS_L5Q]  */
+                                                     {CODE_L5X, SYS_QZS, 3}}; /* [CODE_QZS_L5X]  */
 #define IS_GPS(c) (SYS_GPS == rtklib_bandcode_map[(c)].sys)
 #define IS_QZSS(c) (SYS_QZS == rtklib_bandcode_map[(c)].sys)
 #define IS_BDS(c) (SYS_CMP == rtklib_bandcode_map[(c)].sys)
@@ -199,86 +198,57 @@ static bandcode_t rtklib_bandcode_map[CODE_COUNT] =
 
 /* checksum lookup table -----------------------------------------------------*/
 static const uint32_t CRC_16CCIT_LookUp[256] = {
-    0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108,
-    0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210,
-    0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6, 0x9339, 0x8318, 0xb37b,
-    0xa35a, 0xd3bd, 0xc39c, 0xf3ff, 0xe3de, 0x2462, 0x3443, 0x0420, 0x1401,
-    0x64e6, 0x74c7, 0x44a4, 0x5485, 0xa56a, 0xb54b, 0x8528, 0x9509, 0xe5ee,
-    0xf5cf, 0xc5ac, 0xd58d, 0x3653, 0x2672, 0x1611, 0x0630, 0x76d7, 0x66f6,
-    0x5695, 0x46b4, 0xb75b, 0xa77a, 0x9719, 0x8738, 0xf7df, 0xe7fe, 0xd79d,
-    0xc7bc, 0x48c4, 0x58e5, 0x6886, 0x78a7, 0x0840, 0x1861, 0x2802, 0x3823,
-    0xc9cc, 0xd9ed, 0xe98e, 0xf9af, 0x8948, 0x9969, 0xa90a, 0xb92b, 0x5af5,
-    0x4ad4, 0x7ab7, 0x6a96, 0x1a71, 0x0a50, 0x3a33, 0x2a12, 0xdbfd, 0xcbdc,
-    0xfbbf, 0xeb9e, 0x9b79, 0x8b58, 0xbb3b, 0xab1a, 0x6ca6, 0x7c87, 0x4ce4,
-    0x5cc5, 0x2c22, 0x3c03, 0x0c60, 0x1c41, 0xedae, 0xfd8f, 0xcdec, 0xddcd,
-    0xad2a, 0xbd0b, 0x8d68, 0x9d49, 0x7e97, 0x6eb6, 0x5ed5, 0x4ef4, 0x3e13,
-    0x2e32, 0x1e51, 0x0e70, 0xff9f, 0xefbe, 0xdfdd, 0xcffc, 0xbf1b, 0xaf3a,
-    0x9f59, 0x8f78, 0x9188, 0x81a9, 0xb1ca, 0xa1eb, 0xd10c, 0xc12d, 0xf14e,
-    0xe16f, 0x1080, 0x00a1, 0x30c2, 0x20e3, 0x5004, 0x4025, 0x7046, 0x6067,
-    0x83b9, 0x9398, 0xa3fb, 0xb3da, 0xc33d, 0xd31c, 0xe37f, 0xf35e, 0x02b1,
-    0x1290, 0x22f3, 0x32d2, 0x4235, 0x5214, 0x6277, 0x7256, 0xb5ea, 0xa5cb,
-    0x95a8, 0x8589, 0xf56e, 0xe54f, 0xd52c, 0xc50d, 0x34e2, 0x24c3, 0x14a0,
-    0x0481, 0x7466, 0x6447, 0x5424, 0x4405, 0xa7db, 0xb7fa, 0x8799, 0x97b8,
-    0xe75f, 0xf77e, 0xc71d, 0xd73c, 0x26d3, 0x36f2, 0x0691, 0x16b0, 0x6657,
-    0x7676, 0x4615, 0x5634, 0xd94c, 0xc96d, 0xf90e, 0xe92f, 0x99c8, 0x89e9,
-    0xb98a, 0xa9ab, 0x5844, 0x4865, 0x7806, 0x6827, 0x18c0, 0x08e1, 0x3882,
-    0x28a3, 0xcb7d, 0xdb5c, 0xeb3f, 0xfb1e, 0x8bf9, 0x9bd8, 0xabbb, 0xbb9a,
-    0x4a75, 0x5a54, 0x6a37, 0x7a16, 0x0af1, 0x1ad0, 0x2ab3, 0x3a92, 0xfd2e,
-    0xed0f, 0xdd6c, 0xcd4d, 0xbdaa, 0xad8b, 0x9de8, 0x8dc9, 0x7c26, 0x6c07,
-    0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1, 0xef1f, 0xff3e, 0xcf5d,
-    0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74,
+    0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b,
+    0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6,
+    0x9339, 0x8318, 0xb37b, 0xa35a, 0xd3bd, 0xc39c, 0xf3ff, 0xe3de, 0x2462, 0x3443, 0x0420, 0x1401,
+    0x64e6, 0x74c7, 0x44a4, 0x5485, 0xa56a, 0xb54b, 0x8528, 0x9509, 0xe5ee, 0xf5cf, 0xc5ac, 0xd58d,
+    0x3653, 0x2672, 0x1611, 0x0630, 0x76d7, 0x66f6, 0x5695, 0x46b4, 0xb75b, 0xa77a, 0x9719, 0x8738,
+    0xf7df, 0xe7fe, 0xd79d, 0xc7bc, 0x48c4, 0x58e5, 0x6886, 0x78a7, 0x0840, 0x1861, 0x2802, 0x3823,
+    0xc9cc, 0xd9ed, 0xe98e, 0xf9af, 0x8948, 0x9969, 0xa90a, 0xb92b, 0x5af5, 0x4ad4, 0x7ab7, 0x6a96,
+    0x1a71, 0x0a50, 0x3a33, 0x2a12, 0xdbfd, 0xcbdc, 0xfbbf, 0xeb9e, 0x9b79, 0x8b58, 0xbb3b, 0xab1a,
+    0x6ca6, 0x7c87, 0x4ce4, 0x5cc5, 0x2c22, 0x3c03, 0x0c60, 0x1c41, 0xedae, 0xfd8f, 0xcdec, 0xddcd,
+    0xad2a, 0xbd0b, 0x8d68, 0x9d49, 0x7e97, 0x6eb6, 0x5ed5, 0x4ef4, 0x3e13, 0x2e32, 0x1e51, 0x0e70,
+    0xff9f, 0xefbe, 0xdfdd, 0xcffc, 0xbf1b, 0xaf3a, 0x9f59, 0x8f78, 0x9188, 0x81a9, 0xb1ca, 0xa1eb,
+    0xd10c, 0xc12d, 0xf14e, 0xe16f, 0x1080, 0x00a1, 0x30c2, 0x20e3, 0x5004, 0x4025, 0x7046, 0x6067,
+    0x83b9, 0x9398, 0xa3fb, 0xb3da, 0xc33d, 0xd31c, 0xe37f, 0xf35e, 0x02b1, 0x1290, 0x22f3, 0x32d2,
+    0x4235, 0x5214, 0x6277, 0x7256, 0xb5ea, 0xa5cb, 0x95a8, 0x8589, 0xf56e, 0xe54f, 0xd52c, 0xc50d,
+    0x34e2, 0x24c3, 0x14a0, 0x0481, 0x7466, 0x6447, 0x5424, 0x4405, 0xa7db, 0xb7fa, 0x8799, 0x97b8,
+    0xe75f, 0xf77e, 0xc71d, 0xd73c, 0x26d3, 0x36f2, 0x0691, 0x16b0, 0x6657, 0x7676, 0x4615, 0x5634,
+    0xd94c, 0xc96d, 0xf90e, 0xe92f, 0x99c8, 0x89e9, 0xb98a, 0xa9ab, 0x5844, 0x4865, 0x7806, 0x6827,
+    0x18c0, 0x08e1, 0x3882, 0x28a3, 0xcb7d, 0xdb5c, 0xeb3f, 0xfb1e, 0x8bf9, 0x9bd8, 0xabbb, 0xbb9a,
+    0x4a75, 0x5a54, 0x6a37, 0x7a16, 0x0af1, 0x1ad0, 0x2ab3, 0x3a92, 0xfd2e, 0xed0f, 0xdd6c, 0xcd4d,
+    0xbdaa, 0xad8b, 0x9de8, 0x8dc9, 0x7c26, 0x6c07, 0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1,
+    0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74,
     0x2e93, 0x3eb2, 0x0ed1, 0x1ef0};
 
 /* it's easy to derive a function for the values below, but I'd rather map the
  * table explicitly from the RTCM standard document */
-static const uint32_t rtcm_phase_lock_table[16] = {0,
-                                                   32,
-                                                   64,
-                                                   128,
-                                                   256,
-                                                   512,
-                                                   1024,
-                                                   2048,
-                                                   4096,
-                                                   8192,
-                                                   16384,
-                                                   32768,
-                                                   65536,
-                                                   131072,
-                                                   262144,
-                                                   524288};
+static const uint32_t rtcm_phase_lock_table[16] = {
+    0, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288};
 
 static const uint8_t decoding_table[256] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3E, 0x00, 0x00, 0x00, 0x3F,
-    0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
-    0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12,
-    0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24,
-    0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30,
-    0x31, 0x32, 0x33, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00};
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3E, 0x00, 0x00, 0x00, 0x3F,
+    0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+    0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+    0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static uint8_t puPayloadTmp[256];
 
 static const gtime_t time0 = {0};
 
-static int Base64_Decode(uint8_t *_pcData,
-                         uint32_t _uDataLen,
-                         uint8_t *_puDecodedData,
+static int Base64_Decode(uint8_t *_pcData, uint32_t _uDataLen, uint8_t *_puDecodedData,
                          uint32_t *_puDecodedDataLen) {
   uint32_t i, j;
   uint32_t output_length;
@@ -334,24 +304,25 @@ static int Base64_Decode(uint8_t *_pcData,
 } /* Base64_Decode() */
 /* URA value (m) to URA index ------------------------------------------------*/
 
-static int uraindex(double value)
-{
-    static const double ura_eph[]={
-        2.4,3.4,4.85,6.85,9.65,13.65,24.0,48.0,96.0,192.0,384.0,768.0,1536.0,
-        3072.0,6144.0,0.0
-    };
-    int i;
-    for (i=0;i<15;i++) if (ura_eph[i]>=value) break;
-    return i;
+static int uraindex(double value) {
+  static const double ura_eph[] = {2.4,  3.4,   4.85,  6.85,  9.65,   13.65,  24.0,   48.0,
+                                   96.0, 192.0, 384.0, 768.0, 1536.0, 3072.0, 6144.0, 0.0};
+  int i;
+  for (i = 0; i < 15; i++)
+    if (ura_eph[i] >= value) break;
+  return i;
 }
 
-static int sisa_index(double value)
-{
-    if (value<0.0 || value>6.0) return 255; /* unknown or NAPA */
-    else if (value<=0.5) return (int)(value/0.01);
-    else if (value<=1.0) return (int)((value-0.5)/0.02)+50;
-    else if (value<=2.0) return (int)((value-1.0)/0.04)+75;
-    return ((int)(value-2.0)/0.16)+100;
+static int sisa_index(double value) {
+  if (value < 0.0 || value > 6.0)
+    return 255; /* unknown or NAPA */
+  else if (value <= 0.5)
+    return (int)(value / 0.01);
+  else if (value <= 1.0)
+    return (int)((value - 0.5) / 0.02) + 50;
+  else if (value <= 2.0)
+    return (int)((value - 1.0) / 0.04) + 75;
+  return ((int)(value - 2.0) / 0.16) + 100;
 }
 
 /* SBP checksum calculation --------------------------------------------------*/
@@ -413,9 +384,7 @@ static void clearbuff(raw_t *raw) {
 }
 
 /* appropriate calculation of LLI for SBP */
-static uint8_t calculate_loss_of_lock(double dt,
-                                      uint32_t prev_lock_time,
-                                      uint32_t curr_lock_time) {
+static uint8_t calculate_loss_of_lock(double dt, uint32_t prev_lock_time, uint32_t curr_lock_time) {
   if (prev_lock_time > curr_lock_time) {
     /*    fprintf(stderr, "prev_lock_time %d curr_lock_time %d\n",
      * prev_lock_time, curr_lock_time);*/
@@ -425,13 +394,11 @@ static uint8_t calculate_loss_of_lock(double dt,
     return 1;
   } else if ((prev_lock_time == curr_lock_time) && (dt < prev_lock_time)) {
     return 0;
-  } else if ((prev_lock_time < curr_lock_time) &&
-             (dt >= (2 * curr_lock_time - prev_lock_time))) {
+  } else if ((prev_lock_time < curr_lock_time) && (dt >= (2 * curr_lock_time - prev_lock_time))) {
     /*fprintf(stderr, "3\n");*/
     return 1;
   } else if ((prev_lock_time < curr_lock_time) &&
-             (curr_lock_time < dt &&
-              dt < (2 * curr_lock_time - prev_lock_time))) {
+             (curr_lock_time < dt && dt < (2 * curr_lock_time - prev_lock_time))) {
     /*fprintf(stderr, "4\n");*/
     return 1;
   } else if ((prev_lock_time < curr_lock_time) && (dt <= curr_lock_time))
@@ -462,7 +429,7 @@ static int decode_msgobs(raw_t *raw) {
   dResTow = I4(p + 4); /* residual Time Of Week */
   week = U2(p + 8);    /* GPS week */
   week = adjgpsweek(week);
-  num_obs = p[10];       /* number of observations in message */
+  num_obs = p[10]; /* number of observations in message */
   /*  uSeqSize = num_obs>>4; */
   /*  uSeqIdx  = num_obs&0xf; */
   num_obs = ((raw->len) - 19) / 17;
@@ -483,14 +450,14 @@ static int decode_msgobs(raw_t *raw) {
 
   /* add observations */
   for (i = 0; i < num_obs && i < MAXOBS; i++, p += 17) {
-    pseudorange = U4(p) * 0.02;  /* pseudorange observation in 2cm units */
-    carr_phase = I4(p + 4);     /* carrier phase integer cycles */
-    carr_phase += p[8] / 256.0; /* carrier phase fractional cycles */
-    freq_doppler = I2(p + 9);       /* Doppler shift in integer Hz */
-    freq_doppler += p[11] / 256.0;  /* fractional part of Doppler shift */
+    pseudorange = U4(p) * 0.02;    /* pseudorange observation in 2cm units */
+    carr_phase = I4(p + 4);        /* carrier phase integer cycles */
+    carr_phase += p[8] / 256.0;    /* carrier phase fractional cycles */
+    freq_doppler = I2(p + 9);      /* Doppler shift in integer Hz */
+    freq_doppler += p[11] / 256.0; /* fractional part of Doppler shift */
     cn0_int = p[12];               /* C/N0 */
-    lock_info = p[13] & 0xf;    /* lock time */
-    flags = p[14];             /* observation flags */
+    lock_info = p[13] & 0xf;       /* lock time */
+    flags = p[14];                 /* observation flags */
     sat_id = p[15];
     band_code = p[16];
 
@@ -539,8 +506,7 @@ static int decode_msgobs(raw_t *raw) {
       if (flags & 0x2) {
         prev_lockt = rtcm_phase_lock_table[(raw->halfc[sat - 1][freq])];
         curr_lockt = rtcm_phase_lock_table[lock_info];
-        slip =
-            calculate_loss_of_lock(delta_time * 1000.0, prev_lockt, curr_lockt);
+        slip = calculate_loss_of_lock(delta_time * 1000.0, prev_lockt, curr_lockt);
         half_cycle_amb = (flags & 0x4) ? 0 : 1;
         if (half_cycle_amb) {
           slip |= 0x2; /* half-cycle ambiguity unresolved */
@@ -775,15 +741,10 @@ static int decode_gpsnav_dep_e(raw_t *raw) {
   }
 
   if (!strstr(raw->opt, "EPHALL")) {
-    if ((eph.iode == raw->nav.eph[sat - 1].iode) &&
-        (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
-      trace(3,
-            "decode_gpsnav_dep_e: eph.iode %d raw->nav.eph[sat - 1].iode %d\n",
-            eph.iode,
+    if ((eph.iode == raw->nav.eph[sat - 1].iode) && (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
+      trace(3, "decode_gpsnav_dep_e: eph.iode %d raw->nav.eph[sat - 1].iode %d\n", eph.iode,
             raw->nav.eph[sat - 1].iode);
-      trace(3,
-            "%decode_gpsnav_dep_e: eph.iodc %d raw->nav.eph[sat - 1].iodc %d\n",
-            eph.iode,
+      trace(3, "%decode_gpsnav_dep_e: eph.iodc %d raw->nav.eph[sat - 1].iodc %d\n", eph.iode,
             raw->nav.eph[sat - 1].iode);
       return 0;
     }
@@ -792,7 +753,7 @@ static int decode_gpsnav_dep_e(raw_t *raw) {
   eph.sat = sat;
   raw->nav.eph[sat - 1] = eph;
   raw->ephsat = sat;
-  raw->ephset=0;
+  raw->ephset = 0;
   return 2;
 }
 
@@ -822,8 +783,7 @@ static int decode_gpsnav_dep_f(raw_t *raw) {
 
   eph.code = puiTmp[1];
   if (!IS_GPS(eph.code)) {
-    trace(
-        2, "decode_gpsnav_dep_f: unrecognised code %d for G%02d\n", eph.code, prn);
+    trace(2, "decode_gpsnav_dep_f: unrecognised code %d for G%02d\n", eph.code, prn);
     return -1;
   }
 
@@ -832,14 +792,13 @@ static int decode_gpsnav_dep_f(raw_t *raw) {
   if (0 == timediff(raw->time, time0)) {
     eph.ttr = timeget();
   } else {
-  eph.ttr = raw->time;
+    eph.ttr = raw->time;
   }
 
   if (!strstr(raw->opt, "EPHALL")) {
-    if ((eph.iode == raw->nav.eph[sat - 1].iode) &&
-        (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
+    if ((eph.iode == raw->nav.eph[sat - 1].iode) && (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
       return 0;
-  }
+    }
   }
 
   trace(3, "decode_gpsnav_dep_f: decoded eph for G%02d\n", prn);
@@ -877,8 +836,7 @@ static int decode_gpsnav(raw_t *raw) {
 
   eph.code = puiTmp[1];
   if (!IS_GPS(eph.code)) {
-    trace(
-        2, "decode_gpsnav: unrecognised code %d for G%02d\n", eph.code, prn);
+    trace(2, "decode_gpsnav: unrecognised code %d for G%02d\n", eph.code, prn);
     return -1;
   }
 
@@ -891,16 +849,9 @@ static int decode_gpsnav(raw_t *raw) {
   }
 
   if (!strstr(raw->opt, "EPHALL")) {
-    if ((eph.iode == raw->nav.eph[sat - 1].iode) &&
-        (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
-      trace(3,
-            "eph.iode %d raw->nav.eph[sat - 1].iode %d\n",
-            eph.iode,
-            raw->nav.eph[sat - 1].iode);
-      trace(3,
-            "eph.iodc %d raw->nav.eph[sat - 1].iodc %d\n",
-            eph.iode,
-            raw->nav.eph[sat - 1].iode);
+    if ((eph.iode == raw->nav.eph[sat - 1].iode) && (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
+      trace(3, "eph.iode %d raw->nav.eph[sat - 1].iode %d\n", eph.iode, raw->nav.eph[sat - 1].iode);
+      trace(3, "eph.iodc %d raw->nav.eph[sat - 1].iodc %d\n", eph.iode, raw->nav.eph[sat - 1].iode);
       return 0;
     }
   }
@@ -940,8 +891,7 @@ static int decode_qzssnav(raw_t *raw) {
 
   eph.code = puiTmp[1];
   if (!IS_QZSS(eph.code)) {
-    trace(
-        2, "decode_qzssnav: unrecognised code %d for G%02d\n", eph.code, prn);
+    trace(2, "decode_qzssnav: unrecognised code %d for G%02d\n", eph.code, prn);
     return -1;
   }
 
@@ -950,20 +900,13 @@ static int decode_qzssnav(raw_t *raw) {
   if (0 == timediff(raw->time, time0)) {
     eph.ttr = timeget();
   } else {
-  eph.ttr = raw->time;
+    eph.ttr = raw->time;
   }
 
   if (!strstr(raw->opt, "EPHALL")) {
-    if ((eph.iode == raw->nav.eph[sat - 1].iode) &&
-        (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
-      trace(3,
-            "eph.iode %d raw->nav.eph[sat - 1].iode %d\n",
-            eph.iode,
-            raw->nav.eph[sat - 1].iode);
-      trace(3,
-            "eph.iodc %d raw->nav.eph[sat - 1].iodc %d\n",
-            eph.iode,
-            raw->nav.eph[sat - 1].iode);
+    if ((eph.iode == raw->nav.eph[sat - 1].iode) && (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
+      trace(3, "eph.iode %d raw->nav.eph[sat - 1].iode %d\n", eph.iode, raw->nav.eph[sat - 1].iode);
+      trace(3, "eph.iodc %d raw->nav.eph[sat - 1].iodc %d\n", eph.iode, raw->nav.eph[sat - 1].iode);
       return 0;
     }
   }
@@ -1003,8 +946,7 @@ static int decode_bdsnav(raw_t *raw) {
 
   eph.code = puiTmp[1];
   if (!IS_BDS(eph.code)) {
-    trace(
-        2, "decode_bdsnav: unrecognised code %d for C%02d\n", eph.code, prn);
+    trace(2, "decode_bdsnav: unrecognised code %d for C%02d\n", eph.code, prn);
     return -1;
   }
 
@@ -1013,8 +955,7 @@ static int decode_bdsnav(raw_t *raw) {
   eph.ttr = raw->time;
 
   if (!strstr(raw->opt, "EPHALL")) {
-    if ((eph.iode == raw->nav.eph[sat - 1].iode) &&
-        (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
+    if ((eph.iode == raw->nav.eph[sat - 1].iode) && (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
       return 0;
     }
   }
@@ -1048,15 +989,13 @@ static int decode_galnav_dep_a(raw_t *raw) {
 
   sat = satno(SYS_GAL, prn);
   if (sat == 0) {
-    trace(
-        2, "decode_galnav_dep_a: can't work out Galileo sat for PRN %02d\n", prn);
+    trace(2, "decode_galnav_dep_a: can't work out Galileo sat for PRN %02d\n", prn);
     return -1;
   }
 
   eph.code = puiTmp[1];
   if (!IS_GAL(eph.code)) {
-    trace(
-        2, "decode_galnav_dep_a: unrecognised code %d for E%02d\n", eph.code, prn);
+    trace(2, "decode_galnav_dep_a: unrecognised code %d for E%02d\n", eph.code, prn);
     return -1;
   }
 
@@ -1065,8 +1004,7 @@ static int decode_galnav_dep_a(raw_t *raw) {
   eph.ttr = raw->time;
 
   if (!strstr(raw->opt, "EPHALL")) {
-    if ((eph.iode == raw->nav.eph[sat - 1].iode) &&
-        (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
+    if ((eph.iode == raw->nav.eph[sat - 1].iode) && (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
       return 0;
     }
   }
@@ -1100,15 +1038,13 @@ static int decode_galnav(raw_t *raw) {
 
   sat = satno(SYS_GAL, prn);
   if (sat == 0) {
-    trace(
-        2, "decode_galnav: can't work out Galileo sat for PRN %02d\n", prn);
+    trace(2, "decode_galnav: can't work out Galileo sat for PRN %02d\n", prn);
     return -1;
   }
 
   eph.code = puiTmp[1];
   if (!IS_GAL(eph.code)) {
-    trace(
-        2, "decode_galnav: unrecognised code %d for E%02d\n", eph.code, prn);
+    trace(2, "decode_galnav: unrecognised code %d for E%02d\n", eph.code, prn);
     return -1;
   }
 
@@ -1117,8 +1053,7 @@ static int decode_galnav(raw_t *raw) {
   eph.ttr = raw->time;
 
   if (!strstr(raw->opt, "EPHALL")) {
-    if ((eph.iode == raw->nav.eph[sat - 1].iode) &&
-        (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
+    if ((eph.iode == raw->nav.eph[sat - 1].iode) && (eph.iodc == raw->nav.eph[sat - 1].iodc)) {
       return 0;
     }
   }
@@ -1378,32 +1313,32 @@ static int decode_sbp(raw_t *raw) {
 
   switch (type) {
     case ID_MSGOBS:
-    return decode_msgobs(raw);
+      return decode_msgobs(raw);
     case ID_MSGEPHGPS_DEP_E:
       return decode_gpsnav_dep_e(raw);
     case ID_MSGEPHGPS_DEP_F:
       return decode_gpsnav_dep_f(raw);
-  case ID_MSGEPHGPS:
-    return decode_gpsnav(raw);
-  case ID_MSGEPHBDS:
-    return decode_bdsnav(raw);
+    case ID_MSGEPHGPS:
+      return decode_gpsnav(raw);
+    case ID_MSGEPHBDS:
+      return decode_bdsnav(raw);
     case ID_MSGEPHQZSS:
       return decode_qzssnav(raw);
-  case ID_MSGEPHGAL:
-    return decode_galnav(raw);
+    case ID_MSGEPHGAL:
+      return decode_galnav(raw);
     case ID_MSGEPHGAL_DEP_A:
       return decode_galnav_dep_a(raw);
     case ID_MSGEPHGLO_DEP_D:
       return decode_glonav_dep_d(raw);
-  case ID_MSGEPHGLO:
-    return decode_glonav(raw);
-  case ID_MSGIONGPS:
-    return decode_gpsion(raw);
-  case ID_MSG_SBAS_RAW:
-    return decode_snav(raw);
-  default:
+    case ID_MSGEPHGLO:
+      return decode_glonav(raw);
+    case ID_MSGIONGPS:
+      return decode_gpsion(raw);
+    case ID_MSG_SBAS_RAW:
+      return decode_snav(raw);
+    default:
       trace(3, "decode_sbp: unused frame type=%04x len=%d\n", type, raw->len);
-    /* there are many more SBF blocks to be extracted */
+      /* there are many more SBF blocks to be extracted */
   }
   return 0;
 }
@@ -1496,8 +1431,7 @@ extern int input_sbpf(raw_t *raw, FILE *fp) {
 
   /* let's store in raw->buff the whole block of length len */
   /* 8 bytes have been already read, we read raw->len-8 more */
-  if (fread(raw->buff + 6, 1, raw->len - 6, fp) < (size_t)(raw->len - 6))
-    return endfile(raw);
+  if (fread(raw->buff + 6, 1, raw->len - 6, fp) < (size_t)(raw->len - 6)) return endfile(raw);
 
   /* decode SBF block */
   stat = decode_sbp(raw);

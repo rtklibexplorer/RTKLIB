@@ -1,34 +1,35 @@
 /*------------------------------------------------------------------------------
-* vt.h : header file for virtual console
-*
-*          Copyright (C) 2015 by T.TAKASU, All rights reserved.
-*
-* version : $Revision:$ $Date:$
-* history : 2015/01/11 1.0  separated from rtkrcv.c
-*-----------------------------------------------------------------------------*/
+ * vt.h : header file for virtual console
+ *
+ *          Copyright (C) 2015 by T.TAKASU, All rights reserved.
+ *
+ * version : $Revision:$ $Date:$
+ * history : 2015/01/11 1.0  separated from rtkrcv.c
+ *-----------------------------------------------------------------------------*/
 #ifndef VT_H
 #define VT_H
 #include <termios.h>
+
 #include "rtklib.h"
 
-#define MAXBUFF     4096                /* size of line buffer */
-#define MAXHIST     256                 /* size of history buffer */
+#define MAXBUFF 4096 /* size of line buffer */
+#define MAXHIST 256  /* size of history buffer */
 
 /* type definitions ----------------------------------------------------------*/
-typedef struct vt_tag {                 /* virtual console type */
-    int state;                          /* state(0:close,1:open) */
-    int type;                           /* type (0:dev,1:telnet) */
-    int in,out;                         /* input/output file descriptor */
-    int n,nesc;                         /* number of line buffer/escape */
-    int cur;                            /* cursor position */
-    int cur_h;                          /* current history */
-    int brk;                            /* break status */
-    int blind;                          /* blind inpu mode */
-    struct termios tio;                 /* original terminal attribute */
-    char buff[MAXBUFF];                 /* line buffer */
-    char esc[8];                        /* escape buffer */
-    char *hist[MAXHIST];                /* history buffer */
-    FILE *logfp;                        /* log file pointer */
+typedef struct vt_tag { /* virtual console type */
+  int state;            /* state(0:close,1:open) */
+  int type;             /* type (0:dev,1:telnet) */
+  int in, out;          /* input/output file descriptor */
+  int n, nesc;          /* number of line buffer/escape */
+  int cur;              /* cursor position */
+  int cur_h;            /* current history */
+  int brk;              /* break status */
+  int blind;            /* blind inpu mode */
+  struct termios tio;   /* original terminal attribute */
+  char buff[MAXBUFF];   /* line buffer */
+  char esc[8];          /* escape buffer */
+  char *hist[MAXHIST];  /* history buffer */
+  FILE *logfp;          /* log file pointer */
 } vt_t;
 
 /* function prototypes -------------------------------------------------------*/

@@ -174,8 +174,8 @@ static void gen_rtcm_ant(rtcm_t *rtcm, const int *type, int n, FILE *fp) {
   }
 }
 // Convert to RTCM messages --------------------------------------------------
-static int conv_rtcm(const int *type, int n, const char *opt, const char *outfile,
-                     const obs_t *obs, const nav_t *nav, const sta_t *sta, int staid) {
+static int conv_rtcm(const int *type, int n, const char *opt, const char *outfile, const obs_t *obs,
+                     const nav_t *nav, const sta_t *sta, int staid) {
   rtcm_t rtcm = {0};
 
   strcpy(rtcm.opt, opt);
@@ -309,7 +309,7 @@ int main(int argc, char **argv) {
     readrnxt(infile[i], 0, ts, te, tint, rnxopt, &obs, &nav, &sta);
   }
   sortobs(&obs);
-  uniqnav(&nav); // To sort them for gen_rtcm_nav()
+  uniqnav(&nav);  // To sort them for gen_rtcm_nav()
 
   // Convert to RTCM messages
   int ret = 0;
