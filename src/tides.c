@@ -1,27 +1,27 @@
 /*------------------------------------------------------------------------------
-* tides.c : tidal displacement corrections
-*
-*          Copyright (C) 2015-2017 by T.TAKASU, All rights reserved.
-*
-* references :
-*     [1] D.D.McCarthy, IERS Technical Note 21, IERS Conventions 1996, July 1996
-*     [2] D.D.McCarthy and G.Petit, IERS Technical Note 32, IERS Conventions
-*         2003, November 2003
-*     [3] D.A.Vallado, Fundamentals of Astrodynamics and Applications 2nd ed,
-*         Space Technology Library, 2004
-*     [4] J.Kouba, A Guide to using International GNSS Service (IGS) products,
-*         May 2009
-*     [5] G.Petit and B.Luzum (eds), IERS Technical Note No. 36, IERS
-*         Conventions (2010), 2010
-*
-* version : $Revision:$ $Date:$
-* history : 2015/05/10 1.0  separated from ppp.c
-*           2015/06/11 1.1  fix bug on computing days in tide_oload() (#128)
-*           2017/04/11 1.2  fix bug on calling geterp() in timdedisp()
-*-----------------------------------------------------------------------------*/
+ * tides.c : tidal displacement corrections
+ *
+ *          Copyright (C) 2015-2017 by T.TAKASU, All rights reserved.
+ *
+ * references :
+ *     [1] D.D.McCarthy, IERS Technical Note 21, IERS Conventions 1996, July 1996
+ *     [2] D.D.McCarthy and G.Petit, IERS Technical Note 32, IERS Conventions
+ *         2003, November 2003
+ *     [3] D.A.Vallado, Fundamentals of Astrodynamics and Applications 2nd ed,
+ *         Space Technology Library, 2004
+ *     [4] J.Kouba, A Guide to using International GNSS Service (IGS) products,
+ *         May 2009
+ *     [5] G.Petit and B.Luzum (eds), IERS Technical Note No. 36, IERS
+ *         Conventions (2010), 2010
+ *
+ * version : $Revision:$ $Date:$
+ * history : 2015/05/10 1.0  separated from ppp.c
+ *           2015/06/11 1.1  fix bug on computing days in tide_oload() (#128)
+ *           2017/04/11 1.2  fix bug on calling geterp() in timdedisp()
+ *-----------------------------------------------------------------------------*/
 #include "rtklib.h"
 
-#define SQR(x)      ((x)*(x))
+#define SQR(x) ((x) * (x))
 
 // The following few functions are in support of dehanttideinel. This code is
 // a translation of the respective iers fortran code to C and to RTKLIB, and
@@ -899,7 +899,6 @@ static void hardisp(const gtime_t time, double samp, int irnt, const double tamp
   }
 }
 
-
 // IERS mean pole -------------------------------------------------------------
 // Ref: https://iers-conventions.obspm.fr/conventions_material.php TN.36
 // 7.1.4 Rotational deformation due to polar motion: Secular polar motion and the pole tide.
@@ -935,29 +934,29 @@ static void tide_pole(gtime_t tutc, const double *pos, const double *erpv, doubl
 }
 
 /* Tidal displacement ----------------------------------------------------------
-* Displacements by earth tides
-* Args   : gtime_t tutc     I   time in UTC
-*          double *rr       I   site position (ECEF) (m)
-*          int    opt       I   options (or of the followings)
-*                                 1: solid earth tide
-*                                 2: ocean tide loading
-*                                 4: pole tide
-*                                 8: elimate permanent deformation
-*          double *erp      I   earth rotation parameters (NULL: not used)
-*          double *odisp    I   ocean loading parameters  (NULL: not used)
-*                                 odisp[0][i][0]: consituent i amplitude radial(m)
-*                                 odisp[0][i][1]: consituent i amplitude west  (m)
-*                                 odisp[0][i][2]: consituent i amplitude south (m)
-*                                 odisp[1][i][0]: consituent i phase radial  (deg)
-*                                 odisp[1][i][1]: consituent i phase west    (deg)
-*                                 odisp[1][i][2]: consituent i phase south   (deg)
-*                                (i=0:M2,1:S2,2:N2,3:K2,4:K1,5:O1,6:P1,7:Q1,
-*                                   8:Mf,9:Mm,10:Ssa)
-*          double *dr       O   displacement by earth tides (ECEF) (m)
-* Return : none
-* Notes  : see ref [1], [2] chap 7
-*          see ref [4] 5.2.1, 5.2.2, 5.2.3
-*-----------------------------------------------------------------------------*/
+ * Displacements by earth tides
+ * Args   : gtime_t tutc     I   time in UTC
+ *          double *rr       I   site position (ECEF) (m)
+ *          int    opt       I   options (or of the followings)
+ *                                 1: solid earth tide
+ *                                 2: ocean tide loading
+ *                                 4: pole tide
+ *                                 8: elimate permanent deformation
+ *          double *erp      I   earth rotation parameters (NULL: not used)
+ *          double *odisp    I   ocean loading parameters  (NULL: not used)
+ *                                 odisp[0][i][0]: consituent i amplitude radial(m)
+ *                                 odisp[0][i][1]: consituent i amplitude west  (m)
+ *                                 odisp[0][i][2]: consituent i amplitude south (m)
+ *                                 odisp[1][i][0]: consituent i phase radial  (deg)
+ *                                 odisp[1][i][1]: consituent i phase west    (deg)
+ *                                 odisp[1][i][2]: consituent i phase south   (deg)
+ *                                (i=0:M2,1:S2,2:N2,3:K2,4:K1,5:O1,6:P1,7:Q1,
+ *                                   8:Mf,9:Mm,10:Ssa)
+ *          double *dr       O   displacement by earth tides (ECEF) (m)
+ * Return : none
+ * Notes  : see ref [1], [2] chap 7
+ *          see ref [4] 5.2.1, 5.2.2, 5.2.3
+ *-----------------------------------------------------------------------------*/
 extern void tidedisp(gtime_t tutc, const double *rr, int opt, const erp_t *erp,
                      const double odisp[2][11][3], double *dr) {
   char tstr[40];
@@ -992,7 +991,7 @@ extern void tidedisp(gtime_t tutc, const double *rr, int opt, const erp_t *erp,
     double denu[3];
     denu[0] = -dw;
     denu[1] = -ds;
-    denu[2] =  dz;
+    denu[2] = dz;
     double drt[3];
     matmul("TN", 3, 1, 3, E, denu, drt);
     for (int i = 0; i < 3; i++) dr[i] += drt[i];

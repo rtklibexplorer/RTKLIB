@@ -6,10 +6,7 @@
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
-TConfDialog *ConfDialog;
+TConfDialog* ConfDialog;
 //---------------------------------------------------------------------------
-__fastcall TConfDialog::TConfDialog(TComponent* Owner)
-	: TForm(Owner)
-{
-}
+__fastcall TConfDialog::TConfDialog(TComponent* Owner) : TForm(Owner) {}
 //---------------------------------------------------------------------------
