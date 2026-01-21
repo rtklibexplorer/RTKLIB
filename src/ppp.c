@@ -1100,14 +1100,14 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
                 double danto[3];
                 satantoff(obs[i].time,rs+i*6,sat,nav,danto);
                 for (j=0;j<NFREQ;j++) {
-                  dants[j]+=dot(e,danto,3);
+                    dants[j]+=dot(e,danto,3);
                 }
             }
             else {
-                double danto[NFREQ][3];
+                double danto[NFREQ*3];
                 satantoff_s(obs[i].time,rs+i*6,sat,nav,danto);
                 for (j=0;j<NFREQ;j++) {
-                    dants[j]+=dot(e,danto[j],3);
+                    dants[j]+=dot(e,danto+j*3,3);
                 }
             }
         }

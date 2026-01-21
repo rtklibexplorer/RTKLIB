@@ -213,7 +213,7 @@ void utest6(void)
     double rs1[6]={0},dts1[2]={0};
     double var;
     gtime_t t,time;
-    double danto[NFREQ][3];
+    double danto[NFREQ*3];
 
     time=epoch2time(ep);
 
@@ -230,12 +230,12 @@ void utest6(void)
     fp=fopen("testpeph3.out","w");
 
     sat=3;
-
+    
     for (i=0;i<86400;i+=30) {
         t=timeadd(time,(double)i);
         satpos(t,t,sat,EPHOPT_PREC,&nav,rs1,dts1,&var,&svh);
         satantoff_s(t,rs1,sat,&nav,danto);
-        for (j=0;j<3;j++) rs1[j]+=danto[0][j];
+        for (j=0;j<3;j++) rs1[j]+=danto[0*3+j];
         fprintf(fp,"%02d %6d com %14.3f %14.3f %14.3f\n",
                 sat,i,
                 rs1[0],rs1[1],rs1[2]);
