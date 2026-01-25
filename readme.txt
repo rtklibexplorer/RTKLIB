@@ -21,6 +21,17 @@ CUIs:
 
 WINDOWS/LINUX CLI & GUI (except for Embarcadero GUI) using CMake
 
+Qt5/6 modules required for GUI:
+ - Core
+ - Gui
+ - Widgets
+ - SerialPort
+ - Xml
+ - Concurrent
+ - WebEngineWidgets or WebKitWidgets (optional for maps)
+ - LinguistTools (optional for translations)
+
+
 1) create a build directory
  > mkdir build
  > cd build/
@@ -28,7 +39,8 @@ WINDOWS/LINUX CLI & GUI (except for Embarcadero GUI) using CMake
  > cmake ..
 3) compile CLI & GUI
  > make
-
+4) run tests
+ > make test
 
 LINUX: To build and install code (DEPRECATED)
 
@@ -36,7 +48,7 @@ CUIs:
 1) cd app/consapp/<appName>/gcc
 2) make
 
-GUIs (Qt based - Beta):
+GUIs (Qt based):
 1) cd app/qtapp
 2) qmake
 3) make
