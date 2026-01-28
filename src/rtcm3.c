@@ -722,11 +722,54 @@ static int decode_type1012(rtcm_t *rtcm)
     rtcm->obsflag=!sync;
     return sync?0:1;
 }
-/* decode type 1013: system parameters ---------------------------------------*/
+// Decode type 1013: system parameters ---------------------------------------
 static int decode_type1013(rtcm_t *rtcm)
 {
-    (void)rtcm;
-    return 0;
+  unsigned i = 24 + 12;
+  if (i + 58 > rtcm->len * 8) {
+    trace(2,"rtcm3 1013 length error: len=%d\n", rtcm->len);
+    return -1;
+  }
+
+  unsigned refid = getbitu(rtcm->buff, i, 12);
+  i += 12;
+  unsigned mjd =getbitu(rtcm->buff, i, 16);
+  i += 16;
+  unsigned tod = getbitu(rtcm->buff, i, 17);
+  i += 17;
+  unsigned nmsg = getbitu(rtcm->buff, i, 5);
+  i += 5;
+  unsigned leaps = getbitu(rtcm->buff, i, 8);
+  i += 8;
+
+  if (i + nmsg * 29 > rtcm->len * 8) {
+    trace(2,"rtcm3 1013 length error: len=%d nm=%d\n", rtcm->len, nmsg);
+    return -1;
+  }
+
+  rtcm->nmsg = nmsg;
+  uint8_t sync[32];
+  for (int n = 0; n < nmsg; n++) {
+    rtcm->msgs[n] = getbitu(rtcm->buff, i, 12);
+    i += 12;
+    sync[n] = getbitu(rtcm->buff, i, 1);
+    i += 1;
+    rtcm->tint[n] = getbitu(rtcm->buff, i, 16) * 0.1;
+    i += 16;
+  }
+
+  // Convert to GPST.
+  const double ep[] = {2000, 1, 1, 12, 0, 0};
+  gtime_t time = timeadd(epoch2time(ep), (mjd - 51544.5) * 86400.0 + tod + leaps);
+
+  char tstr[40];
+  time2str(time, tstr, 0);
+  if (rtcm->outtype) {
+    char *msg = rtcm->msgtype + strlen(rtcm->msgtype);
+    sprintf(msg, " %s refid=%4u mjd=%u tod=%u leaps=%u nmsg=%u", tstr, refid, mjd, tod, leaps, nmsg);
+  }
+
+  return 0;
 }
 /* decode type 1019: GPS ephemerides -----------------------------------------*/
 static int decode_type1019(rtcm_t *rtcm)
@@ -2598,7 +2641,7 @@ extern int decode_rtcm3(rtcm_t *rtcm)
         case 1010: ret=decode_type1010(rtcm); break;
         case 1011: ret=decode_type1011(rtcm); break; /* not supported */
         case 1012: ret=decode_type1012(rtcm); break;
-        case 1013: ret=decode_type1013(rtcm); break; /* not supported */
+        case 1013: ret=decode_type1013(rtcm); break;
         case 1019: ret=decode_type1019(rtcm); break;
         case 1020: ret=decode_type1020(rtcm); break;
         case 1021: ret=decode_type1021(rtcm); break; /* not supported */

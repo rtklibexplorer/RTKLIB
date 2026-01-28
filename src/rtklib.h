@@ -982,6 +982,9 @@ typedef struct {        /* RTCM control struct type */
     uint32_t nmsg2[100]; /* message count of RTCM 2 (1-99:1-99,0:other) */
     uint32_t nmsg3[400]; /* message count of RTCM 3 (1-299:1001-1299,300-329:4070-4099,0:other) */
     char opt[256];      /* RTCM dependent options */
+    int nmsg;           /* number of output messages */
+    int msgs[32];       /* output message types */
+    double tint[32];    /* output message intervals (s) */
 } rtcm_t;
 
 typedef struct {        /* RINEX control struct type */
@@ -1272,9 +1275,6 @@ typedef struct {        /* stream type */
 
 typedef struct {        /* stream converter type */
     int itype,otype;    /* input and output stream type */
-    int nmsg;           /* number of output messages */
-    int msgs[32];       /* output message types */
-    double tint[32];    /* output message intervals (s) */
     uint32_t tick[32];  /* cycle tick of output message */
     int ephsat[32];     /* satellites of output ephemeris */
     int stasel;         /* station info selection (0:remote,1:local) */
