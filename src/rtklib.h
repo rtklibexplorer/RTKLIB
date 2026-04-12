@@ -1737,6 +1737,7 @@ EXPORT int input_rtcm2f(rtcm_t *rtcm, FILE *fp);
 EXPORT int input_rtcm3f(rtcm_t *rtcm, FILE *fp);
 EXPORT int gen_rtcm2   (rtcm_t *rtcm, int type, int sync);
 EXPORT int gen_rtcm3   (rtcm_t *rtcm, int type, int subtype, int sync);
+EXPORT int decode_msm7 (rtcm_t *rtcm, int sys);
 
 /* solution functions --------------------------------------------------------*/
 EXPORT void initsolbuf(solbuf_t *solbuf, int cyclic, int nmax);

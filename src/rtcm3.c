@@ -2430,7 +2430,7 @@ static int decode_msm6(rtcm_t *rtcm, int sys)
     return sync?0:1;
 }
 /* decode MSM 7: full pseudorange, phaserange, phaserangerate and CNR (h-res) */
-static int decode_msm7(rtcm_t *rtcm, int sys)
+extern int decode_msm7(rtcm_t *rtcm, int sys)
 {
     msm_h_t h={0};
     double r[64],rr[64],pr[64],cp[64],rrf[64],cnr[64];
