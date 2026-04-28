@@ -193,7 +193,7 @@ int main(int argc, char **argv)
         else if (n<MAXFILE) infile[n++]=argv[i];
     }
     if (!prcopt.navsys) {
-        prcopt.navsys=SYS_GPS|SYS_GLO|SYS_GAL|SYS_BDS;
+        prcopt.navsys=SYS_GPS|SYS_GLO|SYS_GAL|SYS_CMP;
     }
     if (n<=0) {
         showmsg("error : no input file");
