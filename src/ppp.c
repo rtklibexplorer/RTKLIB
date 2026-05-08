@@ -124,7 +124,7 @@ static double STD(rtk_t *rtk, int i)
     return SQRT(rtk->P[i+i*rtk->nx]);
 }
 /* write solution status for PPP ---------------------------------------------*/
-extern int pppoutstat(rtk_t *rtk, char *buff)
+extern int pppoutstat(rtk_t *rtk, char *buff, int level)
 {
     ssat_t *ssat;
     double tow,pos[3],vel[3],acc[3],*x;
@@ -184,17 +184,23 @@ extern int pppoutstat(rtk_t *rtk, char *buff)
                        rtk->ssat[i].azel[1]*R2D,x[j],STD(rtk,j));
         }
     }
-#ifdef OUTSTAT_AMB
-    /* ambiguity parameters */
-    int k;
-    for (i=0;i<MAXSAT;i++) for (j=0;j<NF(&rtk->opt);j++) {
-        k=IB(i+1,j,&rtk->opt);
-        if (rtk->x[k]==0.0) continue;
+    if (level <= 1) return (int)(p-buff);
+
+    /* Write residuals and status */
+    for (int i=0;i<MAXSAT;i++) {
+        ssat=rtk->ssat+i;
+        if (!ssat->vs) continue;
         satno2id(i+1,id);
-        p+=sprintf(p,"$AMB,%d,%.3f,%d,%s,%d,%.4f,%.4f\n",week,tow,
-                   rtk->sol.stat,id,j+1,x[k],STD(rtk,k));
+        for (int j=0;j<NF(&rtk->opt);j++) {
+            int k=IB(i+1,j,&rtk->opt);
+            p+=sprintf(p,"$SAT,%d,%.3f,%s,%d,%.1f,%.1f,%.4f,%.4f,%d,%.0f,%d,%d,%d,%u,%u,%u,%.2f,%.6f,%.5f\n",
+                       week,tow,id,j+1,ssat->azel[0]*R2D,ssat->azel[1]*R2D,
+                       ssat->resp[j],ssat->resc[j],ssat->vsat[j],ssat->snr_rover[j],
+                       ssat->fix[j],ssat->slip[j]&(LLI_SLIP|LLI_HALFC),ssat->lock[j],ssat->outc[j],
+                       ssat->slipc[j],ssat->rejc[j],k<rtk->nx?rtk->x[k]:0,
+                       k<rtk->nx?rtk->P[k+k*rtk->nx]:0,ssat->icbias[j]);
+        }
     }
-#endif
     return (int)(p-buff);
 }
 /* exclude meas of eclipsing satellite (block IIA) ---------------------------*/

@@ -231,7 +231,7 @@ extern int rtkoutstat(rtk_t *rtk, int level, char *buff)
 
     if (rtk->opt.mode>=PMODE_PPP_KINEMA) {
         /* Write ppp solution status to buffer */
-        p+=pppoutstat(rtk,buff);
+        p+=pppoutstat(rtk,buff,level);
     } else {
         /* Receiver position */
         if (est) {
@@ -300,23 +300,22 @@ extern int rtkoutstat(rtk_t *rtk, int level, char *buff)
                            rtk->sol.stat,i+1,rtk->x[j],xa[0]);
             }
         }
-    }
+        if (level <= 1) return (int)(p-buff);
 
-    if (level <= 1) return (int)(p-buff);
-
-    /* Write residuals and status */
-    for (int i=0;i<MAXSAT;i++) {
-        ssat=rtk->ssat+i;
-        if (!ssat->vs) continue;
-        satno2id(i+1,id);
-        for (int j=0;j<nfreq;j++) {
-            int k=IB(i+1,j,&rtk->opt);
-            p+=sprintf(p,"$SAT,%d,%.3f,%s,%d,%.1f,%.1f,%.4f,%.4f,%d,%.0f,%d,%d,%d,%u,%u,%u,%.2f,%.6f,%.5f\n",
-                       week,tow,id,j+1,ssat->azel[0]*R2D,ssat->azel[1]*R2D,
-                       ssat->resp[j],ssat->resc[j],ssat->vsat[j],ssat->snr_rover[j],
-                       ssat->fix[j],ssat->slip[j]&(LLI_SLIP|LLI_HALFC),ssat->lock[j],ssat->outc[j],
-                       ssat->slipc[j],ssat->rejc[j],k<rtk->nx?rtk->x[k]:0,
-                       k<rtk->nx?rtk->P[k+k*rtk->nx]:0,ssat->icbias[j]);
+        /* Write residuals and status */
+        for (int i=0;i<MAXSAT;i++) {
+            ssat=rtk->ssat+i;
+            if (!ssat->vs) continue;
+            satno2id(i+1,id);
+            for (int j=0;j<nfreq;j++) {
+                int k=IB(i+1,j,&rtk->opt);
+                p+=sprintf(p,"$SAT,%d,%.3f,%s,%d,%.1f,%.1f,%.4f,%.4f,%d,%.0f,%d,%d,%d,%u,%u,%u,%.2f,%.6f,%.5f\n",
+                           week,tow,id,j+1,ssat->azel[0]*R2D,ssat->azel[1]*R2D,
+                           ssat->resp[j],ssat->resc[j],ssat->vsat[j],ssat->snr_rover[j],
+                           ssat->fix[j],ssat->slip[j]&(LLI_SLIP|LLI_HALFC),ssat->lock[j],ssat->outc[j],
+                           ssat->slipc[j],ssat->rejc[j],k<rtk->nx?rtk->x[k]:0,
+                           k<rtk->nx?rtk->P[k+k*rtk->nx]:0,ssat->icbias[j]);
+            }
         }
     }
 

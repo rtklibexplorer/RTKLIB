@@ -1859,7 +1859,7 @@ EXPORT int  rtkoutstat(rtk_t *rtk, int level, char *buff);
 /* precise point positioning -------------------------------------------------*/
 EXPORT void pppos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav);
 EXPORT int pppnx(const prcopt_t *opt);
-EXPORT int pppoutstat(rtk_t *rtk, char *buff);
+EXPORT int pppoutstat(rtk_t *rtk, char *buff, int level);
 
 EXPORT int ppp_ar(rtk_t *rtk, const obsd_t *obs, int n, int *exc,
                   const nav_t *nav, const double *azel, double *x, double *P);
