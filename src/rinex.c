@@ -1558,34 +1558,33 @@ static int readrnxnav(FILE *fp, const char *opt, double ver, int sys,
 /* read RINEX clock ----------------------------------------------------------*/
 static int readrnxclk(FILE *fp, const char *opt, double ver, int index, nav_t *nav)
 {
-    pclk_t *nav_pclk;
-    gtime_t time;
-    double data[2];
-    int i,j,sat,mask,off;
-    char buff[MAXRNXLEN],satid[8]="";
-
     trace(3,"readrnxclk: index=%d\n", index);
 
     if (!nav) return 0;
 
+    pclk_t *nav_pclk;
+    char buff[MAXRNXLEN];
     /* set system mask */
-    mask=set_sysmask(opt);
-    off=ver>=3.04?5:0; /* format change for ver>=3.04 */
+    int mask=set_sysmask(opt);
+    int off=ver>=3.04?5:0; /* format change for ver>=3.04 */
 
     while (fgets(buff,sizeof(buff),fp)) {
-
+        gtime_t time;
         if (str2time(buff,8+off,26,&time)) {
             trace(2,"rinex clk invalid epoch: %34.34s\n",buff);
             continue;
         }
+        char satid[8]="";
         memcpy(satid,buff+3,4);
 
         /* only read AS (satellite clock) record */
+        int sat;
         if (strncmp(buff,"AS",2)||!(sat=satid2no(satid))) continue;
 
         if (!(satsys(sat,NULL)&mask)) continue;
 
-        for (i=0,j=40+off;i<2;i++,j+=20) data[i]=str2num(buff,j,19);
+        double data[2];
+        for (int i=0,j=40+off;i<2;i++,j+=20) data[i]=str2num(buff,j,19);
 
         if (nav->nc>=nav->ncmax) {
             nav->ncmax+=1024;
@@ -1600,7 +1599,7 @@ static int readrnxclk(FILE *fp, const char *opt, double ver, int index, nav_t *n
             nav->nc++;
             nav->pclk[nav->nc-1].time =time;
             nav->pclk[nav->nc-1].index=index;
-            for (i=0;i<MAXSAT;i++) {
+            for (int i=0;i<MAXSAT;i++) {
                 nav->pclk[nav->nc-1].clk[i][0]=0.0;
                 nav->pclk[nav->nc-1].std[i][0]=0.0f;
             }
@@ -1608,6 +1607,40 @@ static int readrnxclk(FILE *fp, const char *opt, double ver, int index, nav_t *n
         nav->pclk[nav->nc-1].clk[sat-1][0]=data[0];
         nav->pclk[nav->nc-1].std[sat-1][0]=(float)data[1];
     }
+
+    // Interpolate the standard deviations. The standard deviations can be
+    // supplied at a lower rate than the clock biases, e.g. 30 sec biases with
+    // 5 minute standard deviations.
+    for (int k = 0; k < MAXSAT; k++) {
+      int last_std_idx = -1;
+      for (int i = 0; i < nav->nc; i++) {
+        double std = nav->pclk[i].std[k][0];
+        if (std > 0) {
+          if (last_std_idx < 0) {
+            for (int j = 0; j < i; j++)
+              if (nav->pclk[j].clk[k][0] != 0) nav->pclk[j].std[k][0] = std;
+          } else {
+            // Linear interpolation of the variance.
+            for (int j = last_std_idx + 1; j < i; j++) {
+              if (nav->pclk[j].clk[k][0] != 0) {
+                double last_std = nav->pclk[last_std_idx].std[k][0];
+                double t0 = timediff(nav->pclk[j].time, nav->pclk[last_std_idx].time);
+                double t1 = timediff(nav->pclk[j].time, nav->pclk[i].time);
+                double var = (SQR(std) * t0 - SQR(last_std) * t1) / (t0 - t1);
+                nav->pclk[j].std[k][0] = (float)sqrt(var);
+              }
+            }
+          }
+          last_std_idx = i;
+        }
+      }
+      if (last_std_idx >= 0) {
+        double last_std = nav->pclk[last_std_idx].std[k][0];
+        for (int j = last_std_idx + 1; j < nav->nc; j++)
+          if (nav->pclk[j].clk[k][0] != 0) nav->pclk[j].std[k][0] = last_std;
+      }
+    }
+
     return nav->nc>0;
 }
 /* read RINEX file -----------------------------------------------------------*/
