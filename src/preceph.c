@@ -55,7 +55,7 @@
 
 #define NMAX        10              /* order of polynomial interpolation */
 #define MAXDTE      900.0           /* max time difference to ephem time (s) */
-#define EXTERR_CLK  1E-3            /* extrapolation error for clock (m/s) */
+#define EXTERR_CLK  0.4E-3          /* extrapolation error for clock (m/s) */
 #define EXTERR_EPH  5E-7            /* extrapolation error for ephem (m/s^2) */
 #define MAX_BIAS_SYS 6              /* # of constellations supported */
 
@@ -639,7 +639,7 @@ static int pephpos(gtime_t time, int sat, const nav_t *nav, double *rs,
     else if (c[0]!=0.0&&c[1]!=0.0) {
         dts[0]=(c[1]*t[0]-c[0]*t[1])/(t[0]-t[1]);
         i=t[0]<-t[1]?0:1;
-        std=nav->peph[index+i].std[sat-1][3]+EXTERR_CLK*fabs(t[i]);
+        std = nav->peph[index+i].std[sat-1][3] * CLIGHT + EXTERR_CLK * fabs(t[i]);
     }
     else {
         dts[0]=0.0;
@@ -647,9 +647,10 @@ static int pephpos(gtime_t time, int sat, const nav_t *nav, double *rs,
     if (varc) *varc=SQR(std);
     return 1;
 }
+
 /* satellite clock by precise clock ------------------------------------------*/
-extern int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
-                   double *varc)
+static int pephclk1(gtime_t time, int sat, const nav_t *nav, double *dts,
+                    double *varc)
 {
     double t[2],c[2],std;
     int i,j,k,index;
@@ -661,7 +662,7 @@ extern int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
         timediff(time,nav->pclk[0].time)<-MAXDTE||
         timediff(time,nav->pclk[nav->nc-1].time)>MAXDTE) {
         trace(3,"no prec clock %s sat=%2d\n",time2str(time,tstr,0),sat);
-        return 1;
+        return 0;
     }
     /* binary search */
     for (i=0,j=nav->nc-1;i<j;) {
@@ -696,6 +697,27 @@ extern int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts,
     if (varc) *varc=SQR(std);
     return 1;
 }
+// Precise clock -------------------------------------------------------------
+// Search for a precise clock in either the precise clock or the precise
+// ephemeris data, in this order.
+// Args   : gtime_t time       I   time (GPST)
+//          int    sat         I   satellite number
+//          nav_t  *nav        I   navigation data
+//          double *dts        O   satellite clock bias (s)
+//          double *var        O   satellite clock variance (m^2)
+// Return : 1 in success; 0 on failure.
+//
+// Note: the dts and varc outputs are not modified on failure.
+extern int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts, double *varc) {
+
+  if (pephclk1(time, sat, nav, dts, varc)) return 1;
+  double rs[3], dts2;
+  if (!pephpos(time, sat, nav, rs, &dts2, NULL, varc)) return 0;
+  if (dts2 == 0.0) return 0;
+  *dts = dts2;
+  return 1;
+}
+
 /* satellite antenna phase center offset ---------------------------------------
 * compute satellite antenna phase center offset in ecef
 * args   : gtime_t time       I   time (gpst)
@@ -803,12 +825,12 @@ extern int peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
     if (sat<=0||MAXSAT<sat) return 0;
 
     /* satellite position and clock bias */
-    if (!pephpos(time,sat,nav,rss,dtss,&vare,&varc)||
-        !pephclk(time,sat,nav,dtss,&varc)) return 0;
+    if (!pephpos(time,sat,nav,rss,dtss,&vare,&varc)) return 0;
+    pephclk1(time, sat, nav, dtss, &varc);
 
     time_tt=timeadd(time,tt);
-    if (!pephpos(time_tt,sat,nav,rst,dtst,NULL,NULL)||
-        !pephclk(time_tt,sat,nav,dtst,NULL)) return 0;
+    if (!pephpos(time_tt,sat,nav,rst,dtst,NULL,NULL)) return 0;
+    pephclk1(time_tt, sat, nav, dtst, NULL);
 
     /* satellite antenna offset correction */
     if (opt) {

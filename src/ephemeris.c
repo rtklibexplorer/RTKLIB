@@ -808,8 +808,13 @@ extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
         time[i]=timeadd(obs[i].time,-pr/CLIGHT);
 
         /* satellite clock offset from precise products or broadcast ephemeris */
-        if (ephopt==EPHOPT_PREC&&nav->nc>0) {
-          if(!pephclk(time[i],obs[i].sat,nav,&dt,NULL)) {
+
+        // Note: this uses as input the estimated satellite clock time without
+        // correction but the precise clock corrections are wrt GPST.  The
+        // satellite clock drift over this small period is considered
+        // negligible to the clock offset lookup here.
+        if (ephopt == EPHOPT_PREC) {
+          if (!pephclk(time[i], obs[i].sat, nav, &dt, NULL)) {
             trace(3,"no precise clock %s sat=%2d\n",time2str(time[i],tstr,3),obs[i].sat);
             continue;
           }
