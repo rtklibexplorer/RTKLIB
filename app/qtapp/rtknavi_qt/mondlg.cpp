@@ -2063,7 +2063,7 @@ void MonitorDialog::setRtcmSsr()
     header	<< tr("SAT") << tr("Status") << tr("UDI (s)") << tr("UDHR (s)") << tr("IOD") << tr("URA") << tr("Datum") << tr("T0")
             << tr("D0-A (m)") << tr("D0-C (m)") << tr("D0-R (m)") << tr("D1-A (mm/s)") << tr("D1-C (mm/s)") << tr("D1-R (mm/s)")
             << tr("C0 (m)") << tr("C1 (mm/s)") << tr("C2 (mm/s²)") << tr("C-HR (m)") << tr("Code Bias (m)") << tr("Phase Bias (m)");
-    int i, width[] = { 46, 60, 70, 90, 30, 25, 70, 115, 90, 90, 90, 120, 120, 120, 90, 120, 120, 120, 200, 200 };
+    int i, width[] = { 46, 60, 70, 90, 30, 25, 70, 115, 90, 90, 90, 120, 120, 120, 90, 120, 120, 120, 400, 400 };
 
     ui->tWConsole->setColumnCount(20);
     ui->tWConsole->setRowCount(0);
