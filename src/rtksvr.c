@@ -312,37 +312,18 @@ static void update_antpos(rtksvr_t *svr, int index) {
 /* update ssr corrections ----------------------------------------------------*/
 static void update_ssr(rtksvr_t *svr, int index)
 {
-    int i,sys,prn,iode;
+    for (int i = 0; i < MAXSAT; i++) {
+      if (!svr->rtcm[index].ssr[i].update) continue;
+            
+      // Check consistency between iods of orbit and clock.
+      if (svr->rtcm[index].ssr[i].iod[0] != svr->rtcm[index].ssr[i].iod[1])
+        continue;
 
-        for (i=0;i<MAXSAT;i++) {
-            if (!svr->rtcm[index].ssr[i].update) continue;
-            
-            /* check consistency between iods of orbit and clock */
-        if (svr->rtcm[index].ssr[i].iod[0]!=svr->rtcm[index].ssr[i].iod[1]) {
-            continue;
-        }
-            svr->rtcm[index].ssr[i].update=0;
-            
-            iode=svr->rtcm[index].ssr[i].iode;
-            sys=satsys(i+1,&prn);
-            
-            /* check corresponding ephemeris exists */
-            if (sys==SYS_GPS||sys==SYS_GAL||sys==SYS_QZS) {
-                if (svr->nav.eph[i       ].iode!=iode&&
-                    svr->nav.eph[i+MAXSAT].iode!=iode) {
-                    continue;
-                }
-            }
-            else if (sys==SYS_GLO) {
-                if (svr->nav.geph[prn-1          ].iode!=iode&&
-                    svr->nav.geph[prn-1+MAXPRNGLO].iode!=iode) {
-                    continue;
-                }
-            }
-            svr->nav.ssr[i]=svr->rtcm[index].ssr[i];
-        }
-        svr->nmsg[index][7]++;
+      svr->nav.ssr[i] = svr->rtcm[index].ssr[i];
+      svr->rtcm[index].ssr[i].update = 0;
     }
+    svr->nmsg[index][7]++;
+}
 /* update rtk server struct --------------------------------------------------*/
 static void update_svr(rtksvr_t *svr, int ret, obs_t *obs, nav_t *nav,
                        int ephsat, int ephset, sbsmsg_t *sbsmsg, int index,
