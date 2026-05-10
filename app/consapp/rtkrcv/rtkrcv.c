@@ -152,7 +152,7 @@ static const char *helptxt[]={
     "observ [-n] [cycle]   : show observation data",
     "navidata [cycle]      : show navigation data",
     "stream [cycle]        : show stream status",
-    "ssr [cycle]           : show ssr corrections",
+    "ssr [-c] [-p] [cycle] : show ssr corrections",
     "error                 : show error/warning messages",
     "option [opt]          : show option(s)",
     "set opt [val]         : set option",
@@ -924,7 +924,7 @@ static void prnavidata(vt_t *vt)
     double ion[8],utc[8];
     gtime_t time;
     char id[8],s1[64],s2[64],s3[64];
-    int i,valid,prn;
+    int i,valid;
     
     trace(4,"prnavidata:\n");
     
@@ -940,8 +940,8 @@ static void prnavidata(vt_t *vt)
               ESC_BOLD,"SAT","S","IOD","IOC","FRQ","A/A","SVH","Toe","Toc",
               "Ttr/Tof","L2C","L2P",ESC_RESET);
     for (i=0;i<MAXSAT;i++) {
-        int sys = satsys(i+1,&prn);
-        if (!(sys&(SYS_GPS|SYS_GAL|SYS_QZS|SYS_CMP))||
+        int sys = satsys(i + 1, NULL);
+        if ((sys & (SYS_GPS | SYS_GAL | SYS_QZS | SYS_CMP) & prcopt.navsys) == 0 ||
             eph[i].sat!=i+1) continue;
         // Mask QZS LEX health.
         valid=eph[i].toe.time!=0&&fabs(timediff(time,eph[i].toe))<=MAXDTOE &&
@@ -955,7 +955,8 @@ static void prnavidata(vt_t *vt)
                 eph[i].svh,s1,s2,s3,eph[i].code,eph[i].flag);
     }
     for (i=0;i<MAXSAT;i++) {
-        if (!(satsys(i+1,&prn)&SYS_GLO)||geph[prn-1].sat!=i+1) continue;
+        int prn, sys = satsys(i + 1, &prn);
+        if ((sys & SYS_GLO & prcopt.navsys) == 0 || geph[prn - 1].sat != i + 1) continue;
         valid=geph[prn-1].toe.time!=0&&fabs(timediff(time,geph[prn-1].toe))<=MAXDTOE_GLO &&
             (geph[prn-1].svh & 9) == 0 && (geph[prn-1].svh & 6) != 4;
         satno2id(i+1,id);
@@ -1024,7 +1025,7 @@ static void prstream(vt_t *vt)
     }
 }
 /* print ssr correction ------------------------------------------------------*/
-static void prssr(vt_t *vt)
+static void prssr(vt_t *vt, int cbias, int pbias)
 {
     static char buff[128*MAXSAT];
     gtime_t time;
@@ -1040,21 +1041,40 @@ static void prssr(vt_t *vt)
     rtksvrunlock(&svr);
     
     p+=sprintf(p,"\n%s%3s %3s %3s %3s %3s %19s %6s %6s %6s %6s %6s %6s %8s "
-               "%6s %6s %6s%s\n",
+               "%6s %6s %6s%s%s%s\n",
                ESC_BOLD,"SAT","S","UDI","IOD","URA","T0","D0-A","D0-C","D0-R",
-               "D1-A","D1-C","D1-R","C0","C1","C2","C-HR",ESC_RESET);
+               "D1-A","D1-C","D1-R","C0","C1","C2","C-HR",
+               cbias ? "  CBIAS" : "", pbias ? "  PBIAS" : "", ESC_RESET);
     for (i=0;i<MAXSAT;i++) {
         if (!ssr[i].t0[0].time) continue;
+        if ((satsys(i + 1, NULL) & prcopt.navsys) == 0) continue;
         satno2id(i+1,id);
         valid=fabs(timediff(time,ssr[i].t0[0]))<=1800.0;
         time2str(ssr[i].t0[0],tstr,0);
+        // udi[2] refd
+
         p+=sprintf(p,"%3s %3s %3.0f %3d %3d %19s %6.3f %6.3f %6.3f %6.3f %6.3f "
-                   "%6.3f %8.3f %6.3f %6.4f %6.3f\n",
+                   "%6.3f %8.3f %6.3f %6.4f %6.3f ",
                    id,valid?"OK":"-",ssr[i].udi[0],ssr[i].iode,ssr[i].ura,tstr,
                    ssr[i].deph[0],ssr[i].deph[1],ssr[i].deph[2],
                    ssr[i].ddeph[0]*1E3,ssr[i].ddeph[1]*1E3,ssr[i].ddeph[2]*1E3,
                    ssr[i].dclk[0],ssr[i].dclk[1]*1E3,ssr[i].dclk[2]*1E3,
                    ssr[i].hrclk);
+
+        if (cbias) {
+          for (int k = 1; k < MAXCODE; k++) {
+            if (ssr[i].cbias[k - 1] == 0.0) continue;
+            p += sprintf(p, " %s: %7.3lf", code2obs(k), ssr[i].cbias[k - 1]);
+          }
+          if (pbias) p += sprintf(p, " /");
+        }
+        if (pbias) {
+          for (int k = 1; k < MAXCODE; k++) {
+            if (ssr[i].pbias[k - 1] == 0.0) continue;
+            p += sprintf(p, " %s: %6.3lf", code2obs(k), ssr[i].pbias[k - 1]);
+          }
+        }
+        p += sprintf(p, "\n");
     }
     vt_puts(vt,buff);
 }
@@ -1202,15 +1222,25 @@ static void cmd_stream(char **args, int narg, vt_t *vt)
 /* ssr command ---------------------------------------------------------------*/
 static void cmd_ssr(char **args, int narg, vt_t *vt)
 {
-    int cycle=0;
-    
     trace(3,"cmd_ssr:\n");
     
-    if (narg>1) cycle=(int)(atof(args[1])*1000.0);
-    
+    int cycle = 0;
+    int cbias = 0, pbias = 0;
+    for (int i = 1; i < narg; i++) {
+      if (strcmp(args[i], "-c") == 0) {
+        cbias = 1;
+        continue;
+      }
+      if (strcmp(args[i], "-p") == 0) {
+        pbias = 1;
+        continue;
+      }
+      cycle = (int)(atof(args[i]) * 1000.0);
+    }
+
     while (!vt_chkbrk(vt)) {
         if (cycle>0) vt_printf(vt,ESC_CLEAR);
-        prssr(vt);
+        prssr(vt, cbias, pbias);
         if (cycle>0) sleepms(cycle); else return;
     }
     vt_printf(vt,"\n");
@@ -1745,6 +1775,11 @@ static void deamonise(void)
 *
 *     stream [cycle]
 *       Show stream status. Use option cycle for cyclic display.
+*
+*     ssr [-c] [-p] [cycle]
+*       Show the RTCM SSR state, with option -c to include code biases and
+*       with option -p to include phase biases. Use option cycle for cyclic
+*       display.
 *
 *     error
 *       Show error/warning messages. To stop messages, send break (ctr-C).
