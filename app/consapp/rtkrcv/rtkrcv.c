@@ -724,8 +724,14 @@ static void prstatus(vt_t *vt)
     rtksvrunlock(&svr);
     
     for (i=n=0;i<MAXSAT;i++) {
-        if (rtk->opt.mode==PMODE_SINGLE&&!rtk->ssat[i].vs) continue;
-        if (rtk->opt.mode!=PMODE_SINGLE&&!rtk->ssat[i].vsat[0]) continue;
+        if (rtk->opt.mode == PMODE_SINGLE) {
+          if (!rtk->ssat[i].vs) continue;
+        } else {
+          int any = 0;
+          for (int fi = 0; fi < NFREQ; fi++)
+            if (rtk->ssat[i].vsat[fi]) { any = 1; break; }
+          if (!any) continue;
+        }
         azel[  n*2]=rtk->ssat[i].azel[0];
         azel[1+n*2]=rtk->ssat[i].azel[1];
         n++;
@@ -842,7 +848,7 @@ static void prsatellite(vt_t *vt, int nf)
     *rtk=svr.rtk;
     rtksvrunlock(&svr);
     if (nf<=0||nf>NFREQ) nf=NFREQ;
-    vt_printf(vt,"\n%s%3s %2s %5s %4s",ESC_BOLD,"SAT","C1","Az","El");
+    vt_printf(vt,"\n%s%3s %2s %5s %4s",ESC_BOLD,"SAT","V","Az","El");
     for (j=0;j<nf;j++) vt_printf(vt," L%d"    ,frq[j]);
     for (j=0;j<nf;j++) vt_printf(vt,"  Fix%d" ,frq[j]);
     for (j=0;j<nf;j++) vt_printf(vt,"  P%dRes",frq[j]);
@@ -855,7 +861,14 @@ static void prsatellite(vt_t *vt, int nf)
     for (i=0;i<MAXSAT;i++) {
         if (rtk->ssat[i].azel[1]<=0.0) continue;
         satno2id(i+1,id);
-        vt_printf(vt,"%3s %2s",id,rtk->ssat[i].vs?"OK":"-");
+        int vsat = 0;
+        if (rtk->opt.mode == PMODE_SINGLE) {
+          vsat = rtk->ssat[i].vs;
+        } else {
+          for (int fi = 0; fi < NFREQ; fi++)
+            if (rtk->ssat[i].vsat[fi]) { vsat = 1; break; }
+        }
+        vt_printf(vt,"%3s %2s",id,vsat?"OK":"-");
         az=rtk->ssat[i].azel[0]*R2D; if (az<0.0) az+=360.0;
         el=rtk->ssat[i].azel[1]*R2D;
         vt_printf(vt," %5.1f %4.1f",az,el);

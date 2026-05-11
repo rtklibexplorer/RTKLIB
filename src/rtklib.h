@@ -1896,8 +1896,8 @@ EXPORT int  rtksvropenstr(rtksvr_t *svr, int index, int str, const char *path,
 EXPORT void rtksvrclosestr(rtksvr_t *svr, int index);
 EXPORT void rtksvrlock  (rtksvr_t *svr);
 EXPORT void rtksvrunlock(rtksvr_t *svr);
-EXPORT int  rtksvrostat (rtksvr_t *svr, int type, gtime_t *time, int *sat,
-                         double *az, double *el, int **snr, int *vsat);
+EXPORT int  rtksvrostat (rtksvr_t *svr, int type, gtime_t *time, int sat[MAXSAT],
+                         double *az, double *el, int snr[MAXSAT][NFREQ], int vsat[MAXSAT][NFREQ]);
 EXPORT void rtksvrsstat (rtksvr_t *svr, int *sstat, char *msg);
 EXPORT int  rtksvrmark(rtksvr_t *svr, const char *name, const char *comment);
 

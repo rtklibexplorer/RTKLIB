@@ -160,7 +160,7 @@ public:
     int monitorPortOpen;
 
     int solutionsCurrent, solutionsStart, solutionsEnd, numSatellites[2], solutionCurrentStatus;
-    int satellites[2][MAXSAT], satellitesSNR[2][MAXSAT][NFREQ], validSatellites[2][MAXSAT];
+    int satellites[2][MAXSAT], satellitesSNR[2][MAXSAT][NFREQ], validSatellites[2][MAXSAT][NFREQ];
     double satellitesAzimuth[2][MAXSAT], satellitesElevation[2][MAXSAT];
     gtime_t *timeStamps;
     int *solutionStatus, *numValidSatellites;
