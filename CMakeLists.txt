@@ -11,6 +11,7 @@ message("RTKLIB version: ${VERSION}-${PATCH_LEVEL}")
 
 project(rtklib LANGUAGES C CXX VERSION 2.4.3)
 
+include(GNUInstallDirs)
 include(CTest)
 
 option(IERS_MODEL "Use Earth models from IERS" OFF)
