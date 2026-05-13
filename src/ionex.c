@@ -19,7 +19,9 @@
 #include "rtklib.h"
 
 #define SQR(x)      ((x)*(x))
+#define MIN(x,y)    ((x)<=(y)?(x):(y))
 #define VAR_NOTEC   SQR(30.0)   /* variance of no tec */
+#define VAR_SSR_VTEC SQR(10.0); /* variance of SSR VTEC */
 #define MIN_EL      0.0         /* min elevation angle (rad) */
 #define MIN_HGT     -1000.0     /* min user height (m) */
 
@@ -479,6 +481,87 @@ extern int iontec(gtime_t time, const nav_t *nav, const double *pos,
         *delay=dels[1];
         *var  =vars[1];
     }
-    trace(3,"iontec  : delay=%5.2f std=%5.2f\n",*delay,sqrt(*var));
+    trace(4,"iontec  : delay=%5.2f std=%5.2f\n",*delay,sqrt(*var));
+    return 1;
+}
+/* ionosphere model (VTEC spherical harmonics) ---------------------------------
+* compute ionospheric delay by VTEC spherical harmonics (RTCM SSR MT1264)
+* args   : gtime_t time     I   time (GPST)
+*          nav_t  *nav      I   navigation data (vtec coefficients)
+*          double *pos      I   receiver position {lat,lon,h} (rad,rad,m)
+*          double *azel     I   azimuth/elevation {az,el} (rad)
+*          double freq      I   signal frequency (Hz)
+*          double *delay    O   ionospheric delay (m)
+*          double *var      O   ionospheric delay variance (m^2)
+* return : status (1:ok, 0:error)
+* notes  : delay is positive for code (L1 scale), i.e. corrected = meas - delay
+*-----------------------------------------------------------------------------*/
+extern int ionvtec(gtime_t time, const nav_t *nav, const double *pos,
+                   const double *azel, double freq, double *delay, double *var)
+{
+    const double re=6371.0; /* fallback single-layer height (km) */
+    double pppos[2],fs,vtec,P[17][17],cosl[17],sinl[17];
+    double sinp,cosp,x;
+    int i,j,k,nmax,mmax;
+    char tstr[40];
+
+    trace(4,"ionvtec: time=%s pos=%.3f %.3f azel=%.3f %.3f\n",
+          time2str(time,tstr,0),pos[0]*R2D,pos[1]*R2D,azel[0]*R2D,azel[1]*R2D);
+
+    *delay=*var=0.0;
+
+    if (nav->vtec.nlay<=0) {
+        trace(2,"ionvtec: no vtec data\n");
+        return 0;
+    }
+    if (pos[2]<MIN_HGT||azel[1]<=0.0) return 0;
+
+    vtec=0.0;
+    for (i=0;i<nav->vtec.nlay;i++) {
+        /* ionospheric pierce point position */
+        ionppp(pos,azel,re,nav->vtec.hgt[i],pppos);
+
+        nmax=nav->vtec.nmax[i];
+        mmax=nav->vtec.mmax[i];
+        sinp=sin(pppos[0]);
+        cosp=cos(pppos[0]);
+
+       /* fully normalized associated Legendre polynomials */
+        P[0][0]=1.0;
+        for (j=1;j<=nmax;j++) {
+            /* diagonal term */
+            P[j][j]=sqrt((2*j+1)/(2.0*j))*cosp*P[j-1][j-1];
+            /* one above diagonal */
+            P[j][j-1]=sqrt(2*j+1)*sinp*P[j-1][j-1];
+        }
+        for (j=2;j<=nmax;j++) {
+            for (k=0;k<=j-2;k++) {
+                P[j][k]=sqrt((2*j+1)*(2*j-1)/((double)(j-k)*(j+k)))*sinp*P[j-1][k]
+                       -sqrt((2*j+1)*(j+k-1)*(j-k-1)/((double)(j-k)*(j+k)*(2*j-3)))*P[j-2][k];
+            }
+        }
+        /* cosine and sine of longitude multiples */
+        cosl[0]=1.0; sinl[0]=0.0;
+        for (j=1;j<=mmax;j++) {
+            cosl[j]=cos(j*pppos[1]);
+            sinl[j]=sin(j*pppos[1]);
+        }
+        /* evaluate spherical harmonic expansion (TECU) */
+        x=0.0;
+        for (j=0;j<=nmax;j++) {
+            x+=nav->vtec.cosC[i][j][0]*P[j][0];
+            for (k=1;k<=MIN(j,mmax);k++) {
+                x+=nav->vtec.cosC[i][j][k]*P[j][k]*cosl[k]+
+                   nav->vtec.sinC[i][j][k]*P[j][k]*sinl[k];
+            }
+        }
+        vtec+=x;
+    }
+    /* convert TECU to metres on L1, then scale to signal frequency */
+    fs=ionmapf(pos,azel); /* mapping function  */
+    *delay=40.3E16/SQR(FREQL1)*vtec*SQR(FREQL1/freq)*fs;
+    *var=VAR_SSR_VTEC; /* use fixed variance for now */
+    trace(4,"ionvtec: pppos=%.3f %.3f vtec=%.1f delay=%.3f var=%.2f, freq=%.1f\n",
+          pppos[0]*R2D,pppos[1]*R2D,vtec,*delay,*var,freq);
     return 1;
 }

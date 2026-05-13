@@ -666,7 +666,7 @@ static void udtrop_ppp(rtk_t *rtk)
 /* temporal update of ionospheric parameters ---------------------------------*/
 static void udiono_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
 {
-    double freq1,freq2,ion,sinel,pos[3],*azel;
+    double freq1,freq2,ion,sinel,pos[3],*azel,var=VAR_IONO;
     char *p;
     int i,j,f2,gap_resion=GAP_RESION,sat;
 
@@ -682,27 +682,56 @@ static void udiono_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
             rtk->x[j]=0.0;
         }
     }
+    /* reset ionosphere states if VTEC corrections just became available */
+    if (rtk->vtec_used==0&&nav->vtec.nlay>0) {
+        for (i=0;i<MAXSAT;i++) {
+            rtk->x[II(i+1,&rtk->opt)]=0.0;
+        }
+        rtk->vtec_used=1;  // indicate that vtec coeffs have been used
+    }
     for (i=0;i<n;i++) {
         sat=obs[i].sat;
         j=II(sat,&rtk->opt);
-        if (rtk->x[j]==0.0) {
+        if (rtk->x[j]==0.0&&(int)rtk->ssat[i].outc[0]<=gap_resion) {
             /* initialize ionosphere delay estimates if zero */
-            f2=seliflc(rtk->opt.nf,satsys(sat,NULL));
-            freq1=sat2freq(sat,obs[i].code[0],nav);
-            freq2=sat2freq(sat,obs[i].code[f2],nav);
-            if (obs[i].P[0]==0.0||obs[i].P[f2]==0.0||freq1==0.0||freq2==0.0) {
-                continue;
-            }
-            /* use pseudorange difference adjusted by freq for initial estimate */
-            ion=(obs[i].P[0]-obs[i].P[f2])/(SQR(FREQL1/freq1)-SQR(FREQL1/freq2));
             ecef2pos(rtk->sol.rr,pos);
             azel=rtk->ssat[sat-1].azel;
+            f2=seliflc(rtk->opt.nf,satsys(sat,NULL));
+            if (testsnr(0,0,azel[1],obs[i].SNR[0],&rtk->opt.snrmask)) continue;
+            freq1=sat2freq(sat,obs[i].code[0],nav);
+            freq2=sat2freq(sat,obs[i].code[f2],nav);
+            if (freq1==0.0) continue;
+            if (nav->vtec.nlay>0) {  /* use VTEC if corrections available */
+                ionvtec(obs[i].time,nav,pos,azel,freq1,&ion,&var);
+                if (var==0.0) continue;
+            } else {
+                if (obs[i].P[0]==0.0||obs[i].P[f2]==0.0||freq2==0.0||
+                        testsnr(0,f2,azel[1],obs[i].SNR[f2],&rtk->opt.snrmask)) {
+                    continue;
+                }
+                /* use pseudorange difference adjusted by freq for initial estimate */
+                int sys=satsys(sat,NULL);
+                double P0_corr=obs[i].P[0];
+                double Pf_corr=obs[i].P[f2];
+                if (&rtk->opt.sateph==EPHOPT_SSRAPC||&rtk->opt.sateph==EPHOPT_SSRCOM) {
+                    /* apply SSR correction */
+                    P0_corr-=nav->ssr[obs->sat-1].cbias[obs[i].code[0]-1];
+                    Pf_corr-=nav->ssr[obs->sat-1].cbias[obs[i].code[f2]-1];
+                }
+                else {   /* apply code bias corrections from file */
+                    P0_corr-=code2bias(nav,sys,sat,obs[i].code[0],1);
+                    Pf_corr-=code2bias(nav,sys,sat,obs[i].code[f2],1);
+                }
+                ion=(P0_corr-Pf_corr)/(SQR(FREQL1/freq1)-SQR(FREQL1/freq2));
+                trace(3,"P1=%.3f P2=%.3f frq1=%.1f frq2=%.1f\n",obs[i].P[0],obs[i].P[f2],freq1,freq2);
+                var=VAR_IONO;
+            }
             /* adjust delay estimate by path length */
             ion/=ionmapf(pos,azel);
-            initx(rtk,ion,VAR_IONO,j);
-            trace(4,"ion init: sat=%d ion=%.4f\n",sat,ion);
+            initx(rtk,ion,var,j);
+            trace(3,"ion init: sat=%d ion=%.4f var=%.1f\n",sat,ion,var);
         }
-        else {
+        else { /* temporal update */
             sinel=sin(MAX(rtk->ssat[sat-1].azel[1],5.0*D2R));
             /* update variance of delay state */
             rtk->P[j+j*rtk->nx]+=SQR(rtk->opt.prn[1]/sinel)*fabs(rtk->tt);

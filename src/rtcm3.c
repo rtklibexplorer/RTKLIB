@@ -2056,6 +2056,71 @@ static int decode_ssr7(rtcm_t *rtcm, int sys, int subtype)
     }
     return 20;
 }
+/* decode SSR 8: VTEC ionosphere --------------------------------------------- */
+static int decode_ssr8(rtcm_t *rtcm, int subtype)
+{
+    double udint,hgt,cosC,sinC,tow;
+    int i=0,j,k,l,type,sync,iod,udi,nlay,nmax,mmax,np,offp,qi;
+    char *msg,tstr[40];
+
+    type=getbitu(rtcm->buff,24,12);
+
+    i+=decode_ssr_epoch(rtcm,SYS_GPS,subtype);
+    udi  =getbitu(rtcm->buff,i, 4);             i+= 4;
+    udint=ssrudint[udi];
+    sync =getbitu(rtcm->buff,i,1);              i+= 1;
+    iod  =getbitu(rtcm->buff,i,4);              i+= 4;
+    getbitu(rtcm->buff,i,16);                   i+=16; /* provider ID */
+    getbitu(rtcm->buff,i, 4);                   i+= 4; /* solution ID */
+    qi   =getbitu(rtcm->buff,i,9);              i+= 9; /* quality indicator */
+    nlay =getbitu(rtcm->buff,i,2)+1;            i+= 2;  /* number of layers (1-4) */
+
+    if (rtcm->outtype) {
+        time2str(rtcm->time,tstr,2);
+        msg=rtcm->msgtype+strlen(rtcm->msgtype);
+        sprintf(msg," %s nsat=   iod=%2d udi=%2d sync=%d",tstr,iod,udi,sync);
+    }
+
+    if (nlay>4) {
+        trace(2,"rtcm3 %d too many layers: nlay=%d\n",type,nlay);
+        return -1;
+    }
+
+    for (j=0;j<nlay&&i+16<=rtcm->len*8;j++) {
+        hgt         =getbitu(rtcm->buff,i,8)*10;     i+=8; /* height (km) DF472 */
+        nmax        =getbitu(rtcm->buff,i, 4)+1;     i+= 4; /* degree DF473 */
+        mmax        =getbitu(rtcm->buff,i, 4)+1;     i+= 4; /* order  DF474 */
+
+        rtcm->nav.vtec.hgt[j]=hgt;
+        rtcm->nav.vtec.nmax[j]=nmax;
+        rtcm->nav.vtec.mmax[j]=mmax;
+
+        /* clear previous coefficients */
+        memset(rtcm->nav.vtec.cosC, 0, sizeof(rtcm->nav.vtec.cosC));
+        memset(rtcm->nav.vtec.sinC, 0, sizeof(rtcm->nav.vtec.sinC));
+        /* cosine coefficients: for order o=0..mmax, degree n=o..nmax */
+        for (k=0;k<=mmax;k++) {
+            for (l=k;l<=nmax;l++) {
+                cosC=getbits(rtcm->buff,i,16); i+=16;
+                rtcm->nav.vtec.cosC[j][l][k]=cosC/200.0;
+            }
+        }
+        /* sine coefficients: for order o=1..mmax, degree n=o..nmax */
+        for (k=1;k<=mmax;k++) {
+            for (l=k;l<=nmax;l++) {
+                sinC=getbits(rtcm->buff,i,16); i+=16;
+                rtcm->nav.vtec.sinC[j][l][k]=sinC/200.0;
+            }
+        }
+    }
+    rtcm->nav.vtec.udint=udint;
+    rtcm->nav.vtec.iod=iod;
+    rtcm->nav.vtec.nlay=nlay;
+    rtcm->nav.vtec.qi=qi*0.05; /* TECU */
+
+    trace(3,"ssr8 vtec: nlay=%d\n",nlay);
+    return 10;
+}
 /* get signal index ----------------------------------------------------------*/
 static void sigindex(int sys, const uint8_t *code, int n, const char *opt,
                      int *idx)
@@ -2797,6 +2862,7 @@ extern int decode_rtcm3(rtcm_t *rtcm)
         case 1261: ret=decode_ssr4(rtcm,SYS_CMP,0); break; /* draft */
         case 1262: ret=decode_ssr5(rtcm,SYS_CMP,0); break; /* draft */
         case 1263: ret=decode_ssr6(rtcm,SYS_CMP,0); break; /* draft */
+        case 1264: ret=decode_ssr8(rtcm,0);         break; /* draft */
         case 1265: ret=decode_ssr7(rtcm,SYS_GPS,0); break; /* draft */
         case 1266: ret=decode_ssr7(rtcm,SYS_GLO,0); break; /* draft */
         case 1267: ret=decode_ssr7(rtcm,SYS_GAL,0); break; /* draft */

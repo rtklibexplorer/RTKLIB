@@ -323,6 +323,9 @@ static void update_ssr(rtksvr_t *svr, int index)
       svr->rtcm[index].ssr[i].update = 0;
     }
     svr->nmsg[index][7]++;
+
+    /* update vtec */
+    svr->nav.vtec=svr->rtcm[index].nav.vtec;
 }
 /* update rtk server struct --------------------------------------------------*/
 static void update_svr(rtksvr_t *svr, int ret, obs_t *obs, nav_t *nav,
@@ -993,6 +996,8 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
             svr->rtcm[i].time=strs[i]==STR_FILE?strgettime(svr->stream+i):time;
         }
     }
+    svr->rtk.vtec_used=0;
+
     /* sync input streams */
     strsync(svr->stream,svr->stream+1);
     strsync(svr->stream,svr->stream+2);
