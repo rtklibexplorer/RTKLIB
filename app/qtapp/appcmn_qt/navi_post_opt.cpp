@@ -77,6 +77,7 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     ui->cBIonosphereOption->setItemData(IONOOPT_EST, tr("Estimate ionospheric parameter STEC (slant total electron content)"), Qt::ToolTipRole);
     ui->cBIonosphereOption->setItemData(IONOOPT_TEC, tr("Use IONEX TEC grid data"), Qt::ToolTipRole);
     ui->cBIonosphereOption->setItemData(IONOOPT_QZS, tr("Apply broadcast ionosphere model provided by QZSS"), Qt::ToolTipRole);
+    ui->cBIonosphereOption->setItemData(IONOOPT_VTEC, tr("Apply SSR IONEX VTEC"), Qt::ToolTipRole);
 
     ui->cBTroposphereOption->setItemData(TROPOPT_OFF, tr("Not apply troposphere correction"), Qt::ToolTipRole);
     ui->cBTroposphereOption->setItemData(TROPOPT_SAAS, tr("Apply Saastamoinen model"), Qt::ToolTipRole);
