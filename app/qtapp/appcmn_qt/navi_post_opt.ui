@@ -112,6 +112,11 @@
            <string>QZSS Broadcast</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>SSR VTEC</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item row="4" column="2">
