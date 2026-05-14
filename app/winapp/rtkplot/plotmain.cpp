@@ -1519,8 +1519,9 @@ void __fastcall TPlot::MouseDownSol(int X, int Y)
         
         GraphG[0]->GetLim(xl,yl);
         GraphG[0]->ToPoint(x,yl[1],pnt);
-        
-        if ((X-pnt.x)*(X-pnt.x)+(Y-pnt.y)*(Y-pnt.y)<25) {
+
+        double dx = X - pnt.x, dy = Y - pnt.y;
+        if (dx * dx + dy * dy < 5 * 5) {
             Screen->Cursor=crSizeWE;
             Drag=20;
             Refresh();
@@ -1568,7 +1569,8 @@ void __fastcall TPlot::MouseDownObs(int X, int Y)
         GraphR->GetLim(xl,yl);
         GraphR->ToPoint(x,yl[1],pnt);
         
-        if ((X-pnt.x)*(X-pnt.x)+(Y-pnt.y)*(Y-pnt.y)<25) {
+        double dx = X - pnt.x, dy = Y - pnt.y;
+        if (dx * dx + dy * dy < 5 * 5) {
             Screen->Cursor=crSizeWE;
             Drag=20;
             Refresh();

@@ -1532,12 +1532,11 @@ void Plot::mouseDownSolution(int x, int y)
         graphTriple[0]->getLimits(xl, yl);
         graphTriple[0]->toPoint(x_pos, yl[1], pnt);
 
-        if ((x - pnt.x()) * (x - pnt.x()) + (y - pnt.y()) * (y - pnt.y()) < 5*5) {
+        double dx = x - pnt.x(), dy = y - pnt.y();
+        if (dx * dx + dy * dy < 5 * 5) {
             setCursor(Qt::SizeHorCursor);
-
             dragState = 20;
             refresh();
-
             return;
         }
     }
@@ -1582,7 +1581,8 @@ void Plot::mouseDownObservation(int x, int y)
         graphSingle->getLimits(xl, yl);
         graphSingle->toPoint(x_pos, yl[1], pnt);
 
-        if ((x - pnt.x()) * (x - pnt.x()) + (y - pnt.y()) * (y - pnt.y()) < 5*5) {
+        double dx = x - pnt.x(), dy = y - pnt.y();
+        if (dx * dx + dy * dy < 5 * 5) {
             setCursor(Qt::SizeHorCursor);
             dragState = 20;
             refresh();
