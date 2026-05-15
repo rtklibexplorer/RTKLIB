@@ -292,7 +292,7 @@ int main(int argc, char **argv)
     char *local="",*proxy="",*opt="",buff[256],*p;
     char strmsg[MAXSTRMSG]="",*antinfo="",*rcvinfo="";
     char *ant[]={"","",""},*rcv[]={"","",""},*logfile="";
-    int i,j,n=0,dispint=5000,trlevel=0,opts[]={10000,10000,2000,32768,10,0,30,0};
+    int i,j,n=0,count_stream=0,dispint=5000,trlevel=0,opts[]={10000,10000,2000,32768,10,0,30,0};
     int types[MAXSTR]={STR_FILE,STR_FILE},stat[MAXSTR]={0},log_stat[MAXSTR]={0};
     int byte[MAXSTR]={0},bps[MAXSTR]={0},fmts[MAXSTR]={0},sta=0;
     int deamon=0;
@@ -324,6 +324,7 @@ int main(int argc, char **argv)
             logs[n + 1] = log;
             log = "";
             n++;
+            count_stream++;
         }
         else if (!strcmp(argv[i], "-log") && i + 1 < argc) {
           if (log != NULL && *log) fprintf(stderr, "Warning log '%s' ignored.\n", log);
@@ -362,7 +363,9 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-l"  )&&i+1<argc) local=argv[++i];
         else if (!strcmp(argv[i],"-x"  )&&i+1<argc) proxy=argv[++i];
         else if (!strcmp(argv[i],"-b"  )&&i+1<argc) opts[7]=atoi(argv[++i]);
-        else if (!strcmp(argv[i],"-fl" )&&i+1<argc) logfile=argv[++i];
+        else if (!strcmp(argv[i],"-fl" )&&i+1<argc) {
+            logs[count_stream]=argv[++i];
+        }
         else if (!strcmp(argv[i],"-t"  )&&i+1<argc) trlevel=atoi(argv[++i]);
         else if (!strcmp(argv[i], "--deamon")) deamon=1;
         else if (!strcmp(argv[i], "--version")) {
