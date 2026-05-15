@@ -262,16 +262,15 @@ static void update_antpos(rtksvr_t *svr, int index) {
   } else {
     sta = &svr->raw[index].sta;
   }
-  if (index == 1 && svr->rtk.opt.refpos == POSOPT_RTCM) {
+  if (index == 1 && svr->rtk.opt.refpos == POSOPT_RTCM && norm(sta->pos, 3) > RE_WGS84 / 2) {
     // Update base station position.
     for (int i = 0; i < 3; i++) svr->rtk.rb[i] = sta->pos[i];
     tracet(2, "updated antenna index=%d position to %.4f %.4f %.4f\n", index, svr->rtk.rb[0], svr->rtk.rb[1], svr->rtk.rb[2]);
   }
-  if (index == 0 && svr->rtk.opt.rovpos == POSOPT_RTCM &&
-      (svr->rtk.opt.mode == PMODE_FIXED || svr->rtk.opt.mode == PMODE_PPP_FIXED)) {
+  if (index == 0 && svr->rtk.opt.rovpos == POSOPT_RTCM && norm(sta->pos, 3) > RE_WGS84 / 2) {
     // Update rover fixed position.
     for (int i = 0; i < 3; i++) svr->rtk.opt.ru[i] = sta->pos[i];
-    tracet(2, "updated antenna index=%d position to %.4f %.4f %.4f\n", index, svr->rtk.rb[0], svr->rtk.rb[1], svr->rtk.rb[2]);
+    tracet(2, "updated antenna index=%d default position to %.4f %.4f %.4f\n", index, svr->rtk.opt.ru[0], svr->rtk.opt.ru[1], svr->rtk.opt.ru[2]);
   }
 
   // Antenna type and delta. These are updated independently of the antenna
