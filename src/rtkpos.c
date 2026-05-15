@@ -2358,6 +2358,16 @@ extern int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
         opt->mode!=PMODE_MOVEB) {
         for (i=0;i<6;i++) rtk->rb[i]=i<3?opt->rb[i]:0.0;
     }
+
+    // Default the rover position.
+    if (norm(rtk->sol.rr, 3) <= RE_WGS84 / 2) {
+      if (norm(rtk->opt.ru, 3) > RE_WGS84 / 2) {
+        for (int i = 0; i < 3; i++) rtk->sol.rr[i] = rtk->opt.ru[i];
+      } else if (norm(rtk->rb, 3) > RE_WGS84 / 2) {
+        for (int i = 0; i < 3; i++) rtk->sol.rr[i] = rtk->rb[i];
+      }
+    }
+
     /* count rover/base station observations */
     for (nu=0;nu   <n&&obs[nu   ].rcv==1;nu++) ;
     for (nr=0;nu+nr<n&&obs[nu+nr].rcv==2;nr++) ;
