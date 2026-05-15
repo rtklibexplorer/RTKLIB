@@ -762,6 +762,10 @@ static void prstatus(vt_t *vt)
             if (rtcm[i].nmsg3[j]==0) continue;
             p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+1000,rtcm[i].nmsg3[j]);
         }
+        for (j=300;j<399;j++) {
+            if (rtcm[i].nmsg3[j]==0) continue;
+            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+3770,rtcm[i].nmsg3[j]);
+        }
         if (rtcm[i].nmsg3[0]>0) {
             sprintf(p,"%sother3(%d)",p>s?",":"",rtcm[i].nmsg3[0]);
         }
