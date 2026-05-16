@@ -2351,7 +2351,7 @@ void MainWindow::loadNavigation(nav_t *nav)
     QString str;
     eph_t eph0;
     char buff[2049], *p;
-    long toe_time,toc_time,ttr_time;
+    long unsigned toe_time,toc_time,ttr_time;
     int i;
 
     trace(3, "loadNavigation\n");
@@ -2359,13 +2359,13 @@ void MainWindow::loadNavigation(nav_t *nav)
     memset(&eph0, 0, sizeof(eph_t));
 
     for (i = 0; i < 2 * MAXSAT; i++) {
-        if ((str = settings.value(QString("navi/eph_%1").arg(i, 2)).toString()).isEmpty()) continue;
+        if ((str = settings.value(QString("navi/eph_%1").arg(i, 3, 10, QChar('0'))).toString()).isEmpty()) continue;
         nav->eph[i] = eph0;
         strncpy(buff, qPrintable(str), 2047);
         if (!(p = strchr(buff, ','))) continue;
         *p = '\0';
         if (!(nav->eph[i].sat = satid2no(buff))) continue;
-        sscanf(p + 1, "%d,%d,%d,%d,%ld,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf",
+        sscanf(p + 1, "%d,%d,%d,%d,%lu,%lu,%lu,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf",
                &nav->eph[i].iode,
                &nav->eph[i].iodc,
                &nav->eph[i].sva,
@@ -2434,9 +2434,9 @@ void MainWindow::saveNavigation(nav_t *nav)
         str = str + QString("%1,").arg(nav->eph[i].iodc);
         str = str + QString("%1,").arg(nav->eph[i].sva);
         str = str + QString("%1,").arg(nav->eph[i].svh);
-        str = str + QString("%1,").arg(static_cast<int>(nav->eph[i].toe.time));
-        str = str + QString("%1,").arg(static_cast<int>(nav->eph[i].toc.time));
-        str = str + QString("%1,").arg(static_cast<int>(nav->eph[i].ttr.time));
+        str = str + QString("%1,").arg(static_cast<long unsigned>(nav->eph[i].toe.time));
+        str = str + QString("%1,").arg(static_cast<long unsigned>(nav->eph[i].toc.time));
+        str = str + QString("%1,").arg(static_cast<long unsigned>(nav->eph[i].ttr.time));
         str = str + QString("%1,").arg(nav->eph[i].A, 0, 'E', 14);
         str = str + QString("%1,").arg(nav->eph[i].e, 0, 'E', 14);
         str = str + QString("%1,").arg(nav->eph[i].i0, 0, 'E', 14);
@@ -2461,7 +2461,7 @@ void MainWindow::saveNavigation(nav_t *nav)
         str = str + QString("%1,").arg(nav->eph[i].code);
         str = str + QString("%1,").arg(nav->eph[i].flag);
         str = str + QString("%1,").arg(nav->eph[i].tgd[1],0,'E',14);
-        settings.setValue(QString("navi/eph_%1").arg(i, 2), str);
+        settings.setValue(QString("navi/eph_%1").arg(i, 3, 10, QChar('0')), str);
     }
     str = "";
     for (i = 0; i < 8; i++) str = str + QString("%1,").arg(nav->ion_gps[i], 0, 'E', 14);
