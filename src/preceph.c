@@ -159,7 +159,7 @@ static int addpeph(nav_t *nav, peph_t *peph)
     peph_t *nav_peph;
 
     if (nav->ne>=nav->nemax) {
-        nav->nemax+=256;
+        nav->nemax += nav->nemax < 4 ? 1 : nav->nemax / 4;
         if (!(nav_peph=(peph_t *)realloc(nav->peph,sizeof(peph_t)*nav->nemax))) {
             trace(1,"readsp3b malloc error n=%d\n",nav->nemax);
             free(nav->peph); nav->peph=NULL; nav->ne=nav->nemax=0;
