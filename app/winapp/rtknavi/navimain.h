@@ -254,7 +254,7 @@ public:
 	int MoniPort,OpenPort,AutoRun;
 	
 	int PSol,PSolS,PSolE,Nsat[2],SolCurrentStat;
-	int Sat[2][MAXSAT],Snr[2][MAXSAT][NFREQ],Vsat[2][MAXSAT];
+	int Sat[2][MAXSAT],Snr[2][MAXSAT][NFREQ],Vsat[2][MAXSAT][NFREQ];
 	double Az[2][MAXSAT],El[2][MAXSAT];
 	gtime_t *Time;
 	int *SolStat,*Nvsat;

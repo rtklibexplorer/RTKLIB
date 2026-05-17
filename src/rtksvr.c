@@ -1129,31 +1129,27 @@ extern void rtksvrclosestr(rtksvr_t *svr, int index)
 *          int     *vsat    O  valid satellite flag
 * return : number of satellites
 *-----------------------------------------------------------------------------*/
-extern int rtksvrostat(rtksvr_t *svr, int rcv, gtime_t *time, int *sat,
-                       double *az, double *el, int **snr, int *vsat)
+extern int rtksvrostat(rtksvr_t *svr, int rcv, gtime_t *time, int sat[MAXSAT],
+                       double *az, double *el, int snr[MAXSAT][NFREQ], int vsat[MAXSAT][NFREQ])
 {
-    int i,j,ns;
-    
     tracet(4,"rtksvrostat: rcv=%d\n",rcv);
     
     if (!svr->state) return 0;
     rtksvrlock(svr);
-    ns=svr->obs[rcv][0].n;
+    int ns=svr->obs[rcv][0].n;
     if (ns>0) {
         *time=svr->obs[rcv][0].data[0].time;
     }
-    for (i=0;i<ns;i++) {
+    for (int i=0;i<ns;i++) {
         sat [i]=svr->obs[rcv][0].data[i].sat;
         az  [i]=svr->rtk.ssat[sat[i]-1].azel[0];
         el  [i]=svr->rtk.ssat[sat[i]-1].azel[1];
-        for (j=0;j<NFREQ;j++) {
-            snr[i][j]=(int)(svr->obs[rcv][0].data[i].SNR[j]);
-        }
-        if (svr->rtk.sol.stat==SOLQ_NONE||svr->rtk.sol.stat==SOLQ_SINGLE) {
-            vsat[i]=svr->rtk.ssat[sat[i]-1].vs;
-        }
-        else {
-            vsat[i]=svr->rtk.ssat[sat[i]-1].vsat[0];
+        for (int j=0;j<NFREQ;j++) {
+            snr[i][j] = (int)(svr->obs[rcv][0].data[i].SNR[j] + 0.5);
+            if (svr->rtk.sol.stat == SOLQ_NONE || svr->rtk.sol.stat == SOLQ_SINGLE)
+              vsat[i][j] = svr->rtk.ssat[sat[i] - 1].vs;
+            else
+              vsat[i][j] = svr->rtk.ssat[sat[i] - 1].vsat[j];
         }
     }
     rtksvrunlock(svr);

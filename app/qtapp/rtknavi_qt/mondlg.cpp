@@ -464,8 +464,14 @@ void MonitorDialog::showRtk()
     rtksvrunlock(rtksvr); // unlock
 
     for (j = k = 0; j < MAXSAT; j++) {
-        if (rtk->opt.mode == PMODE_SINGLE && !rtk->ssat[j].vs) continue;
-        if (rtk->opt.mode != PMODE_SINGLE && !rtk->ssat[j].vsat[0]) continue;
+        if (rtk->opt.mode == PMODE_SINGLE) {
+          if (!rtk->ssat[j].vs) continue;
+        } else {
+          int any = 0;
+          for (int fi = 0; fi < NFREQ; fi++)
+            if (rtk->ssat[j].vsat[fi]) { any = 1; break; }
+          if (!any) continue;
+        }
         azel[k * 2] = rtk->ssat[j].azel[0];
         azel[k * 2 + 1] = rtk->ssat[j].azel[1];
 		k++;
@@ -792,8 +798,13 @@ void MonitorDialog::showSat()
     rtksvrunlock(rtksvr);
 
     for (i = 0; i < MAXSAT; i++) {
-        ssat = rtk->ssat + i;
-        vsat[i] = ssat->vs;
+        if (rtk->opt.mode == PMODE_SINGLE) {
+          vsat[i] = rtk->ssat[i].vs;
+        } else {
+          vsat[i] = 0;
+          for (int fi = 0; fi < NFREQ; fi++)
+            if (rtk->ssat[i].vsat[fi]) { vsat[i] = 1; break; }
+        }
     }
 
     for (i = 0, nsat = 0; i < MAXSAT; i++) {
@@ -821,7 +832,7 @@ void MonitorDialog::showSat()
         if (ui->cBSelectSatellites->currentIndex() == 1 && !vsat[i]) continue;
         satno2id(i + 1, id);
         ui->tWConsole->item(n, j++)->setText(id);
-        ui->tWConsole->item(n, j++)->setText(ssat->vs ? tr("OK") : tr("-"));
+        ui->tWConsole->item(n, j++)->setText(vsat[i] ? tr("OK") : tr("-"));
         az = ssat->azel[0] * R2D; if (az < 0.0) az += 360.0;
         el = ssat->azel[1] * R2D;
         ui->tWConsole->item(n, j++)->setText(QString::number(az, 'f', 1));

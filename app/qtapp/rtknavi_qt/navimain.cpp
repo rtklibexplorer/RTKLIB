@@ -138,10 +138,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < MAXSAT; j++) {
-            satellites[i][j] = validSatellites[i][j] = 0;
+            satellites[i][j] = 0;
             satellitesAzimuth[i][j] = satellitesElevation[i][j] = 0.0;
-            for (int k = 0; k < NFREQ; k++)
+            for (int k = 0; k < NFREQ; k++) {
+                validSatellites[i][j][k] = 0;
                 satellitesSNR[i][j][k] = 0;
+            }
         }
 
     static opt_t rcvopts[] = {
@@ -1662,8 +1664,8 @@ void MainWindow::drawSolutionPlot(QLabel *plot, int type, int freq)
 
     int w = buffer.size().width() - 2;
     int h = buffer.height() - 2;
-    int i, j, x, sat[2][MAXSAT], ns[2], snr[2][MAXSAT][NFREQ], vsat[2][MAXSAT];
-    int *snr0[MAXSAT], *snr1[MAXSAT], topMargin = QFontMetrics(optDialog->panelFont).height()*3/2;
+    int i, j, x, sat[2][MAXSAT], ns[2], snr[2][MAXSAT][NFREQ], vsat[2][MAXSAT][NFREQ];
+    int topMargin = QFontMetrics(optDialog->panelFont).height()*3/2;
     double az[2][MAXSAT], el[2][MAXSAT], rr[3], pos[3];
 
     trace(4, "drawSolutionPlot\n");
@@ -1672,12 +1674,8 @@ void MainWindow::drawSolutionPlot(QLabel *plot, int type, int freq)
         fstr[i + 1] = QStringLiteral("L%1").arg(i + 1);
     fstr[i + 1] = " SYS";
 
-    for (i = 0; i < MAXSAT; i++) {
-        snr0[i] = snr[0][i];
-        snr1[i] = snr[1][i];
-    }
-    ns[0] = rtksvrostat(rtksvr, 0, &time, sat[0], az[0], el[0], snr0, vsat[0]);
-    ns[1] = rtksvrostat(rtksvr, 1, &time, sat[1], az[1], el[1], snr1, vsat[1]);
+    ns[0] = rtksvrostat(rtksvr, 0, &time, sat[0], az[0], el[0], snr[0], vsat[0]);
+    ns[1] = rtksvrostat(rtksvr, 1, &time, sat[1], az[1], el[1], snr[1], vsat[1]);
 
     rtksvrlock(rtksvr);
     matcpy(rr, rtksvr->rtk.sol.rr, 3, 1);
@@ -1691,15 +1689,17 @@ void MainWindow::drawSolutionPlot(QLabel *plot, int type, int freq)
                 satellites[i][j] = sat[i][j];
                 satellitesAzimuth[i][j] = az[i][j];
                 satellitesElevation[i][j] = el[i][j];
-                for (int k = 0; k < NFREQ; k++)
+                for (int k = 0; k < NFREQ; k++) {
+                    validSatellites[i][j][k] = vsat[i][j][k];
                     satellitesSNR[i][j][k] = snr[i][j][k];
-                validSatellites[i][j] = vsat[i][j];
+                }
             }
         } else {
             for (j = 0; j < numSatellites[i]; j++) {
-                validSatellites[i][j] = 0;
-                for (int k = 0; k < NFREQ; k++)
+                for (int k = 0; k < NFREQ; k++) {
+                    validSatellites[i][j][k] = 0;
                     satellitesSNR[i][j][k] = 0;
+                }
             }
         }
     }
@@ -1861,7 +1861,10 @@ void MainWindow::drawSnr(QPainter &c, int w, int h, int x0, int y0,
             QRect r1(x1, y1, barWidth, -height);
             if (j == 0) {  // filled bar
                 c.setBrush(QBrush(freq < NFREQ + 1 ? snrColor(snr[snrIdx]) : color_sys[sysIdx], Qt::SolidPattern));
-                if (!validSatellites[index][i])
+                int any = 0;
+                for (int fi = 0; fi < NFREQ; fi++)
+                  if (validSatellites[index][i][fi]) { any = 1; break; }
+                if (!any)
                     c.setBrush(QBrush(QColor(QColorConstants::LightGray), Qt::SolidPattern));
             } else {  // outline only
                 c.setPen(j < NFREQ + 1 ? QColor(QColorConstants::LightGray) : Qt::darkGray);
@@ -1909,7 +1912,10 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
                 snr[0] = snr[j + 1]; // max snr
             }
         }
-        if (validSatellites[index][k] && (freq > NFREQ || snr[freq] > 0)) {
+        int anyValidSatFreq = 0;
+        for (int fi = 0; fi < NFREQ; fi++)
+          if (validSatellites[index][k][fi]) { anyValidSatFreq = 1; break; }
+        if (anyValidSatFreq && (freq > NFREQ || snr[freq] > 0)) {
             azel[nsats * 2] = satellitesAzimuth[index][k];
             azel[nsats * 2 + 1] = satellitesElevation[index][k];
             nsats++;
@@ -1920,7 +1926,7 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
         y[i] = static_cast<int>(p.y() - r * (90 - satellitesElevation[index][k] * R2D) / 90 * cos(satellitesAzimuth[index][k])) + y0;
         radius = QFontMetrics(optDialog->panelFont).height();
 
-        c.setBrush(!validSatellites[index][k] ? Color::Silver :
+        c.setBrush(!anyValidSatFreq ? Color::Silver :
                         (freq < NFREQ + 1 ? snrColor(snr[freq]) : color_sys[sysIdx]));
         c.setPen(Qt::darkGray);
         color_text = Qt::white;
