@@ -382,7 +382,6 @@ static int _strcmp(const void *str1, const void *str2)
 // update observation type pull-down menu --------------------------------------
 void Plot::updateObservationType()
 {
-    char *codes[MAXCODE + 1], *obs;
     int i, j, n = 0, codeMask[MAXCODE + 1] = { 0 };
 
     trace(3, "updateObservationType\n");
@@ -393,9 +392,11 @@ void Plot::updateObservationType()
             codeMask[observation.data[i].code[j]] = 1;
 
     // count codes
+    const char *codes[MAXCODE + 1];
     for (uint8_t c = 1; c <= MAXCODE; c++) {
         if (!codeMask[c]) continue;
-        if (!*(obs = code2obs(c))) continue;
+        const char *obs = code2obs(c);
+        if (!*obs) continue;
         codes[n++] = obs;
     }
     qsort(codes, n, sizeof(char *), _strcmp);

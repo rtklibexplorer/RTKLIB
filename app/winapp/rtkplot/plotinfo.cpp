@@ -333,7 +333,6 @@ static int _strcmp(const void *str1, const void *str2)
 void __fastcall TPlot::UpdateObsType(void)
 {
     UTF8String s;
-    char *obs,*codes[MAXCODE+1];
     int i,j,n=0,cmask[MAXCODE+1]={0},fmask[10]={0};
     const char *obstypes[] =  {"L1/LC","L2/E5b","L5/E5a","L6","L7","L8"};
 
@@ -342,9 +341,11 @@ void __fastcall TPlot::UpdateObsType(void)
     for (i=0;i<Obs.n;i++) for (j=0;j<NFREQ+NEXOBS;j++) {
         cmask[Obs.data[i].code[j]]=1;
     }
+    const char *codes[MAXCODE+1];
     for (i=1;i<=MAXCODE;i++) {
         if (!cmask[i]) continue;
-        if (!*(obs=code2obs((uint8_t)i))) continue;
+        const char *obs = code2obs((uint8_t)i);
+        if (!*obs) continue;
         codes[n++]=obs;
     }
     qsort(codes,n,sizeof(char *),_strcmp);

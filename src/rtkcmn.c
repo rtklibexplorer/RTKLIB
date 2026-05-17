@@ -255,8 +255,8 @@ const char *formatstrs[32]={    /* stream format strings */
     NULL
 };
 
-static char *obscodes[MAXCODE + 1]={       /* observation code strings */
-
+// Observation code strings.
+static const char *obscodes[MAXCODE + 1]={
     ""  ,"1C","1P","1W","1Y", "1M","1N","1S","1L","1E", /*  0- 9 */
     "1A","1B","1X","1Z","2C", "2D","2S","2L","2X","2P", /* 10-19 */
     "2W","2Y","2M","2N","5I", "5Q","5X","7I","7Q","7X", /* 20-29 */
@@ -602,7 +602,7 @@ extern uint8_t obs2code(const char *obs)
 * return : obs code string ("1C","1P","1P",...)
 * notes  : obs codes are based on RINEX 3.04
 *-----------------------------------------------------------------------------*/
-extern char *code2obs(uint8_t code)
+extern const char *code2obs(uint8_t code)
 {
     if (code<=CODE_NONE||MAXCODE<code) return "";
     return obscodes[code];
@@ -610,7 +610,7 @@ extern char *code2obs(uint8_t code)
 /* GPS obs code to frequency -------------------------------------------------*/
 static int code2freq_GPS(uint8_t code, double *freq)
 {
-    char *obs=code2obs(code);
+    const char *obs=code2obs(code);
 
     switch (obs[0]) {
         case '1': *freq=FREQL1; return 0; /* L1 */
@@ -622,7 +622,7 @@ static int code2freq_GPS(uint8_t code, double *freq)
 /* GLONASS obs code to frequency ---------------------------------------------*/
 static int code2freq_GLO(uint8_t code, int fcn, double *freq)
 {
-    char *obs=code2obs(code);
+    const char *obs=code2obs(code);
 
     switch (obs[0]) {
         case '1':  /* G1 */
@@ -642,7 +642,7 @@ static int code2freq_GLO(uint8_t code, int fcn, double *freq)
 /* Galileo obs code to frequency ---------------------------------------------*/
 static int code2freq_GAL(uint8_t code, double *freq)
 {
-    char *obs=code2obs(code);
+    const char *obs=code2obs(code);
 
     switch (obs[0]) {
         case '1': *freq=FREQL1; return 0; /* E1 */
@@ -656,7 +656,7 @@ static int code2freq_GAL(uint8_t code, double *freq)
 /* QZSS obs code to frequency ------------------------------------------------*/
 static int code2freq_QZS(uint8_t code, double *freq)
 {
-    char *obs=code2obs(code);
+    const char *obs=code2obs(code);
 
     switch (obs[0]) {
         case '1': *freq=FREQL1; return 0; /* L1 */
@@ -669,7 +669,7 @@ static int code2freq_QZS(uint8_t code, double *freq)
 /* SBAS obs code to frequency ------------------------------------------------*/
 static int code2freq_SBS(uint8_t code, double *freq)
 {
-    char *obs=code2obs(code);
+    const char *obs=code2obs(code);
 
     switch (obs[0]) {
         case '1': *freq=FREQL1; return 0; /* L1 */
@@ -680,7 +680,7 @@ static int code2freq_SBS(uint8_t code, double *freq)
 /* BDS obs code to frequency -------------------------------------------------*/
 static int code2freq_BDS(uint8_t code, double *freq)
 {
-    char *obs=code2obs(code);
+    const char *obs=code2obs(code);
 
     switch (obs[0]) {
         case '2': *freq=FREQ1_CMP; return 0; /* B1I */
@@ -695,7 +695,7 @@ static int code2freq_BDS(uint8_t code, double *freq)
 /* NavIC obs code to frequency -----------------------------------------------*/
 static int code2freq_IRN(uint8_t code, double *freq)
 {
-    char *obs=code2obs(code);
+    const char *obs=code2obs(code);
 
     switch (obs[0]) {
         case '5': *freq=FREQL5; return 0; /* L5 */
@@ -813,8 +813,8 @@ extern void setcodepri(int sys, int idx, const char *pri)
 *-----------------------------------------------------------------------------*/
 extern int getcodepri(int sys, uint8_t code, const char *opt)
 {
-    const char *p,*optstr;
-    char *obs,str[8]="";
+    const char *p,*optstr, *obs;
+    char str[8]="";
     int i,j;
 
     switch (sys) {

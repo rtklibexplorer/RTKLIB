@@ -1955,7 +1955,7 @@ static int to_satid(int sys, int sat)
 static int to_sigid(int sys, uint8_t code)
 {
     const char **msm_sig;
-    char *sig;
+    const char *sig;
     int i;
     
     /* signal conversion for undefined signal by rtcm */

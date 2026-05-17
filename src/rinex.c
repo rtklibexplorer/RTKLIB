@@ -2374,7 +2374,7 @@ static void outrnxobsf(FILE *fp, double obs, int lli, int std)
 static int obsindex(int rnxver, int sys, const uint8_t *code, const char *tobs,
                     const char *mask)
 {
-    char *id;
+    const char *id;
     int i;
 
     for (i=0;i<NFREQ+NEXOBS;i++) {
