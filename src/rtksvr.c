@@ -540,7 +540,7 @@ static double baseline_len(const rtk_t *rtk)
     double dr[3];
     int i;
 
-    if (norm(rtk->sol.rr,3)<=0.0||norm(rtk->rb,3)<=0.0) return 0.0;
+    if (norm(rtk->sol.rr,3) <= RE_WGS84 / 2 || norm(rtk->rb,3) <= RE_WGS84 / 2) return 0.0;
 
     for (i=0;i<3;i++) {
         dr[i]=rtk->sol.rr[i]-rtk->rb[i];
@@ -551,30 +551,28 @@ static double baseline_len(const rtk_t *rtk)
 static void send_nmea(rtksvr_t *svr, uint32_t *tickreset)
 {
     sol_t sol_nmea={{0}};
-    double vel,bl;
-    uint32_t tick=tickget();
-    int i;
 
     if (svr->stream[1].state!=1) return;
-    sol_nmea.ns=10; /* Some servers don't like when ns = 0 */
 
     if (svr->nmeareq==1) { /* lat-lon-hgt mode */
         sol_nmea.stat=SOLQ_SINGLE;
         sol_nmea.time=utc2gpst(timeget());
+        sol_nmea.ns = 10; // Some servers don't like when ns = 0.
         matcpy(sol_nmea.rr,svr->nmeapos,3,1);
-        strsendnmea(svr->stream+1,&sol_nmea);
     }
     else if (svr->nmeareq==2) { /* single-solution mode */
-        if (norm(svr->rtk.sol.rr,3)<=0.0) return;
-        sol_nmea.stat=SOLQ_SINGLE;
-        sol_nmea.time=utc2gpst(timeget());
+        if (norm(svr->rtk.sol.rr, 3) <= RE_WGS84 / 2) return;
+        sol_nmea.stat = svr->rtk.sol.stat;
+        sol_nmea.time = utc2gpst(timeget());
+        sol_nmea.ns = svr->rtk.sol.ns;
+        sol_nmea.age = svr->rtk.sol.age;
+        sol_nmea.refstationid = svr->rtk.sol.refstationid;
         matcpy(sol_nmea.rr,svr->rtk.sol.rr,3,1);
-        strsendnmea(svr->stream+1,&sol_nmea);
     }
     else if (svr->nmeareq==3) { /* reset-and-single-sol mode */
-
         /* send reset command if baseline over threshold */
-        bl=baseline_len(&svr->rtk);
+        double bl = baseline_len(&svr->rtk);
+        uint32_t tick = tickget();
         if (bl>=svr->bl_reset&&(int)(tick-*tickreset)>MIN_INT_RESET) {
             strsendcmd(svr->stream+1,svr->cmd_reset);
             
@@ -583,22 +581,28 @@ static void send_nmea(rtksvr_t *svr, uint32_t *tickreset)
                    svr->rtk.rb[0],svr->rtk.rb[1],svr->rtk.rb[2]);
             *tickreset=tick;
         }
-        if (norm(svr->rtk.sol.rr,3)<=0.0) return;
-        sol_nmea.stat=SOLQ_SINGLE;
+        if (norm(svr->rtk.sol.rr, 3) <= RE_WGS84 / 2) return;
+        sol_nmea.stat = svr->rtk.sol.stat;
         sol_nmea.time=utc2gpst(timeget());
+        sol_nmea.ns = svr->rtk.sol.ns;
+        sol_nmea.age = svr->rtk.sol.age;
+        sol_nmea.refstationid = svr->rtk.sol.refstationid;
         matcpy(sol_nmea.rr,svr->rtk.sol.rr,3,1);
 
         /* set predicted position if velocity > 36km/h */
-        if ((vel=norm(svr->rtk.sol.rr+3,3))>10.0) {
-            for (i=0;i<3;i++) {
+        double vel = norm(svr->rtk.sol.rr + 3, 3);
+        if (vel > 10.0) {
+            for (int i = 0; i < 3; i++) {
                 sol_nmea.rr[i]+=svr->rtk.sol.rr[i+3]/vel*svr->bl_reset*0.8;
             }
         }
-        strsendnmea(svr->stream+1,&sol_nmea);
-
-        tracet(3,"send nmea: rr=%.3f %.3f %.3f\n",sol_nmea.rr[0],sol_nmea.rr[1],
-               sol_nmea.rr[2]);
     }
+    else return;
+
+    strsendnmea(svr->stream + 1, &sol_nmea);
+    trace(3, "send nmea: stat=%d ns=%d age=%.3f ref=%d rr=%.3f %.3f %.3f\n",
+            sol_nmea.stat, sol_nmea.ns, sol_nmea.age, sol_nmea.refstationid,
+            sol_nmea.rr[0], sol_nmea.rr[1], sol_nmea.rr[2]);
 }
 /* rtk server thread ---------------------------------------------------------*/
 #ifdef WIN32
