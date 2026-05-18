@@ -713,7 +713,7 @@ static void udiono_ppp(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
                 int sys=satsys(sat,NULL);
                 double P0_corr=obs[i].P[0];
                 double Pf_corr=obs[i].P[f2];
-                if (&rtk->opt.sateph==EPHOPT_SSRAPC||&rtk->opt.sateph==EPHOPT_SSRCOM) {
+                if (rtk->opt.sateph==EPHOPT_SSRAPC||rtk->opt.sateph==EPHOPT_SSRCOM) {
                     /* apply SSR correction */
                     P0_corr-=nav->ssr[obs->sat-1].cbias[obs[i].code[0]-1];
                     Pf_corr-=nav->ssr[obs->sat-1].cbias[obs[i].code[f2]-1];
