@@ -1077,7 +1077,7 @@ static int execses(gtime_t ts, gtime_t te, double ti, const prcopt_t *popt,
     if (*fopt->eop) {
         free(navs.erp.data); navs.erp.data=NULL; navs.erp.n=navs.erp.nmax=0;
         reppath(fopt->eop,path,ts,"","");
-        if (!readerp(path,&navs.erp)) {
+        if (readerp(path,&navs.erp) == 0) {
             showmsg("error : no erp data %s",path);
             trace(2,"no erp data %s\n",path);
         }

@@ -112,7 +112,7 @@ static void utest3(void)
         assert(nav.n>0);
 
     stat=readerp(file3,&erp);
-        assert(stat);
+        assert(stat > 0);
 
     stat=tle_read(file2,&tle);
         assert(stat);
