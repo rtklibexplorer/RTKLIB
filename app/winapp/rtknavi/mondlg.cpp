@@ -173,12 +173,12 @@ void __fastcall TMonitorDialog::ClearTable(void)
 	SelObs  ->Visible=TypeF==1;
 	SelSys  ->Visible=TypeF==1||TypeF==5;
 	SelSys2 ->Visible=TypeF==2||TypeF==14;
-	SelSat  ->Visible=TypeF==2||TypeF==5;
+	SelSat  ->Visible=TypeF==2||TypeF==5||TypeF==6||TypeF==7||TypeF==14;
 	SelStr  ->Visible=TypeF==12||TypeF==14||TypeF==15||TypeF==16;
 	SelStr2 ->Visible=TypeF==17;
 	SelFmt  ->Visible=TypeF==16;
 	SelEph  ->Visible=TypeF==2;
-	SelStr  ->Left=(TypeF==14)?SelSys->Left+SelSys->Width+1:Type->Left+Type->Width+1;
+	SelStr  ->Left=(TypeF==14)?SelSat->Left+SelSat->Width+1:Type->Left+Type->Width+1;
 }
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::Timer2Timer(TObject *Sender)
@@ -1954,6 +1954,10 @@ void __fastcall TMonitorDialog::ShowRtcmSsr(void)
 	time=rtksvr.rtk.sol.time;
 	for (i=n=0;i<MAXSAT;i++) {
 		if (!(satsys(i+1,NULL)&sys)) continue;
+		int valid = rtksvr.rtcm[Str1].ssr[i].t0[0].time &&
+			fabs(timediff(time, rtksvr.rtcm[Str1].ssr[i].t0[0])) <= 1800.0 &&
+			rtksvr.rtcm[Str1].ssr[i].iode >= 0;
+		if (SelSat->ItemIndex == 1 && !valid) continue;
 		ssr[n]=rtksvr.rtcm[Str1].ssr[i];
 		sat[n++]=i+1;
 	}
@@ -1970,7 +1974,7 @@ void __fastcall TMonitorDialog::ShowRtcmSsr(void)
 		Tbl->Cells[j++][i+1]=valid?"OK":"-";
 		Tbl->Cells[j++][i+1]=s.sprintf("%.0f",ssr[i].udi[0]);
 		Tbl->Cells[j++][i+1]=s.sprintf("%.0f",ssr[i].udi[2]);
-		Tbl->Cells[j++][i+1]=s.sprintf("%d",ssr[i].iode);
+		Tbl->Cells[j++][i+1] = ssr[i].iode < 0 ? "-" : s.sprintf("%d", ssr[i].iode);
 		Tbl->Cells[j++][i+1]=s.sprintf("%d",ssr[i].ura);
 		Tbl->Cells[j++][i+1]=s.sprintf("%d",ssr[i].refd);
 		if (ssr[i].t0[0].time) time2str(ssr[i].t0[0],tstr,0); else strcpy(tstr,"-");
