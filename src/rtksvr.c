@@ -907,7 +907,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
                        int nmeareq, const double *nmeapos, prcopt_t *prcopt,
                        solopt_t *solopt, stream_t *moni, char *errmsg)
 {
-    gtime_t time,time0={0};
+    gtime_t time;
     int i,j,rw;
     
     tracet(3,"rtksvrstart: cycle=%d buffsize=%d navsel=%d nmeacycle=%d nmeareq=%d\n",
@@ -975,10 +975,13 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
             svr->rtk.rb[i]=i<3?prcopt->rb[i]:0.0;
         }
     }
+#ifdef RTKLIB_DISABLED
     /* update navigation data */
+    gtime_t time0 = {0};
     for (i=0;i<MAXSAT*4 ;i++) svr->nav.eph [i].ttr=time0;
     for (i=0;i<MAXPRNGLO*2;i++) svr->nav.geph[i].tof=time0;
     for (i=0;i<NSATSBS*2;i++) svr->nav.seph[i].tof=time0;
+#endif
     
     /* set monitor stream */
     svr->moni=moni;
