@@ -2328,19 +2328,19 @@ void __fastcall TMainForm::LoadNav(nav_t *nav)
     AnsiString str,s;
     eph_t eph0={0};
     char buff[2049],id[32],*p;
-    long toe_time,toc_time,ttr_time;
+    long unsigned toe_time,toc_time,ttr_time;
     int i;
     
     trace(3,"LoadNav\n");
     
     for (i=0;i<MAXSAT*2;i++) {
-        if ((str=ini->ReadString("navi",s.sprintf("eph_%02d",i),""))=="") continue;
+        if ((str=ini->ReadString("navi",s.sprintf("eph_%03d",i),""))=="") continue;
         nav->eph[i]=eph0;
         strcpy(buff,str.c_str());
         if (!(p=strchr(buff,','))) continue;
         *p='\0';
         if (!(nav->eph[i].sat=satid2no(buff))) continue;
-        sscanf(p+1,"%d,%d,%d,%d,%ld,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf",
+        sscanf(p+1,"%d,%d,%d,%d,%lu,%lu,%lu,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf",
                &nav->eph[i].iode,
                &nav->eph[i].iodc,
                &nav->eph[i].sva ,
@@ -2409,9 +2409,9 @@ void __fastcall TMainForm::SaveNav(nav_t *nav)
         str=str+s.sprintf("%d,",nav->eph[i].iodc);
         str=str+s.sprintf("%d,",nav->eph[i].sva);
         str=str+s.sprintf("%d,",nav->eph[i].svh);
-        str=str+s.sprintf("%d,",(int)nav->eph[i].toe.time);
-        str=str+s.sprintf("%d,",(int)nav->eph[i].toc.time);
-        str=str+s.sprintf("%d,",(int)nav->eph[i].ttr.time);
+        str=str+s.sprintf("%lu,",(long unsigned)nav->eph[i].toe.time);
+        str=str+s.sprintf("%lu,",(long unsigned)nav->eph[i].toc.time);
+        str=str+s.sprintf("%lu,",(long unsigned)nav->eph[i].ttr.time);
         str=str+s.sprintf("%.14E,",nav->eph[i].A);
         str=str+s.sprintf("%.14E,",nav->eph[i].e);
         str=str+s.sprintf("%.14E,",nav->eph[i].i0);
@@ -2436,7 +2436,7 @@ void __fastcall TMainForm::SaveNav(nav_t *nav)
         str=str+s.sprintf("%d,",nav->eph[i].code);
         str=str+s.sprintf("%d,",nav->eph[i].flag);
         str=str+s.sprintf("%.14E,",nav->eph[i].tgd[1]);
-        ini->WriteString("navi",s.sprintf("eph_%02d",i),str);
+        ini->WriteString("navi",s.sprintf("eph_%03d",i),str);
     }
     str="";
     for (i=0;i<8;i++) str=str+s.sprintf("%.14E,",nav->ion_gps[i]);

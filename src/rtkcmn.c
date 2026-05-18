@@ -3160,7 +3160,7 @@ extern int readnav(const char *file, nav_t *nav)
     eph_t eph0={0};
     geph_t geph0={0};
     char buff[4096],*p;
-    long toe_time,tof_time,toc_time,ttr_time;
+    long unsigned toe_time,tof_time,toc_time,ttr_time;
     int i,sat,prn;
 
     trace(3,"loadnav: file=%s\n",file);
@@ -3184,7 +3184,7 @@ extern int readnav(const char *file, nav_t *nav)
             nav->geph[prn-1]=geph0;
             nav->geph[prn-1].sat=sat;
             toe_time=tof_time=0;
-            (void)sscanf(p+1,"%d,%d,%d,%d,%d,%d,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
+            (void)sscanf(p+1,"%d,%d,%d,%d,%d,%d,%lu,%lu,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
                         "%lf,%lf,%lf,%lf",
                    &nav->geph[prn-1].iode,&nav->geph[prn-1].frq,&nav->geph[prn-1].svh,
                    &nav->geph[prn-1].flags,&nav->geph[prn-1].sva,&nav->geph[prn-1].age,
@@ -3200,7 +3200,7 @@ extern int readnav(const char *file, nav_t *nav)
             nav->eph[sat-1]=eph0;
             nav->eph[sat-1].sat=sat;
             toe_time=toc_time=ttr_time=0;
-            (void)sscanf(p+1,"%d,%d,%d,%d,%ld,%ld,%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
+            (void)sscanf(p+1,"%d,%d,%d,%d,%lu,%lu,%lu,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,"
                         "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d",
                    &nav->eph[sat-1].iode,&nav->eph[sat-1].iodc,&nav->eph[sat-1].sva ,
                    &nav->eph[sat-1].svh ,
@@ -3234,12 +3234,12 @@ extern int savenav(const char *file, const nav_t *nav)
     for (i=0;i<MAXSAT;i++) {
         if (nav->eph[i].ttr.time==0) continue;
         satno2id(nav->eph[i].sat,id);
-        fprintf(fp,"%s,%d,%d,%d,%d,%d,%d,%d,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,"
+        fprintf(fp,"%s,%d,%d,%d,%d,%lu,%lu,%lu,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,"
                    "%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,"
                    "%.14E,%.14E,%.14E,%.14E,%.14E,%d,%d\n",
                 id,nav->eph[i].iode,nav->eph[i].iodc,nav->eph[i].sva ,
-                nav->eph[i].svh ,(int)nav->eph[i].toe.time,
-                (int)nav->eph[i].toc.time,(int)nav->eph[i].ttr.time,
+                nav->eph[i].svh ,(long unsigned)nav->eph[i].toe.time,
+                (long unsigned)nav->eph[i].toc.time,(long unsigned)nav->eph[i].ttr.time,
                 nav->eph[i].A   ,nav->eph[i].e  ,nav->eph[i].i0  ,nav->eph[i].OMG0,
                 nav->eph[i].omg ,nav->eph[i].M0 ,nav->eph[i].deln,nav->eph[i].OMGd,
                 nav->eph[i].idot,nav->eph[i].crc,nav->eph[i].crs ,nav->eph[i].cuc ,
@@ -3250,12 +3250,12 @@ extern int savenav(const char *file, const nav_t *nav)
     for (i=0;i<MAXPRNGLO;i++) {
         if (nav->geph[i].tof.time==0) continue;
         satno2id(nav->geph[i].sat,id);
-        fprintf(fp,"%s,%d,%d,%d,%d,%d,%d,%d,%d,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,"
+        fprintf(fp,"%s,%d,%d,%d,%d,%d,%d,%lu,%lu,%.14E,%.14E,%.14E,%.14E,%.14E,%.14E,"
                    "%.14E,%.14E,%.14E,%.14E,%.14E,%.14E\n",
                 id,nav->geph[i].iode,nav->geph[i].frq,nav->geph[i].svh,
                 nav->geph[i].flags,
-                nav->geph[i].sva,nav->geph[i].age,(int)nav->geph[i].toe.time,
-                (int)nav->geph[i].tof.time,
+                nav->geph[i].sva,nav->geph[i].age,(long unsigned)nav->geph[i].toe.time,
+                (long unsigned)nav->geph[i].tof.time,
                 nav->geph[i].pos[0],nav->geph[i].pos[1],nav->geph[i].pos[2],
                 nav->geph[i].vel[0],nav->geph[i].vel[1],nav->geph[i].vel[2],
                 nav->geph[i].acc[0],nav->geph[i].acc[1],nav->geph[i].acc[2],
