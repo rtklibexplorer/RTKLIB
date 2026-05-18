@@ -222,7 +222,7 @@ void MonitorDialog::clearTable()
     ui->cBSelectObservation->setVisible(displayType == 1);
     ui->cBSelectNavigationSystems->setVisible(displayType == 1 || displayType == 5);
     ui->cBSelectSingleNavigationSystem->setVisible(displayType == 2 || displayType == 14);
-    ui->cBSelectSatellites->setVisible(displayType == 2 || displayType == 5);
+    ui->cBSelectSatellites->setVisible(displayType == 2 || displayType == 5 || displayType == 6 || displayType == 7 || displayType == 14);
     ui->cBSelectInputStream->setVisible(displayType == 12 || displayType == 14 || displayType == 15 || displayType == 16);
     ui->cBSelectSolutionStream->setVisible(displayType == 17);
     ui->cBSelectFormat->setVisible(displayType == 16);
@@ -2100,6 +2100,10 @@ void MonitorDialog::showRtcmSsr()
     time = rtksvr->rtk.sol.time;
     for (i = n = 0; i < MAXSAT; i++) {
         if (!(satsys(i + 1, NULL) & sys)) continue;
+        bool valid = rtksvr->rtcm[effectiveStream].ssr[i].t0[0].time &&
+            fabs(timediff(time, rtksvr->rtcm[effectiveStream].ssr[i].t0[0])) <= 1800.0 &&
+            rtksvr->rtcm[effectiveStream].ssr[i].iode >= 0;
+        if (ui->cBSelectSatellites->currentIndex() && !valid) continue;
         ssr[n] = rtksvr->rtcm[effectiveStream].ssr[i];
         sat[n++] = i + 1;
     }
@@ -2120,7 +2124,9 @@ void MonitorDialog::showRtcmSsr()
         ui->tWConsole->item(i, j++)->setText(valid ? tr("OK") : tr("-"));
         ui->tWConsole->item(i, j++)->setText(QString::number(ssr[i].udi[0], 'f', 0));
         ui->tWConsole->item(i, j++)->setText(QString::number(ssr[i].udi[2], 'f', 0));
-        ui->tWConsole->item(i, j++)->setText(QString::number(ssr[i].iode));
+        if (ssr[i].iode < 0) s = "-";
+        else s = QString::number(ssr[i].iode);
+        ui->tWConsole->item(i, j++)->setText(s);
         ui->tWConsole->item(i, j++)->setText(QString::number(ssr[i].ura));
         ui->tWConsole->item(i, j++)->setText(QString::number(ssr[i].refd));
         if (ssr[i].t0[0].time) time2str(ssr[i].t0[0], tstr, 0); else strcpy(tstr, "-");
