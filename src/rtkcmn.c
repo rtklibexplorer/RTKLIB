@@ -3721,7 +3721,7 @@ extern double ionmodel(gtime_t t, const double *ion, const double *pos,
 *-----------------------------------------------------------------------------*/
 extern double ionmapf(const double *pos, const double *azel)
 {
-    if (pos[2]>=HION) return 1.0;
+    if (pos[2]>=HION) return 0.0;
     return 1.0/cos(asin((RE_WGS84+pos[2])/(RE_WGS84+HION)*sin(PI/2.0-azel[1])));
 }
 /* ionospheric pierce point position -------------------------------------------
@@ -3738,17 +3738,22 @@ extern double ionmapf(const double *pos, const double *azel)
 extern double ionppp(const double *pos, const double *azel, double re,
                      double hion, double *posp)
 {
-    double cosaz,r,rp,ap,sinap,tanap;
+    // Guard.
+    if (pos[2] / 1000 >= hion) {
+      posp[0] = pos[0];
+      posp[1] = pos[1];
+      return 0.0;
+    }
 
     /* The radius at the receiver station. */
-    r=re+pos[2]/1000.0;
+    double r=re+pos[2]/1000.0;  // km
     /* asin(rp) is the zenith angle at the IPP. */
-    rp=r/(re+hion)*cos(azel[1]);
+    double rp=r/(re+hion)*cos(azel[1]);
     /* The angle at the center of the earth. */
-    ap=PI/2.0-azel[1]-asin(rp);
-    sinap=sin(ap);
-    tanap=tan(ap);
-    cosaz=cos(azel[0]);
+    double ap=PI/2.0-azel[1]-asin(rp);
+    double sinap=sin(ap);
+    double tanap=tan(ap);
+    double cosaz=cos(azel[0]);
     posp[0]=asin(sin(pos[0])*cos(ap)+cos(pos[0])*sinap*cosaz);
 
     if ((pos[0]> 70.0*D2R&& tanap*cosaz>tan(PI/2.0-pos[0]))||
