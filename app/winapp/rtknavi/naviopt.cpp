@@ -421,7 +421,7 @@ void __fastcall TOptDialog::GetOpt(void)
 	Freq		 ->ItemIndex=PrcOpt.nf-1>NFREQ-1?NFREQ-1:PrcOpt.nf-1;
 	ElMask		 ->Text     =s.sprintf("%.0f",PrcOpt.elmin*R2D);
 	DynamicModel ->ItemIndex=PrcOpt.dynamics;
-	TideCorr	 ->ItemIndex=PrcOpt.tidecorr > 1 ? 2 : PrcOpt.tidecorr;
+	TideCorr	 ->ItemIndex=PrcOpt.tidecorr & 7;
 	IonoOpt		 ->ItemIndex=PrcOpt.ionoopt;
 	TropOpt		 ->ItemIndex=PrcOpt.tropopt;
 	SatEphem	 ->ItemIndex=PrcOpt.sateph;
@@ -565,8 +565,7 @@ void __fastcall TOptDialog::SetOpt(void)
 	PrcOpt.nf        =Freq        ->ItemIndex+1;
 	PrcOpt.elmin     =str2dbl(ElMask ->Text)*D2R;
 	PrcOpt.dynamics  =DynamicModel->ItemIndex;
-	PrcOpt.tidecorr  =TideCorr    ->ItemIndex;
-	if (PrcOpt.tidecorr > 1) PrcOpt.tidecorr = 7;
+	PrcOpt.tidecorr  =TideCorr    ->ItemIndex & 7;
 	PrcOpt.ionoopt   =IonoOpt     ->ItemIndex;
 	PrcOpt.tropopt   =TropOpt     ->ItemIndex;
 	PrcOpt.sateph    =SatEphem    ->ItemIndex;
@@ -752,7 +751,7 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	ElMask		 ->Text			=s.sprintf("%.0f",prcopt.elmin*R2D);
     PrcOpt.snrmask              =prcopt.snrmask;
 	DynamicModel ->ItemIndex	=prcopt.dynamics;
-	TideCorr	 ->ItemIndex	=prcopt.tidecorr > 1 ? 2 : prcopt.tidecorr;
+	TideCorr	 ->ItemIndex	=prcopt.tidecorr & 7;
 	IonoOpt		 ->ItemIndex	=prcopt.ionoopt;
 	TropOpt		 ->ItemIndex	=prcopt.tropopt;
 	SatEphem	 ->ItemIndex	=prcopt.sateph;
@@ -994,8 +993,7 @@ void __fastcall TOptDialog::SaveOpt(AnsiString file)
 	prcopt.elmin	=str2dbl(ElMask	->Text)*D2R;
     prcopt.snrmask	=PrcOpt.snrmask;
 	prcopt.dynamics	=DynamicModel->ItemIndex;
-	prcopt.tidecorr	=TideCorr	 ->ItemIndex;
-	if (prcopt.tidecorr > 1) prcopt.tidecorr = 7;
+	prcopt.tidecorr	=TideCorr	 ->ItemIndex & 7;
 	prcopt.ionoopt	=IonoOpt	 ->ItemIndex;
 	prcopt.tropopt	=TropOpt	 ->ItemIndex;
 	prcopt.sateph	=SatEphem	 ->ItemIndex;

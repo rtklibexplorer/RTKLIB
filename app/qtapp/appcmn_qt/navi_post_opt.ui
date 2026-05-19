@@ -192,7 +192,32 @@
          </item>
          <item>
           <property name="text">
+           <string>OTL</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>Solid/OTL</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>S.Pole</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Solid/S.Pole</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>OTL/S.Pole</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Solid/OTL/S.Pole</string>
           </property>
          </item>
         </widget>
