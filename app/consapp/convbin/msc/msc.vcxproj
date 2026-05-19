@@ -198,6 +198,7 @@
     <ClCompile Include="..\..\..\..\src\rcv\septentrio.c" />
     <ClCompile Include="..\..\..\..\src\rcv\swiftnav.c" />
     <ClCompile Include="..\..\..\..\src\rcv\unicore.c" />
+    <ClCompile Include="..\..\..\..\src\rcv\adnav.c" />
     <ClCompile Include="..\convbin.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

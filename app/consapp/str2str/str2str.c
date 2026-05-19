@@ -91,6 +91,7 @@ static const char *help[]={
 "    rt17         : Trimble RT17 (only in)",
 "    sbf          : Septentrio SBF (only in)",
 "    unicore      : Unicore (only in)",
+"    anpp         : Advanced Navigation Packet Protocol (only in)",
 "",
 " -msg \"type[(tint)][,type[(tint)]...]\"",
 "                   rtcm message types and output intervals (s)",
@@ -168,6 +169,7 @@ static void decodefmt(char *path, int *fmt)
         else if (!strcmp(p,"#rt17" )) *fmt=STRFMT_RT17;
         else if (!strcmp(p,"#sbf"  )) *fmt=STRFMT_SEPT;
         else if (!strcmp(p,"#unicore"  )) *fmt=STRFMT_UNICORE;
+        else if (!strcmp(p,"#anpp" )) *fmt=STRFMT_ANPP;
         else return;
         *p='\0';
     }

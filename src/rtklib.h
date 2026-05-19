@@ -328,7 +328,7 @@ extern "C" {
 #define CODE_L1B    11                  /* obs code: E1B        (GAL) */
 #define CODE_L1X    12                  /* obs code: E1B+C,L1C(D+P),B1D+P (GAL,QZS,BDS) */
 #define CODE_L1Z    13                  /* obs code: E1A+B+C,L1S (GAL,QZS) */
-#define CODE_L2C    14                  /* obs code: L2C/A,G1C/A (GPS,GLO) */
+#define CODE_L2C    14                  /* obs code: L2C/A,G2C/A (GPS,GLO) */
 #define CODE_L2D    15                  /* obs code: L2 L1C/A-(P2-P1) (GPS) */
 #define CODE_L2S    16                  /* obs code: L2C(M)     (GPS,QZS) */
 #define CODE_L2L    17                  /* obs code: L2C(L)     (GPS,QZS) */
@@ -498,13 +498,14 @@ extern "C" {
 #define STRFMT_SEPT    12                 /* stream format: Septentrio */
 /* Tersus currently not supported */
 /* #define STRFMT_TERSUS   13 */          /* stream format: TERSUS */
-#define STRFMT_UNICORE 14                /* stream format: UNICORE */
-#define STRFMT_RINEX   15                 /* stream format: RINEX */
-#define STRFMT_SP3     16                 /* stream format: SP3 */
-#define STRFMT_RNXCLK  17                /* stream format: RINEX CLK */
-#define STRFMT_SBAS    18                 /* stream format: SBAS messages */
-#define STRFMT_NMEA    19                 /* stream format: NMEA 0183 */
-#define MAXRCVFMT      14                 /* max number of receiver format */
+#define STRFMT_UNICORE 14                 /* stream format: UNICORE */
+#define STRFMT_ANPP    15                 /* stream format: Advanced Navigation ANPP */
+#define STRFMT_RINEX   16                 /* stream format: RINEX */
+#define STRFMT_SP3     17                 /* stream format: SP3 */
+#define STRFMT_RNXCLK  18                 /* stream format: RINEX CLK */
+#define STRFMT_SBAS    19                 /* stream format: SBAS messages */
+#define STRFMT_NMEA    20                 /* stream format: NMEA 0183 */
+#define MAXRCVFMT      STRFMT_ANPP        /* number of raw receiver formats */
 
 #define STR_MODE_R  0x1                 /* stream mode: read */
 #define STR_MODE_W  0x2                 /* stream mode: write */
@@ -1564,6 +1565,10 @@ EXPORT void traceb_impl   (int level, const uint8_t *p, int n);
 
 #endif /* TRACE */
 
+/* correctness utility function ----------------------------------------------*/
+#define RTKBOUNDSCHECK(buff, size, index) rtkboundscheck(__func__, __LINE__, buff, size, index);
+EXPORT void rtkboundscheck(const char *func, int line, const void *buff, size_t size, size_t index);
+
 /* platform dependent functions ----------------------------------------------*/
 EXPORT int execcmd(const char *cmd);
 EXPORT int expath (const char *path, char *paths[], int nmax);
@@ -1714,8 +1719,10 @@ EXPORT int input_rawf (raw_t *raw, int format, FILE *fp);
 
 EXPORT int init_rt17  (raw_t *raw);
 EXPORT int init_sbf   (raw_t *raw);
+EXPORT int init_anpp  (raw_t *raw);
 EXPORT void free_rt17 (raw_t *raw);
 EXPORT void free_sbf  (raw_t *raw);
+EXPORT void free_anpp (raw_t *raw);
 
 EXPORT int input_oem4  (raw_t *raw, uint8_t data);
 EXPORT int input_cnav  (raw_t *raw, uint8_t data);
@@ -1730,6 +1737,7 @@ EXPORT int input_rt17  (raw_t *raw, uint8_t data);
 EXPORT int input_sbf   (raw_t *raw, uint8_t data);
 EXPORT int input_tersus(raw_t *raw, uint8_t data);
 EXPORT int input_unicore(raw_t *raw, uint8_t data);
+EXPORT int input_anpp  (raw_t *raw, uint8_t data);
 EXPORT int input_oem4f (raw_t *raw, FILE *fp);
 EXPORT int input_cnavf (raw_t *raw, FILE *fp);
 EXPORT int input_ubxf  (raw_t *raw, FILE *fp);
@@ -1743,6 +1751,7 @@ EXPORT int input_rt17f (raw_t *raw, FILE *fp);
 EXPORT int input_sbff  (raw_t *raw, FILE *fp);
 EXPORT int input_tersusf(raw_t *raw, FILE *fp);
 EXPORT int input_unicoref(raw_t *raw, FILE *fp);
+EXPORT int input_anppf (raw_t *raw, FILE *fp);
 
 EXPORT int gen_ubx (const char *msg, uint8_t *buff);
 EXPORT int gen_stq (const char *msg, uint8_t *buff);

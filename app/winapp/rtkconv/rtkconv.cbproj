@@ -338,6 +338,9 @@
         <CppCompile Include="..\..\..\src\rcv\unicore.c">
             <BuildOrder>39</BuildOrder>
         </CppCompile>
+        <CppCompile Include="..\..\..\src\rcv\adnav.c">
+            <BuildOrder>42</BuildOrder>
+        </CppCompile>
         <CppCompile Include="..\..\..\src\rinex.c">
             <BuildOrder>31</BuildOrder>
         </CppCompile>

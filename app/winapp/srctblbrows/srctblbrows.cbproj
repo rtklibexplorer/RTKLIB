@@ -290,6 +290,9 @@
         <CppCompile Include="..\..\..\src\rcv\unicore.c">
             <BuildOrder>23</BuildOrder>
         </CppCompile>
+        <CppCompile Include="..\..\..\src\rcv\adnav.c">
+            <BuildOrder>27</BuildOrder>
+        </CppCompile>
         <CppCompile Include="..\..\..\src\rtkcmn.c">
             <BuildOrder>23</BuildOrder>
         </CppCompile>

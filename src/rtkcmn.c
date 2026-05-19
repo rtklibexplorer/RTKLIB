@@ -247,11 +247,12 @@ const char *formatstrs[32]={    /* stream format strings */
     "Septentrio SBF",           /* 12 */
     "------",                   /* 13 Tersus currently not supported */
     "Unicore",                  /* 14 */
-    "RINEX",                    /* 15 */
-    "SP3",                      /* 16 */
-    "RINEX CLK",                /* 17 */
-    "SBAS",                     /* 18 */
-    "NMEA 0183",                /* 19 */
+    "Adv. Nav. ANPP",           /* 15 */
+    "RINEX",                    /* 16 */
+    "SP3",                      /* 17 */
+    "RINEX CLK",                /* 18 */
+    "SBAS",                     /* 19 */
+    "NMEA 0183",                /* 20 */
     NULL
 };
 
@@ -389,6 +390,24 @@ extern void add_fatal(fatalfunc_t *func)
 {
     fatalfunc=func;
 }
+/* check indices within bounds -------------------------------------------------
+* Check that the index is within the buffer, generating a fatal error if not.
+* See the macro RTKBOUNDSCHECK()
+* args   : const char *func  I  name of caller performing check
+*          int         line  I  line number
+*          const void *buff  I  buffer to check against
+*          size_t      size  I  size of the buffer in bytes
+*          size_t      index I  index to check; when checking against a byte
+*                               size, this is the index of the last byte to
+*                               be accessed
+*-----------------------------------------------------------------------------*/
+extern void rtkboundscheck(const char *func, int line, const void *buff, size_t size, size_t index) {
+  if (index >= size) {
+    fatalerr("rtk out of bound in %s line %d for buffer %p of size %zu at index %zu\n",
+             func, line, buff, size, index);
+  }
+}
+
 /* satellite system+prn/slot number to satellite number ------------------------
 * convert satellite system+prn/slot number to satellite number
 * args   : int    sys       I   satellite system (SYS_GPS,SYS_GLO,...)
