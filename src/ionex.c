@@ -21,7 +21,7 @@
 #define SQR(x)      ((x)*(x))
 #define MIN(x,y)    ((x)<=(y)?(x):(y))
 #define VAR_NOTEC   SQR(30.0)   /* variance of no tec */
-#define VAR_SSR_VTEC SQR(10.0); /* variance of SSR VTEC */
+#define VAR_SSR_VTEC SQR(3.0)   // Variance of SSR VTEC in TEUC^2.
 #define MIN_EL      0.0         /* min elevation angle (rad) */
 #define MIN_HGT     -1000.0     /* min user height (m) */
 
@@ -499,10 +499,7 @@ extern int iontec(gtime_t time, const nav_t *nav, const double *pos,
 extern int ionvtec(gtime_t time, const nav_t *nav, const double *pos,
                    const double *azel, double freq, double *delay, double *var)
 {
-    const double re=6371.0; /* fallback single-layer height (km) */
-    double pppos[2],fs,vtec,P[17][17],cosl[17],sinl[17];
-    double sinp,cosp,x;
-    int i,j,k,nmax,mmax;
+    const double re = 6370.0; // Spherical earths radius (km).
     char tstr[40];
 
     trace(4,"ionvtec: time=%s pos=%.3f %.3f azel=%.3f %.3f\n",
@@ -516,52 +513,70 @@ extern int ionvtec(gtime_t time, const nav_t *nav, const double *pos,
     }
     if (pos[2]<MIN_HGT||azel[1]<=0.0) return 0;
 
-    vtec=0.0;
-    for (i=0;i<nav->vtec.nlay;i++) {
-        /* ionospheric pierce point position */
-        ionppp(pos,azel,re,nav->vtec.hgt[i],pppos);
+    // Convert the station position to the spherical earth model.
+    double r[3]; // ecef
+    pos2ecef(pos, r);
+    double spos[3], r2 = SQR(r[0]) + SQR(r[1]);
+    spos[0] = r2 > 1E-12 ? atan(r[2] / sqrt(r2)) : (r[2] > 0.0 ? PI / 2.0 : -PI / 2.0);
+    spos[1] = r2 > 1E-12 ? atan2(r[1], r[0]) : 0.0;
+    spos[2] = sqrt(r2 + SQR(r[2])) - re * 1000;
 
-        nmax=nav->vtec.nmax[i];
-        mmax=nav->vtec.mmax[i];
-        sinp=sin(pppos[0]);
-        cosp=cos(pppos[0]);
+    double tow = time2gpst(time, NULL), tod = fmod(tow, 86400);
+    double vtec = 0.0, vartec = 0.0;
+    for (int i = 0; i < nav->vtec.nlay; i++) {
+        // Ionospheric pierce point position.
+        double pppos[3];
+        double fs = ionppp(spos, azel, re, nav->vtec.hgt[i], pppos);
 
-       /* fully normalized associated Legendre polynomials */
-        P[0][0]=1.0;
-        for (j=1;j<=nmax;j++) {
-            /* diagonal term */
-            P[j][j]=sqrt((2*j+1)/(2.0*j))*cosp*P[j-1][j-1];
-            /* one above diagonal */
-            P[j][j-1]=sqrt(2*j+1)*sinp*P[j-1][j-1];
+        // Mean sun fixed longitude pierce point phase shifted to the local
+        // time of maximum TEC, 14:00, and modulo 2 * PI.
+        double pplon = fmod(pppos[1] + (tod - 50400) * PI / 43200, 2 * PI);
+        int nmax = nav->vtec.nmax[i];
+        int mmax = nav->vtec.mmax[i];
+
+        // Fully normalized associated Legendre polynomials.
+        double sinp = sin(pppos[0]), cosp = cos(pppos[0]);
+        double P[17][17];
+        P[0][0] = 1.0;
+        P[1][0] = sqrt(3) * sinp;
+        P[1][1] = sqrt(3) * cosp;
+        for (int n = 2; n <= nmax; n++) {
+            for (int m = 0; m < n - 1; m++) {
+              double anm = sqrt((2 * n + 1) * (2 * n - 1) / ((double)(n - m) * (n + m)));
+              double bnm = sqrt((2 * n + 1) * (n + m - 1) * (n - m - 1) /
+                                ((double)(n - m) * (n + m) * (2 * n - 3)));
+              P[n][m] = anm * sinp * P[n - 1][m] - bnm * P[n - 2][m];
+            }
+            P[n][n - 1] = sqrt(2 * n + 1) * sinp * P[n - 1][n - 1];
+            P[n][n] = cosp * sqrt((2 * n + 1) / (2.0 * n)) * P[n - 1][n - 1];
         }
-        for (j=2;j<=nmax;j++) {
-            for (k=0;k<=j-2;k++) {
-                P[j][k]=sqrt((2*j+1)*(2*j-1)/((double)(j-k)*(j+k)))*sinp*P[j-1][k]
-                       -sqrt((2*j+1)*(j+k-1)*(j-k-1)/((double)(j-k)*(j+k)*(2*j-3)))*P[j-2][k];
+
+        // Cosine and sine of longitude multiples.
+        double cosl[17], sinl[17];
+        cosl[0] = 1.0; sinl[0] = 0.0;
+        for (int m = 1; m <= mmax; m++) {
+            cosl[m] = cos(m * pplon);
+            sinl[m] = sin(m * pplon);
+        }
+        // Evaluate spherical harmonic expansion (TECU).
+        double x = 0.0;
+        for (int n = 0; n <= nmax; n++) {
+            x += nav->vtec.cosC[i][n][0] * P[n][0];
+            for (int m = 1; m <= MIN(n, mmax); m++) {
+                x += (nav->vtec.cosC[i][n][m] * cosl[m] +
+                      nav->vtec.sinC[i][n][m] * sinl[m]) * P[n][m];
             }
         }
-        /* cosine and sine of longitude multiples */
-        cosl[0]=1.0; sinl[0]=0.0;
-        for (j=1;j<=mmax;j++) {
-            cosl[j]=cos(j*pppos[1]);
-            sinl[j]=sin(j*pppos[1]);
-        }
-        /* evaluate spherical harmonic expansion (TECU) */
-        x=0.0;
-        for (j=0;j<=nmax;j++) {
-            x+=nav->vtec.cosC[i][j][0]*P[j][0];
-            for (k=1;k<=MIN(j,mmax);k++) {
-                x+=nav->vtec.cosC[i][j][k]*P[j][k]*cosl[k]+
-                   nav->vtec.sinC[i][j][k]*P[j][k]*sinl[k];
-            }
-        }
-        vtec+=x;
+        // Guard against a negative vtec, per layer.
+        if (x < 0) x = 0;
+        // Mapping function.
+        vtec += fs * x;
+        vartec += SQR(fs * nav->vtec.qi);
+        vartec += SQR(fs) * VAR_SSR_VTEC; // Additional fixed variance for now.
     }
-    /* convert TECU to metres on L1, then scale to signal frequency */
-    fs=ionmapf(pos,azel); /* mapping function  */
-    *delay=40.3E16/SQR(FREQL1)*vtec*SQR(FREQL1/freq)*fs;
-    *var=VAR_SSR_VTEC; /* use fixed variance for now */
-    trace(4,"ionvtec: pppos=%.3f %.3f vtec=%.1f delay=%.3f var=%.2f, freq=%.1f\n",
-          pppos[0]*R2D,pppos[1]*R2D,vtec,*delay,*var,freq);
+    // Convert TECU to metres at the signal frequency.
+    *delay = vtec * 40.3E16 / SQR(freq);
+    *var = vartec * SQR(40.3E16) / SQR(SQR(freq));
+    trace(4,"ionvtec: vtec=%.1f delay=%.3f var=%.2f, freq=%.1f\n", vtec, *delay, *var, freq);
     return 1;
 }
