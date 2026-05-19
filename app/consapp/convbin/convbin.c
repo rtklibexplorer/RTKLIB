@@ -86,6 +86,7 @@ static const char *help[]={
 "                          0x01-01,0x01-02,0x01-03,0x01-04,0x01-06,0x7f-05",
 " Trimble                : RT17",
 " Septentrio             : SBF",
+" Advanded Navigation    : ANPP",
 " RINEX                  : OBS, NAV, GNAV, HNAV, LNAV, QNAV",
 "",
 " Options [default]",
@@ -111,6 +112,7 @@ static const char *help[]={
 "                  rt17 = Trimble RT17",
 "                  sbf  = Septentrio SBF",
 "                  unicore = Unicore binary data output",
+"                  anpp = Advanced Navigation Packet Protocol",
 "                  rinex= RINEX",
 "     -ro opt      receiver options",
 "     -f freq      number of frequencies [all]",
@@ -170,6 +172,7 @@ static const char *help[]={
 "     *.rt17        Trimble RT17",
 "     *.sbf         Septentrio SBF",
 "     *.unc         Unicore binary data output",
+"     *.anpp        Advanced Navigation Packet Protocol",
 "     *.obs,*.*o    RINEX OBS",
 "     *.rnx         RINEX OBS",
 "     *.nav,*.*n    RINEX NAV",
@@ -403,7 +406,11 @@ static int get_filetime(const char *file, gtime_t *time)
     struct stat st;
     if (!stat(path, &st)) {
         struct tm tm;
+#ifdef _MSC_VER
+        if (gmtime_s(&tm, &st.st_mtime) != 0) {
+#else
         if (gmtime_r(&st.st_mtime, &tm)) {
+#endif
           double ep[6];
           ep[0] = tm.tm_year + 1900;
           ep[1] = tm.tm_mon + 1;
@@ -633,6 +640,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
 #ifdef RTK_DISABLED
         else if (!strcmp(fmt,"tersus")) format=STRFMT_TERSUS;
 #endif
+        else if (!strcmp(fmt,"anpp" )) format=STRFMT_ANPP;
         else if (!strcmp(fmt,"rinex")) format=STRFMT_RINEX;
     }
     else {
@@ -657,6 +665,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
 #ifdef RTK_DISABLED
         else if (!strcmp(p,".trs"  ))  format=STRFMT_TERSUS;
 #endif
+        else if (!strcmp(p,".anpp" ))  format=STRFMT_ANPP;
         else if (!strcmp(p,".obs"  ))  format=STRFMT_RINEX;
         else if (!strcmp(p+3,"o"   ))  format=STRFMT_RINEX;
         else if (!strcmp(p+3,"O"   ))  format=STRFMT_RINEX;

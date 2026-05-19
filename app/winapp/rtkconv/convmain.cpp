@@ -896,6 +896,7 @@ void __fastcall TMainWindow::ConvertFile(void)
 		else if (!strcmp(p,".trs"  )) format=STRFMT_TERSUS;
 		else if (!strcmp(p,".cnb"  )) format=STRFMT_CNAV;
 #endif
+		else if (!strcmp(p,".anpp" )) format=STRFMT_ANPP;
 		else if (!strcmp(p,".obs"  )) format=STRFMT_RINEX;
 		else if (!strcmp(p,".OBS"  )) format=STRFMT_RINEX;
 		else if (!strcmp(p,".nav"  )) format=STRFMT_RINEX;

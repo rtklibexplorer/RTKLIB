@@ -25,6 +25,7 @@ endif()
 aux_source_directory(. DIR_SRCS_RTKLIB)
 set(DIR_SRCS_RTKLIB_RCV
   ${DIR_SRCS_RTKLIB_RCV}
+  rcv/adnav.c
   rcv/binex.c
   rcv/crescent.c
   rcv/javad.c

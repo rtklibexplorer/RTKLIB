@@ -449,7 +449,7 @@ void MainWindow::selectInputFile()
 {
     QString filename = QFileDialog::getOpenFileName(this, tr("Input RTCM, RCV RAW or RINEX File"), ui->cBInputFile->currentText(),
                                                     tr("All (*.*);;RTCM 2 (*.rtcm2);;RTCM 3 (*.rtcm3);;NovtAtel (*.gps);;ublox (*.ubx);;"
-                                                       "Hemisphere (*.bin);;Javad (*.jps);;RINEX OBS (*.obs *.*O);;Septentrio (*.sbf)"));
+                                                       "Hemisphere (*.bin);;Javad (*.jps);;RINEX OBS (*.obs *.*O);;Septentrio (*.sbf);;ANPP (*.anpp)"));
 
     if (!filename.isEmpty()) {
         ui->cBInputFile->setCurrentText(QDir::toNativeSeparators(filename));
@@ -798,6 +798,8 @@ void MainWindow::convertFile()
             conversionThread->format = STRFMT_SEPT;
         } else if (fi.completeSuffix() == "unc") {
             conversionThread->format = STRFMT_UNICORE;
+        } else if (fi.completeSuffix() == "anpp") {
+            conversionThread->format = STRFMT_ANPP;
         } else if (fi.completeSuffix().toLower() == "obs") {
             conversionThread->format = STRFMT_RINEX;
         } else if (fi.completeSuffix().toLower().contains("nav")) {
