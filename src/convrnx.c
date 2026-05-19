@@ -340,16 +340,7 @@ static int open_strfile(strfile_t *str, const char *file)
 static void close_strfile(strfile_t *str)
 {
     trace(3,"close_strfile:\n");
-    
-    if (str->format==STRFMT_RTCM2||str->format==STRFMT_RTCM3) {
-        if (str->fp) fclose(str->fp);
-    }
-    else if (str->format<=MAXRCVFMT) {
-        if (str->fp) fclose(str->fp);
-    }
-    else if (str->format==STRFMT_RINEX) {
-        if (str->fp) fclose(str->fp);
-    }
+    if (str->fp) fclose(str->fp);
 }
 /* set format and files in RINEX options comments ----------------------------*/
 static void setopt_file(int format, char **paths, int n, const int *mask,

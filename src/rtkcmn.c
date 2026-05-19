@@ -247,11 +247,12 @@ const char *formatstrs[32]={    /* stream format strings */
     "Septentrio SBF",           /* 12 */
     "------",                   /* 13 Tersus currently not supported */
     "Unicore",                  /* 14 */
-    "RINEX",                    /* 15 */
-    "SP3",                      /* 16 */
-    "RINEX CLK",                /* 17 */
-    "SBAS",                     /* 18 */
-    "NMEA 0183",                /* 19 */
+    "Advanced Navigation ANPP", /* 15 */
+    "RINEX",                    /* 16 */
+    "SP3",                      /* 17 */
+    "RINEX CLK",                /* 18 */
+    "SBAS",                     /* 19 */
+    "NMEA 0183",                /* 20 */
     NULL
 };
 
