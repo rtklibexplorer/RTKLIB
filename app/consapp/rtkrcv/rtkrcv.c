@@ -64,7 +64,7 @@
 #define NAVIFILE    "rtkrcv.nav"        /* navigation save file */
 #define STATFILE    "rtkrcv_%Y%m%d%h%M.stat"  /* solution status file */
 #define TRACEFILE   "rtkrcv_%Y%m%d%h%M.trace" /* debug trace file */
-#define LOGFILE     "rtkrcv_%Y%m%d%h%M.log"   /* Deamon log file */
+#define LOGFILE     "rtkrcv_%Y%m%d%h%M.log"   /* Daemon log file */
 #define INTKEEPALIVE 1000               /* keep alive interval (ms) */
 
 #define ESC_CLEAR   "\033[H\033[2J"     /* ansi/vt100 escape: erase screen */
@@ -139,7 +139,7 @@ static const char *usage[]={
     "  -r level   output solution status file (0:off,1:states,2:residuals)",
     "  -t level   debug trace level (0:off,1-5:on)",
     "  -sta sta   station name for receiver dcb",
-    "  --deamon   detach from the console",
+    "  --daemon   detach from the console",
     "  --version  print the version and exit"
 };
 static const char *helptxt[]={
@@ -1693,7 +1693,7 @@ static void accept_sock(int ssock, con_t **con)
          inet_ntoa(addr.sin_addr));
 }
 
-static void deamonise(void)
+static void daemonise(void)
 {
 #ifndef WIN32
     /* In case we were not started in the background, fork and let the parent
@@ -1741,7 +1741,7 @@ static void deamonise(void)
 *     set, load or save command on the console. To shutdown the program, use
 *     shutdown command on the console or send USR2 signal to the process.
 *
-*     The --deamon option implies no console. When used with -s or -nc the RTK
+*     The --daemon option implies no console. When used with -s or -nc the RTK
 *     server is started on program startup. A telnet console can be used with
 *     this option to start and control the RTK server.
 *
@@ -1756,7 +1756,7 @@ static void deamonise(void)
 *     -r level   output solution status file (0:off,1:states,2:residuals)
 *     -t level   debug trace level (0:off,1-5:on)
 *     -sta sta   station name for receiver dcb
-*     --deamon   detach from the console
+*     --daemon   detach from the console
 *     --version  prints the version and exits
 *
 * command
@@ -1852,9 +1852,9 @@ static void deamonise(void)
 int main(int argc, char **argv)
 {
     con_t *con[MAXCON]={0};
-    int i,port=0,outstat=0,trace=0,sock=0;
+    int i,port=0,outstat=0,outstatp=0,trace=0,sock=0;
     char *dev="",file[MAXSTR]="";
-    int deamon=0;
+    int daemon=0;
     
     for (i=1;i<argc;i++) {
         if      (!strcmp(argv[i],"-s")) start|=1; /* console */
@@ -1864,17 +1864,21 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-d")&&i+1<argc) dev=argv[++i];
         else if (!strcmp(argv[i],"-o")&&i+1<argc) strcpy(file,argv[++i]);
         else if (!strcmp(argv[i],"-w")&&i+1<argc) strcpy(passwd,argv[++i]);
-        else if (!strcmp(argv[i],"-r")&&i+1<argc) outstat=atoi(argv[++i]);
+        else if (!strcmp(argv[i],"-r")&&i+1<argc) {
+          outstat = atoi(argv[++i]);
+          outstatp = 1;
+        }
         else if (!strcmp(argv[i],"-t")&&i+1<argc) trace=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-sta")&&i+1<argc) strcpy(sta_name,argv[++i]);
-        else if (!strcmp(argv[i], "--deamon")) deamon=1;
+        else if (!strcmp(argv[i], "--daemon")) daemon=1;
+        else if (!strcmp(argv[i], "--deamon")) daemon=1;
         else if (!strcmp(argv[i], "--version")) {
             fprintf(stderr, "rtkrcv RTKLIB %s %s\n", VER_RTKLIB, PATCH_LEVEL);
             exit(0);
         }
         else printusage();
     }
-    if (deamon) deamonise();
+    if (daemon) daemonise();
     if (trace>0) {
         traceopen(TRACEFILE);
         tracelevel(trace);
@@ -1898,8 +1902,9 @@ int main(int argc, char **argv)
     if (!readnav(NAVIFILE,&svr.nav)) {
         fprintf(stderr,"no navigation data: %s\n",NAVIFILE);
     }
-    if (outstat>0) {
-        rtkopenstat(STATFILE,outstat);
+    if (!outstatp) outstat = solopt->sstat;
+    if (outstat > 0) {
+        rtkopenstat(filopt.solstat[0] != '\0' ? filopt.solstat : STATFILE, outstat);
     }
     /* open monitor port */
     if (moniport>0&&!openmoni(moniport)) {
@@ -1917,7 +1922,7 @@ int main(int argc, char **argv)
     }
     if (start&2) { /* Start without console */
         startsvr(NULL); 
-    } else if (!deamon) {
+    } else if (!daemon) {
         /* open device for local console */
         if (!(con[0]=con_open(0,dev))) {
             fprintf(stderr,"console open error dev=%s\n",dev);
