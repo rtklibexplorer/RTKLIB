@@ -111,6 +111,7 @@ static const char *help[]={
 "                  rt17 = Trimble RT17",
 "                  sbf  = Septentrio SBF",
 "                  unicore = Unicore binary data output",
+"                  anpp = Advanced Navigation Packet Protocol",
 "                  rinex= RINEX",
 "     -ro opt      receiver options",
 "     -f freq      number of frequencies [all]",
@@ -630,6 +631,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         else if (!strcmp(fmt,"rt17" )) format=STRFMT_RT17;
         else if (!strcmp(fmt,"sbf"  )) format=STRFMT_SEPT;
         else if (!strcmp(fmt,"unicore")) format=STRFMT_UNICORE;
+        else if (!strcmp(fmt,"anpp" )) format=STRFMT_ANPP;
 #ifdef RTK_DISABLED
         else if (!strcmp(fmt,"tersus")) format=STRFMT_TERSUS;
 #endif
@@ -654,6 +656,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
         else if (!strcmp(p,".rt17" ))  format=STRFMT_RT17;
         else if (!strcmp(p,".sbf"  ))  format=STRFMT_SEPT;
         else if (!strcmp(p,".unc"  ))  format=STRFMT_UNICORE;
+        else if (!strcmp(p,".anpp" ))  format=STRFMT_ANPP;
 #ifdef RTK_DISABLED
         else if (!strcmp(p,".trs"  ))  format=STRFMT_TERSUS;
 #endif

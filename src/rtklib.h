@@ -496,13 +496,14 @@ extern "C" {
 #define STRFMT_SEPT    12                 /* stream format: Septentrio */
 /* Tersus currently not supported */
 /* #define STRFMT_TERSUS   13 */          /* stream format: TERSUS */
-#define STRFMT_UNICORE 14                /* stream format: UNICORE */
-#define STRFMT_RINEX   15                 /* stream format: RINEX */
-#define STRFMT_SP3     16                 /* stream format: SP3 */
-#define STRFMT_RNXCLK  17                /* stream format: RINEX CLK */
-#define STRFMT_SBAS    18                 /* stream format: SBAS messages */
-#define STRFMT_NMEA    19                 /* stream format: NMEA 0183 */
-#define MAXRCVFMT      14                 /* max number of receiver format */
+#define STRFMT_UNICORE 14                 /* stream format: UNICORE */
+#define STRFMT_ANPP    15                 /* stream format: Advanced Navigation ANPP */
+#define STRFMT_RINEX   16                 /* stream format: RINEX */
+#define STRFMT_SP3     17                 /* stream format: SP3 */
+#define STRFMT_RNXCLK  18                 /* stream format: RINEX CLK */
+#define STRFMT_SBAS    19                 /* stream format: SBAS messages */
+#define STRFMT_NMEA    20                 /* stream format: NMEA 0183 */
+#define MAXRCVFMT      STRFMT_ANPP        /* number of raw receiver formats */
 
 #define STR_MODE_R  0x1                 /* stream mode: read */
 #define STR_MODE_W  0x2                 /* stream mode: write */
@@ -1707,11 +1708,14 @@ EXPORT void free_raw  (raw_t *raw);
 EXPORT int input_raw  (raw_t *raw, int format, uint8_t data);
 EXPORT int input_rawf (raw_t *raw, int format, FILE *fp);
 
+EXPORT int init_anpp  (raw_t *raw);
 EXPORT int init_rt17  (raw_t *raw);
 EXPORT int init_sbf   (raw_t *raw);
+EXPORT void free_anpp (raw_t *raw);
 EXPORT void free_rt17 (raw_t *raw);
 EXPORT void free_sbf  (raw_t *raw);
 
+EXPORT int input_anpp  (raw_t *raw, uint8_t data);
 EXPORT int input_oem4  (raw_t *raw, uint8_t data);
 EXPORT int input_cnav  (raw_t *raw, uint8_t data);
 EXPORT int input_ubx   (raw_t *raw, uint8_t data);
@@ -1725,6 +1729,7 @@ EXPORT int input_rt17  (raw_t *raw, uint8_t data);
 EXPORT int input_sbf   (raw_t *raw, uint8_t data);
 EXPORT int input_tersus(raw_t *raw, uint8_t data);
 EXPORT int input_unicore(raw_t *raw, uint8_t data);
+EXPORT int input_anppf (raw_t *raw, FILE *fp);
 EXPORT int input_oem4f (raw_t *raw, FILE *fp);
 EXPORT int input_cnavf (raw_t *raw, FILE *fp);
 EXPORT int input_ubxf  (raw_t *raw, FILE *fp);
