@@ -242,7 +242,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>Solution stream 1</string>
+               <string>Log stream rover</string>
               </property>
               <property name="frameShape">
                <enum>QFrame::Shape::Box</enum>
@@ -258,7 +258,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>Solution stream 2</string>
+               <string>Log stream base station</string>
               </property>
               <property name="frameShape">
                <enum>QFrame::Shape::Box</enum>
@@ -274,7 +274,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>Log stream rover</string>
+               <string>Log stream corrections</string>
               </property>
               <property name="frameShape">
                <enum>QFrame::Shape::Box</enum>
@@ -293,7 +293,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>Log stream base station</string>
+               <string>Solution stream 1</string>
               </property>
               <property name="frameShape">
                <enum>QFrame::Shape::Box</enum>
@@ -309,7 +309,23 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>Log stream corrections</string>
+               <string>Solution stream 2</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::Shape::Box</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="lblStream9">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Solution stream 3</string>
               </property>
               <property name="frameShape">
                <enum>QFrame::Shape::Box</enum>
@@ -317,22 +333,6 @@
              </widget>
             </item>
            </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnOutputStream">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>Define output streams</string>
-           </property>
-           <property name="text">
-            <string>O</string>
-           </property>
           </widget>
          </item>
          <item>
@@ -348,6 +348,22 @@
            </property>
            <property name="text">
             <string>L</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnOutputStream">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Define output streams</string>
+           </property>
+           <property name="text">
+            <string>O</string>
            </property>
           </widget>
          </item>
