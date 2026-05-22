@@ -651,7 +651,7 @@ void OptDialog::selectSolutionFont()
 //---------------------------------------------------------------------------
 void OptDialog::updateOptions()
 {
-    double rovPos[3], refPos[3];
+    double rovPos[3] = {0}, refPos[3] = {0};
     QLineEdit *editu[] = {ui->lERoverPosition1, ui->lERoverPosition2, ui->lERoverPosition3 };
     QLineEdit *editr[] = {ui->lEReferencePosition1, ui->lEReferencePosition2, ui->lEReferencePosition3 };
     pcvs_t pcvr;
@@ -1274,7 +1274,7 @@ void OptDialog::save(const QString &file)
 //---------------------------------------------------------------------------
 void OptDialog::saveOptions(QSettings &settings)
 {
-    double rovPos[3], refPos[3];
+    double rovPos[3] = {0}, refPos[3] = {0};
     QLineEdit *editu[] = {ui->lERoverPosition1, ui->lERoverPosition2, ui->lERoverPosition3};
     QLineEdit *editr[] = {ui->lEReferencePosition1, ui->lEReferencePosition2, ui->lEReferencePosition3};
 
