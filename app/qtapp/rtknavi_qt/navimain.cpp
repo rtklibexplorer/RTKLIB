@@ -2550,6 +2550,7 @@ void MainWindow::loadOptions()
     frequencyType[1] = settings.value("setting/freqtype2", 0).toInt();
     frequencyType[2] = settings.value("setting/freqtype3", 0).toInt();
     frequencyType[3] = settings.value("setting/freqtype4", 0).toInt();
+    for (int i = 0; i < 4; i++) if (frequencyType[i] > NFREQ + 1) frequencyType[i] = 0;
     baselineMode[0] = settings.value("setting/blmode1", 0).toInt();
     baselineMode[1] = settings.value("setting/blmode2", 0).toInt();
     baselineMode[2] = settings.value("setting/blmode3", 0).toInt();

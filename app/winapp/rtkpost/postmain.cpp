@@ -1356,6 +1356,7 @@ void __fastcall TMainForm::LoadOpt(void)
     
     PosMode            =ini->ReadInteger("opt","posmode",        2);
     Freq               =ini->ReadInteger("opt","freq",     NFREQ-1);
+    if (Freq > NFREQ - 1) Freq = NFREQ - 1;
     Solution           =ini->ReadInteger("opt","solution",       0);
     ElMask             =ini->ReadFloat  ("opt","elmask",      15.0);
     SnrMask.ena[0]     =ini->ReadInteger("opt","snrmask_ena1",   0);
