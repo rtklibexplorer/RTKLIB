@@ -169,6 +169,9 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     navSelect = 0;                   /* navigation mesaage select */
     proxyaddr[0] = '\0';             /* proxy address */
 
+    current_roverPositionType = -1;
+    current_referencePositionType = -1;
+
     static opt_t _naviopt[] = {
         { "misc-svrcycle",    0, (void *)&serverCycle,      "ms"    },
         { "misc-timeout",     0, (void *)&timeoutTime,      "ms"    },
@@ -429,10 +432,15 @@ void OptDialog::showSnrMaskDialog()
 //---------------------------------------------------------------------------
 void OptDialog::roverPositionTypeChanged(int)
 {
-    QLineEdit *edit[] = {ui->lERoverPosition1, ui->lERoverPosition2, ui->lERoverPosition3};
-	double pos[3];
+    // Startup guard.
+    if (current_roverPositionType < 0 ) {
+      current_roverPositionType = ui->cBRoverPositionType->currentIndex();
+      return;
+    }
 
     // update position value in accordance to type
+    QLineEdit *edit[] = {ui->lERoverPosition1, ui->lERoverPosition2, ui->lERoverPosition3};
+    double pos[3];
     int error = getPosition(current_roverPositionType, edit, pos);
     if (error) {
         ui->cBRoverPositionType->setCurrentIndex(current_roverPositionType); // don't allow to change the type
@@ -445,6 +453,12 @@ void OptDialog::roverPositionTypeChanged(int)
 //---------------------------------------------------------------------------
 void OptDialog::referencePositionTypeChanged(int)
 {
+    // Startup guard.
+    if (current_referencePositionType < 0 ) {
+      current_referencePositionType = ui->cBReferencePositionType->currentIndex();
+      return;
+    }
+
     QLineEdit *edit[] = {ui->lEReferencePosition1, ui->lEReferencePosition2, ui->lEReferencePosition3};
 	double pos[3];
 
@@ -651,7 +665,6 @@ void OptDialog::selectSolutionFont()
 //---------------------------------------------------------------------------
 void OptDialog::updateOptions()
 {
-    double rovPos[3], refPos[3];
     QLineEdit *editu[] = {ui->lERoverPosition1, ui->lERoverPosition2, ui->lERoverPosition3 };
     QLineEdit *editr[] = {ui->lEReferencePosition1, ui->lEReferencePosition2, ui->lEReferencePosition3 };
     pcvs_t pcvr;
@@ -756,6 +769,7 @@ void OptDialog::updateOptions()
         processingOptions.baseline[1] = 0.0;
     }
 
+    double rovPos[3], refPos[3];
     getPosition(ui->cBRoverPositionType->currentIndex(), editu, rovPos);
     getPosition(ui->cBReferencePositionType->currentIndex(), editr, refPos);
 
@@ -1274,7 +1288,6 @@ void OptDialog::save(const QString &file)
 //---------------------------------------------------------------------------
 void OptDialog::saveOptions(QSettings &settings)
 {
-    double rovPos[3], refPos[3];
     QLineEdit *editu[] = {ui->lERoverPosition1, ui->lERoverPosition2, ui->lERoverPosition3};
     QLineEdit *editr[] = {ui->lEReferencePosition1, ui->lEReferencePosition2, ui->lEReferencePosition3};
 
@@ -1323,6 +1336,7 @@ void OptDialog::saveOptions(QSettings &settings)
 
     settings.setValue("setting/rovpostype", ui->cBRoverPositionType->currentIndex());
     settings.setValue("setting/refpostype", ui->cBReferencePositionType->currentIndex());
+    double rovPos[3] = {0}, refPos[3] = {0};
     if (ui->cBRoverPositionType->currentIndex() < 3) getPosition(ui->cBRoverPositionType->currentIndex(), editu, rovPos);
     if (ui->cBReferencePositionType->currentIndex() < 3) getPosition(ui->cBReferencePositionType->currentIndex(), editr, refPos);
 
@@ -1473,7 +1487,6 @@ void OptDialog::saveOptions(QSettings &settings)
 //---------------------------------------------------------------------------
 void OptDialog::loadOptions(QSettings &settings)
 {
-    double rovPos[3], refPos[3];
     QLineEdit *editu[] = {ui->lERoverPosition1, ui->lERoverPosition2, ui->lERoverPosition3};
     QLineEdit *editr[] = {ui->lEReferencePosition1, ui->lEReferencePosition2, ui->lEReferencePosition3};
 
@@ -1569,6 +1582,7 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->cBRoverAntenna->setCurrentIndex(ui->cBRoverAntenna->findText(settings.value("prcopt/anttype1", "").toString()));
     ui->cBReferenceAntenna->setCurrentIndex(ui->cBReferenceAntenna->findText(settings.value("prcopt/anttype2", "").toString()));
 
+    double rovPos[3], refPos[3];
     for (int i = 0; i < 3; i++) {
         rovPos[i] = settings.value(QStringLiteral("setting/rovpos_%1").arg(i), 0.0).toDouble();
         refPos[i] = settings.value(QStringLiteral("setting/refpos_%1").arg(i), 0.0).toDouble();
