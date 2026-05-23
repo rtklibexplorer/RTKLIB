@@ -636,7 +636,7 @@ void __fastcall TOptDialog::LoadOpt(AnsiString file)
 	ElMask		 ->Text			=s.sprintf("%.0f",prcopt.elmin*R2D);
 	SnrMask						=prcopt.snrmask;
 	DynamicModel ->ItemIndex	=prcopt.dynamics;
-	TideCorr	 ->ItemIndex	=prcopt.tidecorr > 1 ? 2 : prcopt.tidecorr;
+	TideCorr	 ->ItemIndex	=prcopt.tidecorr & 7;
 	IonoOpt		 ->ItemIndex	=prcopt.ionoopt;
 	TropOpt		 ->ItemIndex	=prcopt.tropopt;
 	SatEphem	 ->ItemIndex	=prcopt.sateph;
@@ -797,8 +797,7 @@ int ppp=PosMode->ItemIndex>=PMODE_PPP_KINEMA;
 	prcopt.elmin	=str2dbl(ElMask	->Text)*D2R;
 	prcopt.snrmask	=SnrMask;
 	prcopt.dynamics	=DynamicModel->ItemIndex;
-	prcopt.tidecorr	=TideCorr	 ->ItemIndex;
-	if (prcopt.tidecorr > 1) prcopt.tidecorr = 7;
+	prcopt.tidecorr	=TideCorr	 ->ItemIndex & 7;
 	prcopt.ionoopt	=IonoOpt	 ->ItemIndex;
 	prcopt.tropopt	=TropOpt	 ->ItemIndex;
 	prcopt.sateph	=SatEphem	 ->ItemIndex;

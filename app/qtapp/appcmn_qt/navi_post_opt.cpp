@@ -67,7 +67,12 @@ OptDialog::OptDialog(QWidget *parent, int opts)
 
     ui->cBTideCorrection->setItemData(0, tr("Not apply earth tides correction"), Qt::ToolTipRole);
     ui->cBTideCorrection->setItemData(1, tr("Apply solid earth tides correction"), Qt::ToolTipRole);
-    ui->cBTideCorrection->setItemData(2, tr("Apply solid earth tides, OTL (ocean tide loading) and pole tide corrections"), Qt::ToolTipRole);
+    ui->cBTideCorrection->setItemData(2, tr("Apply OTL (ocean tide loading)"), Qt::ToolTipRole);
+    ui->cBTideCorrection->setItemData(3, tr("Apply solid earth tides and OTL (ocean tide loading)"), Qt::ToolTipRole);
+    ui->cBTideCorrection->setItemData(4, tr("Apply pole tide corrections"), Qt::ToolTipRole);
+    ui->cBTideCorrection->setItemData(5, tr("Apply solid earth tides and pole tide corrections"), Qt::ToolTipRole);
+    ui->cBTideCorrection->setItemData(6, tr("Apply OTL (ocean tide loading) and pole tide corrections"), Qt::ToolTipRole);
+    ui->cBTideCorrection->setItemData(7, tr("Apply solid earth tides, OTL (ocean tide loading) and pole tide corrections"), Qt::ToolTipRole);
 
     ui->cBIonosphereOption->setItemData(IONOOPT_OFF, tr("Not apply ionospheric correction"), Qt::ToolTipRole);
     ui->cBIonosphereOption->setItemData(IONOOPT_BRDC, tr("Apply broadcast ionospheric model"), Qt::ToolTipRole);
@@ -705,8 +710,7 @@ void OptDialog::updateOptions()
     processingOptions.ionoopt = ui->cBIonosphereOption->currentIndex();
     processingOptions.tropopt = ui->cBTroposphereOption->currentIndex();
     processingOptions.dynamics = ui->cBDynamicModel->currentIndex();
-    processingOptions.tidecorr = ui->cBTideCorrection->currentIndex();
-    if (processingOptions.tidecorr > 1) processingOptions.tidecorr = 7;
+    processingOptions.tidecorr = ui->cBTideCorrection->currentIndex() & 7;
     processingOptions.niter = ui->sBNumIteration->value();
     // codesmooth
     processingOptions.intpref = ui->cBIntputReferenceObservation->currentIndex();
@@ -933,7 +937,7 @@ void OptDialog::updateUi(const prcopt_t &prcopt, const solopt_t &solopt, const f
     ui->cBIonosphereOption->setCurrentIndex(prcopt.ionoopt);
     ui->cBTroposphereOption->setCurrentIndex(prcopt.tropopt);
     ui->cBDynamicModel->setCurrentIndex(prcopt.dynamics);
-    ui->cBTideCorrection->setCurrentIndex(prcopt.tidecorr > 1 ? 2 : prcopt.tidecorr);
+    ui->cBTideCorrection->setCurrentIndex(prcopt.tidecorr & 7);
     ui->sBNumIteration->setValue(prcopt.niter);
     //prcopt.codesmooth
     if (options == PostOptions) {
@@ -1132,8 +1136,7 @@ void OptDialog::save(const QString &file)
     procOpts.ionoopt = ui->cBIonosphereOption->currentIndex();
     procOpts.tropopt = ui->cBTroposphereOption->currentIndex();
     procOpts.dynamics = ui->cBDynamicModel->currentIndex();
-    procOpts.tidecorr = ui->cBTideCorrection->currentIndex();
-    if (procOpts.tidecorr > 1) procOpts.tidecorr = 7;
+    procOpts.tidecorr = ui->cBTideCorrection->currentIndex() & 7;
     procOpts.niter = ui->sBNumIteration->value();
     // procOpts.codesmooth
     procOpts.intpref = ui->cBIntputReferenceObservation->currentIndex();
@@ -1312,7 +1315,7 @@ void OptDialog::saveOptions(QSettings &settings)
     settings.setValue("prcopt/ionoopt", ui->cBIonosphereOption->currentIndex());
     settings.setValue("prcopt/tropopt", ui->cBTroposphereOption->currentIndex());
     settings.setValue("prcopt/dynamics", ui->cBDynamicModel->currentIndex());
-    settings.setValue("prcopt/tidecorr", ui->cBTideCorrection->currentIndex());
+    settings.setValue("prcopt/tidecorr", ui->cBTideCorrection->currentIndex() & 7);
     settings.setValue("prcopt/niter", ui->sBNumIteration->value());
     // settings.setValue("prcopt/codesmooth", processingOptions.codesmooth);
     settings.setValue("prcopt/intpref", ui->cBIntputReferenceObservation->currentIndex());
@@ -1511,7 +1514,7 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->cBIonosphereOption->setCurrentIndex(settings.value("prcopt/ionoopt", IONOOPT_BRDC).toInt());
     ui->cBTroposphereOption->setCurrentIndex(settings.value("prcopt/tropopt", TROPOPT_SAAS).toInt());
     ui->cBDynamicModel->setCurrentIndex(settings.value("prcopt/dynamics", 0).toInt());
-    ui->cBTideCorrection->setCurrentIndex(settings.value("prcopt/tidecorr", 0).toInt());
+    ui->cBTideCorrection->setCurrentIndex(settings.value("prcopt/tidecorr", 0).toInt() & 7);
     ui->sBNumIteration->setValue(settings.value("prcopt/niter", 1).toInt());
     // processingOptions.codesmooth = settings.value("prcopt/codesmooth", 0).toInt();
     if (options == PostOptions) {

@@ -1000,8 +1000,7 @@ int __fastcall TMainForm::GetOption(prcopt_t &prcopt, solopt_t &solopt,
     prcopt.posopt[4]=PosOpt[4];
     prcopt.posopt[5]=PosOpt[5];
     prcopt.dynamics =DynamicModel;
-    prcopt.tidecorr =TideCorr;
-    if (prcopt.tidecorr > 1) prcopt.tidecorr = 7;
+    prcopt.tidecorr =TideCorr & 7;
     prcopt.armaxiter=ARIter;
     prcopt.niter    =NumIter;
     prcopt.minfixsats=MinFixSats;
