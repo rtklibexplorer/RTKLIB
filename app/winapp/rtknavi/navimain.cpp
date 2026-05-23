@@ -2494,6 +2494,7 @@ void __fastcall TMainForm::LoadOpt(void)
     }
     PrcOpt.mode     =ini->ReadInteger("prcopt", "mode",            2);
     PrcOpt.nf       =ini->ReadInteger("prcopt", "nf",          NFREQ);
+    if (PrcOpt.nf > NFREQ) PrcOpt.nf = NFREQ;
     PrcOpt.elmin    =ini->ReadFloat  ("prcopt", "elmin",    15.0*D2R);
     PrcOpt.snrmask.ena[0]=ini->ReadInteger("prcopt","snrmask_ena1",0);
     PrcOpt.snrmask.ena[1]=ini->ReadInteger("prcopt","snrmask_ena2",0);
@@ -2653,6 +2654,10 @@ void __fastcall TMainForm::LoadOpt(void)
     FreqType2       =ini->ReadInteger("setting","freqtype2",       0);
     FreqType3       =ini->ReadInteger("setting","freqtype3",       0);
     FreqType4       =ini->ReadInteger("setting","freqtype4",       0);
+    if (FreqType1 > NFREQ + 1) FreqType1 = 0;
+    if (FreqType2 > NFREQ + 1) FreqType2 = 0;
+    if (FreqType3 > NFREQ + 1) FreqType3 = 0;
+    if (FreqType4 > NFREQ + 1) FreqType4 = 0;
     BLMode1         =ini->ReadInteger("setting","blmode1",         0);
     BLMode2         =ini->ReadInteger("setting","blmode2",         0);
     BLMode3         =ini->ReadInteger("setting","blmode3",         0);
