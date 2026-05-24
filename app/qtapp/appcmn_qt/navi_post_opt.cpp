@@ -139,9 +139,9 @@ OptDialog::OptDialog(QWidget *parent, int opts)
     QString decSep = QRegularExpression::escape(QLocale().decimalPoint());
 
     regExDMSLat = QRegularExpression(QString("^\\s*(?:(?<deg1>[%0%1]?90)[°\\s]\\s*(?<min1>0{1,2})['\\s]\\s*(?<sec1>0{1,2}(?:[%2]0*)?)\"?\\s*)|"
-                                             "(?:(?<deg2>[%0%1]?(?:[1-8][0-9]|[0-9]))[°\\s]\\s*(?<min2>(?:[0-5][0-9]|[0-9]))['\\s]\\s*(?<sec2>(?:[0-5][0-9]|[0-9])(?:[%2][0-9]*)?)\"?)\\s*$").arg(posSign, negSign, decSep));
+                                             "(?:(?<deg2>[%0%1]?(?:[1-8][0-9]|[0-9]))[°\\s]\\s*(?<min2>(?:[0-5][0-9]|[0-9]))['\\s]\\s*(?<sec2>(?:[0-6][0-9]|[0-9])(?:[%2][0-9]*)?)\"?)\\s*$").arg(posSign, negSign, decSep));
     regExDMSLon = QRegularExpression(QString("^\\s*(?:(?<deg1>[%0%1]?180)[°\\s]\\s*(?<min1>0{1,2})['\\s]\\s*(?<sec1>0{1,2}(?:[%2]0*)?)\"?\\s*)|"
-                                             "(?:(?<deg2>[%0%1]?(?:1[0-7][0-9]|[0-9][0-9]|[0-9]))[°\\s]\\s*(?<min2>(?:[0-5][0-9]|[0-9]))['\\s]\\s*(?<sec2>(?:[0-5][0-9]|[0-9])(?:[%2][0-9]*)?)\"?)\\s*$").arg(posSign, negSign, decSep));
+                                             "(?:(?<deg2>[%0%1]?(?:1[0-7][0-9]|[0-9][0-9]|[0-9]))[°\\s]\\s*(?<min2>(?:[0-5][0-9]|[0-9]))['\\s]\\s*(?<sec2>(?:[0-6][0-9]|[0-9])(?:[%2][0-9]*)?)\"?)\\s*$").arg(posSign, negSign, decSep));
 
 
     processingOptions = prcopt_default;
@@ -1916,8 +1916,8 @@ void OptDialog::setPosition(int type, QLineEdit **edit, const double *pos)
         ecef2pos(pos, p);
         s1 = p[0] < 0 ? -1 : 1;
         s2 = p[1] < 0 ? -1 : 1;
-        p[0] = fabs(p[0]) * R2D + 1E-12;
-        p[1] = fabs(p[1]) * R2D + 1E-12;
+        p[0] = fabs(p[0]) * R2D;
+        p[1] = fabs(p[1]) * R2D;
         dms1[0] = floor(p[0]); p[0] = (p[0] - dms1[0]) * 60.0;
         dms1[1] = floor(p[0]); dms1[2] = (p[0] - dms1[1]) * 60.0;
         dms2[0] = floor(p[1]); p[1] = (p[1] - dms2[0]) * 60.0;
