@@ -1948,37 +1948,39 @@ void MonitorDialog::setRtcm()
 //---------------------------------------------------------------------------
 void MonitorDialog::showRtcm()
 {
-    static rtcm_t rtcm;
     int i = 0, j, format;
     QString mstr1, mstr2;
     char tstr[40] = "-";
 
     int effectiveStream = (inputStream < 0 || inputStream > 2) ? 0 : inputStream;
 
+    rtcm_t *rtcm = (rtcm_t *)malloc(sizeof(rtcm_t));
+    if (rtcm == NULL) return;
+
     rtksvrlock(rtksvr);
     format = rtksvr->format[effectiveStream];
-    rtcm = rtksvr->rtcm[effectiveStream];
+    *rtcm = rtksvr->rtcm[effectiveStream];
     rtksvrunlock(rtksvr);
 
-    if (rtcm.time.time) time2str(rtcm.time, tstr, 3);
+    if (rtcm->time.time) time2str(rtcm->time, tstr, 3);
 
     for (j = 1; j < 100; j++) {
-        if (rtcm.nmsg2[j] == 0) continue;
-        mstr1 += QString("%1%2 (%3)").arg(mstr1.isEmpty() ? "" : ",").arg(j).arg(rtcm.nmsg2[j]);
+        if (rtcm->nmsg2[j] == 0) continue;
+        mstr1 += QString("%1%2 (%3)").arg(mstr1.isEmpty() ? "" : ",").arg(j).arg(rtcm->nmsg2[j]);
 	}
-    if (rtcm.nmsg2[0] > 0) {
-        mstr1 += QString("%1other (%2)").arg(mstr1.isEmpty() ? "" : ",").arg(rtcm.nmsg2[0]);
+    if (rtcm->nmsg2[0] > 0) {
+        mstr1 += QString("%1other (%2)").arg(mstr1.isEmpty() ? "" : ",").arg(rtcm->nmsg2[0]);
     }
     for (j = 1; j < 300; j++) {
-        if (rtcm.nmsg3[j] == 0) continue;
-        mstr2 += QString("%1%2(%3)").arg(mstr2.isEmpty() ? "" : ",").arg(j + 1000).arg(rtcm.nmsg3[j]);
+        if (rtcm->nmsg3[j] == 0) continue;
+        mstr2 += QString("%1%2(%3)").arg(mstr2.isEmpty() ? "" : ",").arg(j + 1000).arg(rtcm->nmsg3[j]);
 	}
     for (j = 300; j < 399; j++) {
-        if (rtcm.nmsg3[j] == 0) continue;
-        mstr2+=QString("%1%2(%3)").arg(mstr2.isEmpty()?"":",").arg(j+3770).arg(rtcm.nmsg3[j]);
+        if (rtcm->nmsg3[j] == 0) continue;
+        mstr2+=QString("%1%2(%3)").arg(mstr2.isEmpty()?"":",").arg(j+3770).arg(rtcm->nmsg3[j]);
     }
-    if (rtcm.nmsg3[0] > 0)
-        mstr2 += QString("%1other(%2)").arg(mstr2.isEmpty() ? "" : ",").arg(rtcm.nmsg3[0]);
+    if (rtcm->nmsg3[0] > 0)
+        mstr2 += QString("%1other(%2)").arg(mstr2.isEmpty() ? "" : ",").arg(rtcm->nmsg3[0]);
 
     ui->tWConsole->item(i,   0)->setText(tr("Format"));
     ui->tWConsole->item(i++, 1)->setText(format == STRFMT_RTCM2 ? tr("RTCM 2") : tr("RTCM 3"));
@@ -1987,43 +1989,45 @@ void MonitorDialog::showRtcm()
     ui->tWConsole->item(i++, 1)->setText(tstr);
 
     ui->tWConsole->item(i,   0)->setText(tr("Station ID"));
-    ui->tWConsole->item(i++, 1)->setText(QString::number(rtcm.staid));
+    ui->tWConsole->item(i++, 1)->setText(QString::number(rtcm->staid));
 
     ui->tWConsole->item(i,   0)->setText(tr("Station Health"));
-    ui->tWConsole->item(i++, 1)->setText(QString::number(rtcm.stah));
+    ui->tWConsole->item(i++, 1)->setText(QString::number(rtcm->stah));
 
     ui->tWConsole->item(i,   0)->setText(tr("Sequence No"));
-    ui->tWConsole->item(i++, 1)->setText(QString::number(rtcm.seqno));
+    ui->tWConsole->item(i++, 1)->setText(QString::number(rtcm->seqno));
 
     ui->tWConsole->item(i,   0)->setText(tr("RTCM Special Message"));
-    ui->tWConsole->item(i++, 1)->setText(rtcm.msg);
+    ui->tWConsole->item(i++, 1)->setText(rtcm->msg);
 
     ui->tWConsole->item(i,   0)->setText(tr("Last Message"));
-    ui->tWConsole->item(i++, 1)->setText(rtcm.msgtype);
+    ui->tWConsole->item(i++, 1)->setText(rtcm->msgtype);
 
     ui->tWConsole->item(i,   0)->setText(tr("# of RTCM Messages"));
     ui->tWConsole->item(i++, 1)->setText(format == STRFMT_RTCM2 ? mstr1 : mstr2);
 
     ui->tWConsole->item(i,   0)->setText(tr("MSM Signals for GPS"));
-    ui->tWConsole->item(i++, 1)->setText(rtcm.msmtype[0]);
+    ui->tWConsole->item(i++, 1)->setText(rtcm->msmtype[0]);
 
     ui->tWConsole->item(i,   0)->setText(tr("MSM Signals for GLONASS"));
-    ui->tWConsole->item(i++, 1)->setText(rtcm.msmtype[1]);
+    ui->tWConsole->item(i++, 1)->setText(rtcm->msmtype[1]);
 
     ui->tWConsole->item(i,   0)->setText(tr("MSM Signals for Galileo"));
-    ui->tWConsole->item(i++, 1)->setText(rtcm.msmtype[2]);
+    ui->tWConsole->item(i++, 1)->setText(rtcm->msmtype[2]);
 
     ui->tWConsole->item(i,   0)->setText(tr("MSM Signals for QZSS"));
-    ui->tWConsole->item(i++, 1)->setText(rtcm.msmtype[3]);
+    ui->tWConsole->item(i++, 1)->setText(rtcm->msmtype[3]);
 
     ui->tWConsole->item(i,   0)->setText(tr("MSM Signals for SBAS"));
-    ui->tWConsole->item(i++, 1)->setText(rtcm.msmtype[4]);
+    ui->tWConsole->item(i++, 1)->setText(rtcm->msmtype[4]);
 
     ui->tWConsole->item(i,   0)->setText(tr("MSM Signals for BDS"));
-    ui->tWConsole->item(i++, 1)->setText(rtcm.msmtype[5]);
+    ui->tWConsole->item(i++, 1)->setText(rtcm->msmtype[5]);
 
     ui->tWConsole->item(i,   0)->setText(tr("MSM Signals for NavIC"));
-    ui->tWConsole->item(i++, 1)->setText(rtcm.msmtype[6]);
+    ui->tWConsole->item(i++, 1)->setText(rtcm->msmtype[6]);
+
+    free(rtcm);
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::setRtcmDgps()
