@@ -453,10 +453,6 @@ static eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
         if (iode>=0&&nav->eph[i].iode!=iode) continue;
         if (sys==SYS_GAL) {
             sel=getseleph(SYS_GAL);
-            /* this code is from 2.4.3 b34 but does not seem to be fully supported,
-               so for now I have dropped back to the b33 code */
-            /* if (sel==0&&!(nav->eph[i].code&(1<<9))) continue; */ /* I/NAV */
-            /*if (sel==1&&!(nav->eph[i].code&(1<<8))) continue; */ /* F/NAV */
             if (sel==1&&!(nav->eph[i].code&(1<<9))) continue; /* I/NAV */
             if (sel==2&&!(nav->eph[i].code&(1<<8))) continue; /* F/NAV */
             if (timediff(nav->eph[i].toe,time)>=0.0) continue; /* AOD<=0 */
@@ -470,7 +466,7 @@ static eph_t *seleph(gtime_t time, int sat, int iode, const nav_t *nav)
               sat,iode);
         return NULL;
     }
-    trace(4,"seleph: sat=%d dt=%.0f\n",sat,tmin);
+    trace(4,"seleph: sat=%d dt=%.0f j=%d iode=%d, sel=%d\n",sat,tmin,j,nav->eph[j].iode, sel);
     return nav->eph+j;
 }
 /* select glonass ephemeris --------------------------------------------------*/

@@ -197,6 +197,8 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
                  timediff(eph1->toc,eph2->toc)!=0.0)) {
                 *eph3=*eph2; /* current ->previous */
                 *eph2=*eph1; /* received->current */
+                trace(4,"update_eph: sat=%d iode %d->%d\n",ephsat,eph3->iode,eph2->iode);
+                svr->rtcm[index].ssr[ephsat-1].update=1;   // Force update of SSR corrections
                 }
             }
             svr->nmsg[index][1]++;
@@ -211,7 +213,9 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
                    (geph1->iode!=geph3->iode&&geph1->iode!=geph2->iode)) {
                    *geph3=*geph2;
                    *geph2=*geph1;
-                update_glofcn(svr);
+                   update_glofcn(svr);
+                   trace(4,"update_eph: sat=%d iode %d->%d\n",ephsat,geph3->iode,geph2->iode);
+                   svr->rtcm[index].ssr[ephsat-1].update=1;   // Force update of SSR corrections
                }
            }
            svr->nmsg[index][6]++;
@@ -311,44 +315,36 @@ static void update_antpos(rtksvr_t *svr, int index) {
 /* update ssr corrections ----------------------------------------------------*/
 static void update_ssr(rtksvr_t *svr, int index)
 {
-    for (int i = 0; i < MAXSAT; i++) {
-      if (!svr->rtcm[index].ssr[i].update) continue;
-            
-      // Check consistency between iods of orbit and clock.
-      if (svr->rtcm[index].ssr[i].iod[0] != svr->rtcm[index].ssr[i].iod[1])
-        continue;
+    for (int i=0;i<MAXSAT;i++) {
+        int sat=i+1;
+        if (!svr->rtcm[index].ssr[i].update) continue;
+        svr->rtcm[index].ssr[i].update=0; // just check once per update 
 
-      // Check consistency of iode between ssr and broadcast.
-      int ssr_iode = svr->rtcm[index].ssr[i].iode, iode = -1;
-      if (ssr_iode < 0) continue;
-      int sys = satsys(i + 1, NULL);
-      if (sys != SYS_GLO) {
-        for (int j = 0; j < svr->nav.n; j++) {
-          if (svr->nav.eph[j].sat == i + 1 && ssr_iode == svr->nav.eph[j].iode) {
-            // Galileo SSR is wrt the I/NAV broadcast clock, skip F/NAV.
-            if (sys == SYS_GAL && (svr->nav.eph[j].code & (1 << 8)) != 0) {
-              trace(4, "update_ssr skipping F/NAV sat=%d\n", i + 1);
-              continue;
+        // Check consistency between iods of orbit and clock.
+        if (svr->rtcm[index].ssr[i].iod[0]!=svr->rtcm[index].ssr[i].iod[1])
+            continue;
+
+        // Check consistency of iode between ssr and broadcast.
+        int ssr_iode=svr->rtcm[index].ssr[i].iode, iode=-1;
+        if (ssr_iode<0) continue;
+        int prn;
+        if (satsys(sat, &prn)!=SYS_GLO) {
+            eph_t *eph=svr->nav.eph+i;
+            if (eph->sat==sat&&ssr_iode==eph->iode) {
+                iode=eph->iode;
             }
-            iode = svr->nav.eph[j].iode;
-            break;
-          }
+        } else { // SYS_GLO
+            geph_t *geph=svr->nav.geph+prn-1;
+            if (geph->sat==sat&&ssr_iode==geph->iode) {
+                iode=geph->iode;
+            }
         }
-      } else {
-        for (int j = 0; j < svr->nav.ng; j++) {
-          if (svr->nav.geph[j].sat == i + 1 && ssr_iode == svr->nav.geph[j].iode) {
-            iode = svr->nav.geph[j].iode;
-            break;
-          }
-        }
-      }
-      if (iode == -1) {
-        trace(4, "update_ssr deferred sat=%d ssr_iode=%d\n", i + 1, ssr_iode);
-        continue;
-      }
-
-      svr->nav.ssr[i] = svr->rtcm[index].ssr[i];
-      svr->rtcm[index].ssr[i].update = 0;
+        if (iode!=-1) {
+            if (svr->nav.ssr[i].iode!=ssr_iode) {
+                trace(4,"update_ssr_iode: sat=%d %d->%d\n",sat,svr->nav.ssr[i].iode,ssr_iode);
+            }
+            svr->nav.ssr[i]=svr->rtcm[index].ssr[i];
+       }
     }
     svr->nmsg[index][7]++;
 
@@ -849,11 +845,13 @@ extern int rtksvrinit(rtksvr_t *svr)
     }
     for (i=0;i<MAXSTRRTK;i++) strinit(svr->stream+i);
 
-    for (int i = 0; i < MAXSAT; i++) {
-      for (int j = 0; j < 6; j++) svr->nav.ssr[i].t0[j] = time0;
-      svr->nav.ssr[i].iode = -1;
+    for (i=0;i<MAXSAT;i++) {
+        svr->nav.ssr[i].iode=-1;
+        for (j=0;j<6;j++) {
+            svr->nav.ssr[i].t0[j]=time0;
+        }
     }
-
+    
     for (i=0;i<3;i++) *svr->cmds_periodic[i]='\0';
     *svr->cmd_reset='\0';
     svr->bl_reset=10.0;
@@ -1033,6 +1031,8 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
         }
     }
     svr->rtk.vtec_used=0;
+    if (svr->rtk.opt.sateph==EPHOPT_SSRAPC||svr->rtk.opt.sateph==EPHOPT_SSRCOM)
+        setseleph(SYS_GAL,1); // SSR mode not compatible with mixed I/NAV F/NAV ephemeris
 
     /* sync input streams */
     strsync(svr->stream,svr->stream+1);
