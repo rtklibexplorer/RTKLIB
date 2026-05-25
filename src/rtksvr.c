@@ -318,6 +318,35 @@ static void update_ssr(rtksvr_t *svr, int index)
       if (svr->rtcm[index].ssr[i].iod[0] != svr->rtcm[index].ssr[i].iod[1])
         continue;
 
+      // Check consistency of iode between ssr and broadcast.
+      int ssr_iode = svr->rtcm[index].ssr[i].iode, iode = -1;
+      if (ssr_iode < 0) continue;
+      int sys = satsys(i + 1, NULL);
+      if (sys != SYS_GLO) {
+        for (int j = 0; j < svr->nav.n; j++) {
+          if (svr->nav.eph[j].sat == i + 1 && ssr_iode == svr->nav.eph[j].iode) {
+            // Galileo SSR is wrt the I/NAV broadcast clock, skip F/NAV.
+            if (sys == SYS_GAL && (svr->nav.eph[j].code & (1 << 8)) != 0) {
+              trace(4, "update_ssr skipping F/NAV sat=%d\n", i + 1);
+              continue;
+            }
+            iode = svr->nav.eph[j].iode;
+            break;
+          }
+        }
+      } else {
+        for (int j = 0; j < svr->nav.ng; j++) {
+          if (svr->nav.geph[j].sat == i + 1 && ssr_iode == svr->nav.geph[j].iode) {
+            iode = svr->nav.geph[j].iode;
+            break;
+          }
+        }
+      }
+      if (iode == -1) {
+        trace(4, "update_ssr deferred sat=%d ssr_iode=%d\n", i + 1, ssr_iode);
+        continue;
+      }
+
       svr->nav.ssr[i] = svr->rtcm[index].ssr[i];
       svr->rtcm[index].ssr[i].update = 0;
     }
@@ -820,10 +849,11 @@ extern int rtksvrinit(rtksvr_t *svr)
     }
     for (i=0;i<MAXSTRRTK;i++) strinit(svr->stream+i);
 
-    for (i=0;i<MAXSAT;i++) for (j=0;j<6;j++) {
-        svr->nav.ssr[i].t0[j]=time0;
+    for (int i = 0; i < MAXSAT; i++) {
+      for (int j = 0; j < 6; j++) svr->nav.ssr[i].t0[j] = time0;
+      svr->nav.ssr[i].iode = -1;
     }
-    
+
     for (i=0;i<3;i++) *svr->cmds_periodic[i]='\0';
     *svr->cmd_reset='\0';
     svr->bl_reset=10.0;
