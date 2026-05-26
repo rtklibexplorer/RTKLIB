@@ -1799,35 +1799,37 @@ void __fastcall TMonitorDialog::SetRtcm(void)
 void __fastcall TMonitorDialog::ShowRtcm(void)
 {
 	AnsiString s;
-	static rtcm_t rtcm;
 	double pos[3]={0};
 	int i=1,j,format;
 	char tstr[40]="-",mstr1[1024]="",mstr2[1024]="",*p1=mstr1,*p2=mstr2;
 	
+	rtcm_t *rtcm = (rtcm_t *)malloc(sizeof(rtcm_t));
+    if (rtcm == NULL) return;
+
 	rtksvrlock(&rtksvr);
 	format=rtksvr.format[Str1];
-	rtcm=rtksvr.rtcm[Str1];
+	*rtcm=rtksvr.rtcm[Str1];
 	rtksvrunlock(&rtksvr);
 	
-	if (rtcm.time.time) time2str(rtcm.time,tstr,3);
+	if (rtcm->time.time) time2str(rtcm->time,tstr,3);
 	
 	for (j=1;j<100;j++) {
-		if (rtcm.nmsg2[j]==0) continue;
-        p1+=sprintf(p1,"%s%d (%d)",p1>mstr1?",":"",j,rtcm.nmsg2[j]);
+		if (rtcm->nmsg2[j]==0) continue;
+        p1+=sprintf(p1,"%s%d (%d)",p1>mstr1?",":"",j,rtcm->nmsg2[j]);
 	}
-	if (rtcm.nmsg2[0]>0) {
-		sprintf(p1,"%sother (%d)",p1>mstr1?",":"",rtcm.nmsg2[0]);
+	if (rtcm->nmsg2[0]>0) {
+		sprintf(p1,"%sother (%d)",p1>mstr1?",":"",rtcm->nmsg2[0]);
 	}
 	for (j=1;j<300;j++) {
-		if (rtcm.nmsg3[j]==0) continue;
-        p2+=sprintf(p2,"%s%d(%d)",p2>mstr2?",":"",j+1000,rtcm.nmsg3[j]);
+		if (rtcm->nmsg3[j]==0) continue;
+        p2+=sprintf(p2,"%s%d(%d)",p2>mstr2?",":"",j+1000,rtcm->nmsg3[j]);
 	}
 	for (j=300;j<399;j++) {
-		if (rtcm.nmsg3[j]==0) continue;
-        p2+=sprintf(p2,"%s%d(%d)",p2>mstr2?",":"",j+3770,rtcm.nmsg3[j]);
+		if (rtcm->nmsg3[j]==0) continue;
+        p2+=sprintf(p2,"%s%d(%d)",p2>mstr2?",":"",j+3770,rtcm->nmsg3[j]);
 	}
-	if (rtcm.nmsg3[0]>0) {
-		sprintf(p2,"%sother(%d)",p2>mstr2?",":"",rtcm.nmsg3[0]);
+	if (rtcm->nmsg3[0]>0) {
+		sprintf(p2,"%sother(%d)",p2>mstr2?",":"",rtcm->nmsg3[0]);
 	}
 	Label->Caption="";
 	
@@ -1840,43 +1842,45 @@ void __fastcall TMonitorDialog::ShowRtcm(void)
 	Tbl->Cells[1][i++]=tstr;
 	
 	Tbl->Cells[0][i  ]="Station ID";
-	Tbl->Cells[1][i++]=s.sprintf("%d",rtcm.staid);
+	Tbl->Cells[1][i++]=s.sprintf("%d",rtcm->staid);
 	
 	Tbl->Cells[0][i  ]="Station Health";
-	Tbl->Cells[1][i++]=s.sprintf("%d",rtcm.stah);
+	Tbl->Cells[1][i++]=s.sprintf("%d",rtcm->stah);
 	
 	Tbl->Cells[0][i  ]="Sequence No";
-	Tbl->Cells[1][i++]=s.sprintf("%d",rtcm.seqno);
+	Tbl->Cells[1][i++]=s.sprintf("%d",rtcm->seqno);
 	
 	Tbl->Cells[0][i  ]="RTCM Special Message";
-	Tbl->Cells[1][i++]=rtcm.msg;
+	Tbl->Cells[1][i++]=rtcm->msg;
 	
 	Tbl->Cells[0][i  ]="Last Message";
-	Tbl->Cells[1][i++]=rtcm.msgtype;
+	Tbl->Cells[1][i++]=rtcm->msgtype;
 	
 	Tbl->Cells[0][i  ]="# of RTCM Messages";
 	Tbl->Cells[1][i++]=format==STRFMT_RTCM2?mstr1:mstr2;
 	
 	Tbl->Cells[0][i  ]="MSM Signals for GPS";
-	Tbl->Cells[1][i++]=rtcm.msmtype[0];
+	Tbl->Cells[1][i++]=rtcm->msmtype[0];
 	
 	Tbl->Cells[0][i  ]="MSM Signals for GLONASS";
-	Tbl->Cells[1][i++]=rtcm.msmtype[1];
+	Tbl->Cells[1][i++]=rtcm->msmtype[1];
 	
 	Tbl->Cells[0][i  ]="MSM Signals for Galileo";
-	Tbl->Cells[1][i++]=rtcm.msmtype[2];
+	Tbl->Cells[1][i++]=rtcm->msmtype[2];
 	
 	Tbl->Cells[0][i  ]="MSM Signals for QZSS";
-	Tbl->Cells[1][i++]=rtcm.msmtype[3];
+	Tbl->Cells[1][i++]=rtcm->msmtype[3];
 	
 	Tbl->Cells[0][i  ]="MSM Signals for SBAS";
-	Tbl->Cells[1][i++]=rtcm.msmtype[4];
+	Tbl->Cells[1][i++]=rtcm->msmtype[4];
 	
 	Tbl->Cells[0][i  ]="MSM Signals for BDS";
-	Tbl->Cells[1][i++]=rtcm.msmtype[5];
+	Tbl->Cells[1][i++]=rtcm->msmtype[5];
 	
 	Tbl->Cells[0][i  ]="MSM Signals for NavIC";
-	Tbl->Cells[1][i++]=rtcm.msmtype[6];
+	Tbl->Cells[1][i++]=rtcm->msmtype[6];
+
+    free(rtcm);
 }
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::SetRtcmDgps(void)
