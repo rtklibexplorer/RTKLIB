@@ -129,6 +129,7 @@ extern int init_rtcm(rtcm_t *rtcm)
       for (int i = 0; i < MAXPRNGLO; i++) rtcm->nav.geph[i] = geph0;
     }
     rtcm->nav.ng = rtcm->nav.ngmax = MAXPRNGLO;
+    for (int i = 0; i < 32; i++) rtcm->nav.glo_fcn[i] = 0;
 
     return 1;
 }
