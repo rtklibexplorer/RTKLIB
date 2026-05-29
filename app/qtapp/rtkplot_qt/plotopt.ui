@@ -45,13 +45,10 @@
       <item row="15" column="8" colspan="3">
        <widget class="QDoubleSpinBox" name="sBReferencePosition2">
         <property name="toolTip">
-         <string>Longitude of receiver</string>
-        </property>
-        <property name="suffix">
-         <string>°</string>
+         <string>Longitude of receiver (deg)</string>
         </property>
         <property name="decimals">
-         <number>9</number>
+         <number>14</number>
         </property>
         <property name="minimum">
          <double>-180.000000000000000</double>
@@ -947,10 +944,7 @@
       <item row="15" column="11" colspan="4">
        <widget class="QDoubleSpinBox" name="sBReferencePosition3">
         <property name="toolTip">
-         <string>Height of receiver</string>
-        </property>
-        <property name="suffix">
-         <string> m</string>
+         <string>Height of receiver (m)</string>
         </property>
         <property name="decimals">
          <number>4</number>
@@ -999,10 +993,7 @@
       <item row="14" column="12" colspan="4">
        <widget class="QSpinBox" name="sBRefreshCycle">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the plot update cycle time for real‐time plots.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="suffix">
-         <string> ms</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the plot update cycle time (ms) for real‐time plots.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="maximum">
          <number>100000</number>
@@ -1028,10 +1019,7 @@
       <item row="10" column="7">
        <widget class="QSpinBox" name="sBBufferSize">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the buffer size for real‐time solution plots in epochs. The older solutions over the buffer size are deleted for real‐time plots.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="suffix">
-         <string> bytes</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the buffer (bytes) size for real‐time solution plots in epochs. The older solutions over the buffer size are deleted for real‐time plots.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="maximum">
          <number>1000000</number>
@@ -1690,13 +1678,10 @@
       <item row="15" column="7">
        <widget class="QDoubleSpinBox" name="sBReferencePosition1">
         <property name="toolTip">
-         <string>Latitude of receiver</string>
-        </property>
-        <property name="suffix">
-         <string>°</string>
+         <string>Latitude of receiver (deg)</string>
         </property>
         <property name="decimals">
-         <number>9</number>
+         <number>14</number>
         </property>
         <property name="minimum">
          <double>-90.000000000000000</double>

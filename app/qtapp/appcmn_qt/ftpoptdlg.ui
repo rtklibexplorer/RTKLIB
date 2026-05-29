@@ -280,10 +280,7 @@
       <item row="3" column="1">
        <widget class="QSpinBox" name="sBRetryInterval">
         <property name="toolTip">
-         <string>Time between retries if download fails.</string>
-        </property>
-        <property name="suffix">
-         <string> s</string>
+         <string>Time (s) between retries if download fails.</string>
         </property>
         <property name="maximum">
          <number>10000</number>

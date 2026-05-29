@@ -1934,22 +1934,22 @@ void OptDialog::setPosition(int type, QLineEdit **edit, const double *pos)
         edit[2]->setText(QStringLiteral("%1 m").arg(QLocale().toString(p[2], 'f', 4)));
 
     } else if (type == 2) { /* x/y/z-ecef */
-        edit[0]->setValidator(new DoubleUnitValidator(-INFINITY, INFINITY, -1, " m", this));
-        edit[1]->setValidator(new DoubleUnitValidator(-INFINITY, INFINITY, -1, " m", this));
-        edit[2]->setValidator(new DoubleUnitValidator(-INFINITY, INFINITY, -1, " m", this));
+        edit[0]->setValidator(new DoubleUnitValidator(-INFINITY, INFINITY, -1, "", this));
+        edit[1]->setValidator(new DoubleUnitValidator(-INFINITY, INFINITY, -1, "", this));
+        edit[2]->setValidator(new DoubleUnitValidator(-INFINITY, INFINITY, -1, "", this));
 
-        edit[0]->setText(QStringLiteral("%1 m").arg(QLocale().toString(pos[0], 'f', 4)));
-        edit[1]->setText(QStringLiteral("%1 m").arg(QLocale().toString(pos[1], 'f', 4)));
-        edit[2]->setText(QStringLiteral("%1 m").arg(QLocale().toString(pos[2], 'f', 4)));
+        edit[0]->setText(QStringLiteral("%1").arg(QLocale().toString(pos[0], 'f', 4)));
+        edit[1]->setText(QStringLiteral("%1").arg(QLocale().toString(pos[1], 'f', 4)));
+        edit[2]->setText(QStringLiteral("%1").arg(QLocale().toString(pos[2], 'f', 4)));
     } else {   /* lat/lon/hight decimal */
-        edit[0]->setValidator(new DoubleUnitValidator(-90, 90, -1, "°", this));
-        edit[1]->setValidator(new DoubleUnitValidator(-180, 180, -1, "°", this));
-        edit[2]->setValidator(new DoubleUnitValidator(-100, 10000, -1, " m", this));
+        edit[0]->setValidator(new DoubleUnitValidator(-90, 90, -1, "", this));
+        edit[1]->setValidator(new DoubleUnitValidator(-180, 180, -1, "", this));
+        edit[2]->setValidator(new DoubleUnitValidator(-100, 10000, -1, "", this));
 
         ecef2pos(pos, p);
-        edit[0]->setText(QStringLiteral("%1°").arg(QLocale().toString(p[0] * R2D, 'f', 9)));
-        edit[1]->setText(QStringLiteral("%1°").arg(QLocale().toString(p[1] * R2D, 'f', 9)));
-        edit[2]->setText(QStringLiteral("%1 m").arg(QLocale().toString(p[2], 'f', 4)));
+        edit[0]->setText(QStringLiteral("%1").arg(QLocale().toString(p[0] * R2D, 'f', 14)));
+        edit[1]->setText(QStringLiteral("%1").arg(QLocale().toString(p[1] * R2D, 'f', 14)));
+        edit[2]->setText(QStringLiteral("%1").arg(QLocale().toString(p[2], 'f', 4)));
     }
 }
 //---------------------------------------------------------------------------

@@ -19,12 +19,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -48,12 +42,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -63,12 +51,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_1_1">
      <property name="toolTip">
       <string>Apply mask to base station</string>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -80,12 +62,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -95,12 +71,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_2_3">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -125,12 +95,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -140,12 +104,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_3_4">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -170,12 +128,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -185,12 +137,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_3_6">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -202,12 +148,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -217,12 +157,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_1_4">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -234,12 +168,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -250,12 +178,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -265,12 +187,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_1_2">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -295,12 +211,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -310,12 +220,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_2_4">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -327,12 +231,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -342,12 +240,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_3_3">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -401,12 +293,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -416,12 +302,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_1_3">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -459,12 +339,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -474,12 +348,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_3_7">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -491,12 +359,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -507,12 +369,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -522,12 +378,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_2_9">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>
@@ -606,12 +456,6 @@
      <property name="toolTip">
       <string/>
      </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
-     </property>
      <property name="maximum">
       <double>90.000000000000000</double>
      </property>
@@ -637,12 +481,6 @@
     <widget class="QDoubleSpinBox" name="sBMask_3_1">
      <property name="toolTip">
       <string/>
-     </property>
-     <property name="text" stdset="0">
-      <string>0,00 dBHz</string>
-     </property>
-     <property name="suffix">
-      <string> dBHz</string>
      </property>
      <property name="maximum">
       <double>90.000000000000000</double>

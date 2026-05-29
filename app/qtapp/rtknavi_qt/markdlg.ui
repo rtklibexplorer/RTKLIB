@@ -46,57 +46,48 @@
      <item>
       <widget class="QDoubleSpinBox" name="sBLatitude">
        <property name="toolTip">
-        <string>Latitude of marker</string>
-       </property>
-       <property name="suffix">
-        <string>°</string>
+        <string>Latitude of marker (deg)</string>
        </property>
        <property name="decimals">
-        <number>9</number>
+        <number>14</number>
        </property>
        <property name="minimum">
-        <double>-180.000000000000000</double>
+        <double>-180.00000000000000</double>
        </property>
        <property name="maximum">
-        <double>180.000000000000000</double>
+        <double>180.00000000000000</double>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="sBLongitude">
        <property name="toolTip">
-        <string>Longitude of marker</string>
-       </property>
-       <property name="suffix">
-        <string>°</string>
+        <string>Longitude of marker (deg)</string>
        </property>
        <property name="decimals">
-        <number>9</number>
+        <number>14</number>
        </property>
        <property name="minimum">
-        <double>-90.000000000000000</double>
+        <double>-90.00000000000000</double>
        </property>
        <property name="maximum">
-        <double>90.000000000000000</double>
+        <double>90.00000000000000</double>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="sBHeight">
        <property name="toolTip">
-        <string>Height of marker</string>
-       </property>
-       <property name="suffix">
-        <string> m</string>
+        <string>Height of marker (m)</string>
        </property>
        <property name="decimals">
-        <number>3</number>
+        <number>4</number>
        </property>
        <property name="minimum">
-        <double>-500.000000000000000</double>
+        <double>-500.0000</double>
        </property>
        <property name="maximum">
-        <double>9000.000000000000000</double>
+        <double>9000.0000</double>
        </property>
       </widget>
      </item>

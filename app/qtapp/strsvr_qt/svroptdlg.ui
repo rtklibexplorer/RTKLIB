@@ -56,10 +56,7 @@
    <item row="0" column="3">
     <widget class="QSpinBox" name="sBAveragePeriodRate">
      <property name="toolTip">
-      <string>Average time for data rate</string>
-     </property>
-     <property name="suffix">
-      <string> ms</string>
+      <string>Average time for data rate (ms)</string>
      </property>
      <property name="maximum">
       <number>1000000</number>
@@ -105,10 +102,7 @@
    <item row="4" column="1">
     <widget class="QSpinBox" name="sBDataTimeout">
      <property name="toolTip">
-      <string>Time to detect inactivity</string>
-     </property>
-     <property name="suffix">
-      <string> ms</string>
+      <string>Time to detect inactivity (ms)</string>
      </property>
      <property name="maximum">
       <number>1000000</number>
@@ -196,10 +190,7 @@
    <item row="2" column="1">
     <widget class="QSpinBox" name="sBServerCycle">
      <property name="toolTip">
-      <string>Server cycle time</string>
-     </property>
-     <property name="suffix">
-      <string> ms</string>
+      <string>Server cycle time (ms)</string>
      </property>
      <property name="maximum">
       <number>10000</number>
@@ -212,10 +203,7 @@
    <item row="6" column="1">
     <widget class="QSpinBox" name="sBReconnectInterval">
      <property name="toolTip">
-      <string>Interval to reconnect</string>
-     </property>
-     <property name="suffix">
-      <string> ms</string>
+      <string>Interval to reconnect (ms)</string>
      </property>
      <property name="maximum">
       <number>100000</number>
@@ -291,10 +279,7 @@
    <item row="0" column="1">
     <widget class="QSpinBox" name="sBServerBufferSize">
      <property name="toolTip">
-      <string>Size of the read buffer</string>
-     </property>
-     <property name="suffix">
-      <string> bytes</string>
+      <string>Size of the read buffer (bytes)</string>
      </property>
      <property name="maximum">
       <number>1000000</number>
@@ -340,10 +325,7 @@
    <item row="2" column="3">
     <widget class="QSpinBox" name="sBFileSwapMargin">
      <property name="toolTip">
-      <string>Time to switch to new file</string>
-     </property>
-     <property name="suffix">
-      <string> s</string>
+      <string>Time to switch to new file (s)</string>
      </property>
      <property name="minimum">
       <number>0</number>
@@ -373,9 +355,6 @@
     <widget class="QSpinBox" name="sBNmeaCycle">
      <property name="toolTip">
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the NMEA GPGGA transmission cycle to NRTK server in ms.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-     <property name="suffix">
-      <string> ms</string>
      </property>
      <property name="maximum">
       <number>100000</number>
@@ -410,19 +389,16 @@
      <item row="0" column="3">
       <widget class="QDoubleSpinBox" name="sBAntennaPos3">
        <property name="toolTip">
-        <string>Station Height</string>
-       </property>
-       <property name="suffix">
-        <string> m</string>
+        <string>Station Height (m)</string>
        </property>
        <property name="decimals">
-        <number>3</number>
+        <number>4</number>
        </property>
        <property name="minimum">
-        <double>-1000.000000000000000</double>
+        <double>-1000.0000</double>
        </property>
        <property name="maximum">
-        <double>10000.000000000000000</double>
+        <double>10000.0000</double>
        </property>
       </widget>
      </item>
@@ -445,95 +421,80 @@
      <item row="0" column="1">
       <widget class="QDoubleSpinBox" name="sBAntennaPos1">
        <property name="toolTip">
-        <string>Station Latitude</string>
-       </property>
-       <property name="suffix">
-        <string>°</string>
+        <string>Station Latitude (deg)</string>
        </property>
        <property name="decimals">
-        <number>8</number>
+        <number>14</number>
        </property>
        <property name="minimum">
-        <double>-90.000000000000000</double>
+        <double>-90.00000000000000</double>
        </property>
        <property name="maximum">
-        <double>90.000000000000000</double>
+        <double>90.00000000000000</double>
        </property>
       </widget>
      </item>
      <item row="0" column="2">
       <widget class="QDoubleSpinBox" name="sBAntennaPos2">
        <property name="toolTip">
-        <string>Station Longitude</string>
-       </property>
-       <property name="suffix">
-        <string>°</string>
+        <string>Station Longitude (deg)</string>
        </property>
        <property name="decimals">
-        <number>8</number>
+        <number>14</number>
        </property>
        <property name="minimum">
-        <double>-180.000000000000000</double>
+        <double>-180.00000000000000</double>
        </property>
        <property name="maximum">
-        <double>180.000000000000000</double>
+        <double>180.00000000000000</double>
        </property>
       </widget>
      </item>
      <item row="1" column="3">
       <widget class="QDoubleSpinBox" name="sBAntennaOffset3">
        <property name="toolTip">
-        <string>Antenna height offset</string>
-       </property>
-       <property name="suffix">
-        <string> m</string>
+        <string>Antenna height offset (m)</string>
        </property>
        <property name="decimals">
         <number>4</number>
        </property>
        <property name="minimum">
-        <double>-1000.000000000000000</double>
+        <double>-1000.0000</double>
        </property>
        <property name="maximum">
-        <double>1000.000000000000000</double>
+        <double>1000.0000</double>
        </property>
       </widget>
      </item>
      <item row="1" column="2">
       <widget class="QDoubleSpinBox" name="sBAntennaOffset2">
        <property name="toolTip">
-        <string>Antenna offset in north direction</string>
-       </property>
-       <property name="suffix">
-        <string> m</string>
+        <string>Antenna offset in north direction (m)</string>
        </property>
        <property name="decimals">
         <number>4</number>
        </property>
        <property name="minimum">
-        <double>-1000.000000000000000</double>
+        <double>-1000.0000</double>
        </property>
        <property name="maximum">
-        <double>1000.000000000000000</double>
+        <double>1000.0000</double>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
       <widget class="QDoubleSpinBox" name="sBAntennaOffset1">
        <property name="toolTip">
-        <string>Antenna offset in east direction</string>
-       </property>
-       <property name="suffix">
-        <string> m</string>
+        <string>Antenna offset in east direction (m)</string>
        </property>
        <property name="decimals">
         <number>4</number>
        </property>
        <property name="minimum">
-        <double>-1000.000000000000000</double>
+        <double>-1000.0000</double>
        </property>
        <property name="maximum">
-        <double>10000.000000000000000</double>
+        <double>10000.0000</double>
        </property>
       </widget>
      </item>
@@ -625,10 +586,7 @@
    <item row="16" column="1" colspan="3">
     <widget class="QSpinBox" name="sBProgressBar">
      <property name="toolTip">
-      <string>Maximum range of input byte buffer</string>
-     </property>
-     <property name="suffix">
-      <string> kb</string>
+      <string>Maximum range of input byte buffer (kb)</string>
      </property>
      <property name="maximum">
       <number>100000</number>

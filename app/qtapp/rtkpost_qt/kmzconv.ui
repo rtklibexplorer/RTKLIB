@@ -407,40 +407,31 @@
          </property>
          <item>
           <widget class="QDoubleSpinBox" name="sBOffset1">
-           <property name="suffix">
-            <string> m</string>
-           </property>
            <property name="decimals">
             <number>4</number>
            </property>
            <property name="maximum">
-            <double>1000.000000000000000</double>
+            <double>1000.0000</double>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QDoubleSpinBox" name="sBOffset2">
-           <property name="suffix">
-            <string> m</string>
-           </property>
            <property name="decimals">
             <number>4</number>
            </property>
            <property name="maximum">
-            <double>10000.000000000000000</double>
+            <double>10000.0000</double>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QDoubleSpinBox" name="sBOffset3">
-           <property name="suffix">
-            <string> m</string>
-           </property>
            <property name="decimals">
             <number>4</number>
            </property>
            <property name="maximum">
-            <double>10000.000000000000000</double>
+            <double>10000.0000</double>
            </property>
           </widget>
          </item>
@@ -468,17 +459,14 @@
       </item>
       <item row="4" column="2">
        <widget class="QDoubleSpinBox" name="sBTimeInterval">
-        <property name="suffix">
-         <string> s</string>
-        </property>
         <property name="decimals">
          <number>1</number>
         </property>
         <property name="maximum">
-         <double>100000.000000000000000</double>
+         <double>100000.0000</double>
         </property>
         <property name="value">
-         <double>1.000000000000000</double>
+         <double>1.0000</double>
         </property>
        </widget>
       </item>

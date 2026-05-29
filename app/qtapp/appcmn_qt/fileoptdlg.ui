@@ -142,10 +142,7 @@
      <item>
       <widget class="QDoubleSpinBox" name="sBTimeStart">
        <property name="toolTip">
-        <string>Start time</string>
-       </property>
-       <property name="suffix">
-        <string> s</string>
+        <string>Start time (s)</string>
        </property>
        <property name="maximum">
         <double>10000.000000000000000</double>

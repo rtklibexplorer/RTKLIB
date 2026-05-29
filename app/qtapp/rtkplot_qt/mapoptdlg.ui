@@ -56,9 +56,6 @@
         <property name="toolTip">
          <string>Image width in pixel</string>
         </property>
-        <property name="suffix">
-         <string> px</string>
-        </property>
         <property name="maximum">
          <number>100000</number>
         </property>
@@ -81,9 +78,6 @@
        <widget class="QSpinBox" name="sBMapSize2">
         <property name="toolTip">
          <string>Image height in pixel</string>
-        </property>
-        <property name="suffix">
-         <string> px</string>
         </property>
         <property name="maximum">
          <number>100000</number>
@@ -127,10 +121,7 @@
       <item row="1" column="2">
        <widget class="QDoubleSpinBox" name="sBLongitude">
         <property name="toolTip">
-         <string>Longitude of map center</string>
-        </property>
-        <property name="suffix">
-         <string>°</string>
+         <string>Longitude of map center (deg)</string>
         </property>
         <property name="decimals">
          <number>9</number>
@@ -149,10 +140,7 @@
       <item row="1" column="3">
        <widget class="QDoubleSpinBox" name="sBLatitude">
         <property name="toolTip">
-         <string>Latitutde of map center</string>
-        </property>
-        <property name="suffix">
-         <string>°</string>
+         <string>Latitutde of map center (deg)</string>
         </property>
         <property name="decimals">
          <number>9</number>
@@ -193,9 +181,6 @@
         <property name="toolTip">
          <string>Scaling factor in x-direction in meter per pixel</string>
         </property>
-        <property name="suffix">
-         <string> m/px</string>
-        </property>
         <property name="decimals">
          <number>5</number>
         </property>
@@ -214,9 +199,6 @@
        <widget class="QDoubleSpinBox" name="sBScaleY">
         <property name="toolTip">
          <string>Scaling factor in y-direction in meter per pixel</string>
-        </property>
-        <property name="suffix">
-         <string> m/px</string>
         </property>
         <property name="decimals">
          <number>5</number>

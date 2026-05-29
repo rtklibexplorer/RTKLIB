@@ -249,9 +249,6 @@
          </item>
          <item row="2" column="7">
           <widget class="QDoubleSpinBox" name="sBTimeUnit">
-           <property name="suffix">
-            <string> h</string>
-           </property>
            <property name="maximum">
             <double>3600.000000000000000</double>
            </property>

@@ -703,7 +703,7 @@
           <number>3</number>
          </property>
          <property name="value">
-          <double>3.000000000000000</double>
+          <double>3.000</double>
          </property>
         </widget>
        </item>
@@ -737,16 +737,13 @@
        <item row="16" column="3" colspan="2">
         <widget class="QDoubleSpinBox" name="sBBaselineSig">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the standard deviation of the baseline length constraint in moving‐base mode (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-basesig).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> m</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the standard deviation (m) of the baseline length constraint in moving‐base mode (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-basesig).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
-          <number>3</number>
+          <number>4</number>
          </property>
          <property name="maximum">
-          <double>1000000.000000000000000</double>
+          <double>1000000.0000</double>
          </property>
         </widget>
        </item>
@@ -763,16 +760,13 @@
        <item row="18" column="1" colspan="2">
         <widget class="QDoubleSpinBox" name="sBMaxPositionVarAR">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximum position variance for ambiguity resolution (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-arthres1&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> m</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximum position variance (m^2) for ambiguity resolution (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-arthres1&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
           <number>4</number>
          </property>
          <property name="value">
-          <double>0.004000000000000</double>
+          <double>0.0040</double>
          </property>
         </widget>
        </item>
@@ -789,10 +783,7 @@
        <item row="5" column="1" colspan="2">
         <widget class="QSpinBox" name="sBLockCountFixAmbiguity">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the minimum lock count to fix integer ambiguity. If the lock count is less than the value, the ambiguity is excluded from the fixed integer vector (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-arlockcnt&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> s</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the minimum lock count to fix integer ambiguity (s). If the lock count is less than the value, the ambiguity is excluded from the fixed integer vector (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-arlockcnt&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="maximum">
           <number>3600</number>
@@ -822,16 +813,13 @@
        <item row="16" column="1">
         <widget class="QDoubleSpinBox" name="sBBaselineLen">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the constraint of the baseline length in moving‐base mode (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-baselen).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> m</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the constraint of the baseline length (m) in moving‐base mode (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-baselen).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
-          <number>3</number>
+          <number>4</number>
          </property>
          <property name="maximum">
-          <double>1000000.000000000000000</double>
+          <double>1000000.0000</double>
          </property>
         </widget>
        </item>
@@ -855,16 +843,13 @@
        <item row="9" column="3" colspan="2">
         <widget class="QDoubleSpinBox" name="sBSlipThreshold">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the cycle‐slip threshold of geometry‐free LC carrier‐phase difference between epochs (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-slipthres&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> m</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the cycle‐slip threshold of geometry‐free LC carrier‐phase difference (m) between epochs (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-slipthres&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
-          <number>3</number>
+          <number>4</number>
          </property>
          <property name="value">
-          <double>0.050000000000000</double>
+          <double>0.0500</double>
          </property>
         </widget>
        </item>
@@ -894,35 +879,29 @@
        <item row="11" column="1" colspan="2">
         <widget class="QDoubleSpinBox" name="sBMaxAgeDifferences">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the maximum value of age of differential between the rover and the base station (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-maxage&lt;/span&gt;) &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> s</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the maximum value of age of differential (s) between the rover and the base station (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-maxage&lt;/span&gt;) &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
           <number>1</number>
          </property>
          <property name="maximum">
-          <double>3600.000000000000000</double>
+          <double>3600.0</double>
          </property>
          <property name="value">
-          <double>30.000000000000000</double>
+          <double>30.0</double>
          </property>
         </widget>
        </item>
        <item row="5" column="3" colspan="2">
         <widget class="QDoubleSpinBox" name="sBElevationMaskAR">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the minimum elevation angle to fix integer ambiguity. If the elevation angle is less than the value, the ambiguity is excluded from the fixed integer vector (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-arelmask&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string>°</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the minimum elevation angle (deg) to fix integer ambiguity. If the elevation angle is less than the value, the ambiguity is excluded from the fixed integer vector (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-arelmask&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
           <number>0</number>
          </property>
          <property name="maximum">
-          <double>90.000000000000000</double>
+          <double>90</double>
          </property>
         </widget>
        </item>
@@ -958,9 +937,6 @@
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the cycle-slip threshold (Hz) of difference between doppler and carrier phase difference between epochs, 0 = disabled (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-dopthres).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
-         <property name="suffix">
-          <string> Hz</string>
-         </property>
          <property name="decimals">
           <number>3</number>
          </property>
@@ -971,30 +947,24 @@
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set relative GLONASS hardware bias in meters per frequency slot. Used only when pos2-gloarmode is&lt;/p&gt;&lt;p&gt;set to “autocal” and is used to specify the interchannel bias between two different receiver manufacturers  (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-arthres2&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
-         <property name="suffix">
-          <string> m</string>
-         </property>
          <property name="decimals">
-          <number>3</number>
+          <number>4</number>
          </property>
         </widget>
        </item>
        <item row="13" column="1" colspan="2">
         <widget class="QDoubleSpinBox" name="sBRejectCode">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the reject threshold of GDOP (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-rejgdop&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the GDOP is over the value, the observable is excluded for the estimation process as an outlier.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> m</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the reject threshold (m) of GDOP (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-rejgdop&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the GDOP is over the value, the observable is excluded for the estimation process as an outlier.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
           <number>2</number>
          </property>
          <property name="maximum">
-          <double>1000.000000000000000</double>
+          <double>1000.00</double>
          </property>
          <property name="value">
-          <double>30.000000000000000</double>
+          <double>30.00</double>
          </property>
         </widget>
        </item>
@@ -1088,19 +1058,16 @@
        <item row="7" column="3" colspan="2">
         <widget class="QDoubleSpinBox" name="sBElevationMaskHold">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the minimum elevation angle to hold ambiguity in ʺFix and Holdʺ integer ambiguity resolution mode (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-elmaskhold&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string>°</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the minimum elevation angle (deg) to hold ambiguity in ʺFix and Holdʺ integer ambiguity resolution mode (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-elmaskhold&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
           <number>0</number>
          </property>
          <property name="maximum">
-          <double>90.000000000000000</double>
+          <double>90</double>
          </property>
          <property name="value">
-          <double>10.000000000000000</double>
+          <double>10</double>
          </property>
         </widget>
        </item>
@@ -1120,17 +1087,14 @@
           <number>3</number>
          </property>
          <property name="value">
-          <double>3.000000000000000</double>
+          <double>3.000</double>
          </property>
         </widget>
        </item>
        <item row="7" column="1" colspan="2">
         <widget class="QSpinBox" name="sBFixCountHoldAmbiguity">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the minimum fix count to hold ambiguity in &amp;quot;Fix and Hold&amp;quot; integer ambiguity resolution mode (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-arminfix&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> s</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define the minimum (s) fix count to hold ambiguity in &amp;quot;Fix and Hold&amp;quot; integer ambiguity resolution mode (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-arminfix&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="maximum">
           <number>1000</number>
@@ -1143,19 +1107,16 @@
        <item row="13" column="3" colspan="2">
         <widget class="QDoubleSpinBox" name="sBRejectPhase">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the reject threshold of the kalman filter innovations (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-rejionn&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the carrier phase innovation is over the value, the observable is excluded for the estimation process as an outlier. The innovation threshold is multiplied by the carrier phase/pseudorange error ratio to generate the threshold for pseudorange innovations.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> m</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the reject threshold (m) of the kalman filter innovations (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-rejionn&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the carrier phase innovation is over the value, the observable is excluded for the estimation process as an outlier. The innovation threshold is multiplied by the carrier phase/pseudorange error ratio to generate the threshold for pseudorange innovations.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
           <number>2</number>
          </property>
          <property name="maximum">
-          <double>1000.000000000000000</double>
+          <double>1000.00</double>
          </property>
          <property name="value">
-          <double>30.000000000000000</double>
+          <double>30.00</double>
          </property>
         </widget>
        </item>
@@ -1178,7 +1139,7 @@
           <number>3</number>
          </property>
          <property name="value">
-          <double>3.000000000000000</double>
+          <double>3.000</double>
          </property>
         </widget>
        </item>
@@ -1205,10 +1166,7 @@
        <item row="11" column="3" colspan="2">
         <widget class="QSpinBox" name="sBOutageCountResetAmbiguity">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the outage count to reset ambiguity. If the data outage count is over the value, the estimated ambiguity is reset to the initial value (option &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-aroutcnt).&lt;/span&gt;&lt;span style=&quot; font-family:'monospace';&quot;&gt;&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> epochs</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the outage count (epochs) to reset ambiguity. If the data outage count is over the value, the estimated ambiguity is reset to the initial value (option &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-aroutcnt).&lt;/span&gt;&lt;span style=&quot; font-family:'monospace';&quot;&gt;&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -1232,10 +1190,7 @@
        <item row="20" column="1" colspan="2">
         <widget class="QDoubleSpinBox" name="sBVarHoldAmb">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set variance for ambiguity hold feedback. Acts asinverse ambiguity tracking gain (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-varholdamb&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> m</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set variance (m^2) for ambiguity hold feedback. Acts asinverse ambiguity tracking gain (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-varholdamb&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="decimals">
           <number>4</number>
@@ -1291,8 +1246,8 @@
        </item>
        <item row="7" column="3">
         <widget class="QDoubleSpinBox" name="sBMaxSolutionStd">
-         <property name="suffix">
-          <string> m</string>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;(m);&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -1442,10 +1397,7 @@
        <item row="12" column="1" colspan="2">
         <widget class="QDoubleSpinBox" name="sBNmeaInterval1">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify the output interval of NMEA GPRMC, GPGGA messages (option: &lt;span style=&quot; font-style:italic;&quot;&gt;out-nmeaintv1&lt;/span&gt;) &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> s</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify the output interval (s) of NMEA GPRMC, GPGGA messages (option: &lt;span style=&quot; font-style:italic;&quot;&gt;out-nmeaintv1&lt;/span&gt;) &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -1571,10 +1523,7 @@
        <item row="12" column="3">
         <widget class="QDoubleSpinBox" name="sBNmeaInterval2">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify the output interval of NMEA GPGSA, GLGSA,GAGSA, GPGSV, GLGSV, GAGSV messages (option: &lt;span style=&quot; font-style:italic;&quot;&gt;out-nmeaintv2&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> s</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Specify the output interval (s) of NMEA GPGSA, GLGSA,GAGSA, GPGSV, GLGSV, GAGSV messages (option: &lt;span style=&quot; font-style:italic;&quot;&gt;out-nmeaintv2&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="value">
           <double>1.000000000000000</double>
@@ -1752,10 +1701,7 @@
           <item row="0" column="1">
            <widget class="ScientificSpinBox" name="sBSatelliteClockStability">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the satellite clock stability (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-clkstab&lt;/span&gt;) &lt;/p&gt;&lt;p&gt;The value is used for interpolation of base-station observables.&lt;/p&gt;&lt;p&gt;Unit: s/s&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> s/s</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the satellite clock stability (s/s) (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-clkstab&lt;/span&gt;) &lt;/p&gt;&lt;p&gt;The value is used for interpolation of base-station observables.&lt;/p&gt;&lt;p&gt;Unit: s/s&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="minimum">
              <double>-1.000000000000000</double>
@@ -1817,10 +1763,7 @@
           <item row="0" column="1">
            <widget class="ScientificSpinBox" name="sBProcessNoise4">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation of the receiver acceleration as the horizontal component (&lt;span style=&quot; font-style:italic;&quot;&gt;stats-prnaccelh&lt;/span&gt;).&lt;/p&gt;&lt;p&gt;If receiver dynamics is set to OFF, they are not used.&lt;/p&gt;&lt;p&gt;Unit: m/s2/sqrt(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m/s²</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation (m/s²) of the receiver acceleration as the horizontal component (&lt;span style=&quot; font-style:italic;&quot;&gt;stats-prnaccelh&lt;/span&gt;).&lt;/p&gt;&lt;p&gt;If receiver dynamics is set to OFF, they are not used.&lt;/p&gt;&lt;p&gt;Unit: m/s2/sqrt(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="maximum">
              <double>100.000000000000000</double>
@@ -1830,10 +1773,7 @@
           <item row="0" column="2">
            <widget class="ScientificSpinBox" name="sBProcessNoise5">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation of the receiver acceleration as the vertical component (&lt;span style=&quot; font-style:italic;&quot;&gt;stats-prnaccelv&lt;/span&gt;).&lt;/p&gt;&lt;p&gt;If receiver dynamics is set to OFF, they are not used.&lt;/p&gt;&lt;p&gt;Unit: m/s2/sqrt(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m/s²</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation (m/s²) of the receiver acceleration as the vertical component (&lt;span style=&quot; font-style:italic;&quot;&gt;stats-prnaccelv&lt;/span&gt;).&lt;/p&gt;&lt;p&gt;If receiver dynamics is set to OFF, they are not used.&lt;/p&gt;&lt;p&gt;Unit: m/s2/sqrt(s)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="maximum">
              <double>100.000000000000000</double>
@@ -1843,10 +1783,7 @@
           <item row="1" column="1" colspan="2">
            <widget class="ScientificSpinBox" name="sBProcessNoise1">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation of carrier-phase bias/ambiguity (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-prnbias&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Unit: cycle/sqrt(s).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> cycles</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation (cycles) of carrier-phase bias/ambiguity (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-prnbias&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Unit: cycle/sqrt(s).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="minimum">
              <double>-100.000000000000000</double>
@@ -1859,10 +1796,7 @@
           <item row="2" column="1" colspan="2">
            <widget class="ScientificSpinBox" name="sBProcessNoise2">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation of vertical ionospheric delay per 10 km baseline (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-prniono&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Unit: m/sqrt(s).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m/10km</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation (m/10km) of vertical ionospheric delay per 10 km baseline (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-prniono&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Unit: m/sqrt(s).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="minimum">
              <double>-10000.000000000000000</double>
@@ -1875,10 +1809,7 @@
           <item row="3" column="1" colspan="2">
            <widget class="ScientificSpinBox" name="sBProcessNoise3">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation of zenith tropospheric delay (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-prntrop&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Unit: m/sqrt(s).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the process noise standard deviation (m) of zenith tropospheric delay (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-prntrop&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Unit: m/sqrt(s).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="minimum">
              <double>-1000.000000000000000</double>
@@ -1900,10 +1831,7 @@
           <item row="8" column="1" colspan="2">
            <widget class="QDoubleSpinBox" name="sBMeasurementError5">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the standard deviation of Doppler errors (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-errdoppler)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> Hz</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the standard deviation (Hz) of Doppler errors (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-errdoppler)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="minimum">
              <double>-10000.000000000000000</double>
@@ -1925,10 +1853,10 @@
              <number>1</number>
             </property>
             <property name="maximum">
-             <double>10000.000000000000000</double>
+             <double>10000.0</double>
             </property>
             <property name="value">
-             <double>100.000000000000000</double>
+             <double>100.0</double>
             </property>
            </widget>
           </item>
@@ -1993,35 +1921,29 @@
           <item row="5" column="1" colspan="4">
            <widget class="QDoubleSpinBox" name="sBMeasurementError4">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the baseline-length dependent term of carrier-phase error standard deviation (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-errphasebl&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m/10km</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the baseline-length dependent term (m/10km) of carrier-phase error standard deviation (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-errphasebl&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
-             <number>3</number>
+             <number>4</number>
             </property>
            </widget>
           </item>
           <item row="3" column="3" colspan="2">
            <widget class="QDoubleSpinBox" name="sBMeasurementError3">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the elevation dependent term of carrier-phase error standard deviation (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-errphaseel&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the elevation dependent term of carrier-phase error standard deviation (m) (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-errphaseel&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
              <number>3</number>
             </property>
             <property name="maximum">
-             <double>100.000000000000000</double>
+             <double>100.000</double>
             </property>
             <property name="singleStep">
-             <double>0.001000000000000</double>
+             <double>0.001</double>
             </property>
             <property name="value">
-             <double>0.003000000000000</double>
+             <double>0.003</double>
             </property>
            </widget>
           </item>
@@ -2038,22 +1960,19 @@
           <item row="3" column="1" colspan="2">
            <widget class="QDoubleSpinBox" name="sBMeasurementError2">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the base term of carrier-phase error standard deviation (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-errphase&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the base term of carrier-phase error standard deviation (m) (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-errphase&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
              <number>3</number>
             </property>
             <property name="maximum">
-             <double>100.000000000000000</double>
+             <double>100.000</double>
             </property>
             <property name="singleStep">
-             <double>0.001000000000000</double>
+             <double>0.001</double>
             </property>
             <property name="value">
-             <double>0.003000000000000</double>
+             <double>0.003</double>
             </property>
            </widget>
           </item>
@@ -2110,10 +2029,7 @@
           <item row="6" column="3" colspan="2">
            <widget class="QDoubleSpinBox" name="sBMeasurementErrorSNR_Max">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the max component of the SNR dependent terms of carrier-phase error standard deviation (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-snrmax&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;e * 10^(0.1*(SNR_MAX - snr))&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> dB</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the max component of the SNR (dB) dependent terms of carrier-phase error standard deviation (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-snrmax&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;e * 10^(0.1*(SNR_MAX - snr))&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
            </widget>
           </item>
@@ -2168,19 +2084,16 @@
           <item row="5" column="6">
            <widget class="QDoubleSpinBox" name="sBReferenceAntennaU">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position in up direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant2-antdelu&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position (m) in up direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant2-antdelu&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
              <number>4</number>
             </property>
             <property name="minimum">
-             <double>-10000.000000000000000</double>
+             <double>-10000.0000</double>
             </property>
             <property name="maximum">
-             <double>10000.000000000000000</double>
+             <double>10000.0000</double>
             </property>
            </widget>
           </item>
@@ -2217,19 +2130,16 @@
           <item row="5" column="4">
            <widget class="QDoubleSpinBox" name="sBReferenceAntennaE">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position in east direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant2-antdele&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position (m) in east direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant2-antdele&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
              <number>4</number>
             </property>
             <property name="minimum">
-             <double>-100000.000000000000000</double>
+             <double>-100000.0000</double>
             </property>
             <property name="maximum">
-             <double>1000000.000000000000000</double>
+             <double>1000000.0000</double>
             </property>
            </widget>
           </item>
@@ -2278,19 +2188,16 @@
           <item row="5" column="5">
            <widget class="QDoubleSpinBox" name="sBReferenceAntennaN">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position in north direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant2-antdeln&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position (m) in north direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant2-antdeln&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
              <number>4</number>
             </property>
             <property name="minimum">
-             <double>-100000.000000000000000</double>
+             <double>-100000.0000</double>
             </property>
             <property name="maximum">
-             <double>1000000.000000000000000</double>
+             <double>1000000.0000</double>
             </property>
            </widget>
           </item>
@@ -2308,9 +2215,6 @@
            <widget class="QSpinBox" name="sBMaxAveEp">
             <property name="toolTip">
              <string>Maximum averaging epochs</string>
-            </property>
-            <property name="suffix">
-             <string> epochs</string>
             </property>
             <property name="maximum">
              <number>10000</number>
@@ -2497,57 +2401,48 @@
           <item row="5" column="2">
            <widget class="QDoubleSpinBox" name="sBRoverAntennaE">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position in east direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant1-antdele&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position (m) in east direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant1-antdele&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
              <number>4</number>
             </property>
             <property name="minimum">
-             <double>-1000000.000000000000000</double>
+             <double>-1000000.0000</double>
             </property>
             <property name="maximum">
-             <double>1000000.000000000000000</double>
+             <double>1000000.0000</double>
             </property>
            </widget>
           </item>
           <item row="5" column="5">
            <widget class="QDoubleSpinBox" name="sBRoverAntennaU">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position in up direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant1-antdelu&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position (m) in up direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant1-antdelu&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
              <number>4</number>
             </property>
             <property name="minimum">
-             <double>-10000.000000000000000</double>
+             <double>-10000.0000</double>
             </property>
             <property name="maximum">
-             <double>10000.000000000000000</double>
+             <double>10000.0000</double>
             </property>
            </widget>
           </item>
           <item row="5" column="3" colspan="2">
            <widget class="QDoubleSpinBox" name="sBRoverAntennaN">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position in north direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant1-antdeln&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="suffix">
-             <string> m</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the delta position (m) in north direction of the rover antenna as offsets of ARP (antenna reference point) position with refer to the marker (option: &lt;span style=&quot; font-style:italic;&quot;&gt;ant1-antdeln&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="decimals">
              <number>4</number>
             </property>
             <property name="minimum">
-             <double>-100000.000000000000000</double>
+             <double>-100000.0000</double>
             </property>
             <property name="maximum">
-             <double>1000000.000000000000000</double>
+             <double>1000000.0000</double>
             </property>
            </widget>
           </item>
@@ -2732,9 +2627,6 @@
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the input message buffer size in bytes (option: &lt;span style=&quot; font-style:italic;&quot;&gt;misc-svrcycle&lt;/span&gt;).&lt;/p&gt;&lt;p&gt;Usually set it to 32768 or more.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
-         <property name="suffix">
-          <string> bytes</string>
-         </property>
          <property name="maximum">
           <number>10000000</number>
          </property>
@@ -2746,10 +2638,7 @@
        <item row="7" column="5">
         <widget class="QSpinBox" name="sBSavedSolution">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the internal log buffer size.  &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> epochs</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the internal log buffer size (epochs).  &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="maximum">
           <number>1000000</number>
@@ -2764,9 +2653,6 @@
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the processing cycle time of in ms (option: &lt;span style=&quot; font-style:italic;&quot;&gt;misc-svrcycle&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;Usually set 100 ms or less value.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
-         <property name="suffix">
-          <string> ms</string>
-         </property>
          <property name="maximum">
           <number>10000</number>
          </property>
@@ -2778,10 +2664,7 @@
        <item row="5" column="4">
         <widget class="QSpinBox" name="sBNmeaCycle">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the NMEA GPGGA transmission cycle to NRTK server (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-nmeacycle&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> ms</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the NMEA GPGGA transmission cycle (ms) to NRTK server (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-nmeacycle&lt;/span&gt;).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="minimum">
           <number>1000</number>
@@ -2807,10 +2690,7 @@
        <item row="7" column="4">
         <widget class="QSpinBox" name="sBSolutionBufferSize">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the internal solution buffer size (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-buffersize&lt;/span&gt;).  &lt;/p&gt;&lt;p&gt;To increase the length of the receiver trajectory on &amp;quot;RTK Map&amp;quot;, increase the solution buffer size.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> epochs</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the internal solution buffer size (epochs) (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-buffersize&lt;/span&gt;).  &lt;/p&gt;&lt;p&gt;To increase the length of the receiver trajectory on &amp;quot;RTK Map&amp;quot;, increase the solution buffer size.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="maximum">
           <number>1000000</number>
@@ -2823,10 +2703,7 @@
        <item row="3" column="5">
         <widget class="QSpinBox" name="sBReconnectTime">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the re-connect interval for TCP client and NTRIP client connections (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-reconnect&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the timeout time expired without sever response, RTKNAVI retries to connect to server after waiting for the re-connect interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> ms</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the re-connect interval (ms) for TCP client and NTRIP client connections (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-reconnect&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the timeout time expired without sever response, RTKNAVI retries to connect to server after waiting for the re-connect interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="maximum">
           <number>1000000</number>
@@ -2839,10 +2716,7 @@
        <item row="5" column="5">
         <widget class="QSpinBox" name="sBFileSwapMargin">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If output or log file swap enabled, set the overlapped periods between the previous and the new output files. If you set it to 0, the periods of these files are not overlapped. &lt;/p&gt;&lt;p&gt;This feature is to avoid the missing of transient data by the output file swapping.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> s</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If output or log file swap enabled, set the overlapped periods (s) between the previous and the new output files. If you set it to 0, the periods of these files are not overlapped. &lt;/p&gt;&lt;p&gt;This feature is to avoid the missing of transient data by the output file swapping.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="maximum">
           <number>10000</number>
@@ -2949,10 +2823,7 @@
        <item row="3" column="4">
         <widget class="QSpinBox" name="sBTimeoutTime">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the timeout interval for TCP client and NTRIP client connections (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-timeout&lt;/span&gt;).&lt;/p&gt;&lt;p&gt;If the timeout time expired without sever response, RTKNAVI retries to connect to server after waiting for the reconnect interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="suffix">
-          <string> ms</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the timeout (ms) interval for TCP client and NTRIP client connections (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-timeout&lt;/span&gt;).&lt;/p&gt;&lt;p&gt;If the timeout time expired without sever response, RTKNAVI retries to connect to server after waiting for the reconnect interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="maximum">
           <number>1000000</number>

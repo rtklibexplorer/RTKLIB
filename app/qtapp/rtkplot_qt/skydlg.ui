@@ -60,10 +60,7 @@
       <item>
        <widget class="QSpinBox" name="sBSkySize1">
         <property name="toolTip">
-         <string>Sky image width</string>
-        </property>
-        <property name="suffix">
-         <string> px</string>
+         <string>Sky image width (px)</string>
         </property>
         <property name="maximum">
          <number>1000000</number>
@@ -89,10 +86,7 @@
       <item>
        <widget class="QSpinBox" name="sBSkySize2">
         <property name="toolTip">
-         <string>Sky image height</string>
-        </property>
-        <property name="suffix">
-         <string> px</string>
+         <string>Sky image height (px)</string>
         </property>
         <property name="maximum">
          <number>1000000</number>
@@ -121,10 +115,7 @@
       <item row="0" column="3">
        <widget class="QDoubleSpinBox" name="sBSkyCenter2">
         <property name="toolTip">
-         <string>Center position of sky image</string>
-        </property>
-        <property name="suffix">
-         <string> px</string>
+         <string>Center position of sky image (px)</string>
         </property>
        </widget>
       </item>
@@ -179,10 +170,7 @@
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="sBSkyCenter1">
         <property name="toolTip">
-         <string>Center position of sky image</string>
-        </property>
-        <property name="suffix">
-         <string> px</string>
+         <string>Center position of sky image (px)</string>
         </property>
        </widget>
       </item>
@@ -205,10 +193,7 @@
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="sBSkyFOV1">
         <property name="toolTip">
-         <string>Rotation of image along roll direction</string>
-        </property>
-        <property name="suffix">
-         <string>°</string>
+         <string>Rotation of image along roll direction (deg)</string>
         </property>
         <property name="minimum">
          <double>-180.000000000000000</double>
@@ -222,9 +207,6 @@
        <widget class="QDoubleSpinBox" name="sBSkyScale">
         <property name="toolTip">
          <string>Sky image scaling factor</string>
-        </property>
-        <property name="suffix">
-         <string/>
         </property>
         <property name="minimum">
          <double>0.000000000000000</double>
@@ -240,10 +222,7 @@
       <item row="1" column="3">
        <widget class="QDoubleSpinBox" name="sBSkyFOV2">
         <property name="toolTip">
-         <string>Rotation of image along pitch direction</string>
-        </property>
-        <property name="suffix">
-         <string>°</string>
+         <string>Rotation of image along pitch direction (deg)</string>
         </property>
         <property name="minimum">
          <double>-180.000000000000000</double>
@@ -288,10 +267,7 @@
       <item row="1" column="5">
        <widget class="QDoubleSpinBox" name="sBSkyFOV3">
         <property name="toolTip">
-         <string>Rotation of image along yaw direction</string>
-        </property>
-        <property name="suffix">
-         <string>°</string>
+         <string>Rotation of image along yaw direction (deg)</string>
         </property>
         <property name="minimum">
          <double>-180.000000000000000</double>
@@ -375,9 +351,6 @@
         <property name="toolTip">
          <string>Distortion (1 = no distortion)</string>
         </property>
-        <property name="suffix">
-         <string/>
-        </property>
         <property name="decimals">
          <number>1</number>
         </property>
@@ -387,9 +360,6 @@
        <widget class="QDoubleSpinBox" name="sBSkyDest4">
         <property name="toolTip">
          <string>Distortion (1 = no distortion)</string>
-        </property>
-        <property name="suffix">
-         <string/>
         </property>
         <property name="decimals">
          <number>1</number>
@@ -423,9 +393,6 @@
         <property name="toolTip">
          <string>Distortion (1 = no distortion)</string>
         </property>
-        <property name="suffix">
-         <string/>
-        </property>
         <property name="decimals">
          <number>1</number>
         </property>
@@ -451,9 +418,6 @@
        <widget class="QDoubleSpinBox" name="sBSkyDest7">
         <property name="toolTip">
          <string>Distortion (1 = no distortion)</string>
-        </property>
-        <property name="suffix">
-         <string/>
         </property>
         <property name="decimals">
          <number>1</number>
@@ -481,9 +445,6 @@
         <property name="toolTip">
          <string>Distortion (1 = no distortion)</string>
         </property>
-        <property name="suffix">
-         <string/>
-        </property>
         <property name="decimals">
          <number>1</number>
         </property>
@@ -494,9 +455,6 @@
         <property name="toolTip">
          <string>Distortion (1 = no distortion)</string>
         </property>
-        <property name="suffix">
-         <string/>
-        </property>
         <property name="decimals">
          <number>1</number>
         </property>
@@ -506,9 +464,6 @@
        <widget class="QDoubleSpinBox" name="sBSkyDest6">
         <property name="toolTip">
          <string>Distortion (1 = no distortion)</string>
-        </property>
-        <property name="suffix">
-         <string/>
         </property>
         <property name="decimals">
          <number>1</number>
@@ -561,9 +516,6 @@
        <widget class="QDoubleSpinBox" name="sBSkyDest8">
         <property name="toolTip">
          <string>Distortion (1 = no distortion)</string>
-        </property>
-        <property name="suffix">
-         <string/>
         </property>
         <property name="decimals">
          <number>1</number>

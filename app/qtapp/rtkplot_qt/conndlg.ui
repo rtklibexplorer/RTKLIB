@@ -200,10 +200,7 @@
    <item row="6" column="3">
     <widget class="QSpinBox" name="sBTimeoutTime">
      <property name="toolTip">
-      <string>Timeout to detect inactivity</string>
-     </property>
-     <property name="suffix">
-      <string> ms</string>
+      <string>Timeout to detect inactivity (ms)</string>
      </property>
      <property name="maximum">
       <number>1000000</number>
@@ -260,10 +257,7 @@
    <item row="6" column="5">
     <widget class="QSpinBox" name="sBReconnectTime">
      <property name="toolTip">
-      <string>Timeout until reconnect</string>
-     </property>
-     <property name="suffix">
-      <string> ms</string>
+      <string>Timeout until reconnect (ms)</string>
      </property>
      <property name="maximum">
       <number>1000000</number>

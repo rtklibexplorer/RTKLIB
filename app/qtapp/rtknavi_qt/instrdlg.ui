@@ -88,9 +88,6 @@
       </item>
       <item row="0" column="3">
        <widget class="QDoubleSpinBox" name="sBTimeStart">
-        <property name="suffix">
-         <string> s</string>
-        </property>
         <property name="maximum">
          <double>3600.000000000000000</double>
         </property>
@@ -242,57 +239,48 @@
          <item row="0" column="3">
           <widget class="QDoubleSpinBox" name="sBNmeaPosition3">
            <property name="toolTip">
-            <string>Height to send to base station</string>
-           </property>
-           <property name="suffix">
-            <string> m</string>
+            <string>Height to send to base station (m)</string>
            </property>
            <property name="decimals">
-            <number>3</number>
+            <number>4</number>
            </property>
            <property name="minimum">
-            <double>-200.000000000000000</double>
+            <double>-200.0000</double>
            </property>
            <property name="maximum">
-            <double>8000.000000000000000</double>
+            <double>8000.0000</double>
            </property>
           </widget>
          </item>
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="sBNmeaPosition1">
            <property name="toolTip">
-            <string>Latitude to send to base station</string>
-           </property>
-           <property name="suffix">
-            <string>°</string>
+            <string>Latitude to send to base station (deg)</string>
            </property>
            <property name="decimals">
-            <number>9</number>
+            <number>14</number>
            </property>
            <property name="minimum">
-            <double>-180.000000000000000</double>
+            <double>-180.00000000000000</double>
            </property>
            <property name="maximum">
-            <double>180.000000000000000</double>
+            <double>180.00000000000000</double>
            </property>
           </widget>
          </item>
          <item row="0" column="2">
           <widget class="QDoubleSpinBox" name="sBNmeaPosition2">
            <property name="toolTip">
-            <string>Longitude to send to base station</string>
-           </property>
-           <property name="suffix">
-            <string>°</string>
+            <string>Longitude to send to base station (deg)</string>
            </property>
            <property name="decimals">
-            <number>9</number>
+            <number>14</number>
            </property>
            <property name="minimum">
-            <double>-90.000000000000000</double>
+            <double>-90.00000000000000</double>
            </property>
            <property name="maximum">
-            <double>90.000000000000000</double>
+            <double>90.00000000000000</double>
            </property>
           </widget>
          </item>
@@ -383,16 +371,13 @@
          <item row="0" column="3">
           <widget class="QDoubleSpinBox" name="sBMaxBaseLine">
            <property name="toolTip">
-            <string>Maximum baseline which will trigger the reset command to be executed</string>
-           </property>
-           <property name="suffix">
-            <string> km</string>
+            <string>Maximum baseline (km) which will trigger the reset command to be executed</string>
            </property>
            <property name="maximum">
-            <double>99999.990000000005239</double>
+            <double>99999.99</double>
            </property>
            <property name="value">
-            <double>10.000000000000000</double>
+            <double>10.00</double>
            </property>
           </widget>
          </item>
