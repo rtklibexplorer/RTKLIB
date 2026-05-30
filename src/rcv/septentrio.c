@@ -449,11 +449,10 @@ static int svid2sat(int svid)
     if (svid <=  68) return satno(SYS_GLO, svid-38);
     if (svid <=  70) return 0;
     if (svid <= 106) return satno(SYS_GAL, svid-70);
-    if (svid <= 119) return 0;
+    if (svid <= 119) return 0; // L-Band (MMS) Satellite
     if (svid <= 140) return satno(SYS_SBS, svid);
     if (svid <= 180) return satno(SYS_CMP, svid-140);
-    if (svid <= 187) return satno(SYS_QZS, svid-180+192);
-    if (svid <= 190) return 0; /* L-Band (MMS) Satellite */
+    if (svid <= 190) return satno(SYS_QZS, svid-180+192);
     if (svid <= 197) return satno(SYS_IRN, svid-190);
     if (svid <= 215) return satno(SYS_SBS, svid-57);
     if (svid <= 222) return satno(SYS_IRN, svid-208);
