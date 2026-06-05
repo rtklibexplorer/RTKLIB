@@ -2364,7 +2364,7 @@ Copyright (C) 2016-2024 Jens Reimann</source>
     </message>
     <message>
         <location filename="convmain.cpp" line="453"/>
-        <source>All (*.*);;RTCM 2 (*.rtcm2);;RTCM 3 (*.rtcm3);;NovtAtel (*.gps);;ublox (*.ubx);;SuperStart II (*.log);;Hemisphere (*.bin);;Javad (*.jps);;RINEX OBS (*.obs *.*O);Septentrio (*.sbf)</source>
+        <source>All (*.*);;RTCM 2 (*.rtcm2);;RTCM 3 (*.rtcm3);;NovtAtel (*.gps);;ublox (*.ubx);;Hemisphere (*.bin);;Javad (*.jps);;RINEX OBS (*.obs *.*O);Septentrio (*.sbf)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
