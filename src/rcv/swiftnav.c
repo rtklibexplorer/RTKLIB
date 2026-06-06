@@ -351,7 +351,7 @@ static int sisa_index(double value)
     else if (value<=0.5) return (int)(value/0.01);
     else if (value<=1.0) return (int)((value-0.5)/0.02)+50;
     else if (value<=2.0) return (int)((value-1.0)/0.04)+75;
-    return ((int)(value-2.0)/0.16)+100;
+    return (int)((value-2.0)/0.16)+100;
 }
 
 /* SBP checksum calculation --------------------------------------------------*/
@@ -533,7 +533,7 @@ static int decode_msgobs(raw_t *raw) {
       raw->obuf.data[ii].P[freq] = (flags & 0x1) ? pseudorange : 0.0;
       raw->obuf.data[ii].L[freq] = (flags & 0x2) ? carr_phase : 0.0;
       raw->obuf.data[ii].D[freq] = (flags & 0x8) ? (float)freq_doppler : 0.0f;
-      raw->obuf.data[ii].SNR[freq] = cn0_int * 0.25;
+      raw->obuf.data[ii].SNR[freq] = (float)(cn0_int * 0.25);
       raw->obuf.data[ii].code[freq] = code;
 
       if (flags & 0x2) {
@@ -1570,7 +1570,7 @@ extern int input_sbpjsonf(raw_t *raw, FILE *fp) {
   pcPayloadBeg = (uint8_t *)strchr((char *)pcTmp, '\"') + 1;
   pcPayloadEnd = (uint8_t *)strchr((char *)pcPayloadBeg, '\"') - 1;
   if ((NULL == pcPayloadBeg) || (NULL == pcPayloadEnd)) return 0;
-  uPayloadSize = pcPayloadEnd - pcPayloadBeg + 1;
+  uPayloadSize = (uint32_t)(pcPayloadEnd - pcPayloadBeg) + 1;
   pcPayloadEnd[1] = 0;
   /* fprintf(stderr, "%4d: %s\n", uPayloadSize, pcPayloadBeg); */
   memset(puPayloadTmp, 0, sizeof(puPayloadTmp));

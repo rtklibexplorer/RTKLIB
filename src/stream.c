@@ -131,10 +131,14 @@
 #define dev_t               HANDLE
 #define socket_t            SOCKET
 typedef int socklen_t;
+#define PRIDEV              "p"
+#define PRISOCK             "llu"
 #else
 #define dev_t               int
 #define socket_t            int
 #define closesocket         close
+#define PRIDEV              "d"
+#define PRISOCK             "d"
 #endif
 
 /* type definition -----------------------------------------------------------*/
@@ -265,7 +269,7 @@ typedef struct {            /* memory buffer type */
 
 static tcpsvr_t *opentcpsvr(const char *path, char *msg);
 static void closetcpsvr(tcpsvr_t *tcpsvr);
-static int writetcpsvr(tcpsvr_t *tcpsvr, uint8_t *buff, int n, char *msg);
+static int writetcpsvr(tcpsvr_t *tcpsvr, const uint8_t *buff, int n, char *msg);
 
 /* global options ------------------------------------------------------------*/
 
@@ -284,7 +288,7 @@ static int readseribuff(serial_t *serial, uint8_t *buff, int nmax)
 {
     int ns;
     
-    tracet(5,"readseribuff: dev=%d\n",serial->dev);
+    tracet(5,"readseribuff: dev=%" PRIDEV "\n",serial->dev);
     
     rtklib_lock(&serial->lock);
     for (ns=0;serial->rp!=serial->wp&&ns<nmax;ns++) {
@@ -295,11 +299,11 @@ static int readseribuff(serial_t *serial, uint8_t *buff, int nmax)
     tracet(5,"readseribuff: ns=%d rp=%d wp=%d\n",ns,serial->rp,serial->wp);
     return ns;
 }
-static int writeseribuff(serial_t *serial, uint8_t *buff, int n)
+static int writeseribuff(serial_t *serial, const uint8_t *buff, int n)
 {
     int ns,wp;
     
-    tracet(5,"writeseribuff: dev=%d n=%d\n",serial->dev,n);
+    tracet(5,"writeseribuff: dev=%" PRIDEV " n=%d\n",serial->dev,n);
     
     rtklib_lock(&serial->lock);
     for (ns=0;ns<n;ns++) {
@@ -492,15 +496,14 @@ static serial_t *openserial(const char *path, int mode, char *msg)
         sprintf(path_tcp,":%d",tcp_port);
         serial->tcpsvr=opentcpsvr(path_tcp,msg_tcp);
     }
-    tracet(3,"openserial: dev=%d\n",serial->dev);
+    tracet(3,"openserial: dev=%" PRIDEV "\n",serial->dev);
     return serial;
 }
 /* close serial --------------------------------------------------------------*/
 static void closeserial(serial_t *serial)
 {
-    tracet(3,"closeserial: dev=%d\n",serial->dev);
-    
     if (!serial) return;
+    tracet(3,"closeserial: dev=%" PRIDEV "\n",serial->dev);
 #ifdef WIN32
     serial->state=0;
     WaitForSingleObject(serial->thread,10000);
@@ -524,14 +527,14 @@ static int readserial(serial_t *serial, uint8_t *buff, int n, char *msg)
 #else
     int nr;
 #endif
-    tracet(4,"readserial: dev=%d n=%d\n",serial->dev,n);
     if (!serial) return 0;
+    tracet(4,"readserial: dev=%" PRIDEV " n=%d\n",serial->dev,n);
 #ifdef WIN32
     if (!ReadFile(serial->dev,buff,n,&nr,NULL)) return 0;
 #else
     if ((nr=read(serial->dev,buff,n))<0) return 0;
 #endif
-    tracet(5,"readserial: exit dev=%d nr=%d\n",serial->dev,nr);
+    tracet(5,"readserial: exit dev=%" PRIDEV " nr=%lu\n",serial->dev,(unsigned long)nr);
     
     /* write received stream to tcp server port */
     if (serial->tcpsvr&&nr>0) {
@@ -541,14 +544,14 @@ static int readserial(serial_t *serial, uint8_t *buff, int n, char *msg)
     return nr;
 }
 /* write serial --------------------------------------------------------------*/
-static int writeserial(serial_t *serial, uint8_t *buff, int n, char *msg)
+static int writeserial(serial_t *serial, const uint8_t *buff, int n, char *msg)
 {
     (void)msg;
     int ns=0;
     
-    tracet(3,"writeserial: dev=%d n=%d\n",serial->dev,n);
-    
     if (!serial) return 0;
+    tracet(3,"writeserial: dev=%" PRIDEV " n=%d\n",serial->dev,n);
+
 #ifdef WIN32
     if ((ns=writeseribuff(serial,buff,n))<n) serial->error=1;
 #else
@@ -561,16 +564,16 @@ static int writeserial(serial_t *serial, uint8_t *buff, int n, char *msg)
         serial->error=1;
     }
 #endif
-    tracet(5,"writeserial: exit dev=%d ns=%d\n",serial->dev,ns);
+    tracet(5,"writeserial: exit dev=%" PRIDEV " ns=%d\n",serial->dev,ns);
     return ns;
 }
 /* get state serial ----------------------------------------------------------*/
-static int stateserial(serial_t *serial)
+static int stateserial(const serial_t *serial)
 {
     return !serial?0:(serial->error?-1:2);
 }
 /* get extended state serial -------------------------------------------------*/
-static int statexserial(serial_t *serial, char *msg)
+static int statexserial(const serial_t *serial, char *msg)
 {
     char *p=msg;
     int state=!serial?0:(serial->error?-1:2);
@@ -578,7 +581,7 @@ static int statexserial(serial_t *serial, char *msg)
     p+=sprintf(p,"serial:\n");
     p+=sprintf(p,"  state   = %d\n",state);
     if (!state) return 0;
-    p+=sprintf(p,"  dev     = %d\n",(int)serial->dev);
+    p+=sprintf(p,"  dev     = %" PRIDEV "\n",serial->dev);
     p+=sprintf(p,"  error   = %d\n",serial->error);
 #ifdef WIN32
     p+=sprintf(p,"  buffsize= %d\n",serial->buffsize);
@@ -783,12 +786,12 @@ static void swapclose(file_t *file)
     file->fp_tmp=file->fp_tag_tmp=NULL;
 }
 /* get state file ------------------------------------------------------------*/
-static int statefile(file_t *file)
+static int statefile(const file_t *file)
 {
     return file?2:0;
 }
 /* get extended state file ---------------------------------------------------*/
-static int statexfile(file_t *file, char *msg)
+static int statexfile(const file_t *file, char *msg)
 {
     char *p=msg,tstr1[40],tstr2[40];
     int state=file?2:0;
@@ -885,7 +888,7 @@ static int readfile(file_t *file, uint8_t *buff, int nmax, char *msg)
     return nr;
 }
 /* write file ----------------------------------------------------------------*/
-static int writefile(file_t *file, uint8_t *buff, int n, char *msg)
+static int writefile(file_t *file, const uint8_t *buff, int n, char *msg)
 {
     gtime_t wtime;
     uint64_t fpos_8B;
@@ -1020,22 +1023,22 @@ static int setsock(socket_t sock, char *msg)
 #else
     struct timeval tv={0};
 #endif
-    tracet(3,"setsock: sock=%d\n",sock);
+    tracet(3,"setsock: sock=%" PRISOCK "\n",sock);
     
     if (setsockopt(sock,SOL_SOCKET,SO_RCVTIMEO,(const char *)&tv,sizeof(tv))==-1||
         setsockopt(sock,SOL_SOCKET,SO_SNDTIMEO,(const char *)&tv,sizeof(tv))==-1) {
         sprintf(msg,"sockopt error: notimeo");
-        tracet(1,"setsock: setsockopt error 1 sock=%d err=%d\n",sock,errsock());
+        tracet(1,"setsock: setsockopt error 1 sock=%" PRISOCK " err=%d\n",sock,errsock());
         closesocket(sock);
         return 0;
     }
     if (setsockopt(sock,SOL_SOCKET,SO_RCVBUF,(const char *)&bs,sizeof(bs))==-1||
         setsockopt(sock,SOL_SOCKET,SO_SNDBUF,(const char *)&bs,sizeof(bs))==-1) {
-        tracet(1,"setsock: setsockopt error 2 sock=%d err=%d bs=%d\n",sock,errsock(),bs);
+        tracet(1,"setsock: setsockopt error 2 sock=%" PRISOCK " err=%d bs=%d\n",sock,errsock(),bs);
         sprintf(msg,"sockopt error: bufsiz");
     }
     if (setsockopt(sock,IPPROTO_TCP,TCP_NODELAY,(const char *)&mode,sizeof(mode))==-1) {
-        tracet(1,"setsock: setsockopt error 3 sock=%d err=%d\n",sock,errsock());
+        tracet(1,"setsock: setsockopt error 3 sock=%" PRISOCK " err=%d\n",sock,errsock());
         sprintf(msg,"sockopt error: nodelay");
     }
     return 1;
@@ -1046,7 +1049,11 @@ static socket_t accept_nb(socket_t sock, struct sockaddr *addr, socklen_t *len, 
     fd_set rs;
     FD_ZERO(&rs); FD_SET(sock, &rs);
     struct timeval tv = {0};
+#ifdef WIN32
+    int ret = select(0, &rs, NULL, NULL, &tv);
+#else
     int ret = select(sock + 1, &rs, NULL, NULL, &tv);
+#endif
     if (ret == 0) {
       *err = 0;
       return (socket_t)ret;
@@ -1084,7 +1091,11 @@ static int connect_nb(socket_t sock, struct sockaddr *addr, socklen_t len, int *
         fd_set rs, ws;
         FD_ZERO(&rs); FD_SET(sock, &rs); ws = rs;
         struct timeval tv = {0};
+#ifdef WIN32
+        if (select(0, &rs, &ws, NULL, &tv) == 0) {
+#else
         if (select(sock + 1, &rs, &ws, NULL, &tv) == 0) {
+#endif
           *err = 0;
           return 0;
         }
@@ -1101,7 +1112,11 @@ static int recv_nb(socket_t sock, uint8_t *buff, int n, int *err)
     fd_set rs;
     FD_ZERO(&rs); FD_SET(sock, &rs);
     struct timeval tv = {0};
+#ifdef WIN32
+    int ret = select(0, &rs, NULL, NULL, &tv);
+#else
     int ret = select(sock + 1, &rs, NULL, NULL, &tv);
+#endif
     if (ret < 0) {
       *err = errsock();
       return ret;
@@ -1123,12 +1138,16 @@ static int recv_nb(socket_t sock, uint8_t *buff, int n, int *err)
     return nr;
 }
 /* non-block send ------------------------------------------------------------*/
-static int send_nb(socket_t sock, uint8_t *buff, int n, int *err)
+static int send_nb(socket_t sock, const uint8_t *buff, int n, int *err)
 {
     fd_set ws;
     FD_ZERO(&ws); FD_SET(sock, &ws);
     struct timeval tv = {0};
+#ifdef WIN32
+    int ret = select(0, NULL, &ws, NULL, &tv);
+#else
     int ret = select(sock + 1, NULL, &ws, NULL, &tv);
+#endif
     if (ret < 0) {
       *err = errsock();
       return ret;
@@ -1148,7 +1167,7 @@ static int send_nb(socket_t sock, uint8_t *buff, int n, int *err)
 /* generate tcp socket -------------------------------------------------------*/
 static int gentcp(tcp_t *tcp, int type, char *msg)
 {
-    struct hostent *hp;
+    const struct hostent *hp;
 #ifdef SVR_REUSEADDR
     int opt=1;
 #endif
@@ -1212,13 +1231,13 @@ static int gentcp(tcp_t *tcp, int type, char *msg)
     }
     tcp->state=1;
     tcp->tact=tickget();
-    tracet(5,"gentcp: exit sock=%d\n",tcp->sock);
+    tracet(5,"gentcp: exit sock=%" PRISOCK "\n",tcp->sock);
     return 1;
 }
 /* disconnect tcp ------------------------------------------------------------*/
 static void discontcp(tcp_t *tcp, int tcon)
 {
-    tracet(3,"discontcp: sock=%d tcon=%d\n",tcp->sock,tcon);
+    tracet(3,"discontcp: sock=%" PRISOCK " tcon=%d\n",tcp->sock,tcon);
     
     closesocket(tcp->sock);
     tcp->state=0;
@@ -1293,18 +1312,18 @@ static int accsock(tcpsvr_t *tcpsvr, char *msg)
     socklen_t len=sizeof(addr);
     int i,err;
     
-    tracet(4,"accsock: sock=%d\n",tcpsvr->svr.sock);
+    tracet(4,"accsock: sock=%" PRISOCK "\n",tcpsvr->svr.sock);
     
     for (i=0;i<MAXCLI;i++) {
         if (tcpsvr->cli[i].state==0) break;
     }
     if (i>=MAXCLI) {
-        tracet(2,"accsock: too many clients sock=%d\n",tcpsvr->svr.sock);
+        tracet(2,"accsock: too many clients sock=%" PRISOCK "\n",tcpsvr->svr.sock);
         return 0;
     }
     if ((sock=accept_nb(tcpsvr->svr.sock,(struct sockaddr *)&addr,&len,&err))==(socket_t)-1) {
         sprintf(msg,"accept error (%d)",err);
-        tracet(1,"accsock: accept error sock=%d err=%d\n",tcpsvr->svr.sock,err);
+        tracet(1,"accsock: accept error sock=%" PRISOCK " err=%d\n",tcpsvr->svr.sock,err);
         closesocket(tcpsvr->svr.sock);
         tcpsvr->svr.state=0;
         return 0;
@@ -1316,7 +1335,7 @@ static int accsock(tcpsvr_t *tcpsvr, char *msg)
     memcpy(&tcpsvr->cli[i].addr,&addr,sizeof(addr));
     strcpy(tcpsvr->cli[i].saddr,inet_ntoa(addr.sin_addr));
     sprintf(msg,"%s",tcpsvr->cli[i].saddr);
-    tracet(3,"accsock: connected sock=%d addr=%s i=%d\n",
+    tracet(3,"accsock: connected sock=%" PRISOCK " addr=%s i=%d\n",
            tcpsvr->cli[i].sock,tcpsvr->cli[i].saddr,i);
     tcpsvr->cli[i].state=2;
     tcpsvr->cli[i].tact=tickget();
@@ -1325,7 +1344,7 @@ static int accsock(tcpsvr_t *tcpsvr, char *msg)
 /* wait socket accept --------------------------------------------------------*/
 static int waittcpsvr(tcpsvr_t *tcpsvr, char *msg)
 {
-    tracet(4,"waittcpsvr: sock=%d state=%d\n",tcpsvr->svr.sock,tcpsvr->svr.state);
+    tracet(4,"waittcpsvr: sock=%" PRISOCK " state=%d\n",tcpsvr->svr.sock,tcpsvr->svr.state);
     
     if (tcpsvr->svr.state<=0) return 0;
     
@@ -1348,7 +1367,7 @@ static int readtcpsvr(tcpsvr_t *tcpsvr, uint8_t *buff, int n, char *msg)
         
         if ((nr=recv_nb(tcpsvr->cli[i].sock,buff,n,&err))==-1) {
             if (err) {
-                tracet(2,"readtcpsvr: recv error sock=%d err=%d\n",
+                tracet(2,"readtcpsvr: recv error sock=%" PRISOCK " err=%d\n",
                        tcpsvr->cli[i].sock,err);
             }
             discontcp(&tcpsvr->cli[i],ticonnect);
@@ -1362,7 +1381,7 @@ static int readtcpsvr(tcpsvr_t *tcpsvr, uint8_t *buff, int n, char *msg)
     return 0;
 }
 /* write tcp server ----------------------------------------------------------*/
-static int writetcpsvr(tcpsvr_t *tcpsvr, uint8_t *buff, int n, char *msg)
+static int writetcpsvr(tcpsvr_t *tcpsvr, const uint8_t *buff, int n, char *msg)
 {
     int i,ns=0,nmax=0,err;
     
@@ -1375,7 +1394,7 @@ static int writetcpsvr(tcpsvr_t *tcpsvr, uint8_t *buff, int n, char *msg)
         
         if ((ns=send_nb(tcpsvr->cli[i].sock,buff,n,&err))==-1) {
             if (err) {
-                tracet(2,"writetcpsvr: send error i=%d sock=%d err=%d\n",i,
+                tracet(2,"writetcpsvr: send error i=%d sock=%" PRISOCK " err=%d\n",i,
                        tcpsvr->cli[i].sock,err);
             }
             discontcp(&tcpsvr->cli[i],ticonnect);
@@ -1389,19 +1408,19 @@ static int writetcpsvr(tcpsvr_t *tcpsvr, uint8_t *buff, int n, char *msg)
     return nmax;
 }
 /* get state tcp server ------------------------------------------------------*/
-static int statetcpsvr(tcpsvr_t *tcpsvr)
+static int statetcpsvr(const tcpsvr_t *tcpsvr)
 {
     return tcpsvr?tcpsvr->svr.state:0;
 }
 /* print extended state tcp --------------------------------------------------*/
-static int statextcp(tcp_t *tcp, char *msg)
+static int statextcp(const tcp_t *tcp, char *msg)
 {
     char *p=msg;
     
     p+=sprintf(p,"    state = %d\n",tcp->state);
     p+=sprintf(p,"    saddr = %s\n",tcp->saddr);
     p+=sprintf(p,"    port  = %d\n",tcp->port);
-    p+=sprintf(p,"    sock  = %d\n",(int)tcp->sock);
+    p+=sprintf(p,"    sock  = %" PRISOCK "\n", tcp->sock);
 #ifdef RTK_DISABLED /* for debug */
     p+=sprintf(p,"    tcon  = %d\n",tcp->tcon);
     p+=sprintf(p,"    tact  = %u\n",tcp->tact);
@@ -1410,7 +1429,7 @@ static int statextcp(tcp_t *tcp, char *msg)
     return (int)(p-msg);
 }
 /* get extended state tcp server ---------------------------------------------*/
-static int statextcpsvr(tcpsvr_t *tcpsvr, char *msg)
+static int statextcpsvr(const tcpsvr_t *tcpsvr, char *msg)
 {
     char *p=msg;
     int i,state=tcpsvr?tcpsvr->svr.state:0;
@@ -1432,7 +1451,7 @@ static int consock(tcpcli_t *tcpcli, char *msg)
 {
     int stat,err;
     
-    tracet(4,"consock: sock=%d\n",tcpcli->svr.sock);
+    tracet(4,"consock: sock=%" PRISOCK "\n",tcpcli->svr.sock);
     
     /* wait re-connect */
     if (tcpcli->svr.tcon<0||(tcpcli->svr.tcon>0&&
@@ -1443,7 +1462,7 @@ static int consock(tcpcli_t *tcpcli, char *msg)
     if ((stat=connect_nb(tcpcli->svr.sock,(struct sockaddr *)&tcpcli->svr.addr,
                          sizeof(tcpcli->svr.addr),&err))==-1) {
         sprintf(msg,"connect error (%d)",err);
-        tracet(2,"consock: connect error sock=%d err=%d\n",tcpcli->svr.sock,err);
+        tracet(2,"consock: connect error sock=%" PRISOCK " err=%d\n",tcpcli->svr.sock,err);
         closesocket(tcpcli->svr.sock);
         tcpcli->svr.state=0;
         return 0;
@@ -1453,7 +1472,7 @@ static int consock(tcpcli_t *tcpcli, char *msg)
         return 0;
     }
     sprintf(msg,"%s",tcpcli->svr.saddr);
-    tracet(3,"consock: connected sock=%d addr=%s\n",tcpcli->svr.sock,tcpcli->svr.saddr);
+    tracet(3,"consock: connected sock=%" PRISOCK " addr=%s\n",tcpcli->svr.sock,tcpcli->svr.saddr);
     tcpcli->svr.state=2;
     tcpcli->svr.tact=tickget();
     return 1;
@@ -1483,7 +1502,7 @@ static tcpcli_t *opentcpcli(const char *path, char *msg)
 /* close tcp client ----------------------------------------------------------*/
 static void closetcpcli(tcpcli_t *tcpcli)
 {
-    tracet(3,"closetcpcli: sock=%d\n",tcpcli->svr.sock);
+    tracet(3,"closetcpcli: sock=%" PRISOCK "\n",tcpcli->svr.sock);
     
     closesocket(tcpcli->svr.sock);
     free(tcpcli);
@@ -1491,7 +1510,7 @@ static void closetcpcli(tcpcli_t *tcpcli)
 /* wait socket connect -------------------------------------------------------*/
 static int waittcpcli(tcpcli_t *tcpcli, char *msg)
 {
-    tracet(4,"waittcpcli: sock=%d state=%d\n",tcpcli->svr.sock,tcpcli->svr.state);
+    tracet(4,"waittcpcli: sock=%" PRISOCK " state=%d\n",tcpcli->svr.sock,tcpcli->svr.state);
     
     if (tcpcli->svr.state<0) return 0;
     
@@ -1505,7 +1524,7 @@ static int waittcpcli(tcpcli_t *tcpcli, char *msg)
         if (tcpcli->toinact>0&&
             (int)(tickget()-tcpcli->svr.tact)>tcpcli->toinact) {
             sprintf(msg,"timeout");
-            tracet(2,"waittcpcli: inactive timeout sock=%d\n",tcpcli->svr.sock);
+            tracet(2,"waittcpcli: inactive timeout sock=%" PRISOCK "\n",tcpcli->svr.sock);
             discontcp(&tcpcli->svr,tcpcli->tirecon);
             return 0;
         }
@@ -1517,13 +1536,13 @@ static int readtcpcli(tcpcli_t *tcpcli, uint8_t *buff, int n, char *msg)
 {
     int nr,err;
     
-    tracet(4,"readtcpcli: sock=%d\n",tcpcli->svr.sock);
+    tracet(4,"readtcpcli: sock=%" PRISOCK "\n",tcpcli->svr.sock);
     
     if (!waittcpcli(tcpcli,msg)) return 0;
     
     if ((nr=recv_nb(tcpcli->svr.sock,buff,n,&err))==-1) {
         if (err) {
-            tracet(2,"readtcpcli: recv error sock=%d err=%d\n",tcpcli->svr.sock,err);
+            tracet(2,"readtcpcli: recv error sock=%" PRISOCK " err=%d\n",tcpcli->svr.sock,err);
             sprintf(msg,"recv error (%d)",err);
         }
         else {
@@ -1533,37 +1552,37 @@ static int readtcpcli(tcpcli_t *tcpcli, uint8_t *buff, int n, char *msg)
         return 0;
     }
     if (nr>0) tcpcli->svr.tact=tickget();
-    tracet(5,"readtcpcli: exit sock=%d nr=%d\n",tcpcli->svr.sock,nr);
+    tracet(5,"readtcpcli: exit sock=%" PRISOCK " nr=%d\n",tcpcli->svr.sock,nr);
     return nr;
 }
 /* write tcp client ----------------------------------------------------------*/
-static int writetcpcli(tcpcli_t *tcpcli, uint8_t *buff, int n, char *msg)
+static int writetcpcli(tcpcli_t *tcpcli, const uint8_t *buff, int n, char *msg)
 {
     int ns,err;
     
-    tracet(3,"writetcpcli: sock=%d state=%d n=%d\n",tcpcli->svr.sock,tcpcli->svr.state,n);
+    tracet(3,"writetcpcli: sock=%" PRISOCK " state=%d n=%d\n",tcpcli->svr.sock,tcpcli->svr.state,n);
     
     if (!waittcpcli(tcpcli,msg)) return 0;
     
     if ((ns=send_nb(tcpcli->svr.sock,buff,n,&err))==-1) {
         if (err) {
-            tracet(2,"writetcp: send error sock=%d err=%d\n",tcpcli->svr.sock,err);
+            tracet(2,"writetcp: send error sock=%" PRISOCK " err=%d\n",tcpcli->svr.sock,err);
             sprintf(msg,"send error (%d)",err);
         }
         discontcp(&tcpcli->svr,tcpcli->tirecon);
         return 0;
     }
     if (ns>0) tcpcli->svr.tact=tickget();
-    tracet(5,"writetcpcli: exit sock=%d ns=%d\n",tcpcli->svr.sock,ns);
+    tracet(5,"writetcpcli: exit sock=%" PRISOCK " ns=%d\n",tcpcli->svr.sock,ns);
     return ns;
 }
 /* get state tcp client ------------------------------------------------------*/
-static int statetcpcli(tcpcli_t *tcpcli)
+static int statetcpcli(const tcpcli_t *tcpcli)
 {
     return tcpcli?tcpcli->svr.state:0;
 }
 /* get extended state tcp client ---------------------------------------------*/
-static int statextcpcli(tcpcli_t *tcpcli, char *msg)
+static int statextcpcli(const tcpcli_t *tcpcli, char *msg)
 {
     (void)msg;
     return tcpcli?tcpcli->svr.state:0;
@@ -1837,7 +1856,7 @@ static int readntrip(ntrip_t *ntrip, uint8_t *buff, int n, char *msg)
     return readtcpcli(ntrip->tcp,buff,n,msg);
 }
 /* write ntrip ---------------------------------------------------------------*/
-static int writentrip(ntrip_t *ntrip, uint8_t *buff, int n, char *msg)
+static int writentrip(ntrip_t *ntrip, const uint8_t *buff, int n, char *msg)
 {
     tracet(3,"writentrip: n=%d\n",n);
     
@@ -1846,12 +1865,12 @@ static int writentrip(ntrip_t *ntrip, uint8_t *buff, int n, char *msg)
     return writetcpcli(ntrip->tcp,buff,n,msg);
 }
 /* get state ntrip -----------------------------------------------------------*/
-static int statentrip(ntrip_t *ntrip)
+static int statentrip(const ntrip_t *ntrip)
 {
     return !ntrip?0:(ntrip->state==0?ntrip->tcp->svr.state:ntrip->state);
 }
 /* get extended state ntrip --------------------------------------------------*/
-static int statexntrip(ntrip_t *ntrip, char *msg)
+static int statexntrip(const ntrip_t *ntrip, char *msg)
 {
     char *p=msg;
     int state=!ntrip?0:(ntrip->state==0?ntrip->tcp->svr.state:ntrip->state);
@@ -2033,7 +2052,7 @@ static void wait_ntripc(ntripc_t *ntripc, char *msg)
         
         if ((n=recv_nb(ntripc->tcp->cli[i].sock,buff,nmax,&err))==-1) {
             if (err) {
-                tracet(2,"wait_ntripc: recv error sock=%d err=%d\n",
+                tracet(2,"wait_ntripc: recv error sock=%" PRISOCK " err=%d\n",
                        ntripc->tcp->cli[i].sock,err);
             }
             discon_ntripc(ntripc,i);
@@ -2062,7 +2081,7 @@ static int readntripc(ntripc_t *ntripc, uint8_t *buff, int n, char *msg)
         
         if (nr<0) {
             if (err) {
-                tracet(2,"readntripc: recv error i=%d sock=%d err=%d\n",i,
+                tracet(2,"readntripc: recv error i=%d sock=%" PRISOCK " err=%d\n",i,
                        ntripc->tcp->cli[i].sock,err);
             }
             discon_ntripc(ntripc,i);
@@ -2075,7 +2094,7 @@ static int readntripc(ntripc_t *ntripc, uint8_t *buff, int n, char *msg)
     return 0;
 }
 /* write ntrip-caster --------------------------------------------------------*/
-static int writentripc(ntripc_t *ntripc, uint8_t *buff, int n, char *msg)
+static int writentripc(ntripc_t *ntripc, const uint8_t *buff, int n, char *msg)
 {
     int i,ns=0,err;
 
@@ -2090,7 +2109,7 @@ static int writentripc(ntripc_t *ntripc, uint8_t *buff, int n, char *msg)
         
         if (ns<n) {
             if (err) {
-                tracet(2,"writentripc: send error i=%d sock=%d err=%d\n",i,
+                tracet(2,"writentripc: send error i=%d sock=%" PRISOCK " err=%d\n",i,
                        ntripc->tcp->cli[i].sock,err);
             }
             discon_ntripc(ntripc,i);
@@ -2102,12 +2121,12 @@ static int writentripc(ntripc_t *ntripc, uint8_t *buff, int n, char *msg)
     return ns;
 }
 /* get state ntrip-caster ----------------------------------------------------*/
-static int statentripc(ntripc_t *ntripc)
+static int statentripc(const ntripc_t *ntripc)
 {
     return !ntripc?0:ntripc->state;
 }
 /* get extended state ntrip-caster -------------------------------------------*/
-static int statexntripc(ntripc_t *ntripc, char *msg)
+static int statexntripc(const ntripc_t *ntripc, char *msg)
 {
     char *p=msg;
     int i,state=!ntripc?0:ntripc->state;
@@ -2135,7 +2154,7 @@ static int statexntripc(ntripc_t *ntripc, char *msg)
 static udp_t *genudp(int type, int port, const char *saddr, char *msg)
 {
     udp_t *udp;
-    struct hostent *hp;
+    const struct hostent *hp;
     int bs=buffsize,opt=1;
     
     tracet(3,"genudp: type=%d\n",type);
@@ -2153,7 +2172,7 @@ static udp_t *genudp(int type, int port, const char *saddr, char *msg)
     }
     if (setsockopt(udp->sock,SOL_SOCKET,SO_RCVBUF,(const char *)&bs,sizeof(bs))==-1||
         setsockopt(udp->sock,SOL_SOCKET,SO_SNDBUF,(const char *)&bs,sizeof(bs))==-1) {
-        tracet(2,"genudp: setsockopt error sock=%d err=%d bs=%d\n",udp->sock,errsock(),bs);
+        tracet(2,"genudp: setsockopt error sock=%" PRISOCK " err=%d bs=%d\n",udp->sock,errsock(),bs);
         sprintf(msg,"sockopt error: bufsiz");
     }
     memset(&udp->addr,0,sizeof(udp->addr));
@@ -2166,7 +2185,7 @@ static udp_t *genudp(int type, int port, const char *saddr, char *msg)
         setsockopt(udp->sock,SOL_SOCKET,SO_REUSEADDR,(const char *)&opt, sizeof(opt));
 #endif
         if (bind(udp->sock,(struct sockaddr *)&udp->addr,sizeof(udp->addr))==-1) {
-            tracet(2,"genudp: bind error sock=%d port=%d err=%d\n",udp->sock,port,errsock());
+            tracet(2,"genudp: bind error sock=%" PRISOCK " port=%d err=%d\n",udp->sock,port,errsock());
             sprintf(msg,"bind error (%d): %d",errsock(),port);
             closesocket(udp->sock);
             free(udp);
@@ -2177,7 +2196,7 @@ static udp_t *genudp(int type, int port, const char *saddr, char *msg)
         if (!strcmp(saddr,"255.255.255.255")&&
             setsockopt(udp->sock,SOL_SOCKET,SO_BROADCAST,(const char *)&opt,
                        sizeof(opt))==-1) {
-            tracet(2,"genudp: setsockopt error sock=%d err=%d\n",udp->sock,errsock());
+            tracet(2,"genudp: setsockopt error sock=%" PRISOCK " err=%d\n",udp->sock,errsock());
             sprintf(msg,"sockopt error: broadcast");
         }
         if (!(hp=gethostbyname(saddr))) {
@@ -2210,7 +2229,7 @@ static udp_t *openudpsvr(const char *path, char *msg)
 /* close udp server ----------------------------------------------------------*/
 static void closeudpsvr(udp_t *udpsvr)
 {
-    tracet(3,"closeudpsvr: sock=%d\n",udpsvr->sock);
+    tracet(3,"closeudpsvr: sock=%" PRISOCK "\n", udpsvr->sock);
     
     closesocket(udpsvr->sock);
     free(udpsvr);
@@ -2223,21 +2242,25 @@ static int readudpsvr(udp_t *udpsvr, uint8_t *buff, int n, char *msg)
     fd_set rs;
     int ret,nr;
     
-    tracet(4,"readudpsvr: sock=%d n=%d\n",udpsvr->sock,n);
+    tracet(4,"readudpsvr: sock=%" PRISOCK " n=%d\n",udpsvr->sock,n);
     
     FD_ZERO(&rs); FD_SET(udpsvr->sock,&rs);
+#ifdef WIN32
+    ret=select(0,&rs,NULL,NULL,&tv);
+#else
     ret=select(udpsvr->sock+1,&rs,NULL,NULL,&tv);
+#endif
     if (ret<=0) return ret;
     nr=recvfrom(udpsvr->sock,(char *)buff,n,0,NULL,NULL);
     return nr<=0?-1:nr;
 }
 /* get state udp server ------------------------------------------------------*/
-static int stateudpsvr(udp_t *udpsvr)
+static int stateudpsvr(const udp_t *udpsvr)
 {
     return udpsvr?udpsvr->state:0;
 }
 /* get extended state udp server ---------------------------------------------*/
-static int statexudpsvr(udp_t *udpsvr, char *msg)
+static int statexudpsvr(const udp_t *udpsvr, char *msg)
 {
     char *p=msg;
     int state=udpsvr?udpsvr->state:0;
@@ -2246,7 +2269,7 @@ static int statexudpsvr(udp_t *udpsvr, char *msg)
     p+=sprintf(p,"  state   = %d\n",state);
     if (!state) return 0;
     p+=sprintf(p,"  type    = %d\n",udpsvr->type);
-    p+=sprintf(p,"  sock    = %d\n",(int)udpsvr->sock);
+    p+=sprintf(p,"  sock    = %" PRISOCK "\n", udpsvr->sock);
     sprintf(p,"  port    = %d\n",udpsvr->port);
     return state;
 }
@@ -2270,27 +2293,27 @@ static udp_t *openudpcli(const char *path, char *msg)
 /* close udp client ----------------------------------------------------------*/
 static void closeudpcli(udp_t *udpcli)
 {
-    tracet(3,"closeudpcli: sock=%d\n",udpcli->sock);
+    tracet(3,"closeudpcli: sock=%" PRISOCK "\n",udpcli->sock);
     
     closesocket(udpcli->sock);
     free(udpcli);
 }
 /* write udp client -----------------------------------------------------------*/
-static int writeudpcli(udp_t *udpcli, uint8_t *buff, int n, char *msg)
+static int writeudpcli(udp_t *udpcli, const uint8_t *buff, int n, char *msg)
 {
     (void)msg;
-    tracet(4,"writeudpcli: sock=%d n=%d\n",udpcli->sock,n);
+    tracet(4,"writeudpcli: sock=%" PRISOCK " n=%d\n",udpcli->sock,n);
     
     return (int)sendto(udpcli->sock,(char *)buff,n,0,
                        (struct sockaddr *)&udpcli->addr,sizeof(udpcli->addr));
 }
 /* get state udp client ------------------------------------------------------*/
-static int stateudpcli(udp_t *udpcli)
+static int stateudpcli(const udp_t *udpcli)
 {
     return udpcli?udpcli->state:0;
 }
 /* get extended state udp client ---------------------------------------------*/
-static int statexudpcli(udp_t *udpcli, char *msg)
+static int statexudpcli(const udp_t *udpcli, char *msg)
 {
     char *p=msg;
     int state=udpcli?udpcli->state:0;
@@ -2299,7 +2322,7 @@ static int statexudpcli(udp_t *udpcli, char *msg)
     p+=sprintf(p,"  state   = %d\n",state);
     if (!state) return 0;
     p+=sprintf(p,"  type    = %d\n",udpcli->type);
-    p+=sprintf(p,"  sock    = %d\n",(int)udpcli->sock);
+    p+=sprintf(p,"  sock    = %" PRISOCK "\n",udpcli->sock);
     p+=sprintf(p,"  addr    = %s\n",udpcli->saddr);
     sprintf(p,"  port    = %d\n",udpcli->port);
     return state;
@@ -2550,12 +2573,12 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
     return (int)(p-buff);
 }
 /* get state ftp -------------------------------------------------------------*/
-static int stateftp(ftp_t *ftp)
+static int stateftp(const ftp_t *ftp)
 {
     return !ftp?0:(ftp->state==0?2:(ftp->state<=2?3:-1));
 }
 /* get extended state ftp ----------------------------------------------------*/
-static int statexftp(ftp_t *ftp, char *msg)
+static int statexftp(const ftp_t *ftp, char *msg)
 {
     (void)msg;
     return !ftp?0:(ftp->state==0?2:(ftp->state<=2?3:-1));
@@ -2615,7 +2638,7 @@ static int readmembuf(membuf_t *membuf, uint8_t *buff, int n, char *msg)
     return nr;
 }
 /* write memory buffer -------------------------------------------------------*/
-static int writemembuf(membuf_t *membuf, uint8_t *buff, int n, char *msg)
+static int writemembuf(membuf_t *membuf, const uint8_t *buff, int n, char *msg)
 {
     int i;
     
@@ -2639,12 +2662,12 @@ static int writemembuf(membuf_t *membuf, uint8_t *buff, int n, char *msg)
     return i;
 }
 /* get state memory buffer ---------------------------------------------------*/
-static int statemembuf(membuf_t *membuf)
+static int statemembuf(const membuf_t *membuf)
 {
     return !membuf?0:membuf->state;
 }
 /* get extended state memory buffer ------------------------------------------*/
-static int statexmembuf(membuf_t *membuf, char *msg)
+static int statexmembuf(const membuf_t *membuf, char *msg)
 {
     char *p=msg;
     int state=!membuf?0:membuf->state;
@@ -2953,7 +2976,7 @@ extern int strread(stream_t *stream, uint8_t *buff, int n)
 * return : status (0:error,1:ok)
 * notes  : write data to buffer and return immediately
 *-----------------------------------------------------------------------------*/
-extern int strwrite(stream_t *stream, uint8_t *buff, int n)
+extern int strwrite(stream_t *stream, const uint8_t *buff, int n)
 {
     uint32_t tick=tickget();
     char *msg=stream->msg;

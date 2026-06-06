@@ -915,14 +915,14 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         switch (ind->type[i]) {
             case 0: obs->P[p[i]]=val[i];
                     obs->code[p[i]]=ind->code[i];
-                    obs->Pstd[p[i]] = std[i] > 0 ? 0.01 * pow(2, std[i] + 5) : 0;
+                    obs->Pstd[p[i]] = std[i] > 0 ? (float)(0.01 * pow(2, std[i] + 5)) : 0.0f;
                     break;
             case 1: obs->L[p[i]]=val[i];
                     obs->LLI[p[i]]=lli[i];
-                    obs->Lstd[p[i]] = std[i] > 0 ? std[i] * 0.004 : 0;
+                    obs->Lstd[p[i]] = std[i] > 0 ? (float)(std[i] * 0.004) : 0.0f;
                     break;
             case 2: obs->D[p[i]]=(float)val[i]; break;
-            case 3: obs->SNR[p[i]]=val[i]; break;
+            case 3: obs->SNR[p[i]]=(float)val[i]; break;
         }
         trace(4, "obs: i=%d f=%d P=%14.3f L=%14.3f LLI=%d code=%d\n",i,p[i],obs->P[p[i]],
         obs->L[p[i]],obs->LLI[p[i]],obs->code[p[i]]);
@@ -1352,7 +1352,7 @@ static int decode_geph(double ver, int sat, gtime_t toc, double *data,
     if (ver >= 3.05) {
       geph->flags = (int)data[15]; // Status flags
       geph->dtaun = data[16];
-      geph->sva = data[17];
+      geph->sva = (int)data[17];
       geph->svh |= ((int)data[18]) << 1; // Extended SVH
     }
     /* some receiver output >128 for minus frequency number */
@@ -1618,7 +1618,7 @@ static int readrnxclk(FILE *fp, const char *opt, double ver, int index, nav_t *n
         if (std > 0) {
           if (last_std_idx < 0) {
             for (int j = 0; j < i; j++)
-              if (nav->pclk[j].clk[k][0] != 0) nav->pclk[j].std[k][0] = std;
+              if (nav->pclk[j].clk[k][0] != 0) nav->pclk[j].std[k][0] = (float)std;
           } else {
             // Linear interpolation of the variance.
             for (int j = last_std_idx + 1; j < i; j++) {
@@ -1637,7 +1637,7 @@ static int readrnxclk(FILE *fp, const char *opt, double ver, int index, nav_t *n
       if (last_std_idx >= 0) {
         double last_std = nav->pclk[last_std_idx].std[k][0];
         for (int j = last_std_idx + 1; j < nav->nc; j++)
-          if (nav->pclk[j].clk[k][0] != 0) nav->pclk[j].std[k][0] = last_std;
+          if (nav->pclk[j].clk[k][0] != 0) nav->pclk[j].std[k][0] = (float)last_std;
       }
     }
 
@@ -1732,7 +1732,7 @@ extern int rnxcomment(rnxopt_t *opt, const char *format, ...) {
         if (!*opt->comment[i]) break;
     }
     // Copy while wrapping overflow into the next comment line.
-    for (int j = 0, rem = strlen(buff); rem > 0; i++) {
+    for (int j = 0, rem = (int)strlen(buff); rem > 0; i++) {
         if (i >= MAXCOMMENT) return 0;
         int indent = j > 0 ? 2 : 0; // Indent overflow lines
         int n = rem > 60 - indent ? 60 - indent : rem;
@@ -2555,13 +2555,13 @@ extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
                 case 'P': {
                   // To RTKLib RINEX encoding
                   float std = obs[ind[i]].Pstd[k];
-                  int stdi = std > 0.0003125 ? log2(std * 100) - 5 + 0.5 : 0;
+                  int stdi = std > 0.0003125 ? (int)trunc(log2(std * 100) - 5 + 0.5) : 0;
                   outrnxobsf(fp,obs[ind[i]].P[k],-1,stdi);
                   break;
                 }
                 case 'L': {
                   // To RTKLib RINEX encoding
-                  int lstdi = obs[ind[i]].Lstd[k] / 0.004 + 0.5;
+                  int lstdi = (int)trunc(obs[ind[i]].Lstd[k] / 0.004 + 0.5);
                   outrnxobsf(fp,obs[ind[i]].L[k]+dL,obs[ind[i]].LLI[k],lstdi);
                   break;
                 }
