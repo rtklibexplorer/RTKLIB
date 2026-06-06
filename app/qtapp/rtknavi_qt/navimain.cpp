@@ -142,7 +142,7 @@ MainWindow::MainWindow(QWidget *parent)
             satellitesAzimuth[i][j] = satellitesElevation[i][j] = 0.0;
             for (int k = 0; k < NFREQ; k++) {
                 validSatellites[i][j][k] = 0;
-                satellitesSNR[i][j][k] = 0;
+                satellitesSNR[i][j][k] = 0.0;
             }
         }
 
@@ -1664,7 +1664,8 @@ void MainWindow::drawSolutionPlot(QLabel *plot, int type, int freq)
 
     int w = buffer.size().width() - 2;
     int h = buffer.height() - 2;
-    int i, j, x, sat[2][MAXSAT], ns[2], snr[2][MAXSAT][NFREQ], vsat[2][MAXSAT][NFREQ];
+    int i, j, x, sat[2][MAXSAT], ns[2], vsat[2][MAXSAT][NFREQ];
+    double snr[2][MAXSAT][NFREQ];
     int topMargin = QFontMetrics(optDialog->panelFont).height()*3/2;
     double az[2][MAXSAT], el[2][MAXSAT], rr[3], pos[3];
 
@@ -1698,7 +1699,7 @@ void MainWindow::drawSolutionPlot(QLabel *plot, int type, int freq)
             for (j = 0; j < numSatellites[i]; j++) {
                 for (int k = 0; k < NFREQ; k++) {
                     validSatellites[i][j][k] = 0;
-                    satellitesSNR[i][j][k] = 0;
+                    satellitesSNR[i][j][k] = 0.0;
                 }
             }
         }
@@ -1780,7 +1781,7 @@ void MainWindow::updatePlot()
     }
 }
 // snr color ----------------------------------------------------------------
-QColor MainWindow::snrColor(int snr)
+QColor MainWindow::snrColor(double snr)
 {
     QColor color[] = {Qt::darkGreen, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Qt::darkGray};
     uint32_t r1, g1, b1;
@@ -1788,9 +1789,9 @@ QColor MainWindow::snrColor(int snr)
     double a;
     int i;
 
-    if (snr < 25) return color[5];
-    if (snr < 27) return color[4];
-    if (snr > 47) return color[0];
+    if (snr < 25.0) return color[5];
+    if (snr < 27.0) return color[4];
+    if (snr > 47.0) return color[0];
     a = (snr - 27.5) / 5.0;
     i = static_cast<int>(a);
     a -= i;
@@ -1812,7 +1813,8 @@ void MainWindow::drawSnr(QPainter &c, int w, int h, int x0, int y0,
         QColor(128, 128, 128)
     };
     static const QColor color_sys[] = {Qt::darkGreen, Color::Orange, Color::Fuchsia, Qt::blue, Qt::red, Color::Teal, Qt::darkGray};
-    int i, j, snrIdx, sysIdx, numSystems, x1, y1, height, offset, topMargin, bottomMargin, hh, barDistance, barWidth, snr[NFREQ + 1], sysMask[7] = {0};
+    int i, j, snrIdx, sysIdx, numSystems, x1, y1, height, offset, topMargin, bottomMargin, hh, barDistance, barWidth, sysMask[7] = {0};
+    double snr[NFREQ + 1];
     char id[8], sys[] = "GREJCS", *q;
 
     trace(4, "drawSnr: w=%d h=%d x0=%d y0=%d index=%d freq=%d\n", w, h, x0, y0, index, freq);
@@ -1828,7 +1830,7 @@ void MainWindow::drawSnr(QPainter &c, int w, int h, int x0, int y0,
     for (snr[0] = MINSNR + 10; snr[0] < MAXSNR; snr[0] += 10) {
         y1 = y0 + hh - (snr[0] - MINSNR) * hh / (MAXSNR - MINSNR);
         c.drawLine(x0 + 2, y1, x0 + w - 20, y1);
-        drawText(c, x0 + w - 4, y1, QLocale().toString(snr[0]), Qt::darkGray, 2, 0);
+        drawText(c, x0 + w - 4, y1, QString::number(qRound(snr[0])), Qt::darkGray, 2, 0);
     }
 
     // draw outer box
@@ -1846,7 +1848,8 @@ void MainWindow::drawSnr(QPainter &c, int w, int h, int x0, int y0,
         satno2id(satellites[index][i], id);
         sysIdx = (q = strchr(sys, id[0])) ? (int)(q - sys) : 6;
 
-        for (j = snr[0] = 0; j < NFREQ; j++) {
+        snr[0] = 0.0;
+        for (j = 0; j < NFREQ; j++) {
             snr[j + 1] = satellitesSNR[index][i][j];
             if ((freq && freq == j + 1) || ((!freq || freq > NFREQ) && snr[j + 1] > snr[0]))
                 snr[0] = snr[j + 1];  // store max snr
@@ -1854,7 +1857,7 @@ void MainWindow::drawSnr(QPainter &c, int w, int h, int x0, int y0,
         for (j = 0; j < NFREQ + 2; j++) {
             snrIdx = j < NFREQ + 1 ? j : 0;
             offset = j < NFREQ + 1 ? 0 : 2;
-            if (snr[snrIdx] > 0) height = (snr[snrIdx] - MINSNR) * hh / (MAXSNR - MINSNR);
+            if (snr[snrIdx] > 0) height = (int)round((snr[snrIdx] - MINSNR) * hh / (MAXSNR - MINSNR));
             else height = offset;
             height = height > y1 - 2 ? y1 - 2 : (height < 0 ? 0 : height);  // limit bar from going negative or too high
 
@@ -1896,7 +1899,8 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
     QColor color_text;
     QPoint p(w / 2, h / 2);
     double r = qMin(w * 0.95, h * 0.95) / 2, azel[MAXSAT * 2], dop[4];
-    int i, j, k, sysIdx, radius, x[MAXSAT], y[MAXSAT], snr[NFREQ + 1], nsats = 0;
+    int i, j, k, sysIdx, radius, x[MAXSAT], y[MAXSAT], nsats = 0;
+    double snr[NFREQ + 1];
     char id[8], sys[] = "GREJCIS", *q;
 
     trace(4, "drawSatellites: w=%d h=%d index=%d freq=%d\n", w, h, index, freq);
@@ -1906,7 +1910,8 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
     // draw satellites
     for (i = 0, k = numSatellites[index] - 1; i < numSatellites[index] && i < MAXSAT; i++, k--) {
         if (satellitesElevation[index][k] <= 0.0) continue;
-        for (j = snr[0] = 0; j < NFREQ; j++) {
+        snr[0] = 0.0;
+        for (j = 0; j < NFREQ; j++) {
             snr[j + 1] = satellitesSNR[index][k][j];
             if ((freq && freq == j + 1) || ((!freq || freq > NFREQ) && snr[j + 1] > snr[0])) {
                 snr[0] = snr[j + 1]; // max snr
@@ -1915,7 +1920,7 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
         int anyValidSatFreq = 0;
         for (int fi = 0; fi < NFREQ; fi++)
           if (validSatellites[index][k][fi]) { anyValidSatFreq = 1; break; }
-        if (anyValidSatFreq && (freq > NFREQ || snr[freq] > 0)) {
+        if (anyValidSatFreq && (freq > NFREQ || snr[freq] > 0.0)) {
             azel[nsats * 2] = satellitesAzimuth[index][k];
             azel[nsats * 2 + 1] = satellitesElevation[index][k];
             nsats++;
@@ -1930,7 +1935,7 @@ void MainWindow::drawSatellites(QPainter &c, int w, int h, int x0, int y0,
                         (freq < NFREQ + 1 ? snrColor(snr[freq]) : color_sys[sysIdx]));
         c.setPen(Qt::darkGray);
         color_text = Qt::white;
-        if (freq < NFREQ + 1 && snr[freq] <= 0) {
+        if (freq < NFREQ + 1 && snr[freq] <= 0.0) {
             c.setPen(Color::Silver);
             color_text = Color::Silver;
         }

@@ -795,20 +795,20 @@ static int encode_type1013(rtcm_t *rtcm, int sync)
     int i = 24;
     const double ep[] = {2000, 1, 1, 12, 0, 0};
     gtime_t utc = gpst2utc(rtcm->time);
-    int leaps = timediff(rtcm->time, utc);
+    int leaps = (int)round(timediff(rtcm->time, utc));
     double mjd = 51544.5 + (timediff(utc, epoch2time(ep))) / 86400.0;
-    uint32_t mjdi = floor(mjd);
-    uint32_t tod = round((mjd - mjdi) * 86400.0);
+    uint32_t mjdi = (uint32_t)floor(mjd);
+    uint32_t tod = (uint32_t)round((mjd - mjdi) * 86400.0);
     setbitu(rtcm->buff, i, 12, 1013      ); i += 12; // Message no.
     setbitu(rtcm->buff, i, 12, 0         ); i += 12; // Ref station id.
-    setbitu(rtcm->buff, i, 16, mjd       ); i += 16; // MJD.
+    setbitu(rtcm->buff, i, 16, mjdi      ); i += 16; // MJD.
     setbitu(rtcm->buff, i, 17, tod       ); i += 17; // Time of day, seconds.
     setbitu(rtcm->buff, i,  5, rtcm->nmsg); i +=  5; // Number of messages.
     setbitu(rtcm->buff, i,  8, leaps     ); i +=  8; // Leap seconds, GPST-UTC.
     for (int n = 0; n < rtcm->nmsg; n++) {
       setbitu(rtcm->buff, i, 12, rtcm->msgs[n]); i+=12; // Message ID.
       setbitu(rtcm->buff, i,  1, 1            ); i+= 1; // Synchronous.
-      setbitu(rtcm->buff, i, 16, round(rtcm->tint[n] * 10.0)); i+= 16; // Interval.
+      setbitu(rtcm->buff, i, 16, (unsigned)round(rtcm->tint[n] * 10.0)); i+= 16; // Interval.
     }
     rtcm->nbit=i;
     return 1;

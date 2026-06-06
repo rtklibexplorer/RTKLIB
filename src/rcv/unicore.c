@@ -816,14 +816,14 @@ static int decode_obsvmb(raw_t* raw)
             raw->obs.data[index].L[idx] = -adr;
             raw->obs.data[index].P[idx] = psr;
             raw->obs.data[index].D[idx] = (float)dop;
-            raw->obs.data[index].SNR[idx] = snr;
+            raw->obs.data[index].SNR[idx] = (float)snr;
             raw->obs.data[index].LLI[idx] = (uint8_t)lli;
             raw->obs.data[index].code[idx] = (uint8_t)code;
             if (rcvstds) {
                 double pstd = U2(p + 20) * 0.01;  // Meters
-                raw->obs.data[index].Pstd[idx] = pstd;
+                raw->obs.data[index].Pstd[idx] = (float)pstd;
                 double lstd = U2(p + 22) * 0.0001; // Cycles
-                raw->obs.data[index].Lstd[idx] = lstd;
+                raw->obs.data[index].Lstd[idx] = (float)lstd;
             }
         }
     }

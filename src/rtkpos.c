@@ -1764,11 +1764,11 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
                     coeff[i] = coeff[i]*opt->thresar[0]+ar_poly_coeffs[i][j];
             }
             /* generate adjusted AR ratio based on # of sat pairs */
-            rtk->sol.thres = coeff[0];
+            rtk->sol.thres = (float)coeff[0];
             for (i=1;i<3;i++) {
-                rtk->sol.thres = rtk->sol.thres*1.0/(nb1+1.0)+coeff[i];
+                rtk->sol.thres = (float)(rtk->sol.thres*1.0/(nb1+1.0)+coeff[i]);
             }
-            rtk->sol.thres = MIN(MAX(rtk->sol.thres,opt->thresar[5]),opt->thresar[6]);
+            rtk->sol.thres = (float)MIN(MAX(rtk->sol.thres,opt->thresar[5]),opt->thresar[6]);
         } else
             rtk->sol.thres=(float)opt->thresar[0];
         /* validation by popular ratio-test of residuals*/
@@ -1826,9 +1826,9 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
 static int manage_amb_LAMBDA(rtk_t *rtk, double *bias, double *xa, const int *sat, int nf, int ns)
 {
     int gps1=-1,glo1=-1,sbas1=-1,gps2,glo2,sbas2,nb,rerun,dly;
-    float ratio1,posvar=0;
 
     /* calc position variance, will skip AR if too high to avoid false fix */
+    double posvar = 0;
     for (int i=0;i<3;i++) posvar+=rtk->P[i+i*rtk->nx];
     posvar/=3.0; /* maintain compatibility with previous code */
 
@@ -1891,7 +1891,7 @@ static int manage_amb_LAMBDA(rtk_t *rtk, double *bias, double *xa, const int *sa
     sbas1=(rtk->opt.navsys&SYS_GLO)?glo1:((rtk->opt.navsys&SYS_SBS)?1:0);
     /* first attempt to resolve ambiguities */
     nb=resamb_LAMBDA(rtk,bias,xa,gps1,glo1,sbas1);
-    ratio1=rtk->sol.ratio;
+    float ratio1=rtk->sol.ratio;
     /* reject bad satellites if AR filtering enabled */
     if (rtk->opt.arfilter) {
         rerun=0;
@@ -2027,7 +2027,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
 
      if (opt->mode!=PMODE_MOVEB) {
         /* check if exceeded max age of differential */
-        rtk->sol.age=dt;
+        rtk->sol.age=(float)dt;
         if (fabs(rtk->sol.age)>opt->maxtdiff) {
             errmsg(rtk,"age of differential error (age=%.1f)\n",rtk->sol.age);
             free(rs); free(dts); free(var); free(y); free(e); free(azel); free(freq);
