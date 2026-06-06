@@ -1151,6 +1151,7 @@ object MainWindow: TMainWindow
       'All (*.*)|*.*|RTCM 2 (*.rtcm2)|*.rtcm2|RTCM 3 (*.rtcm3)|*.rtcm3|' +
       'NovtAtel (*.gps)|*.gps|ublox (*.ubx)|*.ubx' +
       '|Hemisphere (*.bin)|*.bin|Javad (*.jps)|*.jps|' +
+      'Septentrio (*.sbf)|*.sbf|' +
       'RINEX OBS (*.obs,*.*O)|*.obs;*.*O'
     Options = [ofHideReadOnly, ofNoChangeDir, ofEnableSizing]
     Left = 260
