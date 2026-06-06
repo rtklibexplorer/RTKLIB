@@ -215,7 +215,6 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
                    *geph2=*geph1;
                    update_glofcn(svr);
                    trace(4,"update_eph: sat=%d iode %d->%d\n",ephsat,geph3->iode,geph2->iode);
-                   svr->rtcm[index].ssr[ephsat-1].update=1;   // Force update of SSR corrections
                }
            }
            svr->nmsg[index][6]++;
@@ -330,13 +329,21 @@ static void update_ssr(rtksvr_t *svr, int index)
         int prn;
         if (satsys(sat, &prn)!=SYS_GLO) {
             eph_t *eph=svr->nav.eph+i;
-            if (eph->sat==sat&&ssr_iode==eph->iode) {
+            if (eph->sat==sat&&ssr_iode==eph->iode)  // check current ephemeris
                 iode=eph->iode;
+            else { // check previous ephemeris
+               eph=svr->nav.eph+i+2*MAXSAT;
+               if (eph->sat==sat&&ssr_iode==eph->iode)
+                   iode=eph->iode;
             }
         } else { // SYS_GLO
             geph_t *geph=svr->nav.geph+prn-1;
-            if (geph->sat==sat&&ssr_iode==geph->iode) {
+            if (geph->sat==sat&&ssr_iode==geph->iode)
                 iode=geph->iode;
+            else { // check previous ephemeris
+                geph=svr->nav.geph+prn-1+MAXPRNGLO;
+                if (geph->sat==sat&&ssr_iode==geph->iode)
+                   iode=geph->iode;
             }
         }
         if (iode!=-1) {
@@ -1033,6 +1040,8 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     svr->rtk.vtec_used=0;
     if (svr->rtk.opt.sateph==EPHOPT_SSRAPC||svr->rtk.opt.sateph==EPHOPT_SSRCOM)
         setseleph(SYS_GAL,1); // SSR mode not compatible with mixed I/NAV F/NAV ephemeris
+    else
+        setseleph(SYS_GAL,0); // restore to default
 
     /* sync input streams */
     strsync(svr->stream,svr->stream+1);
