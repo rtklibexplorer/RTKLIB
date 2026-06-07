@@ -680,9 +680,8 @@ static void prstatus(vt_t *vt)
     };
     gtime_t eventime={0};
     const char *freq[]={"-","L1","L1+L2","L1+L2+E5b","L1+L2+E5b+L5","5","6","7"};
-    rtcm_t rtcm[3];
     pthread_t thread;
-    int i,j,n,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
+    int j,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
     int cputime,nb[3]={0},nmsg[3][10]={{0}};
     char tstr[40],tmstr[40],s[1024],*p;
     double runtime,rt[3]={0},dop[4]={0},rr[3],bl1=0.0,bl2=0.0;
@@ -692,6 +691,12 @@ static void prstatus(vt_t *vt)
     
     rtk_t *rtk = (rtk_t *)malloc(sizeof(rtk_t));
     if (rtk == NULL) return;
+
+    rtcm_t *rtcm[3] = { NULL, NULL, NULL };
+    for (int i = 0; i < 3; i++) {
+      rtcm[i] = (rtcm_t *)malloc(sizeof(rtcm_t));
+      if (rtcm[i] == NULL) goto done;
+    }
 
     rtksvrlock(&svr);
     *rtk=svr.rtk;
@@ -706,8 +711,8 @@ static void prstatus(vt_t *vt)
     cputime=svr.cputime;
     prcout=svr.prcout;
     nave=svr.nave;
-    for (i=0;i<3;i++) nb[i]=svr.nb[i];
-    for (i=0;i<3;i++) for (j=0;j<10;j++) {
+    for (int i=0;i<3;i++) nb[i]=svr.nb[i];
+    for (int i=0;i<3;i++) for (j=0;j<10;j++) {
         nmsg[i][j]=svr.nmsg[i][j];
     }
     if (svr.state) {
@@ -715,15 +720,16 @@ static void prstatus(vt_t *vt)
         rt[0]=floor(runtime/3600.0); runtime-=rt[0]*3600.0;
         rt[1]=floor(runtime/60.0); rt[2]=runtime-rt[1]*60.0;
     }
-    for (i=0;i<3;i++) rtcm[i]=svr.rtcm[i];
+    for (int i=0;i<3;i++) *rtcm[i]=svr.rtcm[i];
     if (svr.raw[0].obs.data != NULL) {
         timevalid = svr.raw[0].obs.data[0].timevalid;
         eventime = svr.raw[0].obs.data[0].eventime;
     }
     time2str(eventime,tmstr,9);
     rtksvrunlock(&svr);
-    
-    for (i=n=0;i<MAXSAT;i++) {
+
+    int n = 0;
+    for (int i=0;i<MAXSAT;i++) {
         if (rtk->opt.mode == PMODE_SINGLE) {
           if (!rtk->ssat[i].vs) continue;
         } else {
@@ -749,31 +755,31 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %d\n","cpu time for a cycle (ms)",cputime);
     vt_printf(vt,"%-28s: %d\n","missing obs data count",prcout);
     vt_printf(vt,"%-28s: %d,%d\n","bytes in input buffer",nb[0],nb[1]);
-    for (i=0;i<3;i++) {
+    for (int i=0;i<3;i++) {
         sprintf(s,"# of input data %s",type[i]);
         vt_printf(vt,"%-28s: obs(%d),nav(%d),gnav(%d),ion(%d),sbs(%d),pos(%d),dgps(%d),ssr(%d),err(%d)\n",
                 s,nmsg[i][0],nmsg[i][1],nmsg[i][6],nmsg[i][2],nmsg[i][3],
                 nmsg[i][4],nmsg[i][5],nmsg[i][7],nmsg[i][9]);
     }
-    for (i=0;i<3;i++) {
+    for (int i=0;i<3;i++) {
         p=s; *p='\0';
         for (j=1;j<100;j++) {
-            if (rtcm[i].nmsg2[j]==0) continue;
-            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j,rtcm[i].nmsg2[j]);
+            if (rtcm[i]->nmsg2[j]==0) continue;
+            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j,rtcm[i]->nmsg2[j]);
         }
-        if (rtcm[i].nmsg2[0]>0) {
-            sprintf(p,"%sother2(%d)",p>s?",":"",rtcm[i].nmsg2[0]);
+        if (rtcm[i]->nmsg2[0]>0) {
+            sprintf(p,"%sother2(%d)",p>s?",":"",rtcm[i]->nmsg2[0]);
         }
         for (j=1;j<300;j++) {
-            if (rtcm[i].nmsg3[j]==0) continue;
-            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+1000,rtcm[i].nmsg3[j]);
+            if (rtcm[i]->nmsg3[j]==0) continue;
+            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+1000,rtcm[i]->nmsg3[j]);
         }
         for (j=300;j<399;j++) {
-            if (rtcm[i].nmsg3[j]==0) continue;
-            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+3770,rtcm[i].nmsg3[j]);
+            if (rtcm[i]->nmsg3[j]==0) continue;
+            p+=sprintf(p,"%s%d(%d)",p>s?",":"",j+3770,rtcm[i]->nmsg3[j]);
         }
-        if (rtcm[i].nmsg3[0]>0) {
-            sprintf(p,"%sother3(%d)",p>s?",":"",rtcm[i].nmsg3[0]);
+        if (rtcm[i]->nmsg3[0]>0) {
+            sprintf(p,"%sother3(%d)",p>s?",":"",rtcm[i]->nmsg3[0]);
         }
         vt_printf(vt,"%-15s %-9s: %s\n","# of rtcm messages",type[i],s);
     }
@@ -822,11 +828,11 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %.3f,%.3f,%.3f\n","vel enu (m/s) base",
             vel[0],vel[1],vel[2]);
     if (rtk->opt.mode>0&&rtk->x&&norm(rtk->x,3)>0.0) {
-        for (i=0;i<3;i++) rr[i]=rtk->x[i]-rtk->rb[i];
+        for (int i=0;i<3;i++) rr[i]=rtk->x[i]-rtk->rb[i];
         bl1=norm(rr,3);
     }
     if (rtk->opt.mode>0&&rtk->xa&&norm(rtk->xa,3)>0.0) {
-        for (i=0;i<3;i++) rr[i]=rtk->xa[i]-rtk->rb[i];
+        for (int i=0;i<3;i++) rr[i]=rtk->xa[i]-rtk->rb[i];
         bl2=norm(rr,3);
     }
     vt_printf(vt,"%-28s: %.3f\n","baseline length float (m)",bl1);
@@ -834,7 +840,10 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %s\n","last time mark",tmcount ? tmstr : "-");
     vt_printf(vt,"%-28s: %d\n","receiver time mark count",rcvcount);
     vt_printf(vt,"%-28s: %d\n","rtklib time mark count",tmcount);
+
+done:
     free(rtk);
+    for (int i = 0; i < 3; i++) free(rtcm[i]);
 }
 /* print satellite -----------------------------------------------------------*/
 static void prsatellite(vt_t *vt, int nf)
