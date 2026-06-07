@@ -38,7 +38,7 @@
 #define PRGNAME     "str2str"          /* program name */
 #define MAXSTR      5                  /* max number of streams */
 #define TRACEFILE   "str2str_%Y%m%d%h%M.trace" /* Debug trace file */
-#define LOGFILE     "str2str_%Y%m%d%h%M.log"   /* Deamon log file */
+#define LOGFILE     "str2str_%Y%m%d%h%M.log"   /* Daemon log file */
 
 /* global variables ----------------------------------------------------------*/
 static strsvr_t strsvr;                /* stream server */
@@ -116,7 +116,7 @@ static const char *help[]={
 " -b  str_no        relay back messages from output str to input str [no]",
 " -t  level         trace level [0]",
 " -fl file          log file [str2str.trace]",
-" --deamon          detach from the console",
+" --daemon          detach from the console",
 " --version         print version",
 " -h                print help",
 "",
@@ -246,7 +246,7 @@ static void readcmd(const char *file, char *cmd, size_t size, int type)
   fclose(fp);
 }
 
-static void deamonise(void)
+static void daemonise(void)
 {
 #ifndef WIN32
     /* In case we were not started in the background, fork and let the parent
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
     int i,j,n=0,dispint=5000,trlevel=0,opts[]={10000,10000,2000,32768,10,0,30,0};
     int types[MAXSTR]={STR_FILE,STR_FILE},stat[MAXSTR]={0},log_stat[MAXSTR]={0};
     int byte[MAXSTR]={0},bps[MAXSTR]={0},fmts[MAXSTR]={0},sta=0;
-    int deamon=0;
+    int daemon=0;
     const char *msg = "1004,1019"; // Current messages.
     const char *msgs[MAXSTR];      // Messages per output stream.
     const char *log = "";          // Log for the next input or output stream.
@@ -364,7 +364,8 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i],"-b"  )&&i+1<argc) opts[7]=atoi(argv[++i]);
         else if (!strcmp(argv[i],"-fl" )&&i+1<argc) logfile=argv[++i];
         else if (!strcmp(argv[i],"-t"  )&&i+1<argc) trlevel=atoi(argv[++i]);
-        else if (!strcmp(argv[i], "--deamon")) deamon=1;
+        else if (!strcmp(argv[i], "--daemon")) daemon=1;
+        else if (!strcmp(argv[i], "--deamon")) daemon=1;
         else if (!strcmp(argv[i], "--version")) {
             fprintf(stderr, "str2str RTKLIB %s %s\n", VER_RTKLIB, PATCH_LEVEL);
             exit(0);
@@ -406,7 +407,7 @@ int main(int argc, char **argv)
         matcpy(conv[i]->out.sta.pos,stapos,3,1);
         matcpy(conv[i]->out.sta.del,stadel,3,1);
     }
-    if (deamon) deamonise();
+    if (daemon) daemonise();
     signal(SIGTERM,sigfunc);
     signal(SIGINT ,sigfunc);
     signal(SIGHUP ,SIG_IGN);
