@@ -55,8 +55,10 @@ extern "C" {
 #ifdef _MSC_VER
 #ifdef WIN_DLL /* for Windows DLL */
 #define EXPORT __declspec(dllexport)
-#else
+#elif !defined(WIN_STATIC)
 #define EXPORT __declspec(dllimport)
+#else
+#define EXPORT // For files bundled into an app.
 #endif
 #else
 #define EXPORT
