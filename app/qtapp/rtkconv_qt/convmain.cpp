@@ -448,7 +448,7 @@ void MainWindow::showStopTimeDialog()
 void MainWindow::selectInputFile()
 {
     QString filename = QFileDialog::getOpenFileName(this, tr("Input RTCM, RCV RAW or RINEX File"), ui->cBInputFile->currentText(),
-                                                    tr("All (*.*);;RTCM 2 (*.rtcm2);;RTCM 3 (*.rtcm3);;NovtAtel (*.gps);;ublox (*.ubx);;SuperStart II (*.log);;"
+                                                    tr("All (*.*);;RTCM 2 (*.rtcm2);;RTCM 3 (*.rtcm3);;NovtAtel (*.gps);;ublox (*.ubx);;"
                                                        "Hemisphere (*.bin);;Javad (*.jps);;RINEX OBS (*.obs *.*O);;Septentrio (*.sbf)"));
 
     if (!filename.isEmpty()) {

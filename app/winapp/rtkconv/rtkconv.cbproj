@@ -593,7 +593,6 @@
                 <DeployFile LocalName="..\..\..\src\rcv\septentrio.c" Configuration="Release" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\..\src\rcv\skytraq.c" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\..\src\rcv\skytraq.c" Configuration="Release" Class="ProjectFile"/>
-                <DeployFile LocalName="..\..\..\src\rcv\ss2.c" Configuration="Release" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\..\src\rcv\swiftnav.c" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\..\src\rcv\tersus.c" Configuration="Release" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\..\src\rcv\ublox.c" Configuration="Debug" Class="ProjectFile"/>
@@ -633,7 +632,6 @@
                 <DeployFile LocalName="..\..\src\rcv\rt17.c" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\src\rcv\septentrio.c" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\src\rcv\skytraq.c" Configuration="Debug" Class="ProjectFile"/>
-                <DeployFile LocalName="..\..\src\rcv\ss2.c" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\src\rcv\tersus.c" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\src\rcv\ublox.c" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="..\..\src\rcvraw.c" Configuration="Debug" Class="ProjectFile"/>

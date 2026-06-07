@@ -1321,10 +1321,9 @@ extern int init_raw(raw_t *raw, int format)
             raw->halfc[i][j]=0;
             raw->lockflag[i][j]=0;
         }
-        raw->icpp[i]=raw->off[i]=raw->prCA[i]=raw->dpCA[i]=0.0;
+        raw->prCA[i]=raw->dpCA[i]=0.0;
     }
     for (i=0;i<MAXOBS;i++) raw->freqn[i]=0;
-    raw->icpc=0.0;
     raw->nbyte=raw->len=0;
     raw->iod=raw->flag=raw->tbase=raw->outtype=0;
     raw->tod=-1;
