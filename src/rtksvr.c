@@ -198,7 +198,6 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
                 *eph3=*eph2; /* current ->previous */
                 *eph2=*eph1; /* received->current */
                 trace(4,"update_eph: sat=%d iode %d->%d\n",ephsat,eph3->iode,eph2->iode);
-                svr->rtcm[index].ssr[ephsat-1].update=1;   // Force update of SSR corrections
                 }
             }
             svr->nmsg[index][1]++;
@@ -317,7 +316,7 @@ static void update_ssr(rtksvr_t *svr, int index)
     for (int i=0;i<MAXSAT;i++) {
         int sat=i+1;
         if (!svr->rtcm[index].ssr[i].update) continue;
-        svr->rtcm[index].ssr[i].update=0; // just check once per update 
+        svr->rtcm[index].ssr[i].update=0; // just check once per update
 
         // Check consistency between iods of orbit and clock.
         if (svr->rtcm[index].ssr[i].iod[0]!=svr->rtcm[index].ssr[i].iod[1])
@@ -346,12 +345,14 @@ static void update_ssr(rtksvr_t *svr, int index)
                    iode=geph->iode;
             }
         }
-        if (iode!=-1) {
-            if (svr->nav.ssr[i].iode!=ssr_iode) {
-                trace(4,"update_ssr_iode: sat=%d %d->%d\n",sat,svr->nav.ssr[i].iode,ssr_iode);
-            }
-            svr->nav.ssr[i]=svr->rtcm[index].ssr[i];
-       }
+        if (iode == -1) {
+          trace(4, "update_ssr deferred sat=%d ssr_iode=%d\n", sat, ssr_iode);
+          continue;
+        }
+        if (svr->nav.ssr[i].iode!=ssr_iode)
+          trace(4,"update_ssr_iode: sat=%d %d->%d\n",sat,svr->nav.ssr[i].iode,ssr_iode);
+        svr->nav.ssr[i]=svr->rtcm[index].ssr[i];
+        svr->rtcm[index].ssr[i].update = 0;
     }
     svr->nmsg[index][7]++;
 
