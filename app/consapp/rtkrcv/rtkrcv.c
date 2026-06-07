@@ -150,7 +150,7 @@ static const char *helptxt[]={
     "status [cycle]        : show rtk status",
     "satellite [-n] [cycle]: show satellite status",
     "observ [-n] [cycle]   : show observation data",
-    "navidata [cycle]      : show navigation data",
+    "navidata [-p] [-n] [cycle] : show navigation data",
     "stream [cycle]        : show stream status",
     "ssr [-c] [-p] [cycle] : show ssr corrections",
     "error                 : show error/warning messages",
@@ -943,34 +943,39 @@ static void probserv(vt_t *vt, int nf)
     free(obs);
 }
 /* print navigation data -----------------------------------------------------*/
-static void prnavidata(vt_t *vt)
+static void prnavidata(vt_t *vt, int prev, int set)
 {
     eph_t eph[MAXSAT];
     geph_t geph[MAXPRNGLO];
     double ion[8],utc[8];
     gtime_t time;
     char id[8],s1[64],s2[64],s3[64];
-    int i,valid;
     
     trace(4,"prnavidata:\n");
-    
+
     rtksvrlock(&svr);
     time=svr.rtk.sol.time;
-    for (i=0;i<MAXSAT;i++) eph[i]=svr.nav.eph[i];
-    for (i=0;i<MAXPRNGLO;i++) geph[i]=svr.nav.geph[i];
-    for (i=0;i<8;i++) ion[i]=svr.nav.ion_gps[i];
-    for (i=0;i<8;i++) utc[i]=svr.nav.utc_gps[i];
+    if (set >= 0 && set <= 1 && prev >= 0 && prev <= 1)
+      for (int i = 0; i < MAXSAT; i++) eph[i] = svr.nav.eph[i + (prev * 2 + set) * MAXSAT];
+    else
+      memset(&eph, 0, sizeof(eph));
+    if (set >= 0 && set <= 0 && prev >= 0 && prev <= 1)
+      for (int i = 0; i < MAXPRNGLO; i++) geph[i] = svr.nav.geph[i + (prev * 1 + set) * MAXPRNGLO];
+    else
+      memset(&geph, 0, sizeof(geph));
+    for (int i=0;i<8;i++) ion[i]=svr.nav.ion_gps[i];
+    for (int i=0;i<8;i++) utc[i]=svr.nav.utc_gps[i];
     rtksvrunlock(&svr);
     
     vt_printf(vt,"\n%s%3s %3s %3s %3s %3s %3s %3s %19s %19s %19s %3s %3s%s\n",
               ESC_BOLD,"SAT","S","IOD","IOC","FRQ","A/A","SVH","Toe","Toc",
               "Ttr/Tof","L2C","L2P",ESC_RESET);
-    for (i=0;i<MAXSAT;i++) {
+    for (int i=0;i<MAXSAT;i++) {
         int sys = satsys(i + 1, NULL);
         if ((sys & (SYS_GPS | SYS_GAL | SYS_QZS | SYS_CMP) & prcopt.navsys) == 0 ||
             eph[i].sat!=i+1) continue;
         // Mask QZS LEX health.
-        valid=eph[i].toe.time!=0&&fabs(timediff(time,eph[i].toe))<=MAXDTOE &&
+        int valid=eph[i].toe.time!=0&&fabs(timediff(time,eph[i].toe))<=MAXDTOE &&
             (sys == SYS_QZS ? (eph[i].svh & 0xfe) == 0 : eph[i].svh == 0);
         satno2id(i+1,id);
         if (eph[i].toe.time!=0) time2str(eph[i].toe,s1,0); else strcpy(s1,"-");
@@ -980,10 +985,10 @@ static void prnavidata(vt_t *vt)
                 id,valid?"OK":"-",eph[i].iode,eph[i].iodc,0,eph[i].sva,
                 eph[i].svh,s1,s2,s3,eph[i].code,eph[i].flag);
     }
-    for (i=0;i<MAXSAT;i++) {
+    for (int i=0;i<MAXSAT;i++) {
         int prn, sys = satsys(i + 1, &prn);
         if ((sys & SYS_GLO & prcopt.navsys) == 0 || geph[prn - 1].sat != i + 1) continue;
-        valid=geph[prn-1].toe.time!=0&&fabs(timediff(time,geph[prn-1].toe))<=MAXDTOE_GLO &&
+        int valid=geph[prn-1].toe.time!=0&&fabs(timediff(time,geph[prn-1].toe))<=MAXDTOE_GLO &&
             (geph[prn-1].svh & 9) == 0 && (geph[prn-1].svh & 6) != 4;
         satno2id(i+1,id);
         if (geph[prn-1].toe.time!=0) time2str(geph[prn-1].toe,s1,0); else strcpy(s1,"-");
@@ -1201,15 +1206,22 @@ static void cmd_observ(char **args, int narg, vt_t *vt)
 /* navidata command ----------------------------------------------------------*/
 static void cmd_navidata(char **args, int narg, vt_t *vt)
 {
-    int cycle=0;
+    int cycle = 0, prev = 0, set = 0;
     
     trace(3,"cmd_navidata:\n");
     
-    if (narg>1) cycle=(int)(atof(args[1])*1000.0);
+    for (int i = 1; i < narg; i++) {
+      if (strcmp(args[i], "-p") == 0) {
+        prev = 1;
+        continue;
+      }
+      if (sscanf(args[i], "-%d", &set) == 1) continue;
+      cycle = (int)(atof(args[i]) * 1000.0);
+    }
     
     while (!vt_chkbrk(vt)) {
         if (cycle>0) vt_printf(vt,ESC_CLEAR);
-        prnavidata(vt);
+        prnavidata(vt, prev, set);
         if (cycle>0) sleepms(cycle); else return;
     }
     vt_printf(vt,"\n");
@@ -1796,8 +1808,9 @@ static void daemonise(void)
 *       Show observation data. Use option cycle for cyclic display. Option -n
 *       specify number of frequencies.
 *
-*     navidata [cycle]
-*       Show navigation data. Use option cycle for cyclic display.
+*     navidata [-p] [-n] [cycle]
+*       Show navigation data. Option -p shows the previous set. Option -n
+*       specifies the set, 0 to 1. Use option cycle for cyclic display.
 *
 *     stream [cycle]
 *       Show stream status. Use option cycle for cyclic display.
