@@ -198,7 +198,6 @@ static void update_eph(rtksvr_t *svr, nav_t *nav, int ephsat, int ephset,
                 *eph3=*eph2; /* current ->previous */
                 *eph2=*eph1; /* received->current */
                 trace(4,"update_eph: sat=%d iode %d->%d\n",ephsat,eph3->iode,eph2->iode);
-                svr->rtcm[index].ssr[ephsat-1].update=1;   // Force update of SSR corrections
                 }
             }
             svr->nmsg[index][1]++;
