@@ -564,7 +564,11 @@ extern "C" {
 #define rtklib_unlock(f)   LeaveCriticalSection(f)
 #define RTKLIB_FILEPATHSEP '\\'
 /* strtok_r not supported in Windows */
+#ifdef _MSC_VER
+#define strtok_r(str,delim,ptr) strtok_s(str,delim,ptr)
+#else
 #define strtok_r(str,delim,ptr) strtok(str,delim)
+#endif
 #else
 #define rtklib_thread_t    pthread_t
 #define rtklib_lock_t      pthread_mutex_t
