@@ -4,3 +4,4 @@ BasedOnStyle: Google
 Language: Cpp
 ColumnLimit: 100
 UseTab: Never
+PointerAlignment: Right
