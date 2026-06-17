@@ -1884,7 +1884,10 @@ static int manage_amb_LAMBDA(rtk_t *rtk, double *bias, double *xa, const int *sa
 
     /* for inital ambiguity resolution attempt, include all enabled sats */
     gps1=1;    /* always enable gps for initial pass */
-    glo1=(rtk->opt.navsys&SYS_GLO)?(((rtk->opt.glomodear==GLO_ARMODE_FIXHOLD)&&!rtk->holdamb)?0:1):0;
+    /* enable GLO AR if configured and FIXHOLD has acquired hold */
+    glo1 = (rtk->opt.navsys & SYS_GLO) &&
+       rtk->opt.glomodear != GLO_ARMODE_OFF &&
+       (rtk->opt.glomodear != GLO_ARMODE_FIXHOLD || rtk->holdamb);
     sbas1=(rtk->opt.navsys&SYS_GLO)?glo1:((rtk->opt.navsys&SYS_SBS)?1:0);
     /* first attempt to resolve ambiguities */
     nb=resamb_LAMBDA(rtk,bias,xa,gps1,glo1,sbas1);
