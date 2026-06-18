@@ -403,7 +403,11 @@ static int get_filetime(const char *file, gtime_t *time)
     struct stat st;
     if (!stat(path, &st)) {
         struct tm tm;
+#ifdef _MSC_VER
+        if (gmtime_s(&tm, &st.st_mtime) != 0) {
+#else
         if (gmtime_r(&st.st_mtime, &tm)) {
+#endif
           double ep[6];
           ep[0] = tm.tm_year + 1900;
           ep[1] = tm.tm_mon + 1;
