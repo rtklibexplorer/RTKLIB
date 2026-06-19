@@ -123,8 +123,8 @@ void RefDialog::loadList(QString filename)
         for (int i = 0; i < 3; i++)
             pos[i] = tokens.at(i).toDouble();
 
-        addReference(n, pos, tokens.size() > 3 ? tokens.at(3) : "",
-                     tokens.size() > 4 ? tokens.at(4) : "");
+        addReference(n, pos, tokens.size() > 3 ? tokens.at(3) : QString(""),
+                     tokens.size() > 4 ? tokens.at(4) : QString(""));
     }
     if (n == 0) ui->tWStationList->setRowCount(0);
 
