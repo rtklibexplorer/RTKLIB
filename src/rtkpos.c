@@ -2102,13 +2102,13 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
                 K=P*H*(H'*P*H+R)^-1
                 xp=x+K*v
                 Pp=(I-K*H')*P                  */
-        trace(3,"before filter x=");tracemat(3,rtk->x,1,9,13,6);
+        trace(3,"before filter x=");tracemat(3,rtk->x,1,NP(opt),13,6);
         if ((info=filter(xp,Pp,H,v,R,rtk->nx,nv))) {
             errmsg(rtk,"filter error (info=%d)\n",info);
             stat=SOLQ_NONE;
             break;
         }
-        trace(3,"after filter x=");tracemat(3,xp,1,9,13,6);
+        trace(3,"after filter x=");tracemat(3,xp,1,NP(opt),13,6);
         trace(4,"x(%d)=",i+1); tracemat(4,xp,1,NR(opt),13,4);
     }
     /* calc zero diff residuals again after kalman filter update */
