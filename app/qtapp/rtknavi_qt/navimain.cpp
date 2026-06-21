@@ -514,10 +514,8 @@ void MainWindow::showOptionsDialog()
 
         strfmt[i] = inputFormat[i];
 
-        if (!streamEnabled[i]) {
-            strtype[i] = STR_NONE;
-            strncpy(strpath[i], "", MAXSTR-1);
-        } else if (strtype[i] == STR_SERIAL) {
+        strncpy(strpath[i], "", MAXSTR-1);
+        if (strtype[i] == STR_SERIAL) {
             strncpy(strpath[i], qPrintable(paths[i][0]), MAXSTR-1);
         } else if (strtype[i] == STR_FILE) {
             strncpy(strpath[i], qPrintable(paths[i][2]), MAXSTR-1);
