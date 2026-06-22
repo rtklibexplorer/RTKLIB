@@ -179,7 +179,7 @@ static gtime_t time_stat={0};    /* rtk status file time */
 *          lambda   : wavelength
 *
 *-----------------------------------------------------------------------------*/
-extern int rtkopenstat(const char *file, int level)
+int rtkopenstat(const char *file, int level)
 {
     gtime_t time=utc2gpst(timeget());
     char path[1024];
@@ -204,7 +204,7 @@ extern int rtkopenstat(const char *file, int level)
 * args   : none
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void rtkclosestat(void)
+void rtkclosestat(void)
 {
     trace(3,"rtkclosestat:\n");
 
@@ -214,7 +214,7 @@ extern void rtkclosestat(void)
     statlevel=0;
 }
 /* Write solution status to buffer -------------------------------------------*/
-extern int rtkoutstat(rtk_t *rtk, int level, char *buff)
+int rtkoutstat(rtk_t *rtk, int level, char *buff)
 {
     if (level<=0||rtk->sol.stat==SOLQ_NONE) {
         return 0;
@@ -2238,7 +2238,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
 *          prcopt_t *opt    I   positioning options (see rtklib.h)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void rtkinit(rtk_t *rtk, const prcopt_t *opt)
+void rtkinit(rtk_t *rtk, const prcopt_t *opt)
 {
     sol_t sol0={{0}};
     ambc_t ambc0={{{0}}};
@@ -2276,7 +2276,7 @@ extern void rtkinit(rtk_t *rtk, const prcopt_t *opt)
 * args   : rtk_t    *rtk    IO  rtk control/result struct
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void rtkfree(rtk_t *rtk)
+void rtkfree(rtk_t *rtk)
 {
     trace(3,"rtkfree :\n");
 
@@ -2343,7 +2343,7 @@ extern void rtkfree(rtk_t *rtk)
 * notes  : before calling function, base station position rtk->sol.rb[] should
 *          be properly set for relative mode except for moving-baseline
 *-----------------------------------------------------------------------------*/
-extern int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
+int rtkpos(rtk_t *rtk, const obsd_t *obs, int n, const nav_t *nav)
 {
     prcopt_t *opt=&rtk->opt;
     sol_t solb={{0}};

@@ -886,7 +886,7 @@ static int decode_unicore(raw_t* raw)
 *                  2: input ephemeris, 3: input sbas message,
 *                  9: input ion/utc parameter)
 */
-extern int input_unicore(raw_t* raw, uint8_t data)
+int input_unicore(raw_t* raw, uint8_t data)
 {
     trace(5, "input_unicore: data=%02x\n", data);
 
@@ -915,7 +915,7 @@ extern int input_unicore(raw_t* raw, uint8_t data)
 *          FILE   *fp       I   file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_unicoref(raw_t* raw, FILE* fp)
+int input_unicoref(raw_t* raw, FILE* fp)
 {
     int i, data;
 

@@ -46,7 +46,7 @@ static int abortf=0;          // abort flag
 
 // show message in message area ---------------------------------------------
 extern "C" {
-extern int showmsg(const char *format,...)
+int showmsg(const char *format,...)
 {
     va_list arg;
     AnsiString str;

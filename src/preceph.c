@@ -309,7 +309,7 @@ static void combpeph(nav_t *nav, int opt)
 *          function
 *          only files with extensions of .sp3, .SP3, .eph* and .EPH* are read
 *-----------------------------------------------------------------------------*/
-extern void readsp3(const char *file, nav_t *nav, int opt)
+void readsp3(const char *file, nav_t *nav, int opt)
 {
     FILE *fp;
     gtime_t time={0};
@@ -359,7 +359,7 @@ extern void readsp3(const char *file, nav_t *nav, int opt)
 * return : status (1:ok,0:error)
 * notes  : only support antex format for the antenna parameter file
 *-----------------------------------------------------------------------------*/
-extern int readsap(const char *file, const gtime_t time, nav_t *nav) {
+int readsap(const char *file, const gtime_t time, nav_t *nav) {
   char tstr[40];
   trace(3, "readsap : file=%s time=%s\n", file, time2str(time, tstr, 0));
 
@@ -443,7 +443,7 @@ static int sys2ix(int sys)
 *       mode:  0=DCB or pseudo-DCB
 *              1=OSB or pseudo-OSB
 * ----------------------------------------------------------------------------*/
-extern double code2bias(const nav_t *nav, int sys, int sat, int code, int mode) {
+double code2bias(const nav_t *nav, int sys, int sat, int code, int mode) {
     int sys_ix,frq_ix,code_ix;
     double bias=0;
 
@@ -520,7 +520,7 @@ static int readbiaf(const char *file, nav_t *nav)
          : currently only support P1-P2, P1-C1 bias in DCB file
          : currently only supports satellite biases in BIA/BSX files
 *-----------------------------------------------------------------------------*/
-extern int readdcb(const char *file, nav_t *nav, const sta_t *sta)
+int readdcb(const char *file, nav_t *nav, const sta_t *sta)
 {
     int i,j,k,n,dcb_ok=0;
     char *efiles[MAXEXFILE]={0};
@@ -708,7 +708,7 @@ static int pephclk1(gtime_t time, int sat, const nav_t *nav, double *dts,
 // Return : 1 in success; 0 on failure.
 //
 // Note: the dts and varc outputs are not modified on failure.
-extern int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts, double *varc) {
+int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts, double *varc) {
 
   if (pephclk1(time, sat, nav, dts, varc)) return 1;
   double rs[3], dts2;
@@ -735,7 +735,7 @@ extern int pephclk(gtime_t time, int sat, const nav_t *nav, double *dts, double 
 *            BDS      : B1I-B2I
 *            NavIC    : L5-S
 *-----------------------------------------------------------------------------*/
-extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
+void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
                       double *dant)
 {
     const pcv_t *pcv=nav->pcvs+sat-1;
@@ -812,7 +812,7 @@ extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
 *          nav->nc must be set by calling readsp3(), readrnx() or readrnxt()
 *          if precise clocks are not set, clocks in sp3 are used instead
 *-----------------------------------------------------------------------------*/
-extern int peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
+int peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
                     double *rs, double *dts, double *var)
 {
     gtime_t time_tt;

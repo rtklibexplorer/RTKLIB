@@ -387,7 +387,7 @@ static int decode_type59(rtcm_t *rtcm)
     return 0;
 }
 /* decode rtcm ver.2 message -------------------------------------------------*/
-extern int decode_rtcm2(rtcm_t *rtcm)
+int decode_rtcm2(rtcm_t *rtcm)
 {
     double zcnt;
     int staid,seqno,stah,ret=0,type=getbitu(rtcm->buff,8,6);

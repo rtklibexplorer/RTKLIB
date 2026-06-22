@@ -385,7 +385,7 @@ static void fatalerr(const char *format, ...)
 * return : none
 * notes  : if malloc() failed in return : none
 *-----------------------------------------------------------------------------*/
-extern void add_fatal(fatalfunc_t *func)
+void add_fatal(fatalfunc_t *func)
 {
     fatalfunc=func;
 }
@@ -395,7 +395,7 @@ extern void add_fatal(fatalfunc_t *func)
 *          int    prn       I   satellite prn/slot number
 * return : satellite number (0:error)
 *-----------------------------------------------------------------------------*/
-extern int satno(int sys, int prn)
+int satno(int sys, int prn)
 {
     if (prn<=0) return 0;
     switch (sys) {
@@ -434,7 +434,7 @@ extern int satno(int sys, int prn)
 *          int    *prn      IO  satellite prn/slot number (NULL: no output)
 * return : satellite system (SYS_GPS,SYS_GLO,...)
 *-----------------------------------------------------------------------------*/
-extern int satsys(int sat, int *prn)
+int satsys(int sat, int *prn)
 {
     int sys=SYS_NONE;
     if (sat<=0||MAXSAT<sat) sat=0;
@@ -472,7 +472,7 @@ extern int satsys(int sat, int *prn)
 * return : satellite number (0: error)
 * notes  : 120-142 and 193-199 are also recognized as sbas and qzss
 *-----------------------------------------------------------------------------*/
-extern int satid2no(const char *id)
+int satid2no(const char *id)
 {
     int sys,prn;
     char code;
@@ -505,7 +505,7 @@ extern int satid2no(const char *id)
 *          char   *id       O   satellite id (Gnn,Rnn,Enn,Jnn,Cnn,Inn or nnn)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void satno2id(int sat, char id[8])
+void satno2id(int sat, char id[8])
 {
     int prn;
     switch (satsys(sat,&prn)) {
@@ -528,7 +528,7 @@ extern void satno2id(int sat, char id[8])
 *          prcopt_t *opt    I   processing options (NULL: not used)
 * return : status (1:excluded,0:not excluded)
 *-----------------------------------------------------------------------------*/
-extern int satexclude(int sat, double var, int svh, const prcopt_t *opt)
+int satexclude(int sat, double var, int svh, const prcopt_t *opt)
 {
     int sys=satsys(sat,NULL);
 
@@ -564,7 +564,7 @@ extern int satexclude(int sat, double var, int svh, const prcopt_t *opt)
 *          snrmask_t *mask  I   SNR mask
 * return : status (1:masked,0:unmasked)
 *-----------------------------------------------------------------------------*/
-extern int testsnr(int base, int idx, double el, double snr,
+int testsnr(int base, int idx, double el, double snr,
                    const snrmask_t *mask)
 {
     double minsnr,a;
@@ -586,7 +586,7 @@ extern int testsnr(int base, int idx, double el, double snr,
 * return : obs code (CODE_???)
 * notes  : obs codes are based on RINEX 3.04
 *-----------------------------------------------------------------------------*/
-extern uint8_t obs2code(const char *obs)
+uint8_t obs2code(const char *obs)
 {
     int i;
 
@@ -602,7 +602,7 @@ extern uint8_t obs2code(const char *obs)
 * return : obs code string ("1C","1P","1P",...)
 * notes  : obs codes are based on RINEX 3.04
 *-----------------------------------------------------------------------------*/
-extern const char *code2obs(uint8_t code)
+const char *code2obs(uint8_t code)
 {
     if (code<=CODE_NONE||MAXCODE<code) return "";
     return obscodes[code];
@@ -719,7 +719,7 @@ static int code2freq_IRN(uint8_t code, double *freq)
 *            BDS       B1    B2b   B2a   B3   B1C   B2ab
 *            NavIC     L5     S    L1     -     -     -
 *-----------------------------------------------------------------------------*/
-extern int code2idx(int sys, uint8_t code)
+int code2idx(int sys, uint8_t code)
 {
     double freq;
 
@@ -741,7 +741,7 @@ extern int code2idx(int sys, uint8_t code)
 *          int    fcn       I   frequency channel number for GLONASS
 * return : carrier frequency (Hz) (0.0: error)
 *-----------------------------------------------------------------------------*/
-extern double code2freq(int sys, uint8_t code, int fcn)
+double code2freq(int sys, uint8_t code, int fcn)
 {
     double freq=0.0;
 
@@ -763,7 +763,7 @@ extern double code2freq(int sys, uint8_t code, int fcn)
 *          nav_t  *nav_t    I   navigation data for GLONASS (NULL: not used)
 * return : carrier frequency (Hz) (0.0: error)
 *-----------------------------------------------------------------------------*/
-extern double sat2freq(int sat, uint8_t code, const nav_t *nav)
+double sat2freq(int sat, uint8_t code, const nav_t *nav)
 {
     int i,fcn=-8,sys,prn;
 
@@ -791,7 +791,7 @@ extern double sat2freq(int sat, uint8_t code, const nav_t *nav)
 *                               (higher priority precedes lower)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void setcodepri(int sys, int idx, const char *pri)
+void setcodepri(int sys, int idx, const char *pri)
 {
     trace(3,"setcodepri:sys=%d idx=%d pri=%s\n",sys,idx,pri);
 
@@ -811,7 +811,7 @@ extern void setcodepri(int sys, int idx, const char *pri)
 *          char   *opt      I   code options (NULL:no option)
 * return : priority (15:highest-1:lowest,0:error)
 *-----------------------------------------------------------------------------*/
-extern int getcodepri(int sys, uint8_t code, const char *opt)
+int getcodepri(int sys, uint8_t code, const char *opt)
 {
     const char *p,*optstr, *obs;
     char str[8]="";
@@ -845,14 +845,14 @@ extern int getcodepri(int sys, uint8_t code, const char *opt)
 *          int    len       I   bit length (bits) (len<=32)
 * return : extracted unsigned/signed bits
 *-----------------------------------------------------------------------------*/
-extern uint32_t getbitu(const uint8_t *buff, int pos, int len)
+uint32_t getbitu(const uint8_t *buff, int pos, int len)
 {
     uint32_t bits=0;
     int i;
     for (i=pos;i<pos+len;i++) bits=(bits<<1)+((buff[i/8]>>(7-i%8))&1u);
     return bits;
 }
-extern int32_t getbits(const uint8_t *buff, int pos, int len)
+int32_t getbits(const uint8_t *buff, int pos, int len)
 {
     uint32_t bits=getbitu(buff,pos,len);
     if (len<=0||32<=len||!(bits&(1u<<(len-1)))) return (int32_t)bits;
@@ -866,7 +866,7 @@ extern int32_t getbits(const uint8_t *buff, int pos, int len)
 *          [u]int32_t data  I   unsigned/signed data
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void setbitu(uint8_t *buff, int pos, int len, uint32_t data)
+void setbitu(uint8_t *buff, int pos, int len, uint32_t data)
 {
     uint32_t mask=1u<<(len-1);
     int i;
@@ -875,7 +875,7 @@ extern void setbitu(uint8_t *buff, int pos, int len, uint32_t data)
         if (data&mask) buff[i/8]|=1u<<(7-i%8); else buff[i/8]&=~(1u<<(7-i%8));
     }
 }
-extern void setbits(uint8_t *buff, int pos, int len, int32_t data)
+void setbits(uint8_t *buff, int pos, int len, int32_t data)
 {
     if (data<0) data|=1<<(len-1); else data&=~(1<<(len-1)); /* set sign bit */
     setbitu(buff,pos,len,(uint32_t)data);
@@ -887,7 +887,7 @@ extern void setbits(uint8_t *buff, int pos, int len, int32_t data)
 * return : crc-32 parity
 * notes  : see NovAtel OEMV firmware manual 1.7 32-bit CRC
 *-----------------------------------------------------------------------------*/
-extern uint32_t rtk_crc32(const uint8_t *buff, int len)
+uint32_t rtk_crc32(const uint8_t *buff, int len)
 {
     uint32_t crc=0;
     int i,j;
@@ -909,7 +909,7 @@ extern uint32_t rtk_crc32(const uint8_t *buff, int len)
 * return : crc-24Q parity
 * notes  : see reference [2] A.4.3.3 Parity
 *-----------------------------------------------------------------------------*/
-extern uint32_t rtk_crc24q(const uint8_t *buff, int len)
+uint32_t rtk_crc24q(const uint8_t *buff, int len)
 {
     uint32_t crc=0;
     int i;
@@ -926,7 +926,7 @@ extern uint32_t rtk_crc24q(const uint8_t *buff, int len)
 * return : crc-16 parity
 * notes  : see reference [10] A.3.
 *-----------------------------------------------------------------------------*/
-extern uint16_t rtk_crc16(const uint8_t *buff, int len)
+uint16_t rtk_crc16(const uint8_t *buff, int len)
 {
     uint16_t crc=0;
     int i;
@@ -947,7 +947,7 @@ extern uint16_t rtk_crc16(const uint8_t *buff, int len)
 * return : status (1:ok,0:parity error)
 * notes  : see reference [1] 20.3.5.2 user parity algorithm
 *-----------------------------------------------------------------------------*/
-extern int decode_word(uint32_t word, uint8_t *data)
+int decode_word(uint32_t word, uint8_t *data)
 {
     const uint32_t hamming[]={
         0xBB1F3480,0x5D8F9A40,0xAEC7CD00,0x5763E680,0x6BB1F340,0x8B7A89C0
@@ -973,7 +973,7 @@ extern int decode_word(uint32_t word, uint8_t *data)
 * args   : int    n,m       I   number of rows and columns of matrix
 * return : matrix pointer (if n<=0 or m<=0, return NULL)
 *-----------------------------------------------------------------------------*/
-extern double *mat(int n, int m)
+double *mat(int n, int m)
 {
     double *p;
 
@@ -988,7 +988,7 @@ extern double *mat(int n, int m)
 * args   : int    n,m       I   number of rows and columns of matrix
 * return : matrix pointer (if n<=0 or m<=0, return NULL)
 *-----------------------------------------------------------------------------*/
-extern int *imat(int n, int m)
+int *imat(int n, int m)
 {
     int *p;
 
@@ -1003,7 +1003,7 @@ extern int *imat(int n, int m)
 * args   : int    n,m       I   number of rows and columns of matrix
 * return : matrix pointer (if n<=0 or m<=0, return NULL)
 *-----------------------------------------------------------------------------*/
-extern double *zeros(int n, int m)
+double *zeros(int n, int m)
 {
     double *p;
 
@@ -1022,7 +1022,7 @@ extern double *zeros(int n, int m)
 * args   : int    n         I   number of rows and columns of matrix
 * return : matrix pointer (if n<=0, return NULL)
 *-----------------------------------------------------------------------------*/
-extern double *eye(int n)
+double *eye(int n)
 {
     double *p;
     int i;
@@ -1036,14 +1036,14 @@ extern double *eye(int n)
  * args   : double *a,*b     I   vectors a and b
  * return : a'*b
  *-----------------------------------------------------------------------------*/
-extern double dot2(const double* a, const double* b) { return a[0] * b[0] + a[1] * b[1]; }
+double dot2(const double* a, const double* b) { return a[0] * b[0] + a[1] * b[1]; }
 
 /* dot product -----------------------------------------------------------------
  * inner product of vectors of size 3
  * args   : double *a,*b     I   vectors a and b
  * return : a'*b
  *-----------------------------------------------------------------------------*/
-extern double dot3(const double* a, const double* b)
+double dot3(const double* a, const double* b)
 {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
@@ -1054,7 +1054,7 @@ extern double dot3(const double* a, const double* b)
 *          int    n         I   size of vector a,b
 * return : a'*b
 *-----------------------------------------------------------------------------*/
-extern double dot(const double *a, const double *b, int n)
+double dot(const double *a, const double *b, int n)
 {
     double c=0.0;
 
@@ -1068,7 +1068,7 @@ extern double dot(const double *a, const double *b, int n)
 *          int    n         I   size of vector a
 * return : || a ||
 *-----------------------------------------------------------------------------*/
-extern double norm(const double *a, int n)
+double norm(const double *a, int n)
 {
     return sqrt(dot(a,a,n));
 }
@@ -1078,7 +1078,7 @@ extern double norm(const double *a, int n)
 *          double *c        O   outer product (a x b) (3 x 1)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void cross3(const double *a, const double *b, double *c)
+void cross3(const double *a, const double *b, double *c)
 {
     c[0]=a[1]*b[2]-a[2]*b[1];
     c[1]=a[2]*b[0]-a[0]*b[2];
@@ -1090,7 +1090,7 @@ extern void cross3(const double *a, const double *b, double *c)
 *          double *b        O   normalized vector (3 x 1) || b || = 1
 * return : status (1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int normv3(const double *a, double *b)
+int normv3(const double *a, double *b)
 {
     double r;
     if ((r=norm(a,3))<=0.0) return 0;
@@ -1106,7 +1106,7 @@ extern int normv3(const double *a, double *b)
 *          int    n,m       I   number of rows and columns of matrix
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void matcpy(double *A, const double *B, int n, int m)
+void matcpy(double *A, const double *B, int n, int m)
 {
     memcpy(A,B,sizeof(double)*n*m);
 }
@@ -1122,7 +1122,7 @@ extern void matcpy(double *A, const double *B, int n, int m)
 *          double *C        O matrix C (n x k)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void matmul(const char *tr, int n, int k, int m,
+void matmul(const char *tr, int n, int k, int m,
                    const double *A, const double *B, double *C)
 {
     int lda=tr[0]=='T'?m:n,ldb=tr[1]=='T'?k:m;
@@ -1134,7 +1134,7 @@ extern void matmul(const char *tr, int n, int k, int m,
 /* multiply matrix (wrapper of blas dgemm) -------------------------------------
 * multiply matrix by matrix (C=C+A*B)
 *-----------------------------------------------------------------------------*/
-extern void matmulp(const char *tr, int n, int k, int m,
+void matmulp(const char *tr, int n, int k, int m,
                     const double *A, const double *B, double *C)
 {
     int lda=tr[0]=='T'?m:n,ldb=tr[1]=='T'?k:m;
@@ -1146,7 +1146,7 @@ extern void matmulp(const char *tr, int n, int k, int m,
 /* multiply matrix (wrapper of blas dgemm) -------------------------------------
 * multiply matrix by matrix (C=C-A*B)
 *-----------------------------------------------------------------------------*/
-extern void matmulm(const char *tr, int n, int k, int m,
+void matmulm(const char *tr, int n, int k, int m,
                     const double *A, const double *B, double *C)
 {
     int lda=tr[0]=='T'?m:n,ldb=tr[1]=='T'?k:m;
@@ -1161,7 +1161,7 @@ extern void matmulm(const char *tr, int n, int k, int m,
 *          int    n         I   size of matrix A
 * return : status (0:ok,0>:error)
 *-----------------------------------------------------------------------------*/
-extern int matinv(double *A, int n)
+int matinv(double *A, int n)
 {
     double *work;
     int info,lwork=n*16,*ipiv=imat(n,1);
@@ -1183,7 +1183,7 @@ extern int matinv(double *A, int n)
 * notes  : matrix stored by column-major order (fortran convention)
 *          X can be same as Y
 *-----------------------------------------------------------------------------*/
-extern int solve(const char *tr, const double *A, const double *Y, int n,
+int solve(const char *tr, const double *A, const double *Y, int n,
                  int m, double *X)
 {
     double *B=mat(n,n);
@@ -1200,7 +1200,7 @@ extern int solve(const char *tr, const double *A, const double *Y, int n,
 #else /* without LAPACK/BLAS or MKL */
 
 /* multiply matrix -----------------------------------------------------------*/
-extern void matmul(const char *tr, int n, int k, int m,
+void matmul(const char *tr, int n, int k, int m,
                    const double *A, const double *B, double *C)
 {
     int f=(tr[0]!='N')*2+(tr[1]!='N');
@@ -1244,7 +1244,7 @@ extern void matmul(const char *tr, int n, int k, int m,
           break;
     }
 }
-extern void matmulp(const char *tr, int n, int k, int m,
+void matmulp(const char *tr, int n, int k, int m,
                     const double *A, const double *B, double *C)
 {
     int f=(tr[0]!='N')*2+(tr[1]!='N');
@@ -1288,7 +1288,7 @@ extern void matmulp(const char *tr, int n, int k, int m,
           break;
     }
 }
-extern void matmulm(const char *tr, int n, int k, int m,
+void matmulm(const char *tr, int n, int k, int m,
                     const double *A, const double *B, double *C)
 {
     int f=(tr[0]!='N')*2+(tr[1]!='N');
@@ -1383,7 +1383,7 @@ static void lubksb(const double *A, int n, const int *indx, double *b)
     }
 }
 /* inverse of matrix ---------------------------------------------------------*/
-extern int matinv(double *A, int n)
+int matinv(double *A, int n)
 {
     double d,*B;
     int i,j,*indx;
@@ -1399,7 +1399,7 @@ extern int matinv(double *A, int n)
     return 0;
 }
 /* solve linear equation -----------------------------------------------------*/
-extern int solve(const char *tr, const double *A, const double *Y, int n,
+int solve(const char *tr, const double *A, const double *Y, int n,
                  int m, double *X)
 {
     double *B=mat(n,n);
@@ -1425,7 +1425,7 @@ extern int solve(const char *tr, const double *A, const double *Y, int n,
 * notes  : for weighted least square, replace A and y by A*w and w*y (w=W^(1/2))
 *          matrix stored by column-major order (fortran convention)
 *-----------------------------------------------------------------------------*/
-extern int lsq(const double *A, const double *y, int n, int m, double *x,
+int lsq(const double *A, const double *y, int n, int m, double *x,
                double *Q)
 {
     double *Ay;
@@ -1476,7 +1476,7 @@ static int filter_(const double *x, const double *P, const double *H,
     free(F); free(Q); free(K); free(I);
     return info;
 }
-extern int filter(double *x, double *P, const double *H, const double *v,
+int filter(double *x, double *P, const double *H, const double *v,
                   const double *R, int n, int m)
 {
     double *x_,*xp_,*P_,*Pp_,*H_;
@@ -1517,7 +1517,7 @@ extern int filter(double *x, double *P, const double *H, const double *v,
 * notes  : see reference [4] 5.2
 *          matrix stored by column-major order (fortran convention)
 *-----------------------------------------------------------------------------*/
-extern int smoother(const double *xf, const double *Qf, const double *xb,
+int smoother(const double *xf, const double *Qf, const double *xb,
                     const double *Qb, int n, double *xs, double *Qs)
 {
     double *invQf=mat(n,n),*invQb=mat(n,n),*xx=mat(n,1);
@@ -1545,7 +1545,7 @@ extern int smoother(const double *xf, const double *Qf, const double *xb,
 * return : none
 * notes  : matrix stored by column-major order (fortran convention)
 *-----------------------------------------------------------------------------*/
-extern void matfprint(const double A[], int n, int m, int p, int q, FILE *fp)
+void matfprint(const double A[], int n, int m, int p, int q, FILE *fp)
 {
     int i,j;
 
@@ -1554,12 +1554,12 @@ extern void matfprint(const double A[], int n, int m, int p, int q, FILE *fp)
         fprintf(fp,"\n");
     }
 }
-extern void matprint(const double A[], int n, int m, int p, int q)
+void matprint(const double A[], int n, int m, int p, int q)
 {
     matfprint(A,n,m,p,q,stdout);
 }
 /* set string without tail space ---------------------------------------------*/
-extern void setstr(char *dst, const char *src, int n)
+void setstr(char *dst, const char *src, int n)
 {
     char *p=dst;
     const char *q=src;
@@ -1573,7 +1573,7 @@ extern void setstr(char *dst, const char *src, int n)
 *          int    i,n       I   substring position and width
 * return : converted number (0.0:error)
 *-----------------------------------------------------------------------------*/
-extern double str2num(const char *s, int i, int n)
+double str2num(const char *s, int i, int n)
 {
     char str[256],*p=str;
 
@@ -1597,7 +1597,7 @@ extern double str2num(const char *s, int i, int n)
 *          gtime_t *t       O   gtime_t struct
 * return : status (0:ok,0>:error)
 *-----------------------------------------------------------------------------*/
-extern int str2time(const char *s, int i, int n, gtime_t *t)
+int str2time(const char *s, int i, int n, gtime_t *t)
 {
     double ep[6];
     char str[256],*p=str;
@@ -1617,7 +1617,7 @@ extern int str2time(const char *s, int i, int n, gtime_t *t)
 * return : gtime_t struct
 * notes  : proper in 1970-2037 or 1970-2099 (64bit time_t)
 *-----------------------------------------------------------------------------*/
-extern gtime_t epoch2time(const double *ep)
+gtime_t epoch2time(const double *ep)
 {
     const int doy[]={1,32,60,91,121,152,182,213,244,274,305,335};
     gtime_t time={0};
@@ -1639,7 +1639,7 @@ extern gtime_t epoch2time(const double *ep)
 * return : none
 * notes  : proper in 1970-2037 or 1970-2099 (64bit time_t)
 *-----------------------------------------------------------------------------*/
-extern void time2epoch(gtime_t t, double *ep)
+void time2epoch(gtime_t t, double *ep)
 {
     const int mday[]={ /* # of days in a month */
         31,28,31,30,31,30,31,31,30,31,30,31,31,28,31,30,31,30,31,31,30,31,30,31,
@@ -1657,7 +1657,7 @@ extern void time2epoch(gtime_t t, double *ep)
     ep[3]=sec/3600; ep[4]=sec%3600/60; ep[5]=sec%60+t.sec;
 }
 /* same as above but output limited to n decimals for formatted output */
-extern void time2epoch_n(gtime_t t, double *ep, int n)
+void time2epoch_n(gtime_t t, double *ep, int n)
 {
     if (n<0) n=0; else if (n>12) n=12;
     if (1.0-t.sec<0.5/pow(10.0,n)) {t.time++; t.sec=0.0;};
@@ -1669,7 +1669,7 @@ extern void time2epoch_n(gtime_t t, double *ep, int n)
 *          double sec       I   time of week in gps time (s)
 * return : gtime_t struct
 *-----------------------------------------------------------------------------*/
-extern gtime_t gpst2time(int week, double sec)
+gtime_t gpst2time(int week, double sec)
 {
     gtime_t t=epoch2time(gpst0);
 
@@ -1684,7 +1684,7 @@ extern gtime_t gpst2time(int week, double sec)
 *          int    *week     IO  week number in gps time (NULL: no output)
 * return : time of week in gps time (s)
 *-----------------------------------------------------------------------------*/
-extern double time2gpst(gtime_t t, int *week)
+double time2gpst(gtime_t t, int *week)
 {
     gtime_t t0=epoch2time(gpst0);
     time_t sec=t.time-t0.time;
@@ -1699,7 +1699,7 @@ extern double time2gpst(gtime_t t, int *week)
 *          double sec       I   time of week in gst (s)
 * return : gtime_t struct
 *-----------------------------------------------------------------------------*/
-extern gtime_t gst2time(int week, double sec)
+gtime_t gst2time(int week, double sec)
 {
     gtime_t t=epoch2time(gst0);
 
@@ -1714,7 +1714,7 @@ extern gtime_t gst2time(int week, double sec)
 *          int    *week     IO  week number in gst (NULL: no output)
 * return : time of week in gst (s)
 *-----------------------------------------------------------------------------*/
-extern double time2gst(gtime_t t, int *week)
+double time2gst(gtime_t t, int *week)
 {
     gtime_t t0=epoch2time(gst0);
     time_t sec=t.time-t0.time;
@@ -1729,7 +1729,7 @@ extern double time2gst(gtime_t t, int *week)
 *          double sec       I   time of week in bdt (s)
 * return : gtime_t struct
 *-----------------------------------------------------------------------------*/
-extern gtime_t bdt2time(int week, double sec)
+gtime_t bdt2time(int week, double sec)
 {
     gtime_t t=epoch2time(bdt0);
 
@@ -1744,7 +1744,7 @@ extern gtime_t bdt2time(int week, double sec)
 *          int    *week     IO  week number in bdt (NULL: no output)
 * return : time of week in bdt (s)
 *-----------------------------------------------------------------------------*/
-extern double time2bdt(gtime_t t, int *week)
+double time2bdt(gtime_t t, int *week)
 {
     gtime_t t0=epoch2time(bdt0);
     time_t sec=t.time-t0.time;
@@ -1759,7 +1759,7 @@ extern double time2bdt(gtime_t t, int *week)
 *          double sec       I   time to add (s)
 * return : gtime_t struct (t+sec)
 *-----------------------------------------------------------------------------*/
-extern gtime_t timeadd(gtime_t t, double sec)
+gtime_t timeadd(gtime_t t, double sec)
 {
     double tt;
 
@@ -1771,7 +1771,7 @@ extern gtime_t timeadd(gtime_t t, double sec)
 * args   : gtime_t t1,t2    I   gtime_t structs
 * return : time difference (t1-t2) (s)
 *-----------------------------------------------------------------------------*/
-extern double timediff(gtime_t t1, gtime_t t2)
+double timediff(gtime_t t1, gtime_t t2)
 {
     return difftime(t1.time,t2.time)+t1.sec-t2.sec;
 }
@@ -1782,7 +1782,7 @@ extern double timediff(gtime_t t1, gtime_t t2)
 *-----------------------------------------------------------------------------*/
 static double timeoffset_=0.0;        /* time offset (s) */
 
-extern gtime_t timeget(void)
+gtime_t timeget(void)
 {
     double ep[6]={0};
 #ifdef WIN32
@@ -1820,7 +1820,7 @@ extern gtime_t timeget(void)
 *          the time offset is reflected to only timeget()
 *          not reentrant
 *-----------------------------------------------------------------------------*/
-extern void timeset(gtime_t t)
+void timeset(gtime_t t)
 {
     timeoffset_+=timediff(t,timeget());
 }
@@ -1829,7 +1829,7 @@ extern void timeset(gtime_t t)
 * args   : none
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void timereset(void)
+void timereset(void)
 {
     timeoffset_=0.0;
 }
@@ -1889,7 +1889,7 @@ static int read_leaps_usno(FILE *fp)
 *          (2) The date and time indicate the start UTC time for the UTC-GPST
 *          (3) The date and time should be descending order.
 *-----------------------------------------------------------------------------*/
-extern int read_leaps(const char *file)
+int read_leaps(const char *file)
 {
     FILE *fp;
     int i,n;
@@ -1911,7 +1911,7 @@ extern int read_leaps(const char *file)
 * return : time expressed in utc
 * notes  : ignore slight time offset under 100 ns
 *-----------------------------------------------------------------------------*/
-extern gtime_t gpst2utc(gtime_t t)
+gtime_t gpst2utc(gtime_t t)
 {
     gtime_t tu;
     int i;
@@ -1928,7 +1928,7 @@ extern gtime_t gpst2utc(gtime_t t)
 * return : time expressed in gpstime
 * notes  : ignore slight time offset under 100 ns
 *-----------------------------------------------------------------------------*/
-extern gtime_t utc2gpst(gtime_t t)
+gtime_t utc2gpst(gtime_t t)
 {
     int i;
 
@@ -1945,7 +1945,7 @@ extern gtime_t utc2gpst(gtime_t t)
 *          no leap seconds in BDT
 *          ignore slight time offset under 100 ns
 *-----------------------------------------------------------------------------*/
-extern gtime_t gpst2bdt(gtime_t t)
+gtime_t gpst2bdt(gtime_t t)
 {
     return timeadd(t,-14.0);
 }
@@ -1955,7 +1955,7 @@ extern gtime_t gpst2bdt(gtime_t t)
 * return : time expressed in gpstime
 * notes  : see gpst2bdt()
 *-----------------------------------------------------------------------------*/
-extern gtime_t bdt2gpst(gtime_t t)
+gtime_t bdt2gpst(gtime_t t)
 {
     return timeadd(t,14.0);
 }
@@ -1975,7 +1975,7 @@ static double time2sec(gtime_t time, gtime_t *day)
 *          double ut1_utc   I   UT1-UTC (s)
 * return : gmst (rad)
 *-----------------------------------------------------------------------------*/
-extern double utc2gmst(gtime_t t, double ut1_utc)
+double utc2gmst(gtime_t t, double ut1_utc)
 {
     const double ep2000[]={2000,1,1,12,0,0};
     gtime_t tut,tut0;
@@ -1997,7 +1997,7 @@ extern double utc2gmst(gtime_t t, double ut1_utc)
 *          int    n         I   number of decimals
 * return : time string
 *-----------------------------------------------------------------------------*/
-extern char *time2str(gtime_t t, char s[40], int n)
+char *time2str(gtime_t t, char s[40], int n)
 {
     double ep[6];
 
@@ -2013,7 +2013,7 @@ extern char *time2str(gtime_t t, char s[40], int n)
 * args   : gtime_t t        I   gtime_t struct
 * return : day of year (days)
 *-----------------------------------------------------------------------------*/
-extern double time2doy(gtime_t t)
+double time2doy(gtime_t t)
 {
     double ep[6];
 
@@ -2026,7 +2026,7 @@ extern double time2doy(gtime_t t)
 * args   : int   week       I   not-adjusted gps week number (0-1023)
 * return : adjusted gps week number
 *-----------------------------------------------------------------------------*/
-extern int adjgpsweek(int week)
+int adjgpsweek(int week)
 {
     int w;
     (void)time2gpst(utc2gpst(timeget()),&w);
@@ -2038,7 +2038,7 @@ extern int adjgpsweek(int week)
 * args   : none
 * return : current tick in ms
 *-----------------------------------------------------------------------------*/
-extern uint32_t tickget(void)
+uint32_t tickget(void)
 {
 #ifdef WIN32
     return (uint32_t)timeGetTime();
@@ -2066,7 +2066,7 @@ extern uint32_t tickget(void)
 * args   : int   ms         I   milliseconds to sleep (<0:no sleep)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void sleepms(int ms)
+void sleepms(int ms)
 {
 #ifdef WIN32
     if (ms<5) Sleep(1); else Sleep(ms);
@@ -2085,7 +2085,7 @@ extern void sleepms(int ms)
 *          int    ndec      I   number of decimals of second
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void deg2dms(double deg, double *dms, int ndec)
+void deg2dms(double deg, double *dms, int ndec)
 {
     double sign=deg<0.0?-1.0:1.0,a=fabs(deg);
     double unit=pow(0.1,ndec);
@@ -2107,7 +2107,7 @@ extern void deg2dms(double deg, double *dms, int ndec)
 * args   : double *dms      I   degree-minute-second {deg,min,sec}
 * return : degree
 *-----------------------------------------------------------------------------*/
-extern double dms2deg(const double *dms)
+double dms2deg(const double *dms)
 {
     double sign=dms[0]<0.0?-1.0:1.0;
     return sign*(fabs(dms[0])+dms[1]/60.0+dms[2]/3600.0);
@@ -2119,7 +2119,7 @@ extern double dms2deg(const double *dms)
 * return : none
 * notes  : WGS84, ellipsoidal height
 *-----------------------------------------------------------------------------*/
-extern void ecef2pos(const double *r, double *pos)
+void ecef2pos(const double *r, double *pos)
 {
     double e2=FE_WGS84*(2.0-FE_WGS84),r2=dot2(r,r),z,zk,v=RE_WGS84,sinp;
 
@@ -2140,7 +2140,7 @@ extern void ecef2pos(const double *r, double *pos)
 * return : none
 * notes  : WGS84, ellipsoidal height
 *-----------------------------------------------------------------------------*/
-extern void pos2ecef(const double *pos, double *r)
+void pos2ecef(const double *pos, double *r)
 {
     double sinp=sin(pos[0]),cosp=cos(pos[0]),sinl=sin(pos[1]),cosl=cos(pos[1]);
     double e2=FE_WGS84*(2.0-FE_WGS84),v=RE_WGS84/sqrt(1.0-e2*sinp*sinp);
@@ -2156,7 +2156,7 @@ extern void pos2ecef(const double *pos, double *r)
 * return : none
 * notes  : matrix stored by column-major order (fortran convention)
 *-----------------------------------------------------------------------------*/
-extern void xyz2enu(const double *pos, double *E)
+void xyz2enu(const double *pos, double *E)
 {
     double sinp=sin(pos[0]),cosp=cos(pos[0]),sinl=sin(pos[1]),cosl=cos(pos[1]);
 
@@ -2171,7 +2171,7 @@ extern void xyz2enu(const double *pos, double *E)
 *          double *e        O   vector in local tangential coordinate {e,n,u}
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void ecef2enu(const double *pos, const double *r, double *e)
+void ecef2enu(const double *pos, const double *r, double *e)
 {
     double E[9];
 
@@ -2185,7 +2185,7 @@ extern void ecef2enu(const double *pos, const double *r, double *e)
 *          double *r        O   vector in ecef coordinate {x,y,z}
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void enu2ecef(const double *pos, const double *e, double *r)
+void enu2ecef(const double *pos, const double *e, double *r)
 {
     double E[9];
 
@@ -2199,7 +2199,7 @@ extern void enu2ecef(const double *pos, const double *e, double *r)
 *          double *Q        O   covariance in local tangential coordinate
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void covenu(const double *pos, const double *P, double *Q)
+void covenu(const double *pos, const double *P, double *Q)
 {
     double E[9],EP[9];
 
@@ -2214,7 +2214,7 @@ extern void covenu(const double *pos, const double *P, double *Q)
 *          double *P        O   covariance in xyz-ecef coordinate
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void covecef(const double *pos, const double *Q, double *P)
+void covecef(const double *pos, const double *Q, double *P)
 {
     double E[9],EQ[9];
 
@@ -2394,7 +2394,7 @@ static void nut_iau1980(double t, const double *f, double *dpsi, double *deps)
 * note   : see ref [3] chap 5
 *          not thread-safe
 *-----------------------------------------------------------------------------*/
-extern void eci2ecef(gtime_t tutc, const double *erpv, double *U, double *gmst)
+void eci2ecef(gtime_t tutc, const double *erpv, double *U, double *gmst)
 {
     const double ep2000[]={2000,1,1,12,0,0};
     static THREADLOCAL gtime_t tutc_ = {0, 0};
@@ -2614,7 +2614,7 @@ static int readantex(const char *file, pcvs_t *pcvs)
 *          see reference [3]
 *          only support non-azimuth-depedent parameters
 *-----------------------------------------------------------------------------*/
-extern int readpcv(const char *file, pcvs_t *pcvs)
+int readpcv(const char *file, pcvs_t *pcvs)
 {
     pcv_t *pcv;
     char *ext;
@@ -2646,7 +2646,7 @@ extern int readpcv(const char *file, pcvs_t *pcvs)
 *          pcvs_t *pcvs       IO  antenna parameters
 * return : antenna parameter (NULL: no antenna)
 *-----------------------------------------------------------------------------*/
-extern pcv_t *searchpcv(int sat, const char *type, gtime_t time,
+pcv_t *searchpcv(int sat, const char *type, gtime_t time,
                         const pcvs_t *pcvs)
 {
     pcv_t *pcv;
@@ -2696,7 +2696,7 @@ extern pcv_t *searchpcv(int sat, const char *type, gtime_t time,
 *                               (all 0 if search error)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void readpos(const char *file, const char *rcv, double *pos)
+void readpos(const char *file, const char *rcv, double *pos)
 {
     static double poss[2048][3];
     static char stas[2048][16];
@@ -2753,7 +2753,7 @@ static int readblqrecord(FILE *fp, double odisp[2][11][3])
 *          double odisp[2][11][3] O   ocean tide loading parameters
 * return : status (1:ok,0:file open error)
 *-----------------------------------------------------------------------------*/
-extern int readblq(const char *file, const char *sta, double odisp[2][11][3])
+int readblq(const char *file, const char *sta, double odisp[2][11][3])
 {
     FILE *fp;
     char buff[256],staname[17]="",name[17],*p;
@@ -2789,7 +2789,7 @@ extern int readblq(const char *file, const char *sta, double odisp[2][11][3])
 *          erp_t  *erp        O   earth rotation parameters
 * return : number of files read.
 *-----------------------------------------------------------------------------*/
-extern int readerp(const char *file, erp_t *erp) {
+int readerp(const char *file, erp_t *erp) {
   trace(3, "readerp: file=%s\n", file);
 
   char *efiles[MAXEXFILE];
@@ -2910,7 +2910,7 @@ extern int readerp(const char *file, erp_t *erp) {
 *          double *erpv       O   erp values {xp,yp,ut1_utc,lod} (rad,rad,s,s/d)
 * return : status (1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int geterp(const erp_t *erp, gtime_t time, double *erpv)
+int geterp(const erp_t *erp, gtime_t time, double *erpv)
 {
     const double ep[]={2000,1,1,12,0,0};
     double mjd,day,a;
@@ -3084,7 +3084,7 @@ static void uniqseph(nav_t *nav)
 * args   : nav_t *nav    IO     navigation data
 * return : number of epochs
 *-----------------------------------------------------------------------------*/
-extern void uniqnav(nav_t *nav)
+void uniqnav(nav_t *nav)
 {
     trace(3,"uniqnav: neph=%d ngeph=%d nseph=%d\n",nav->n,nav->ng,nav->ns);
 
@@ -3107,7 +3107,7 @@ static int cmpobs(const void *p1, const void *p2)
 * args   : obs_t *obs    IO     observation data
 * return : number of epochs
 *-----------------------------------------------------------------------------*/
-extern int sortobs(obs_t *obs)
+int sortobs(obs_t *obs)
 {
     int i,j,n;
 
@@ -3142,7 +3142,7 @@ extern int sortobs(obs_t *obs)
 *          double  tint  I      time interval (s) (0.0:no screen by tint)
 * return : 1:on condition, 0:not on condition
 *-----------------------------------------------------------------------------*/
-extern int screent(gtime_t time, gtime_t ts, gtime_t te, double tint)
+int screent(gtime_t time, gtime_t ts, gtime_t te, double tint)
 {
     return (tint<=0.0||fmod(time2gpst(time,NULL)+DTTOL,tint)<=DTTOL*2.0)&&
            (ts.time==0||timediff(time,ts)>=-DTTOL)&&
@@ -3154,7 +3154,7 @@ extern int screent(gtime_t time, gtime_t ts, gtime_t te, double tint)
 *          nav_t   nav   O/I    navigation data
 * return : status (1:ok,0:no file)
 *-----------------------------------------------------------------------------*/
-extern int readnav(const char *file, nav_t *nav)
+int readnav(const char *file, nav_t *nav)
 {
     FILE *fp;
     eph_t eph0={0};
@@ -3221,7 +3221,7 @@ extern int readnav(const char *file, nav_t *nav)
     fclose(fp);
     return 1;
 }
-extern int savenav(const char *file, const nav_t *nav)
+int savenav(const char *file, const nav_t *nav)
 {
     FILE *fp;
     int i;
@@ -3276,7 +3276,7 @@ extern int savenav(const char *file, const nav_t *nav)
 * args   : obs_t *obs    IO     observation data
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void freeobs(obs_t *obs)
+void freeobs(obs_t *obs)
 {
     free(obs->data); obs->data=NULL; obs->n=obs->nmax=0;
 }
@@ -3290,7 +3290,7 @@ extern void freeobs(obs_t *obs)
 *                                0x40: tec data)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void freenav(nav_t *nav, int opt)
+void freenav(nav_t *nav, int opt)
 {
     if (opt&0x01) {free(nav->eph ); nav->eph =NULL; nav->n =nav->nmax =0;}
     if (opt&0x02) {free(nav->geph); nav->geph=NULL; nav->ng=nav->ngmax=0;}
@@ -3306,7 +3306,7 @@ extern void freenav(nav_t *nav, int opt)
 * args   : char   *cmd      I   command line
 * return : execution status (0:ok,0>:error)
 *-----------------------------------------------------------------------------*/
-extern int execcmd(const char *cmd)
+int execcmd(const char *cmd)
 {
 #ifdef WIN32
     PROCESS_INFORMATION info;
@@ -3339,7 +3339,7 @@ extern int execcmd(const char *cmd)
 * return : number of expanded file paths
 * notes  : the order of expanded files is alphabetical order
 *-----------------------------------------------------------------------------*/
-extern int expath(const char *path, char *paths[], int nmax)
+int expath(const char *path, char *paths[], int nmax)
 {
     int i,j,n=0;
     char tmp[1024];
@@ -3450,7 +3450,7 @@ static int mkdir_r(const char *dir)
 * return : none
 * notes  : recursively.
 *-----------------------------------------------------------------------------*/
-extern void createdir(const char *path)
+void createdir(const char *path)
 {
     char buff[1024],*p;
 
@@ -3507,7 +3507,7 @@ static int repstr(char *str, const char *pat, const char *rep)
 *              %r -> rrrr : rover id
 *              %b -> bbbb : base station id
 *-----------------------------------------------------------------------------*/
-extern int reppath(const char *path, char *rpath, gtime_t time, const char *rov,
+int reppath(const char *path, char *rpath, gtime_t time, const char *rov,
                    const char *base)
 {
     double ep[6],ep0[6]={2000,1,1,0,0,0};
@@ -3563,7 +3563,7 @@ extern int reppath(const char *path, char *rpath, gtime_t time, const char *rov,
 * notes  : see reppath() for replacements of keywords.
 *          minimum interval of time replaced is 900s.
 *-----------------------------------------------------------------------------*/
-extern int reppaths(const char *path, char *rpath[], int nmax, gtime_t ts,
+int reppaths(const char *path, char *rpath[], int nmax, gtime_t ts,
                     gtime_t te, const char *rov, const char *base)
 {
     gtime_t time;
@@ -3596,7 +3596,7 @@ extern int reppaths(const char *path, char *rpath[], int nmax, gtime_t ts,
 * return : geometric distance (m) (0>:error/no satellite position)
 * notes  : distance includes sagnac effect correction
 *-----------------------------------------------------------------------------*/
-extern double geodist(const double *rs, const double *rr, double *e)
+double geodist(const double *rs, const double *rr, double *e)
 {
     double r;
     int i;
@@ -3615,7 +3615,7 @@ extern double geodist(const double *rs, const double *rr, double *e)
 *                               (0.0<=azel[0]<2*pi,-pi/2<=azel[1]<=pi/2)
 * return : elevation angle (rad)
 *-----------------------------------------------------------------------------*/
-extern double satazel(const double *pos, const double *e, double *azel)
+double satazel(const double *pos, const double *e, double *azel)
 {
     double az=0.0,el=PI/2.0,enu[3];
 
@@ -3639,7 +3639,7 @@ extern double satazel(const double *pos, const double *e, double *azel)
 *-----------------------------------------------------------------------------*/
 #define SQRT(x)     ((x)<0.0||(x)!=(x)?0.0:sqrt(x))
 
-extern void dops(int ns, const double *azel, double elmin, double *dop)
+void dops(int ns, const double *azel, double elmin, double *dop)
 {
     double H[4*MAXSAT],Q[16],cosel,sinel;
     int i,n;
@@ -3672,7 +3672,7 @@ extern void dops(int ns, const double *azel, double elmin, double *dop)
 *          double *azel     I   azimuth/elevation angle {az,el} (rad)
 * return : ionospheric delay (L1) (m)
 *-----------------------------------------------------------------------------*/
-extern double ionmodel(gtime_t t, const double *ion, const double *pos,
+double ionmodel(gtime_t t, const double *ion, const double *pos,
                        const double *azel)
 {
     const double ion_default[]={ /* 2004/1/1 */
@@ -3719,7 +3719,7 @@ extern double ionmodel(gtime_t t, const double *ion, const double *pos,
 *          double *azel     I   azimuth/elevation angle {az,el} (rad)
 * return : ionospheric mapping function
 *-----------------------------------------------------------------------------*/
-extern double ionmapf(const double *pos, const double *azel)
+double ionmapf(const double *pos, const double *azel)
 {
     if (pos[2]>=HION) return 1.0;
     return 1.0/cos(asin((RE_WGS84+pos[2])/(RE_WGS84+HION)*sin(PI/2.0-azel[1])));
@@ -3735,7 +3735,7 @@ extern double ionmapf(const double *pos, const double *azel)
 * notes  : see ref [2], only valid on the earth surface
 *          fixing bug on ref [2] A.4.4.10.1 A-22,23
 *-----------------------------------------------------------------------------*/
-extern double ionppp(const double *pos, const double *azel, double re,
+double ionppp(const double *pos, const double *azel, double re,
                      double hion, double *posp)
 {
     double cosaz,r,rp,ap,sinap,tanap;
@@ -3762,7 +3762,7 @@ extern double ionppp(const double *pos, const double *azel, double re,
     return 1.0/sqrt(1.0-rp*rp);
 }
 /* select iono-free linear combination (L1/L2 or L1/L5) ----------------------*/
-extern int seliflc(int optnf,int sys)
+int seliflc(int optnf,int sys)
 {
     /* use L1/L5 for GPS,GAL,BDS if L5 is enabled */
     return((optnf==2||sys==SYS_GLO)?1:2);
@@ -3775,7 +3775,7 @@ extern int seliflc(int optnf,int sys)
 *          double humi      I   relative humidity
 * return : tropospheric delay (m)
 *-----------------------------------------------------------------------------*/
-extern double tropmodel(gtime_t time, const double *pos, const double *azel,
+double tropmodel(gtime_t time, const double *pos, const double *azel,
                         double humi)
 {
     (void)time;
@@ -3868,7 +3868,7 @@ static double nmf(gtime_t time, const double pos[], const double azel[],
 *          paper is obtained from:
 *          ftp://web.haystack.edu/pub/aen/nmf/NMF_JGR.pdf
 *-----------------------------------------------------------------------------*/
-extern double tropmapf(gtime_t time, const double pos[], const double azel[],
+double tropmapf(gtime_t time, const double pos[], const double azel[],
                        double *mapfw)
 {
 #ifdef IERS_MODEL
@@ -3916,7 +3916,7 @@ static double interpvar(double ang, const double *var)
 * return : none
 * notes  : current version does not support azimuth dependent terms
 *-----------------------------------------------------------------------------*/
-extern void antmodel(const pcv_t *pcv, const double *del, const double *azel,
+void antmodel(const pcv_t *pcv, const double *del, const double *azel,
                      int opt, double *dant)
 {
     double e[3],off[3],cosel=cos(azel[1]);
@@ -3942,7 +3942,7 @@ extern void antmodel(const pcv_t *pcv, const double *del, const double *azel,
 *          double *dant     O   range offsets for each frequency (m)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void antmodel_s(const pcv_t *pcv, double nadir, double *dant)
+void antmodel_s(const pcv_t *pcv, double nadir, double *dant)
 {
     int i;
 
@@ -4079,7 +4079,7 @@ static void moonpos_eci(gtime_t tutc, const double *erpv, double *rmoon) {
  *          double *gmst     O   GMST (rad)
  * Return : none
  *----------------------------------------------------------------------------*/
-extern void sunmoonpos(gtime_t tutc, const double *erpv, double *rsun, double *rmoon,
+void sunmoonpos(gtime_t tutc, const double *erpv, double *rsun, double *rmoon,
                        double *gmst) {
   char tstr[40];
   trace(4, "sunmoonpos: tutc=%s\n", time2str(tutc, tstr, 3));
@@ -4111,7 +4111,7 @@ extern void sunmoonpos(gtime_t tutc, const double *erpv, double *rsun, double *r
 * note   : creates uncompressed file in temporary directory
 *          gzip, tar and crx2rnx commands have to be installed in commands path
 *-----------------------------------------------------------------------------*/
-extern int rtk_uncompress(const char *file, char *uncfile)
+int rtk_uncompress(const char *file, char *uncfile)
 {
     int stat=0;
     char *p,cmd[64+2048]="",tmpfile[1024]="",buff[1024],*fname,*dir="";
@@ -4182,7 +4182,7 @@ extern int rtk_uncompress(const char *file, char *uncfile)
     return stat;
 }
 /* station position from file ------------------------------------------------*/
-extern int getstapos(const char *file, const char *name, double *r)
+int getstapos(const char *file, const char *name, double *r)
 {
     trace(3, "getstapos: file=%s name=%s\n", file, name);
 
@@ -4294,8 +4294,8 @@ extern int getstapos(const char *file, const char *name, double *r)
 }
 /* dummy application functions for shared library ----------------------------*/
 #if defined(WIN_DLL) || defined(DLL)
-extern int showmsg(const char *format,...) {return 0;}
-extern void settspan(gtime_t ts, gtime_t te) {}
-extern void settime(gtime_t time) {}
+int showmsg(const char *format,...) {return 0;}
+void settspan(gtime_t ts, gtime_t te) {}
+void settime(gtime_t time) {}
 #endif
 

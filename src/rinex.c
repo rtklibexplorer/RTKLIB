@@ -1710,7 +1710,7 @@ static int readrnxfile(const char *file, gtime_t ts, gtime_t te, double tint,
 * Returns 1 on success, and 0 if omitted or truncated.
 * The comment is append from the first empty comment, and it is assumed that
 * comments are added without empty comments. */
-extern int rnxcomment(rnxopt_t *opt, const char *format, ...) {
+int rnxcomment(rnxopt_t *opt, const char *format, ...) {
     char buff[256];
     va_list ap;
     va_start(ap, format);
@@ -1779,7 +1779,7 @@ extern int rnxcomment(rnxopt_t *opt, const char *format, ...) {
 *                               (sys=G:GPS,R:GLO,E:GAL,J:QZS,C:BDS,I:IRN,S:SBS)
 *
 *-----------------------------------------------------------------------------*/
-extern int readrnxt(const char *file, int rcv, gtime_t ts, gtime_t te,
+int readrnxt(const char *file, int rcv, gtime_t ts, gtime_t te,
                     double tint, const char *opt, obs_t *obs, nav_t *nav,
                     sta_t *sta)
 {
@@ -1816,7 +1816,7 @@ extern int readrnxt(const char *file, int rcv, gtime_t ts, gtime_t te,
 
     return stat;
 }
-extern int readrnx(const char *file, int rcv, const char *opt, obs_t *obs,
+int readrnx(const char *file, int rcv, const char *opt, obs_t *obs,
                    nav_t *nav, sta_t *sta)
 {
     gtime_t t={0};
@@ -1872,7 +1872,7 @@ static void combpclk(nav_t *nav)
 *          nav_t *nav    IO     navigation data    (NULL: no input)
 * return : number of precise clock
 *-----------------------------------------------------------------------------*/
-extern int readrnxc(const char *file, nav_t *nav)
+int readrnxc(const char *file, nav_t *nav)
 {
     gtime_t t={0};
     int i,n,index=0,stat=1;
@@ -1912,7 +1912,7 @@ extern int readrnxc(const char *file, nav_t *nav)
 * args   : rnxctr_t *rnx IO     RINEX control struct
 * return : status (1:ok,0:memory allocation error)
 *-----------------------------------------------------------------------------*/
-extern int init_rnxctr(rnxctr_t *rnx)
+int init_rnxctr(rnxctr_t *rnx)
 {
     gtime_t time0={0};
     obsd_t data0={{0}};
@@ -1965,7 +1965,7 @@ extern int init_rnxctr(rnxctr_t *rnx)
 * args   : rnxctr_t *rnx IO  RINEX control struct
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void free_rnxctr(rnxctr_t *rnx)
+void free_rnxctr(rnxctr_t *rnx)
 {
     trace(3,"free_rnxctr:\n");
 
@@ -1981,7 +1981,7 @@ extern void free_rnxctr(rnxctr_t *rnx)
 * return : status (-2: end of file, 0: no message, 1: input observation data,
 *                   2: input navigation data)
 *-----------------------------------------------------------------------------*/
-extern int open_rnxctr(rnxctr_t *rnx, FILE *fp)
+int open_rnxctr(rnxctr_t *rnx, FILE *fp)
 {
     const char *rnxtypes="ONGLJHC";
     double ver;
@@ -2028,7 +2028,7 @@ extern int open_rnxctr(rnxctr_t *rnx, FILE *fp)
 *            rnx->nav.eph [sat-1]        : other ephemeris set1 (sat=sat-no)
 *            rnx->nav.eph [sat-1+MAXSAT] : other ephemeris set2 (sat=sat-no)
 *-----------------------------------------------------------------------------*/
-extern int input_rnxctr(rnxctr_t *rnx, FILE *fp)
+int input_rnxctr(rnxctr_t *rnx, FILE *fp)
 {
     eph_t eph={0};
     geph_t geph={0};
@@ -2277,7 +2277,7 @@ static char *igsanttype(const char *anttype, char buff[21]) {
 *          nav_t  *nav      I   navigation data
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxobsh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
+int outrnxobsh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     double ep[6],pos[3]={0},del[3]={0};
     char date[32],*sys,*tsys="GPS";
@@ -2469,7 +2469,7 @@ static void outrinexevent(FILE *fp, const rnxopt_t *opt, const obsd_t *obs,
 *          int    flag      I   epoch flag (0:ok,1:power failure,>1:event flag)
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
+int outrnxobsb(FILE *fp, const rnxopt_t *opt, const obsd_t *obs, int n,
                       int flag)
 {
     double epdiff,ep[6],dL;
@@ -2733,7 +2733,7 @@ static void out_leaps(FILE *fp, int sys, const rnxopt_t *opt, const nav_t *nav)
 *          nav_t  nav       I   navigation data (NULL: no input)
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
+int outrnxnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
     char date[32],*sys;
@@ -2780,7 +2780,7 @@ extern int outrnxnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 *          eph_t  *eph      I   ephemeris
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxnavb(FILE *fp, const rnxopt_t *opt, const eph_t *eph)
+int outrnxnavb(FILE *fp, const rnxopt_t *opt, const eph_t *eph)
 {
     double ep[6],ttr;
     int week,sys,prn;
@@ -2900,7 +2900,7 @@ extern int outrnxnavb(FILE *fp, const rnxopt_t *opt, const eph_t *eph)
 *          nav_t  nav       I   navigation data (NULL: no input)
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxgnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
+int outrnxgnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
     char date[32];
@@ -2936,7 +2936,7 @@ extern int outrnxgnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 *          geph_t  *geph    I   glonass ephemeris
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxgnavb(FILE *fp, const rnxopt_t *opt, const geph_t *geph)
+int outrnxgnavb(FILE *fp, const rnxopt_t *opt, const geph_t *geph)
 {
     gtime_t toe;
     double ep[6],tof;
@@ -3002,7 +3002,7 @@ extern int outrnxgnavb(FILE *fp, const rnxopt_t *opt, const geph_t *geph)
 *          nav_t  nav       I   navigation data (NULL: no input)
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxhnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
+int outrnxhnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
     char date[32];
@@ -3038,7 +3038,7 @@ extern int outrnxhnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 *          seph_t  *seph    I   SBAS ephemeris
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxhnavb(FILE *fp, const rnxopt_t *opt, const seph_t *seph)
+int outrnxhnavb(FILE *fp, const rnxopt_t *opt, const seph_t *seph)
 {
     double ep[6];
     int prn;
@@ -3092,7 +3092,7 @@ extern int outrnxhnavb(FILE *fp, const rnxopt_t *opt, const seph_t *seph)
 *          nav_t  nav       I   navigation data (NULL: no input)
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxlnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
+int outrnxlnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
     char date[32];
@@ -3126,7 +3126,7 @@ extern int outrnxlnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 *          nav_t  nav       I   navigation data (NULL: no input)
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxqnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
+int outrnxqnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
     char date[32];
@@ -3160,7 +3160,7 @@ extern int outrnxqnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 *          nav_t  nav       I   navigation data (NULL: no input)
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxcnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
+int outrnxcnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
     char date[32];
@@ -3194,7 +3194,7 @@ extern int outrnxcnavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 *          nav_t  nav       I   navigation data (NULL: no input)
 * return : status (1:ok, 0:output error)
 *-----------------------------------------------------------------------------*/
-extern int outrnxinavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
+int outrnxinavh(FILE *fp, const rnxopt_t *opt, const nav_t *nav)
 {
     int i;
     char date[32];
