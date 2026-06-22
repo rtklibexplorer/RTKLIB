@@ -1015,11 +1015,11 @@ void __fastcall TPlot::GenObsSlip(int *LLI)
             double freq1,freq2,gf;
             
             if (!strcmp(obstype,"ALL")) {
-                if ((freq1=sat2freq(obs->sat,obs->code[0],&Nav))==0.0) continue;
+                if ((freq1=sat2freq(obs->sat,obs->code[0],Nav))==0.0) continue;
                 LLI[i]=obs->LLI[0]&2;
                 for (j=1;j<NFREQ+NEXOBS;j++) {
                     LLI[i]|=obs->LLI[j]&2;
-                    if ((freq2=sat2freq(obs->sat,obs->code[j],&Nav))==0.0) continue;
+                    if ((freq2=sat2freq(obs->sat,obs->code[j],Nav))==0.0) continue;
                     gf=CLIGHT*(obs->L[0]/freq1-obs->L[j]/freq2);
                     if (fabs(gfp[obs->sat-1][j]-gf)>THRESLIP) LLI[i]|=1;
                     gfp[obs->sat-1][j]=gf;
@@ -1037,8 +1037,8 @@ void __fastcall TPlot::GenObsSlip(int *LLI)
                 }    
                 LLI[i]=obs->LLI[j]&2;
                 k=(j==0)?1:0;
-                if ((freq1=sat2freq(obs->sat,obs->code[k],&Nav))==0.0) continue;
-                if ((freq2=sat2freq(obs->sat,obs->code[j],&Nav))==0.0) continue;
+                if ((freq1=sat2freq(obs->sat,obs->code[k],Nav))==0.0) continue;
+                if ((freq2=sat2freq(obs->sat,obs->code[j],Nav))==0.0) continue;
                 gf=CLIGHT*(obs->L[k]/freq1-obs->L[j]/freq2);
                 if (fabs(gfp[obs->sat-1][j]-gf)>THRESLIP) LLI[i]|=1;
                 gfp[obs->sat-1][j]=gf;
@@ -1102,53 +1102,53 @@ void __fastcall TPlot::DrawObsEphem(double *yp)
     
     for (i=0;i<MAXSAT;i++) {
         if (!SatSel[i]) continue;
-        for (j=0;j<Nav.n;j++) {
-            if (Nav.eph[j].sat!=i+1) continue;
-            GraphR->ToPoint(TimePos(Nav.eph[j].ttr),yp[i],ps[0]);
-            in=GraphR->ToPoint(TimePos(Nav.eph[j].toe),yp[i],ps[2]);
+        for (j=0;j<Nav->n;j++) {
+            if (Nav->eph[j].sat!=i+1) continue;
+            GraphR->ToPoint(TimePos(Nav->eph[j].ttr),yp[i],ps[0]);
+            in=GraphR->ToPoint(TimePos(Nav->eph[j].toe),yp[i],ps[2]);
             ps[1]=ps[0];
-            off[Nav.eph[j].sat-1]=off[Nav.eph[j].sat-1]?0:3;
+            off[Nav->eph[j].sat-1]=off[Nav->eph[j].sat-1]?0:3;
             
-            for (k=0;k<3;k++) ps[k].y+=MarkSize+2+off[Nav.eph[j].sat-1];
+            for (k=0;k<3;k++) ps[k].y+=MarkSize+2+off[Nav->eph[j].sat-1];
             ps[0].y-=2;
             
-            svh=Nav.eph[j].svh;
+            svh=Nav->eph[j].svh;
             // Mask QZS LEX health.
             int health = satsys(i + 1, NULL) == SYS_QZS ? (svh & 0xfe) != 0 : svh != 0;
             GraphR->DrawPoly(ps,3,health?MColor[0][5]:CColor[1],0);
             
             if (in) GraphR->DrawMark(ps[2],0,health?MColor[0][5]:CColor[1],health?4:3,0);
         }
-        for (j=0;j<Nav.ng;j++) {
-            if (Nav.geph[j].sat!=i+1) continue;
-            GraphR->ToPoint(TimePos(Nav.geph[j].tof),yp[i],ps[0]);
-            in=GraphR->ToPoint(TimePos(Nav.geph[j].toe),yp[i],ps[2]);
+        for (j=0;j<Nav->ng;j++) {
+            if (Nav->geph[j].sat!=i+1) continue;
+            GraphR->ToPoint(TimePos(Nav->geph[j].tof),yp[i],ps[0]);
+            in=GraphR->ToPoint(TimePos(Nav->geph[j].toe),yp[i],ps[2]);
             ps[1]=ps[0];
-            off[Nav.geph[j].sat-1]=off[Nav.geph[j].sat-1]?0:3;
-            for (k=0;k<3;k++) ps[k].y+=MarkSize+2+off[Nav.geph[j].sat-1];
+            off[Nav->geph[j].sat-1]=off[Nav->geph[j].sat-1]?0:3;
+            for (k=0;k<3;k++) ps[k].y+=MarkSize+2+off[Nav->geph[j].sat-1];
             ps[0].y-=2;
             
-            svh=Nav.geph[j].svh;
+            svh=Nav->geph[j].svh;
             int health = (svh & 9) != 0 || (svh & 6) == 4;
             GraphR->DrawPoly(ps,3,health?MColor[0][5]:CColor[1],0);
             
-            if (in) GraphR->DrawMark(ps[2],0,Nav.geph[j].svh?MColor[0][5]:CColor[1],
-                                     Nav.geph[j].svh?4:3,0);
+            if (in) GraphR->DrawMark(ps[2],0,Nav->geph[j].svh?MColor[0][5]:CColor[1],
+                                     Nav->geph[j].svh?4:3,0);
         }
-        for (j=0;j<Nav.ns;j++) {
-            if (Nav.seph[j].sat!=i+1) continue;
-            GraphR->ToPoint(TimePos(Nav.seph[j].tof),yp[i],ps[0]);
-            in=GraphR->ToPoint(TimePos(Nav.seph[j].t0),yp[i],ps[2]);
+        for (j=0;j<Nav->ns;j++) {
+            if (Nav->seph[j].sat!=i+1) continue;
+            GraphR->ToPoint(TimePos(Nav->seph[j].tof),yp[i],ps[0]);
+            in=GraphR->ToPoint(TimePos(Nav->seph[j].t0),yp[i],ps[2]);
             ps[1]=ps[0];
-            off[Nav.seph[j].sat-1]=off[Nav.seph[j].sat-1]?0:3;
-            for (k=0;k<3;k++) ps[k].y+=MarkSize+2+off[Nav.seph[j].sat-1];
+            off[Nav->seph[j].sat-1]=off[Nav->seph[j].sat-1]?0:3;
+            for (k=0;k<3;k++) ps[k].y+=MarkSize+2+off[Nav->seph[j].sat-1];
             ps[0].y-=2;
             
-            svh=Nav.seph[j].svh;
+            svh=Nav->seph[j].svh;
             GraphR->DrawPoly(ps,3,svh?MColor[0][5]:CColor[1],0);
             
-            if (in) GraphR->DrawMark(ps[2],0,Nav.seph[j].svh?MColor[0][5]:CColor[1],
-                                     Nav.seph[j].svh?4:3,0);
+            if (in) GraphR->DrawMark(ps[2],0,Nav->seph[j].svh?MColor[0][5]:CColor[1],
+                                     Nav->seph[j].svh?4:3,0);
         }
     }
 }
@@ -1387,7 +1387,7 @@ void __fastcall TPlot::DrawSky(int level)
             GraphS->DrawText(p2,ustr,col==clBlack?MColor[0][0]:col,2,2,0,MS_FONT);
         }
     }
-    if (Nav.n<=0&&Nav.ng<=0&&!SimObs) {
+    if (Nav->n<=0&&Nav->ng<=0&&!SimObs) {
         GraphS->GetPos(p1,p2);
         p2.x-=10;
         p2.y-=3;
@@ -1667,7 +1667,7 @@ void __fastcall TPlot::DrawDop(int level)
     else {
         DrawDopStat(dop,ns,n);
     }
-    if (Nav.n<=0&&Nav.ng<=0&&(doptype==0||doptype>=2)&&!SimObs) {
+    if (Nav->n<=0&&Nav->ng<=0&&(doptype==0||doptype>=2)&&!SimObs) {
         GraphR->GetPos(p1,p2);
         p2.x-=10;
         p2.y-=3;

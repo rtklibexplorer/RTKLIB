@@ -1138,13 +1138,13 @@ void Plot::generateObservationSlips(int *LLI)
 
         if (plotOptDialog->getShowSlip() == 1) { // LG jump
             if (obstype.isNull()) {  // "ALL" selected
-                if ((freq1 = sat2freq(obs->sat, obs->code[0], &navigation)) == 0.0) continue;
+                if ((freq1 = sat2freq(obs->sat, obs->code[0], navigation)) == 0.0) continue;
 
                 LLI[i] = obs->LLI[0] & 2;
                 for (j = 1; j < NFREQ + NEXOBS; j++) {
                     LLI[i] |= obs->LLI[j] & 2;
 
-                    if ((freq2 = sat2freq(obs->sat, obs->code[j], &navigation)) == 0.0) continue;
+                    if ((freq2 = sat2freq(obs->sat, obs->code[j], navigation)) == 0.0) continue;
 
                     gf = CLIGHT * (obs->L[0] / freq1-obs->L[j] / freq2); // geometry-free
                     if (fabs(prev_gf[obs->sat-1][j] - gf) > THRESLIP) LLI[i] |= 1;
@@ -1165,8 +1165,8 @@ void Plot::generateObservationSlips(int *LLI)
                 LLI[i] = obs->LLI[j] & 2;
                 k = (j == 0) ? 1 : 0;  // selected reference for geometry-free solution
 
-                if ((freq1 = sat2freq(obs->sat, obs->code[k], &navigation)) == 0.0) continue;
-                if ((freq2 = sat2freq(obs->sat, obs->code[j], &navigation)) == 0.0) continue;
+                if ((freq1 = sat2freq(obs->sat, obs->code[k], navigation)) == 0.0) continue;
+                if ((freq2 = sat2freq(obs->sat, obs->code[j], navigation)) == 0.0) continue;
 
                 gf = CLIGHT * (obs->L[k] / freq1-obs->L[j] / freq2);
                 if (fabs(prev_gf[obs->sat-1][j] - gf) > THRESLIP) LLI[i] |= 1;
@@ -1238,20 +1238,20 @@ void Plot::drawObservationEphemeris(QPainter &c, double *yp)
         if (!satelliteSelection[sat]) continue;
 
         // GPS/Galileo/... ephemeris
-        for (i = 0; i < navigation.n; i++) {
-            if (navigation.eph[i].sat != sat + 1) continue;
+        for (i = 0; i < navigation->n; i++) {
+            if (navigation->eph[i].sat != sat + 1) continue;
 
-            graphSingle->toPoint(timePosition(navigation.eph[i].ttr), yp[sat], ps[0]);  // start position
+            graphSingle->toPoint(timePosition(navigation->eph[i].ttr), yp[sat], ps[0]);  // start position
             ps[1] = ps[0];
-            in = graphSingle->toPoint(timePosition(navigation.eph[i].toe), yp[sat], ps[2]);  // end position
+            in = graphSingle->toPoint(timePosition(navigation->eph[i].toe), yp[sat], ps[2]);  // end position
 
-            offset[navigation.eph[i].sat - 1] = offset[navigation.eph[i].sat - 1] ? 0 : 3;
+            offset[navigation->eph[i].sat - 1] = offset[navigation->eph[i].sat - 1] ? 0 : 3;
 
             for (k = 0; k < 3; k++)
-                ps[k].ry() += plotOptDialog->getMarkSize() + 2 + offset[navigation.eph[i].sat - 1];
+                ps[k].ry() += plotOptDialog->getMarkSize() + 2 + offset[navigation->eph[i].sat - 1];
             ps[0].ry() -= 2;
 
-            svh = navigation.eph[i].svh;
+            svh = navigation->eph[i].svh;
             // Mask QZS LEX health.
             int health = satsys(sat + 1, NULL) == SYS_QZS ? (svh & 0xfe) != 0 : svh != 0;
             graphSingle->drawPoly(c, ps, 3, health ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), 0);
@@ -1259,40 +1259,40 @@ void Plot::drawObservationEphemeris(QPainter &c, double *yp)
             if (in) graphSingle->drawMark(c, ps[2], Graph::MarkerTypes::Dot, health ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), health ? 4 : 3, 0);
         }
         // Glonass ephemeris
-        for (i = 0; i < navigation.ng; i++) {
-            if (navigation.geph[i].sat != sat + 1) continue;
+        for (i = 0; i < navigation->ng; i++) {
+            if (navigation->geph[i].sat != sat + 1) continue;
 
-            graphSingle->toPoint(timePosition(navigation.geph[i].tof), yp[sat], ps[0]);
+            graphSingle->toPoint(timePosition(navigation->geph[i].tof), yp[sat], ps[0]);
             ps[1] = ps[0];
-            in = graphSingle->toPoint(timePosition(navigation.geph[i].toe), yp[sat], ps[2]);
+            in = graphSingle->toPoint(timePosition(navigation->geph[i].toe), yp[sat], ps[2]);
 
-            offset[navigation.geph[i].sat - 1] = offset[navigation.geph[i].sat - 1] ? 0 : 3;
+            offset[navigation->geph[i].sat - 1] = offset[navigation->geph[i].sat - 1] ? 0 : 3;
 
             for (k = 0; k < 3; k++)
-                ps[k].ry() += plotOptDialog->getMarkSize() + 2 + offset[navigation.geph[i].sat - 1];
+                ps[k].ry() += plotOptDialog->getMarkSize() + 2 + offset[navigation->geph[i].sat - 1];
             ps[0].ry() -= 2;
 
-            svh = navigation.geph[i].svh;
+            svh = navigation->geph[i].svh;
             int health = (svh & 9) != 0 || (svh & 6) == 4;
             graphSingle->drawPoly(c, ps, 3, health ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), 0);
 
             if (in) graphSingle->drawMark(c, ps[2], Graph::MarkerTypes::Dot, health ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), health ? 4 : 3, 0);
         }
         // SBAS ephemeris
-        for (i = 0; i < navigation.ns; i++) {
-            if (navigation.seph[i].sat != sat + 1) continue;
+        for (i = 0; i < navigation->ns; i++) {
+            if (navigation->seph[i].sat != sat + 1) continue;
 
-            graphSingle->toPoint(timePosition(navigation.seph[i].tof), yp[sat], ps[0]);
+            graphSingle->toPoint(timePosition(navigation->seph[i].tof), yp[sat], ps[0]);
             ps[1] = ps[0];
-            in = graphSingle->toPoint(timePosition(navigation.seph[i].t0), yp[sat], ps[2]);
+            in = graphSingle->toPoint(timePosition(navigation->seph[i].t0), yp[sat], ps[2]);
 
-            offset[navigation.seph[i].sat - 1] = offset[navigation.seph[i].sat - 1] ? 0 : 3;
+            offset[navigation->seph[i].sat - 1] = offset[navigation->seph[i].sat - 1] ? 0 : 3;
 
             for (k = 0; k < 3; k++)
-                ps[k].ry() += plotOptDialog->getMarkSize() + 2 + offset[navigation.seph[i].sat - 1];
+                ps[k].ry() += plotOptDialog->getMarkSize() + 2 + offset[navigation->seph[i].sat - 1];
             ps[0].ry() -= 2;
 
-            svh = navigation.seph[i].svh;
+            svh = navigation->seph[i].svh;
             graphSingle->drawPoly(c, ps, 3, svh ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), 0);
 
             if (in) graphSingle->drawMark(c, ps[2], Graph::MarkerTypes::Dot, svh ? plotOptDialog->getMarkerColor(0, 5) : plotOptDialog->getCColor(1), svh ? 4 : 3, 0);
@@ -1450,7 +1450,7 @@ void Plot::drawSky(QPainter &c, int level)
         }
     }
 
-    if (navigation.n <= 0 && navigation.ng <= 0 && !simulatedObservation) {  // indicate if no navigation data is available
+    if (navigation->n <= 0 && navigation->ng <= 0 && !simulatedObservation) {  // indicate if no navigation data is available
         graphSky->getExtent(p1, p2);
         p2.rx() -= 10;
         p2.ry() -= 3;
@@ -1691,7 +1691,7 @@ void Plot::drawSky(QPainter &c, int level)
         }
     }
 
-    if (navigation.n <= 0 && navigation.ng <= 0 && !simulatedObservation) {  // indicate if no navigation data is available
+    if (navigation->n <= 0 && navigation->ng <= 0 && !simulatedObservation) {  // indicate if no navigation data is available
         graphSky->getExtent(p1, p2);
         p2.rx() -= 10;
         p2.ry() -= 3;
@@ -2004,7 +2004,7 @@ void Plot::drawDop(QPainter &c, int level)
         drawDopStat(c, dop, ns, n);
     }
 
-    if (navigation.n <= 0 && navigation.ng <= 0 && (doptype == 0 || doptype >= 2) && !simulatedObservation) {  // indicate if no navigation data is available
+    if (navigation->n <= 0 && navigation->ng <= 0 && (doptype == 0 || doptype >= 2) && !simulatedObservation) {  // indicate if no navigation data is available
         graphSingle->getExtent(p1, p2);
         p2.rx() -= 10;
         p2.ry() -= 3;
@@ -2861,7 +2861,7 @@ void Plot::drawIonoSky(QPainter &c, int level)
         }
     }
 
-    if (navigation.n <= 0 && navigation.ng <= 0 && !simulatedObservation) {  // indicate if no navigation data is available
+    if (navigation->n <= 0 && navigation->ng <= 0 && !simulatedObservation) {  // indicate if no navigation data is available
         graphSky->getExtent(p1, p2);
         p2.rx() -= 10;
         p2.ry() -= 3;
