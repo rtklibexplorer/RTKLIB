@@ -78,7 +78,7 @@ extern "C" {
 
 #define VER_RTKLIB  "EX"             /* library version */
 
-#define PATCH_LEVEL "2.5.0"               /* patch level */
+#define PATCH_LEVEL "2.5.1"               /* patch level */
 
 #define COPYRIGHT_RTKLIB \
             "Copyright (C) 2007-2020 T.Takasu\nAll rights reserved."
