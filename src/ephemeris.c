@@ -146,7 +146,7 @@ static double var_urassr(int ura)
 * return : none
 * notes  : see ref [1],[7],[8]
 *-----------------------------------------------------------------------------*/
-extern void alm2pos(gtime_t time, const alm_t *alm, double *rs, double *dts)
+void alm2pos(gtime_t time, const alm_t *alm, double *rs, double *dts)
 {
     double tk,M,E,Ek,sinE,cosE,u,r,i,O,x,y,sinO,cosO,cosi,mu;
     int n;
@@ -188,7 +188,7 @@ extern void alm2pos(gtime_t time, const alm_t *alm, double *rs, double *dts)
 * notes  : see ref [1],[7],[8]
 *          satellite clock does not include relativity correction and tdg
 *-----------------------------------------------------------------------------*/
-extern double eph2clk(gtime_t time, const eph_t *eph)
+double eph2clk(gtime_t time, const eph_t *eph)
 {
     double t,ts;
     int i;
@@ -219,7 +219,7 @@ extern double eph2clk(gtime_t time, const eph_t *eph)
 *          satellite clock includes relativity correction without code bias
 *          (tgd or bgd)
 *-----------------------------------------------------------------------------*/
-extern void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts,
+void eph2pos(gtime_t time, const eph_t *eph, double *rs, double *dts,
                     double *var)
 {
     double tk,M,E,Ek,sinE,cosE,u,r,i,O,sin2u,cos2u,x,y,sinO,cosO,cosi,mu,omge;
@@ -328,7 +328,7 @@ static void glorbit(double t, double *x, const double *acc)
 * return : satellite clock bias (s)
 * notes  : see ref [2]
 *-----------------------------------------------------------------------------*/
-extern double geph2clk(gtime_t time, const geph_t *geph)
+double geph2clk(gtime_t time, const geph_t *geph)
 {
     double t,ts;
     int i;
@@ -355,7 +355,7 @@ extern double geph2clk(gtime_t time, const geph_t *geph)
 * return : none
 * notes  : see ref [2]
 *-----------------------------------------------------------------------------*/
-extern void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts,
+void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts,
                      double *var)
 {
     double t,tt,x[6];
@@ -388,7 +388,7 @@ extern void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts,
 * return : satellite clock bias (s)
 * notes  : see ref [3]
 *-----------------------------------------------------------------------------*/
-extern double seph2clk(gtime_t time, const seph_t *seph)
+double seph2clk(gtime_t time, const seph_t *seph)
 {
     char tstr[40];
     trace(4,"seph2clk: time=%s sat=%2d\n",time2str(time,tstr,3),seph->sat);
@@ -410,7 +410,7 @@ extern double seph2clk(gtime_t time, const seph_t *seph)
 * return : none
 * notes  : see ref [3]
 *-----------------------------------------------------------------------------*/
-extern void seph2pos(gtime_t time, const seph_t *seph, double *rs, double *dts,
+void seph2pos(gtime_t time, const seph_t *seph, double *rs, double *dts,
                      double *var)
 {
     double t;
@@ -734,7 +734,7 @@ static int satpos_ssr(gtime_t time, gtime_t teph, int sat, const nav_t *nav,
 * notes  : satellite position is referenced to antenna phase center
 *          satellite clock does not include code bias correction (tgd or bgd)
 *-----------------------------------------------------------------------------*/
-extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
+int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
                   const nav_t *nav, double *rs, double *dts, double *var,
                   int *svh)
 {
@@ -778,7 +778,7 @@ extern int satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
 *          any pseudorange and broadcast ephemeris are always needed to get
 *          signal transmission time
 *-----------------------------------------------------------------------------*/
-extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
+void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
                     int ephopt, double *rs, double *dts, double *var, int *svh)
 {
     gtime_t time[2*MAXOBS]={{0}};
@@ -858,7 +858,7 @@ extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
 *                                 others : undefined
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void setseleph(int sys, int sel)
+void setseleph(int sys, int sel)
 {
     switch (sys) {
         case SYS_GPS: eph_sel[0]=sel; break;
@@ -876,7 +876,7 @@ extern void setseleph(int sys, int sel)
 * return : selected ephemeris
 *            refer setseleph()
 *-----------------------------------------------------------------------------*/
-extern int getseleph(int sys)
+int getseleph(int sys)
 {
     switch (sys) {
         case SYS_GPS: return eph_sel[0];

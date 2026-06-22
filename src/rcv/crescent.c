@@ -570,7 +570,7 @@ static int sync_cres(uint8_t *buff, uint8_t data)
 *          -ENAGLO      : enable glonass messages
 *
 *-----------------------------------------------------------------------------*/
-extern int input_cres(raw_t *raw, uint8_t data)
+int input_cres(raw_t *raw, uint8_t data)
 {
     trace(5,"input_cres: data=%02x\n",data);
     
@@ -601,7 +601,7 @@ extern int input_cres(raw_t *raw, uint8_t data)
 *          FILE   *fp    I      file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_cresf(raw_t *raw, FILE *fp)
+int input_cresf(raw_t *raw, FILE *fp)
 {
     int i,data;
     

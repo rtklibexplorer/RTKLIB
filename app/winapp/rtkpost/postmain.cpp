@@ -64,7 +64,7 @@ static char base_[256]="";          // base-station name
 extern "C" {
 
 // show message in message area ---------------------------------------------
-extern int showmsg(const char *format, ...)
+int showmsg(const char *format, ...)
 {
     va_list arg;
     char buff[1024];
@@ -78,13 +78,13 @@ extern int showmsg(const char *format, ...)
     return MainForm->AbortFlag;
 }
 // set time span of progress bar --------------------------------------------
-extern void settspan(gtime_t ts, gtime_t te)
+void settspan(gtime_t ts, gtime_t te)
 {
     tstart_=ts;
     tend_  =te;
 }
 // set current time to show progress ----------------------------------------
-extern void settime(gtime_t time)
+void settime(gtime_t time)
 {
     static int i=0;
     double tt;

@@ -725,7 +725,7 @@ static int sync_tersus(unsigned char *buff, unsigned char data)
 *
 *          -EPHALL : input all ephemerides
 *-----------------------------------------------------------------------------*/
-extern int input_tersus(raw_t *raw, unsigned char data)
+int input_tersus(raw_t *raw, unsigned char data)
 {
     trace(5,"input_tersus: data=%02x\n",data);
     
@@ -754,7 +754,7 @@ extern int input_tersus(raw_t *raw, unsigned char data)
 *          FILE   *fp    I      file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_tersusf(raw_t *raw, FILE *fp)
+int input_tersusf(raw_t *raw, FILE *fp)
 {
     int i,data;
     
