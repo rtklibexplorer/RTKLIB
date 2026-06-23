@@ -250,7 +250,7 @@ private:
     solstatbuf_t solutionStat[2];
     int solutionIndex[2];
     obs_t observation;
-    nav_t navigation;
+    nav_t *navigation;
     sta_t station;
     double *azimuth, *elevation, *multipath[NFREQ+NEXOBS], *ionosphere;
     char streamBuffer[1024];

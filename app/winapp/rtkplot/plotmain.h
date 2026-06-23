@@ -410,7 +410,7 @@ private:
     solstatbuf_t SolStat[2];
     int SolIndex[2];
     obs_t Obs;
-    nav_t Nav;
+    nav_t *Nav;
     sta_t Sta;
     double *Az,*El,*Mp[NFREQ+NEXOBS];
     char StrBuff[1024];

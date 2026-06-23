@@ -171,7 +171,7 @@ void __fastcall TPlot::ReadObs(TStrings *files)
     }
     ClearObs();
     Obs=obs;
-    Nav=*nav;
+    *Nav=*nav;
     free(nav);
     Sta=sta;
     SimObs=0;
@@ -309,18 +309,18 @@ void __fastcall TPlot::ReadNav(TStrings *files)
     
     TimeSpan(&ts,&te,&tint);
     
-    freenav(&Nav,0xFF);
+    freenav(Nav,0xFF);
     
     ShowMsg("reading nav data...");
     Application->ProcessMessages();
     
     for (i=0;i<files->Count;i++) {
         strcpy(navfile,U2A(files->Strings[i]).c_str());
-        readrnxt(navfile,1,ts,te,tint,opt,NULL,&Nav,NULL);
+        readrnxt(navfile,1,ts,te,tint,opt,NULL,Nav,NULL);
     }
-    uniqnav(&Nav);
+    uniqnav(Nav);
     
-    if (Nav.n<=0&&Nav.ng<=0&&Nav.ns<=0) {
+    if (Nav->n<=0&&Nav->ng<=0&&Nav->ns<=0) {
         ShowMsg(s.sprintf("no nav message: %s...",files->Strings[0].c_str()));
         ReadWaitEnd();
         return;
@@ -1231,7 +1231,7 @@ void __fastcall TPlot::UpdateObs(int nobs)
             char msg[128];
             
             opt.err[0]=900.0;
-            pntpos(Obs.data+i,j-i,&Nav,&opt,&sol,azel,NULL,msg);
+            pntpos(Obs.data+i,j-i,Nav,&opt,&sol,azel,NULL,msg);
             matcpy(rr,sol.rr,3,1);
             ecef2pos(rr,pos);
         }
@@ -1253,7 +1253,7 @@ void __fastcall TPlot::UpdateObs(int nobs)
                 if (!tle_pos(time,name,"","",&TLEData,NULL,rs)) continue;
             }
             else {
-                if (!satpos(time,time,sat,EPHOPT_BRDC,&Nav,rs,dts,&var,&svh)) {
+                if (!satpos(time,time,sat,EPHOPT_BRDC,Nav,rs,dts,&var,&svh)) {
                     continue;
                 }
             }
@@ -1304,10 +1304,10 @@ void __fastcall TPlot::UpdateMp(void)
 	// Choose two frequencies to calculate reference I.
         double freq1 = 0.0, freq2 = 0.0, I = 0.0;
         for (int j = 0; j < NFREQ + NEXOBS; j++) {
-            freq1 = sat2freq(data->sat, data->code[j], &Nav);
+            freq1 = sat2freq(data->sat, data->code[j], Nav);
             if (data->L[j] == 0.0 || freq1 == 0.0 ) continue;
             for (int k = j + 1; k < NFREQ + NEXOBS; k++) {
-                freq2 = sat2freq(data->sat, data->code[k], &Nav);
+                freq2 = sat2freq(data->sat, data->code[k], Nav);
                 if (data->L[k] == 0.0 || freq2 == 0.0 || freq1 == freq2) continue;
                 I = -CLIGHT * (data->L[j] / freq1-data->L[k] / freq2) / (1.0 - SQR(freq1 / freq2));
                 break;
@@ -1317,7 +1317,7 @@ void __fastcall TPlot::UpdateMp(void)
         if (freq1 == 0.0 || freq2 == 0.0) continue;
 
         for (int j=0;j<NFREQ+NEXOBS;j++) {
-            double freq=sat2freq(data->sat,data->code[j],&Nav);
+            double freq=sat2freq(data->sat,data->code[j],Nav);
             if (data->P[j]==0.0||data->L[j]==0.0||freq==0.0) continue;
             Mp[j][i]=data->P[j]-CLIGHT*data->L[j]/freq-2.0*SQR(freq1/freq)*I;
         }
@@ -1388,7 +1388,7 @@ void __fastcall TPlot::ClearObs(void)
     int i;
     
     freeobs(&Obs);
-    freenav(&Nav,0xFF);
+    freenav(Nav,0xFF);
     delete [] IndexObs; IndexObs=NULL;
     delete [] Az; Az=NULL;
     delete [] El; El=NULL;

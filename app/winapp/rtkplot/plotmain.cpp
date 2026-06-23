@@ -100,7 +100,7 @@ __fastcall TPlot::TPlot(TComponent* Owner) : TForm(Owner)
     obs0.data=NULL; obs0.n =obs0.nmax =0;
     ObsIndex=0;
     Obs=obs0;
-    memset(&Nav, 0, sizeof(Nav));
+    Nav = new nav_t{};
     Sta=sta0;
     Gis=gis0;
     SimObs=0;
