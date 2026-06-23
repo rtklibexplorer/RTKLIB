@@ -57,7 +57,7 @@
 *          char   *dev      I   device ("": standard tty)
 * return : virtual console (NULL: error)
 *-----------------------------------------------------------------------------*/
-extern vt_t *vt_open(int sock, const char *dev)
+vt_t *vt_open(int sock, const char *dev)
 {
     const char mode[]={C_IAC,C_WILL,C_SUPPGA,C_IAC,C_WILL,C_ECHO};
     struct termios tio={0};
@@ -101,7 +101,7 @@ extern vt_t *vt_open(int sock, const char *dev)
 * args   : vt_t   *vt       I   virtual console
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void vt_close(vt_t *vt)
+void vt_close(vt_t *vt)
 {
     int i;
     
@@ -258,7 +258,7 @@ static int seq_esc(vt_t *vt)
 * return : status (1:ok,0:error)
 * notes  : if no input, return ok with *c='\0'
 *-----------------------------------------------------------------------------*/
-extern int vt_getc(vt_t *vt, char *c)
+int vt_getc(vt_t *vt, char *c)
 {
     struct timeval tv={0,1000}; /* timeout (us) */
     fd_set rs;
@@ -305,7 +305,7 @@ extern int vt_getc(vt_t *vt, char *c)
 *          in     n         I   buffer size
 * return : status (1:ok,0:no input)
 *-----------------------------------------------------------------------------*/
-extern int vt_gets(vt_t *vt, char *buff, int n)
+int vt_gets(vt_t *vt, char *buff, int n)
 {
     char c;
     
@@ -347,7 +347,7 @@ static int vt_putchar(vt_t *vt, char c)
 *          char   c         I   character
 * return : status (1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int vt_putc(vt_t *vt, char c)
+int vt_putc(vt_t *vt, char c)
 {
     if (c=='\n'&&!vt_putchar(vt,'\r')) return 0;
     return vt_putchar(vt,c);
@@ -358,7 +358,7 @@ extern int vt_putc(vt_t *vt, char c)
 *          char   *buff     I   strings
 * return : status (1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int vt_puts(vt_t *vt, const char *buff)
+int vt_puts(vt_t *vt, const char *buff)
 {
     const char *p;
     for (p=buff;*p;p++) if (!vt_putc(vt,*p)) return 0;
@@ -371,7 +371,7 @@ extern int vt_puts(vt_t *vt, const char *buff)
 *          ...              I   variable arguments
 * return : status (1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int vt_printf(vt_t *vt, const char *format, ...)
+int vt_printf(vt_t *vt, const char *format, ...)
 {
     va_list ap;
     char buff[MAXBUFF+1];
@@ -385,7 +385,7 @@ extern int vt_printf(vt_t *vt, const char *format, ...)
 * args   : vt_t   *vt       I   virtual console
 * return : status (1:break,0:no break)
 *-----------------------------------------------------------------------------*/
-extern int vt_chkbrk(vt_t *vt)
+int vt_chkbrk(vt_t *vt)
 {
     char c;
     vt->brk=0;
@@ -397,7 +397,7 @@ extern int vt_chkbrk(vt_t *vt)
 *          char   *file     I   log file path
 * return : status (1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int vt_openlog(vt_t *vt, const char *file)
+int vt_openlog(vt_t *vt, const char *file)
 {
     if (!vt||!vt->state||!(vt->logfp=fopen(file,"w"))) return 0;
     return 1;
@@ -407,7 +407,7 @@ extern int vt_openlog(vt_t *vt, const char *file)
 * args   : vt_t   *vt       I   virtual console
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void vt_closelog(vt_t *vt)
+void vt_closelog(vt_t *vt)
 {
     if (!vt||!vt->state||!vt->logfp) return;
     fclose(vt->logfp);

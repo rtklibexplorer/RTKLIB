@@ -1433,7 +1433,7 @@ static int sync_ubx(uint8_t *buff, uint8_t data)
 *          documented and not supported by u-blox.
 *          Users can use these messages by their own risk.
 *-----------------------------------------------------------------------------*/
-extern int input_ubx(raw_t *raw, uint8_t data)
+int input_ubx(raw_t *raw, uint8_t data)
 {
     trace(5,"input_ubx: data=%02x\n",data);
     
@@ -1463,7 +1463,7 @@ extern int input_ubx(raw_t *raw, uint8_t data)
 *          FILE   *fp    I      file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_ubxf(raw_t *raw, FILE *fp)
+int input_ubxf(raw_t *raw, FILE *fp)
 {
     int i,data;
     
@@ -1544,7 +1544,7 @@ static int stoi(const char *s)
 *          the following messages are not supported:
 *             CFG-DOSC,CFG-ESRC
 *-----------------------------------------------------------------------------*/
-extern int gen_ubx(const char *msg, uint8_t *buff)
+int gen_ubx(const char *msg, uint8_t *buff)
 {
     const char *cmd[]={
         "PRT","USB","MSG","NMEA","RATE","CFG","TP","NAV2","DAT","INF",

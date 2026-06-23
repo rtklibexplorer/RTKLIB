@@ -182,7 +182,7 @@ static void printhelp(void)
     exit(0);
 }
 /* show message --------------------------------------------------------------*/
-extern int showmsg(const char *format, ...)
+int showmsg(const char *format, ...)
 {
     va_list arg;
     va_start(arg,format); vfprintf(stderr,format,arg); va_end(arg);

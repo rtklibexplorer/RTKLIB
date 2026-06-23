@@ -1082,7 +1082,7 @@ static int sync_cnav(unsigned char *buff, unsigned char data)
 *          -GALFNAV: use F/NAV for GAL ephemeris
 *
 *-----------------------------------------------------------------------------*/
-extern int input_cnav(raw_t *raw, unsigned char data)
+int input_cnav(raw_t *raw, unsigned char data)
 {
     trace(5,"input_cnav: data=%02x\n",data);
     
@@ -1111,7 +1111,7 @@ extern int input_cnav(raw_t *raw, unsigned char data)
 *          FILE   *fp    I      file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_cnavf(raw_t *raw, FILE *fp)
+int input_cnavf(raw_t *raw, FILE *fp)
 {
     int i,data;
     
