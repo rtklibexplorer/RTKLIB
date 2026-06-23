@@ -417,7 +417,7 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav, pcvs_t *pcvsr) {
             char id[8];
             satno2id(i + 1, id);
             int len = strlen(satlst);
-            if (len + strlen(id) > sizeof(satlst) - 1) continue;
+            if (len + 1 + strlen(id) + 1 > sizeof(satlst)) continue;
             p += sprintf(p, " %s", id);
           }
         }
