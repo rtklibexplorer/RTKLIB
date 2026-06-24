@@ -1170,13 +1170,13 @@ extern void rtksvrclosestr(rtksvr_t *svr, int index)
 *          int     *sat     O  satellite prn numbers
 *          double  *az      O  satellite azimuth angles (rad)
 *          double  *el      O  satellite elevation angles (rad)
-*          int     **snr    O  satellite snr for each freq (dBHz)
+*          double  **snr    O  satellite snr for each freq (dBHz)
 *                              snr[i][j] = sat i freq j snr
 *          int     *vsat    O  valid satellite flag
 * return : number of satellites
 *-----------------------------------------------------------------------------*/
 extern int rtksvrostat(rtksvr_t *svr, int rcv, gtime_t *time, int sat[MAXSAT],
-                       double *az, double *el, int snr[MAXSAT][NFREQ], int vsat[MAXSAT][NFREQ])
+                       double *az, double *el, double snr[MAXSAT][NFREQ], int vsat[MAXSAT][NFREQ])
 {
     tracet(4,"rtksvrostat: rcv=%d\n",rcv);
     
@@ -1191,7 +1191,7 @@ extern int rtksvrostat(rtksvr_t *svr, int rcv, gtime_t *time, int sat[MAXSAT],
         az  [i]=svr->rtk.ssat[sat[i]-1].azel[0];
         el  [i]=svr->rtk.ssat[sat[i]-1].azel[1];
         for (int j=0;j<NFREQ;j++) {
-            snr[i][j] = (int)(svr->obs[rcv][0].data[i].SNR[j] + 0.5);
+            snr[i][j] = svr->obs[rcv][0].data[i].SNR[j] + 0.5;
             if (svr->rtk.sol.stat == SOLQ_NONE || svr->rtk.sol.stat == SOLQ_SINGLE)
               vsat[i][j] = svr->rtk.ssat[sat[i] - 1].vs;
             else

@@ -1456,7 +1456,7 @@ EXPORT void add_fatal(fatalfunc_t *func);
 /* time and string functions -------------------------------------------------*/
 EXPORT void    setstr(char *dst, const char *src, int n);
 EXPORT double  str2num(const char *s, int i, int n);
-EXPORT int     str2time(const char *s, int i, int n, gtime_t *t);
+EXPORT int     str2time(const char *s, size_t i, size_t n, gtime_t *t);
 EXPORT char    *time2str(gtime_t t, char str[40], int n);
 EXPORT gtime_t epoch2time(const double *ep);
 EXPORT void    time2epoch(gtime_t t, double *ep);
@@ -1918,7 +1918,7 @@ EXPORT void rtksvrclosestr(rtksvr_t *svr, int index);
 EXPORT void rtksvrlock  (rtksvr_t *svr);
 EXPORT void rtksvrunlock(rtksvr_t *svr);
 EXPORT int  rtksvrostat (rtksvr_t *svr, int type, gtime_t *time, int sat[MAXSAT],
-                         double *az, double *el, int snr[MAXSAT][NFREQ], int vsat[MAXSAT][NFREQ]);
+                         double *az, double *el, double snr[MAXSAT][NFREQ], int vsat[MAXSAT][NFREQ]);
 EXPORT void rtksvrsstat (rtksvr_t *svr, int *sstat, char *msg);
 EXPORT int  rtksvrmark(rtksvr_t *svr, const char *name, const char *comment);
 

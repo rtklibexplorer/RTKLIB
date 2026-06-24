@@ -363,8 +363,8 @@ static int decode_rxmraw(raw_t *raw)
         
         for (j=1;j<NFREQ+NEXOBS;j++) {
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
-            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0;
-            raw->obs.data[n].Lstd[j]=raw->obs.data[n].Pstd[j]=0.0;
+            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0f;
+            raw->obs.data[n].Lstd[j]=raw->obs.data[n].Pstd[j]=0.0f;
             raw->obs.data[n].LLI[j]=0;
             raw->obs.data[n].code[j]=CODE_NONE;
         }
@@ -524,8 +524,8 @@ static int decode_rxmrawx(raw_t *raw)
             raw->obs.data[n].rcv=0;
             for (k=0;k<NFREQ+NEXOBS;k++) {
                 raw->obs.data[n].L[k]=raw->obs.data[n].P[k]=0.0;
-                raw->obs.data[n].D[k]=raw->obs.data[n].SNR[k]=0.0;
-                raw->obs.data[n].Lstd[k]=raw->obs.data[n].Pstd[k]=0.0;
+                raw->obs.data[n].D[k]=raw->obs.data[n].SNR[k]=0.0f;
+                raw->obs.data[n].Lstd[k]=raw->obs.data[n].Pstd[k]=0.0f;
                 raw->obs.data[n].LLI[k]=0;
                 raw->obs.data[n].code[k]=CODE_NONE;
             }
@@ -533,10 +533,10 @@ static int decode_rxmrawx(raw_t *raw)
         }
         raw->obs.data[j].L[idx]=L;
         raw->obs.data[j].P[idx]=P;
-        raw->obs.data[j].Lstd[idx] = rcvstds ? cpstd * 0.004 : 0;
-        raw->obs.data[j].Pstd[idx] = rcvstds ? 0.01 * pow(2, prstd) : 0.0;
+        raw->obs.data[j].Lstd[idx] = rcvstds ? (float)(cpstd * 0.004) : 0.0f;
+        raw->obs.data[j].Pstd[idx] = rcvstds ? (float)(0.01 * pow(2, prstd)) : 0.0f;
         raw->obs.data[j].D[idx]=(float)D;
-        raw->obs.data[j].SNR[idx]=cn0;
+        raw->obs.data[j].SNR[idx]=(float)cn0;
         raw->obs.data[j].LLI[idx]=(uint8_t)LLI;
         raw->obs.data[j].code[idx]=(uint8_t)code;
         if (L!=0.0) raw->lockflag[sat-1][idx]=0; /* clear slip carry-forward flag if valid phase*/
@@ -693,9 +693,9 @@ static int decode_trkmeas(raw_t *raw)
         raw->obs.data[n].P[0]=tau*CLIGHT;
         raw->obs.data[n].L[0]=-adr;
         raw->obs.data[n].D[0]=(float)dop;
-        raw->obs.data[n].SNR[0]=snr;
+        raw->obs.data[n].SNR[0]=(float)snr;
         raw->obs.data[n].code[0]=sys==SYS_CMP?CODE_L2I:CODE_L1C;
-        raw->obs.data[n].Lstd[0] = rcvstds ? (8 - qi) * 0.004 : 0;
+        raw->obs.data[n].Lstd[0] = rcvstds ? (float)((8 - qi) * 0.004) : 0.0f;
         raw->obs.data[n].LLI[0]=raw->lockt[sat-1][1]>0.0?1:0;
         if (sys==SYS_SBS) { /* half-cycle valid */
             raw->obs.data[n].LLI[0]|=lock2>142?0:2;
@@ -711,8 +711,8 @@ static int decode_trkmeas(raw_t *raw)
         }
         for (j=1;j<NFREQ+NEXOBS;j++) {
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
-            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0;
-            raw->obs.data[n].Lstd[j]=raw->obs.data[n].Pstd[j]=0.0;
+            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0f;
+            raw->obs.data[n].Lstd[j]=raw->obs.data[n].Pstd[j]=0.0f;
             raw->obs.data[n].LLI[j]=0;
             raw->obs.data[n].code[j]=CODE_NONE;
         }
@@ -820,14 +820,14 @@ static int decode_trkd5(raw_t *raw)
         raw->obs.data[n].P[0]=tau*CLIGHT;
         raw->obs.data[n].L[0]=-adr;
         raw->obs.data[n].D[0]=(float)dop;
-        raw->obs.data[n].SNR[0]=snr;
+        raw->obs.data[n].SNR[0]=(float)snr;
         raw->obs.data[n].code[0]=sys==SYS_CMP?CODE_L2I:CODE_L1C;
         raw->obs.data[n].LLI[0]=raw->lockt[sat-1][1]>0.0?1:0;
         raw->lockt[sat-1][1]=0.0;
         
         for (j=1;j<NFREQ+NEXOBS;j++) {
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
-            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0;
+            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0f;
             raw->obs.data[n].LLI[j]=0;
             raw->obs.data[n].code[j]=CODE_NONE;
         }

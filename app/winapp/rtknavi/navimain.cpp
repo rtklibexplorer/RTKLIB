@@ -141,7 +141,7 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
         Sat[i][j]=0;
         Az[i][j]=El[i][j]=0.0;
         for (int k=0;k<NFREQ;k++) {
-          Snr[i][j][k]=0;
+          Snr[i][j][k]=0.0;
           Vsat[i][j][k]=0;
         }
     }
@@ -1669,7 +1669,8 @@ void __fastcall TMainForm::DrawPlot(TImage *plot, int type, int freq)
     TCanvas *c=plot->Canvas;
     TLabel *label[]={Plabel1,Plabel2,Plabel3,Pos1,Pos2,Pos3};
     int w=plot->Parent->Width-2,h=plot->Parent->Height-2;
-    int i,j,x,sat[2][MAXSAT],ns[2],snr[2][MAXSAT][NFREQ],vsat[2][MAXSAT][NFREQ];
+    int i,j,x,sat[2][MAXSAT],ns[2],vsat[2][MAXSAT][NFREQ];
+    double snr[2][MAXSAT][NFREQ];
     int tm=PanelFont->Size*3/2;
     char name[16];
     double az[2][MAXSAT],el[2][MAXSAT],rr[3],rs[6],e[3],pos[3],azel[2];
@@ -1802,16 +1803,16 @@ void __fastcall TMainForm::UpdatePlot(void)
     }
 }
 // snr color ----------------------------------------------------------------
-TColor __fastcall TMainForm::SnrColor(int snr)
+TColor __fastcall TMainForm::SnrColor(double snr)
 {
     TColor color[]={clGreen,CLORANGE,clFuchsia,clBlue,clRed,clGray};
     uint32_t c1,c2,r1,r2,g1,g2,b1,b2;
     double a;
     int i;
     
-    if (snr<25) return color[5];
-    if (snr<27) return color[4];
-    if (snr>47) return color[0];
+    if (snr<25.0) return color[5];
+    if (snr<27.0) return color[4];
+    if (snr>47.0) return color[0];
     a=(snr-27.5)/5.0;
     i=(int)a; a-=i;
     c1=(uint32_t)color[3-i];
@@ -1837,7 +1838,8 @@ void __fastcall TMainForm::DrawSnr(TCanvas *c, int w, int h, int x0, int y0,
         clGreen,(TColor)0xAAFF,clFuchsia,clBlue,clRed,clTeal,clGray
     };
     UTF8String s; 
-    int i,j,k,l,n,x1,x2,y1,y2,y3,k1,tm,bm,hh,ww,www,snr[NFREQ+1],mask[7]={0};
+    int i,j,k,l,n,x1,x2,y1,y2,y3,k1,tm,bm,hh,ww,www,mask[7]={0};
+    double snr[NFREQ+1];
     char id[8],sys[]="GREJCIS",*q;
     
     trace(4,"DrawSnr: w=%d h=%d x0=%d y0=%d index=%d freq=%d\n",w,h,x0,y0,index,freq);
@@ -1850,7 +1852,7 @@ void __fastcall TMainForm::DrawSnr(TCanvas *c, int w, int h, int x0, int y0,
     for (snr[0]=MINSNR+10;snr[0]<MAXSNR;snr[0]+=10) {
         y1=y0+hh-(snr[0]-MINSNR)*hh/(MAXSNR-MINSNR);
         c->MoveTo(x0+2,y1); c->LineTo(x0+w-2,y1);
-        DrawText(c,x0+w-4,y1,s.sprintf("%d",snr[0]),clGray,2,0);
+        DrawText(c,x0+w-4,y1,s.sprintf("%d",(int)round(snr[0])),clGray,2,0);
     }
     y1=y0+hh;
     TRect b(x0+2,y0,x0+w-2,y1);
@@ -1865,8 +1867,9 @@ void __fastcall TMainForm::DrawSnr(TCanvas *c, int w, int h, int x0, int y0,
         x1=x0+i*(w-16)/Nsat[index]+ww/2;
         satno2id(Sat[index][i],id);
         l=(q=strchr(sys,id[0]))?(int)(q-sys):6;
-        
-        for (j=snr[0]=0;j<NFREQ;j++) {
+
+        snr[0]=0.0;
+        for (j=0;j<NFREQ;j++) {
             snr[j+1]=Snr[index][i][j];
             if ((freq&&freq==j+1)||((!freq||freq>NFREQ)&&snr[j+1]>snr[0])) {
                 snr[0]=snr[j+1];
@@ -1876,7 +1879,7 @@ void __fastcall TMainForm::DrawSnr(TCanvas *c, int w, int h, int x0, int y0,
             k=j<NFREQ+1?j:0;
             y3=j<NFREQ+1?0:2;
             y2=y1-y3;
-            if (snr[k]>0) y2-=(snr[k]-MINSNR)*hh/(MAXSNR-MINSNR)-y3;
+            if (snr[k]>0) y2-=(int)round((snr[k]-MINSNR)*hh/(MAXSNR-MINSNR)-y3);
             y2=y2<2?2:(y1<y2?y1:y2);
             
             TRect r1(x1,y1,x1+www,y2);
@@ -1916,7 +1919,8 @@ void __fastcall TMainForm::DrawSat(TCanvas *c, int w, int h, int x0, int y0,
     UTF8String s;
     TPoint p(w/2,h/2);
     double r=MIN(w*0.95,h*0.95)/2,azel[MAXSAT*2],dop[4];
-    int i,j,k,l,d,x[MAXSAT],y[MAXSAT],snr[NFREQ+1],ns=0;
+    int i,j,k,l,d,x[MAXSAT],y[MAXSAT],ns=0;
+    double snr[NFREQ+1];
     char id[8],sys[]="GREJCIS",*q;
     
     trace(4,"DrawSat: w=%d h=%d index=%d freq=%d\n",w,h,index,freq);
@@ -1925,7 +1929,8 @@ void __fastcall TMainForm::DrawSat(TCanvas *c, int w, int h, int x0, int y0,
     
     for (i=0,k=Nsat[index]-1;i<Nsat[index]&&i<MAXSAT;i++,k--) {
         if (El[index][k]<=0.0) continue;
-        for (j=snr[0]=0;j<NFREQ;j++) {
+        snr[0]=0;
+        for (j=0;j<NFREQ;j++) {
             snr[j+1]=Snr[index][k][j];
             if ((freq&&freq==j+1)||((!freq||freq>NFREQ)&&snr[j+1]>snr[0])) {
                 snr[0]=snr[j+1]; // max snr
