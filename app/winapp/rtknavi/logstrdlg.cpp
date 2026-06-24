@@ -24,12 +24,15 @@ void __fastcall TLogStrDialog::FormShow(TObject *Sender)
 	Stream1C ->Checked  =StreamC[0];
 	Stream2C ->Checked  =StreamC[1];
 	Stream3C ->Checked  =StreamC[2];
+	Stream4C ->Checked  =StreamC[3];
 	Stream1  ->ItemIndex=Stream[0];
 	Stream2  ->ItemIndex=Stream[1];
 	Stream3  ->ItemIndex=Stream[2];
+	Stream4  ->ItemIndex=Stream[3];
 	FilePath1->Text     =GetFilePath(Paths[0][2]);
 	FilePath2->Text     =GetFilePath(Paths[1][2]);
 	FilePath3->Text     =GetFilePath(Paths[2][2]);
+	FilePath4->Text     =GetFilePath(Paths[3][2]);
 	SwapIntv ->Text     =SwapInterval;
 	TimeTagC ->Checked  =LogTimeTag;
 	UpdateEnable();
@@ -40,12 +43,15 @@ void __fastcall TLogStrDialog::BtnOkClick(TObject *Sender)
 	StreamC [0]=Stream1C->Checked;
 	StreamC [1]=Stream2C->Checked;
 	StreamC [2]=Stream3C->Checked;
+	StreamC [3]=Stream4C->Checked;
 	Stream  [0]=Stream1 ->ItemIndex;
 	Stream  [1]=Stream2 ->ItemIndex;
 	Stream  [2]=Stream3 ->ItemIndex;
+	Stream  [3]=Stream4 ->ItemIndex;
 	Paths[0][2]=SetFilePath(FilePath1->Text);
 	Paths[1][2]=SetFilePath(FilePath2->Text);
 	Paths[2][2]=SetFilePath(FilePath3->Text);
+	Paths[3][2]=SetFilePath(FilePath4->Text);
 	SwapInterval=SwapIntv->Text;
 	LogTimeTag =TimeTagC->Checked;
 }
@@ -71,6 +77,13 @@ void __fastcall TLogStrDialog::BtnFile3Click(TObject *Sender)
 	FilePath3->Text=SaveDialog->FileName;
 }
 //---------------------------------------------------------------------------
+void __fastcall TLogStrDialog::BtnFile4Click(TObject *Sender)
+{
+	SaveDialog->FileName=FilePath4->Text;
+	if (!SaveDialog->Execute()) return;
+	FilePath4->Text=SaveDialog->FileName;
+}
+//---------------------------------------------------------------------------
 void __fastcall TLogStrDialog::Stream1Change(TObject *Sender)
 {
 	UpdateEnable();
@@ -81,7 +94,12 @@ void __fastcall TLogStrDialog::Stream2Change(TObject *Sender)
 	UpdateEnable();
 }
 //---------------------------------------------------------------------------
-void __fastcall TLogStrDialog::Stream3CClick(TObject *Sender)
+void __fastcall TLogStrDialog::Stream3Change(TObject *Sender)
+{
+	UpdateEnable();
+}
+//---------------------------------------------------------------------------
+void __fastcall TLogStrDialog::Stream4Change(TObject *Sender)
 {
 	UpdateEnable();
 }
@@ -96,7 +114,12 @@ void __fastcall TLogStrDialog::Stream2CClick(TObject *Sender)
 	UpdateEnable();
 }
 //---------------------------------------------------------------------------
-void __fastcall TLogStrDialog::Stream3Change(TObject *Sender)
+void __fastcall TLogStrDialog::Stream3CClick(TObject *Sender)
+{
+	UpdateEnable();
+}
+//---------------------------------------------------------------------------
+void __fastcall TLogStrDialog::Stream4CClick(TObject *Sender)
 {
 	UpdateEnable();
 }
@@ -136,6 +159,17 @@ void __fastcall TLogStrDialog::BtnStr3Click(TObject *Sender)
 		case 2: TcpOpt(2,0); break;
 		case 3: TcpOpt(2,2); break;
 		case 4: TcpOpt(2,4); break;
+	}
+}
+//---------------------------------------------------------------------------
+void __fastcall TLogStrDialog::BtnStr4Click(TObject *Sender)
+{
+	switch (Stream3->ItemIndex) {
+		case 0: SerialOpt(3,0); break;
+		case 1: TcpOpt(3,1); break;
+		case 2: TcpOpt(3,0); break;
+		case 3: TcpOpt(3,2); break;
+		case 4: TcpOpt(3,4); break;
 	}
 }
 //---------------------------------------------------------------------------
@@ -185,19 +219,24 @@ void __fastcall TLogStrDialog::UpdateEnable(void)
 {
 	int ena=(Stream1C->Checked&&Stream1->ItemIndex==5)||
 			(Stream2C->Checked&&Stream2->ItemIndex==5)||
-			(Stream3C->Checked&&Stream3->ItemIndex==5);
+			(Stream3C->Checked&&Stream3->ItemIndex==5)||
+			(Stream4C->Checked&&Stream4->ItemIndex==5);
 	Stream1  ->Enabled=Stream1C->Checked;
 	Stream2  ->Enabled=Stream2C->Checked;
 	Stream3  ->Enabled=Stream3C->Checked;
+	Stream4  ->Enabled=Stream4C->Checked;
 	BtnStr1  ->Enabled=Stream1C->Checked&&Stream1->ItemIndex<=4;
 	BtnStr2  ->Enabled=Stream2C->Checked&&Stream2->ItemIndex<=4;
 	BtnStr3  ->Enabled=Stream3C->Checked&&Stream3->ItemIndex<=4;
+	BtnStr4  ->Enabled=Stream4C->Checked&&Stream4->ItemIndex<=4;
 	FilePath1->Enabled=Stream1C->Checked&&Stream1->ItemIndex==5;
 	FilePath2->Enabled=Stream2C->Checked&&Stream2->ItemIndex==5;
 	FilePath3->Enabled=Stream3C->Checked&&Stream3->ItemIndex==5;
+	FilePath4->Enabled=Stream4C->Checked&&Stream4->ItemIndex==5;
 	BtnFile1 ->Enabled=Stream1C->Checked&&Stream1->ItemIndex==5;
 	BtnFile2 ->Enabled=Stream2C->Checked&&Stream2->ItemIndex==5;
 	BtnFile3 ->Enabled=Stream3C->Checked&&Stream3->ItemIndex==5;
+	BtnFile4 ->Enabled=Stream4C->Checked&&Stream4->ItemIndex==5;
 	Label1   ->Enabled=ena;
 	Label2   ->Enabled=ena;
 	LabelF1  ->Enabled=ena;

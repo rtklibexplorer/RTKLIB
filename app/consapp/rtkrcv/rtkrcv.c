@@ -91,14 +91,11 @@ static char passwd[MAXSTR]="admin";     /* login password */
 static int timetype     =0;             /* time format (0:gpst,1:utc,2:jst,3:tow) */
 static int soltype      =0;             /* sol format (0:dms,1:deg,2:xyz,3:enu,4:pyl) */
 static int solflag      =2;             /* sol flag (1:std+2:age/ratio/ns) */
-static int strtype[]={                  /* stream types */
-    STR_SERIAL,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE,STR_NONE
-};
-static char strpath[8][MAXSTR]={"","","","","","","",""}; /* stream paths */
-static int strfmt[]={                   /* stream formats */
-    STRFMT_UBX,STRFMT_RTCM3,STRFMT_SP3,SOLF_LLH,SOLF_NMEA
-};
-static char rcvopt[3][256]={""};        /* Receiver options */
+static int strtype[MAXSTRRTK];          /* stream types */
+static char strpath[MAXSTRRTK][MAXSTR]; /* stream paths */
+static int strfmt[RTKSVRNIN];           /* Input stream formats */
+static int ostrfmt[RTKSVRNSOL];         /* Output stream formats */
+static char rcvopt[RTKSVRNIN][256];     /* Receiver options */
 static int svrcycle     =10;            /* server cycle (ms) */
 static int timeout      =10000;         /* timeout time (ms) */
 static int reconnect    =10000;         /* reconnect interval (ms) */
@@ -107,8 +104,8 @@ static int buffsize     =32768;         /* input buffer size (bytes) */
 static int navmsgsel    =0;             /* navigation message select */
 static char proxyaddr[256]="";          /* http/ntrip proxy */
 static int nmeareq      =0;             /* nmea request type (0:off,1:lat/lon,2:single) */
-static double nmeapos[] ={0,0,0};       /* nmea position (lat/lon/height) (deg,m) */
-static char rcvcmds[3][MAXSTR]={""};    /* receiver commands files */
+static double nmeapos[] ={0,0,0,0};     /* nmea position (lat/lon/height) (deg,m) */
+static char rcvcmds[RTKSVRNIN][MAXSTR]; /* receiver commands files */
 #ifdef RTKSHELLCMDS
 static char startcmd[MAXSTR]="";        /* start command */
 static char stopcmd [MAXSTR]="";        /* stop command */
@@ -122,7 +119,7 @@ static int fswapmargin  =30;            /* file swap margin (s) */
 static char sta_name[256]="";           /* station name */
 
 static prcopt_t prcopt;                 /* processing options */
-static solopt_t solopt[2]={{0}};        /* solution options */
+static solopt_t solopt[RTKSVRNSOL]={{0}}; /* solution options */
 static filopt_t filopt  ={""};          /* file options */
 
 /* help text -----------------------------------------------------------------*/
@@ -152,7 +149,7 @@ static const char *helptxt[]={
     "observ [-n] [cycle]   : show observation data",
     "navidata [-p] [-n] [cycle] : show navigation data",
     "stream [cycle]        : show stream status",
-    "ssr [-[1,2,3]] [-c] [-p] [cycle] : show ssr corrections",
+    "ssr [-n] [-c] [-p] [cycle] : show ssr corrections",
     "error                 : show error/warning messages",
     "option [opt]          : show option(s)",
     "set opt [val]         : set option",
@@ -197,33 +194,65 @@ static opt_t rcvopts[]={
     {"console-solflag", 0,  (void *)&solflag,            FLGOPT },
     
     {"inpstr1-type",    3,  (void *)&strtype[0],         ISTOPT },
-    {"inpstr2-type",    3,  (void *)&strtype[1],         ISTOPT },
-    {"inpstr3-type",    3,  (void *)&strtype[2],         ISTOPT },
     {"inpstr1-path",    2,  (void *)strpath [0],         ""     },
-    {"inpstr2-path",    2,  (void *)strpath [1],         ""     },
-    {"inpstr3-path",    2,  (void *)strpath [2],         ""     },
     {"inpstr1-format",  3,  (void *)&strfmt [0],         FMTOPT },
-    {"inpstr2-format",  3,  (void *)&strfmt [1],         FMTOPT },
-    {"inpstr3-format",  3,  (void *)&strfmt [2],         FMTOPT },
     {"inpstr1-rcvopt",  2,  (void *)rcvopt[0],           ""     },
+    {"inpstr2-type",    3,  (void *)&strtype[1],         ISTOPT },
+    {"inpstr2-path",    2,  (void *)strpath [1],         ""     },
+    {"inpstr2-format",  3,  (void *)&strfmt [1],         FMTOPT },
     {"inpstr2-rcvopt",  2,  (void *)rcvopt[1],           ""     },
-    {"inpstr3-rcvopt",  2,  (void *)rcvopt[2],           ""     },
     {"inpstr2-nmeareq", 3,  (void *)&nmeareq,            NMEOPT },
     {"inpstr2-nmealat", 1,  (void *)&nmeapos[0],         "deg"  },
     {"inpstr2-nmealon", 1,  (void *)&nmeapos[1],         "deg"  },
     {"inpstr2-nmeahgt", 1,  (void *)&nmeapos[2],         "m"    },
-    {"outstr1-type",    3,  (void *)&strtype[3],         OSTOPT },
-    {"outstr2-type",    3,  (void *)&strtype[4],         OSTOPT },
-    {"outstr1-path",    2,  (void *)strpath [3],         ""     },
-    {"outstr2-path",    2,  (void *)strpath [4],         ""     },
-    {"outstr1-format",  3,  (void *)&strfmt [3],         SOLOPT },
-    {"outstr2-format",  3,  (void *)&strfmt [4],         SOLOPT },
-    {"logstr1-type",    3,  (void *)&strtype[5],         OSTOPT },
-    {"logstr2-type",    3,  (void *)&strtype[6],         OSTOPT },
-    {"logstr3-type",    3,  (void *)&strtype[7],         OSTOPT },
-    {"logstr1-path",    2,  (void *)strpath [5],         ""     },
-    {"logstr2-path",    2,  (void *)strpath [6],         ""     },
-    {"logstr3-path",    2,  (void *)strpath [7],         ""     },
+    {"inpstr3-type",    3,  (void *)&strtype[2],         ISTOPT },
+    {"inpstr3-path",    2,  (void *)strpath [2],         ""     },
+    {"inpstr3-format",  3,  (void *)&strfmt [2],         FMTOPT },
+    {"inpstr3-rcvopt",  2,  (void *)rcvopt[2],           ""     },
+    {"inpstr4-type",    3,  (void *)&strtype[3],         ISTOPT },
+    {"inpstr4-path",    2,  (void *)strpath [3],         ""     },
+    {"inpstr4-format",  3,  (void *)&strfmt [3],         FMTOPT },
+    {"inpstr4-rcvopt",  2,  (void *)rcvopt[3],           ""     },
+#if RTKSVRNIN > 4
+    {"inpstr5-type",    3,  (void *)&strtype[4],         ISTOPT },
+    {"inpstr5-path",    2,  (void *)strpath [4],         ""     },
+    {"inpstr5-format",  3,  (void *)&strfmt [4],         FMTOPT },
+    {"inpstr5-rcvopt",  2,  (void *)rcvopt[4],           ""     },
+#endif
+    {"logstr1-type",    3,  (void *)&strtype[RTKSVRNIN], OSTOPT },
+    {"logstr1-path",    2,  (void *)strpath [RTKSVRNIN], ""     },
+    {"logstr2-type",    3,  (void *)&strtype[RTKSVRNIN + 1], OSTOPT },
+    {"logstr2-path",    2,  (void *)strpath [RTKSVRNIN + 1], ""     },
+    {"logstr3-type",    3,  (void *)&strtype[RTKSVRNIN + 2], OSTOPT },
+    {"logstr3-path",    2,  (void *)strpath [RTKSVRNIN + 2], ""     },
+    {"logstr4-type",    3,  (void *)&strtype[RTKSVRNIN + 3], OSTOPT },
+    {"logstr4-path",    2,  (void *)strpath [RTKSVRNIN + 3], ""     },
+#if RTKSVRNIN > 4
+    {"logstr5-type",    3,  (void *)&strtype[RTKSVRNIN + 4], OSTOPT },
+    {"logstr5-path",    2,  (void *)strpath [RTKSVRNIN + 4], ""     },
+#endif
+    {"outstr1-type",    3,  (void *)&strtype[RTKSVRNIN*2], OSTOPT },
+    {"outstr1-path",    2,  (void *)strpath [RTKSVRNIN*2], ""     },
+    {"outstr1-format",  3,  (void *)&ostrfmt[0],         SOLOPT },
+    {"outstr2-type",    3,  (void *)&strtype[RTKSVRNIN*2 + 1], OSTOPT },
+    {"outstr2-path",    2,  (void *)strpath [RTKSVRNIN*2 + 1], ""     },
+    {"outstr2-format",  3,  (void *)&ostrfmt[1],         SOLOPT },
+    {"outstr3-type",    3,  (void *)&strtype[RTKSVRNIN*2 + 2], OSTOPT },
+    {"outstr3-path",    2,  (void *)strpath [RTKSVRNIN*2 + 2], ""     },
+    {"outstr3-format",  3,  (void *)&ostrfmt[2],         SOLOPT },
+    {"outstr4-type",    3,  (void *)&strtype[RTKSVRNIN*2 + 3], OSTOPT },
+    {"outstr4-path",    2,  (void *)strpath [RTKSVRNIN*2 + 3], ""     },
+    {"outstr4-format",  3,  (void *)&ostrfmt[3],         SOLOPT },
+#if RTKSVRNSOL > 4
+    {"outstr5-type",    3,  (void *)&strtype[RTKSVRNIN*2 + 4], OSTOPT },
+    {"outstr5-path",    2,  (void *)strpath [RTKSVRNIN*2 + 4], ""     },
+    {"outstr5-format",  3,  (void *)&ostrfmt[4],         SOLOPT },
+#endif
+#if RTKSVRNSOL > 5
+    {"outstr6-type",    3,  (void *)&strtype[RTKSVRNIN*2 + 5], OSTOPT },
+    {"outstr6-path",    2,  (void *)strpath [RTKSVRNIN*2 + 5], ""     },
+    {"outstr6-format",  3,  (void *)&ostrfmt[5],         SOLOPT },
+#endif
     
     {"misc-svrcycle",   0,  (void *)&svrcycle,           "ms"   },
     {"misc-timeout",    0,  (void *)&timeout,            "ms"   },
@@ -242,6 +271,10 @@ static opt_t rcvopts[]={
     {"file-cmdfile1",   2,  (void *)rcvcmds[0],          ""     },
     {"file-cmdfile2",   2,  (void *)rcvcmds[1],          ""     },
     {"file-cmdfile3",   2,  (void *)rcvcmds[2],          ""     },
+    {"file-cmdfile4",   2,  (void *)rcvcmds[3],          ""     },
+#if RTKSVRNSOL > 4
+    {"file-cmdfile5",   2,  (void *)rcvcmds[4],          ""     },
+#endif
     
     {"",0,NULL,""}
 };
@@ -433,20 +466,20 @@ static int startsvr(vt_t *vt)
 {
     static sta_t sta[MAXRCV]={{""}};
     double pos[3],npos[3];
-    char s1[3][MAXRCVCMD]={"","",""},*cmds[]={NULL,NULL,NULL};
-    char s2[3][MAXRCVCMD]={"","",""},*cmds_periodic[]={NULL,NULL,NULL};
-    char *ropts[]={rcvopt[0],rcvopt[1],rcvopt[2]};
-    char *paths[]={
-        strpath[0],strpath[1],strpath[2],strpath[3],strpath[4],strpath[5],
-        strpath[6],strpath[7]
-    };
+    char s1[RTKSVRNIN][MAXRCVCMD],*cmds[RTKSVRNIN];
+    char s2[RTKSVRNIN][MAXRCVCMD],*cmds_periodic[RTKSVRNIN];
+    char *ropts[RTKSVRNIN];
+    char *paths[MAXSTRRTK];
     char errmsg[2048]="";
-    int i,stropt[8]={0};
+    int i;
     
     trace(3,"startsvr:\n");
-    
+
     /* read start commands from command files */
-    for (i=0;i<3;i++) {
+    for (i=0;i<RTKSVRNIN;i++) {
+        s1[i][0] = s2[i][0] = '\0';
+        cmds[i] = cmds_periodic[i] = NULL;
+        ropts[i] = rcvopt[i];
         if (!*rcvcmds[i]) continue;
         if (!readcmd(rcvcmds[i],s1[i],0)) {
             vt_printf(vt,"no command file: %s\n",rcvcmds[i]);
@@ -459,7 +492,7 @@ static int startsvr(vt_t *vt)
     }
     /* confirm overwrite */
     if (vt!=NULL) {
-        for (i=3;i<8;i++) {
+        for (i = RTKSVRNIN; i < MAXSTRRTK; i++) {
             if (strtype[i]==STR_FILE&&!confwrite(vt,strpath[i])) return 0;
         }
     }
@@ -488,6 +521,7 @@ static int startsvr(vt_t *vt)
     for (i=0;*sysopts[i].name;i++) modflgs[i]=0;
     
     /* set stream options */
+    int stropt[8]={0};
     stropt[0]=timeout;
     stropt[1]=reconnect;
     stropt[2]=1000;
@@ -507,9 +541,10 @@ static int startsvr(vt_t *vt)
         vt_printf(vt,"command exec error: %s (%d)\n",startcmd,ret);
     }
 #endif
-    solopt[0].posf=strfmt[3];
-    solopt[1].posf=strfmt[4];
-    
+    for (int i = 0; i < RTKSVRNSOL; i++) solopt[i].posf=ostrfmt[i];
+
+    for (int i = 0; i < MAXSTRRTK; i++) paths[i] = strpath[i];
+
     /* start rtk server */
     if (!rtksvrstart(&svr,svrcycle,buffsize,strtype,(const char **)paths,strfmt,navmsgsel,
                      (const char **)cmds,(const char **)cmds_periodic,(const char **)ropts,nmeacycle,nmeareq,npos,&prcopt,
@@ -524,7 +559,7 @@ static int startsvr(vt_t *vt)
 /* stop rtk server -----------------------------------------------------------*/
 static void stopsvr(vt_t *vt)
 {
-    char s[3][MAXRCVCMD]={"","",""},*cmds[]={NULL,NULL,NULL};
+    char s[RTKSVRNIN][MAXRCVCMD],*cmds[RTKSVRNIN];
     int i;
     
     trace(3,"stopsvr:\n");
@@ -532,7 +567,9 @@ static void stopsvr(vt_t *vt)
     if (!svr.state) return;
     
     /* read stop commands from command files */
-    for (i=0;i<3;i++) {
+    for (i=0;i<RTKSVRNIN;i++) {
+        s[i][0] = '\0';
+        cmds[i] = NULL;
         if (!*rcvcmds[i]) continue;
         if (!readcmd(rcvcmds[i],s[i],1)) {
             vt_printf(vt,"no command file: %s\n",rcvcmds[i]);
@@ -672,7 +709,7 @@ static void prsolution(vt_t *vt, const sol_t *sol, const double *rb)
 /* print status --------------------------------------------------------------*/
 static void prstatus(vt_t *vt)
 {
-    const char *svrstate[]={"stop","run"},*type[]={"rover","base","corr"};
+    const char *svrstate[]={"stop","run"},*type[]={"rover","base"};
     const char *sol[]={"-","fix","float","SBAS","DGPS","single","PPP",""};
     const char *mode[]={
          "single","DGPS","kinematic","static","static-start","moving-base","fixed",
@@ -682,7 +719,7 @@ static void prstatus(vt_t *vt)
     const char *freq[]={"-","L1","L1+L2","L1+L2+E5b","L1+L2+E5b+L5","5","6","7"};
     pthread_t thread;
     int j,cycle,state,rtkstat,nsat0,nsat1,prcout,rcvcount,tmcount,timevalid,nave;
-    int cputime,nb[3]={0},nmsg[3][10]={{0}};
+    int cputime,nb[RTKSVRNIN]={0},nmsg[RTKSVRNIN][10]={{0}};
     char tstr[40],tmstr[40],s[1024],*p;
     double runtime,rt[3]={0},dop[4]={0},rr[3],bl1=0.0,bl2=0.0;
     double azel[MAXSAT*2],pos[3],vel[3],*del;
@@ -692,8 +729,9 @@ static void prstatus(vt_t *vt)
     rtk_t *rtk = (rtk_t *)malloc(sizeof(rtk_t));
     if (rtk == NULL) return;
 
-    rtcm_t *rtcm[3] = { NULL, NULL, NULL };
-    for (int i = 0; i < 3; i++) {
+    rtcm_t *rtcm[RTKSVRNIN];
+    for (int i = 0; i < RTKSVRNIN; i++) rtcm[i] = NULL;
+    for (int i = 0; i < RTKSVRNIN; i++) {
       rtcm[i] = (rtcm_t *)malloc(sizeof(rtcm_t));
       if (rtcm[i] == NULL) goto done;
     }
@@ -711,8 +749,8 @@ static void prstatus(vt_t *vt)
     cputime=svr.cputime;
     prcout=svr.prcout;
     nave=svr.nave;
-    for (int i=0;i<3;i++) nb[i]=svr.nb[i];
-    for (int i=0;i<3;i++) for (j=0;j<10;j++) {
+    for (int i=0;i<RTKSVRNIN;i++) nb[i]=svr.nb[i];
+    for (int i=0;i<RTKSVRNIN;i++) for (j=0;j<10;j++) {
         nmsg[i][j]=svr.nmsg[i][j];
     }
     if (svr.state) {
@@ -720,7 +758,7 @@ static void prstatus(vt_t *vt)
         rt[0]=floor(runtime/3600.0); runtime-=rt[0]*3600.0;
         rt[1]=floor(runtime/60.0); rt[2]=runtime-rt[1]*60.0;
     }
-    for (int i=0;i<3;i++) *rtcm[i]=svr.rtcm[i];
+    for (int i=0;i<RTKSVRNIN;i++) *rtcm[i]=svr.rtcm[i];
     if (svr.raw[0].obs.data != NULL) {
         timevalid = svr.raw[0].obs.data[0].timevalid;
         eventime = svr.raw[0].obs.data[0].eventime;
@@ -755,13 +793,13 @@ static void prstatus(vt_t *vt)
     vt_printf(vt,"%-28s: %d\n","cpu time for a cycle (ms)",cputime);
     vt_printf(vt,"%-28s: %d\n","missing obs data count",prcout);
     vt_printf(vt,"%-28s: %d,%d\n","bytes in input buffer",nb[0],nb[1]);
-    for (int i=0;i<3;i++) {
-        sprintf(s,"# of input data %s",type[i]);
+    for (int i=0;i<RTKSVRNIN;i++) {
+        sprintf(s,"# of input data %s", i < 2 ? type[i] : "corr");
         vt_printf(vt,"%-28s: obs(%d),nav(%d),gnav(%d),ion(%d),sbs(%d),pos(%d),dgps(%d),ssr(%d),err(%d)\n",
                 s,nmsg[i][0],nmsg[i][1],nmsg[i][6],nmsg[i][2],nmsg[i][3],
                 nmsg[i][4],nmsg[i][5],nmsg[i][7],nmsg[i][9]);
     }
-    for (int i=0;i<3;i++) {
+    for (int i=0;i<RTKSVRNIN;i++) {
         p=s; *p='\0';
         for (j=1;j<100;j++) {
             if (rtcm[i]->nmsg2[j]==0) continue;
@@ -781,7 +819,7 @@ static void prstatus(vt_t *vt)
         if (rtcm[i]->nmsg3[0]>0) {
             sprintf(p,"%sother3(%d)",p>s?",":"",rtcm[i]->nmsg3[0]);
         }
-        vt_printf(vt,"%-15s %-9s: %s\n","# of rtcm messages",type[i],s);
+        vt_printf(vt,"%-15s %-9s: %s\n","# of rtcm messages", i < 2 ? type[i] : "corr" ,s);
     }
     vt_printf(vt,"%-28s: %s\n","solution status",sol[rtkstat]);
     time2str(rtk->sol.time,tstr,9);
@@ -843,7 +881,7 @@ static void prstatus(vt_t *vt)
 
 done:
     free(rtk);
-    for (int i = 0; i < 3; i++) free(rtcm[i]);
+    for (int i = 0; i < RTKSVRNIN; i++) free(rtcm[i]);
 }
 /* print satellite -----------------------------------------------------------*/
 static void prsatellite(vt_t *vt, int nf)
@@ -1020,10 +1058,8 @@ static void prerror(vt_t *vt)
 /* print stream --------------------------------------------------------------*/
 static void prstream(vt_t *vt)
 {
-    const char *ch[]={
-        "input rover","input base","input corr","output sol1","output sol2",
-        "log rover","log base","log corr","monitor"
-    };
+    const char *inch[]={"input rover","input base"};
+    const char *logch[]={"log rover","log base"};
     const char *type[]={
         "-","serial","file","tcpsvr","tcpcli","ntrips","ntripc","ftp",
         "http","ntripcas","udpsvr","udpcli","membuf"
@@ -1031,25 +1067,32 @@ static void prstream(vt_t *vt)
     const char *fmt[]={"rtcm2","rtcm3","oem4","","ubx","swift","hemis","skytreq",
                        "javad","nvs","binex","rt17","sbf","","unicore","sp3",""};
     const char *sol[]={"llh","xyz","enu","nmea","stat","-"};
-    stream_t stream[9];
-    int i,format[9]={0};
+    stream_t stream[MAXSTRRTK+1];
+    int i,format[MAXSTRRTK+1]={0};
     
     trace(4,"prstream:\n");
     
     rtksvrlock(&svr);
-    for (i=0;i<8;i++) stream[i]=svr.stream[i];
-    for (i=0;i<3;i++) format[i]=svr.format[i];
-    for (i=3;i<5;i++) format[i]=svr.solopt[i-3].posf;
-    stream[8]=moni;
-    format[8]=SOLF_LLH;
+    for (i=0;i<MAXSTRRTK;i++) stream[i]=svr.stream[i];
+    for (i=0;i<RTKSVRNIN;i++) format[i]=svr.format[i];
+    for (i=0;i<RTKSVRNSOL;i++) format[RTKSVRNIN*2+i]=svr.solopt[i].posf;
+    stream[MAXSTRRTK]=moni;
+    format[MAXSTRRTK]=SOLF_LLH;
     rtksvrunlock(&svr);
     
     vt_printf(vt,"\n%s%-12s %-8s %-5s %s %10s %7s %10s %7s %-24s %s%s\n",ESC_BOLD,
               "Stream","Type","Fmt","S","In-byte","In-bps","Out-byte","Out-bps",
               "Path","Message",ESC_RESET);
-    for (i=0;i<9;i++) {
+    for (i=0;i<MAXSTRRTK+1;i++) {
+        const char *name;
+        if (i < 2) name = inch[i];
+        else if (i < RTKSVRNIN) name = "input corr";
+        else if (i < RTKSVRNIN + 2) name = logch[i - RTKSVRNIN];
+        else if (i < RTKSVRNIN * 2) name = "log corr";
+        else if (i < MAXSTRRTK) name = "output sol";
+        else name = "monitor";
         vt_printf(vt,"%-12s %-8s %-5s %s %10d %7d %10d %7d %-24.24s %s\n",
-            ch[i],type[stream[i].type],i<3?fmt[format[i]]:(i<5||i==8?sol[format[i]]:"-"),
+            name,type[stream[i].type],i<RTKSVRNIN?fmt[format[i]]:(i>=RTKSVRNIN*2?sol[format[i]]:"-"),
             stream[i].state<0?"E":(stream[i].state?"C":"-"),
             stream[i].inb,stream[i].inr,stream[i].outb,stream[i].outr,
             stream[i].path,stream[i].msg);
@@ -1067,7 +1110,7 @@ static void prssr(vt_t *vt, int ri, int cbias, int pbias)
     rtksvrlock(&svr);
     time=svr.rtk.sol.time;
     for (i=0;i<MAXSAT;i++) {
-      if (ri <= 0 || ri > 3)
+      if (ri <= 0 || ri > RTKSVRNIN)
         ssr[i] = svr.nav.ssr[i];
       else
         ssr[i] = svr.rtcm[ri - 1].ssr[i];
@@ -1355,7 +1398,7 @@ static void cmd_set(char **args, int narg, vt_t *vt)
         return;
     }
     getsysopts(&prcopt,solopt,&filopt);
-    solopt[1]=solopt[0];
+    for (int i = 1; i < RTKSVRNSOL; i++) solopt[i] = solopt[0];
     
     vt_printf(vt,"option %s changed.",opt->name);
     if (strncmp(opt->name,"console",7)) {
@@ -1460,7 +1503,7 @@ static void cmd_load(char **args, int narg, vt_t *vt)
         return;
     }
     getsysopts(&prcopt,solopt,&filopt);
-    solopt[1]=solopt[0];
+    for (int i = 1; i < RTKSVRNSOL; i++) solopt[i] = solopt[0];
     
     if (!loadopts(file,rcvopts)) {
         vt_printf(vt,"no options file: %s\n",file);
@@ -1819,8 +1862,8 @@ static void daemonise(void)
 *     stream [cycle]
 *       Show stream status. Use option cycle for cyclic display.
 *
-*     ssr [-[1,2,3]] [-c] [-p] [cycle]
-*       Show the RTCM SSR state. Option -1 -2 or -3 selects the respective
+*     ssr [-n] [-c] [-p] [cycle]
+*       Show the RTCM SSR state. Option -n selects the nth respective
 *       input, output, or correction RTCM stream index otherwise the combined
 *       ssr state is used. Option -c includes code biases and option -p
 *       includes phase biases. Use option cycle for cyclic display.
@@ -1910,6 +1953,21 @@ int main(int argc, char **argv)
         traceopen(TRACEFILE);
         tracelevel(trace);
     }
+
+    // Default input streams.
+    for (int i = 0; i < RTKSVRNIN; i++) {
+      strtype[i] = STR_NONE;
+      strpath[i][0] = '\0';
+      strfmt[i] = STRFMT_RTCM3;
+      rcvopt[i][0] = rcvcmds[i][0] = '\0';
+    }
+    // Default output streams.
+    for (int i = 0; i < RTKSVRNSOL; i++) {
+      strtype[RTKSVRNIN * 2 + i] = STR_NONE;
+      strcpy(strpath[RTKSVRNIN * 2 + i], "");
+      ostrfmt[i] = i == 0 ? SOLF_LLH : SOLF_NMEA;
+    }
+
     /* initialize rtk server and monitor port */
     rtksvrinit(&svr);
     strinit(&moni);
@@ -1922,8 +1980,8 @@ int main(int argc, char **argv)
         fprintf(stderr,"no options file: %s. defaults used\n",file);
     }
     getsysopts(&prcopt,solopt,&filopt);
-    /* Copy the system options for the second output solution stream */
-    solopt[1]=solopt[0];
+    /* Copy the system options for the other output solution streams */
+    for (int i = 1; i < RTKSVRNSOL; i++) solopt[i] = solopt[0];
     
     /* read navigation data */
     if (!readnav(NAVIFILE,&svr.nav)) {

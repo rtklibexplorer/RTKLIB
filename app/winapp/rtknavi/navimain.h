@@ -66,6 +66,9 @@ __published:
 	TPanel *Str6;
 	TPanel *Str7;
 	TPanel *Str8;
+	TPanel *Str9;
+	TPanel *Str10;
+	TPanel *Str11;
 	TPanel *Svr;
 	TPanel *Panel122;
 	TSpeedButton *BtnOutputStr;
@@ -244,7 +247,7 @@ public:
 	int OutTimeTag,OutAppend,LogTimeTag,LogAppend;
 	int TimeoutTime,ReconTime,SbasCorr,DgpsCorr,TideCorr,FileSwapMargin;
 	int Stream[MAXSTRRTK],StreamC[MAXSTRRTK],Format[MAXSTRRTK];
-	int CmdEna[3][3],CmdEnaTcp[3][3];
+	int CmdEna[RTKSVRNIN][3],CmdEnaTcp[RTKSVRNIN][3];
 	int TimeSys,SolType;
 	int PlotType1,FreqType1,PlotType2,FreqType2;
 	int PlotType3,FreqType3,PlotType4,FreqType4;
@@ -260,9 +263,9 @@ public:
 	int *SolStat,*Nvsat;
 	double *SolRov,*SolRef,*Qr,*VelRov,*Age,*Ratio;
 	double TrkOri[3],MaxBL;
-	AnsiString Paths[MAXSTRRTK][4],Cmds[3][3],CmdsTcp[3][3];
+	AnsiString Paths[MAXSTRRTK][4],Cmds[RTKSVRNIN][3],CmdsTcp[RTKSVRNIN][3];
 	AnsiString InTimeStart,InTimeSpeed,ExSats;
-	AnsiString RcvOpt[3],ProxyAddr;
+	AnsiString RcvOpt[RTKSVRNIN],ProxyAddr;
 	AnsiString OutSwapInterval,LogSwapInterval,ResetCmd;
 	prcopt_t PrcOpt;
 	solopt_t SolOpt;

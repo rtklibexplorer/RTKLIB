@@ -18,7 +18,6 @@
 #define SQRT(x)     ((x)<0.0||(x)!=(x)?0.0:sqrt(x))
 #define MAXLINE		128
 #define MAXLEN		256
-#define NMONITEM	17
 
 
 static const int sys_tbl[] = {
@@ -84,15 +83,18 @@ void MonitorDialog::closeEvent(QCloseEvent *event)
 //---------------------------------------------------------------------------
 void MonitorDialog::displayTypeChanged()
 {
-    int index = getDisplayType() - NMONITEM;
+    int index = getDisplayType();
 
-    if (0 <= index) {
+    if (index >= 16) {
+        // Clear the peek buffers.
         rtksvrlock(rtksvr);
-        if (index < 2) rtksvr->npb[index] = 0;
-        else if (index < 4) rtksvr->nsb[index - 2] = 0;
-        else rtksvr->rtk.neb = 0;
+        if (index == 16) {
+          for (int i = 0; i < RTKSVRNIN; i++) rtksvr->npb[i] = 0;
+        } else if (index == 17) {
+          for (int i = 0; i < RTKSVRNSOL; i++) rtksvr->nsb[i] = 0;
+        } else rtksvr->rtk.neb = 0;
         rtksvrunlock(rtksvr);
-	}
+    }
     ui->lblInformation->setText("");
     consoleBuffer.clear();
     ui->tWConsole->clear();
@@ -243,13 +245,13 @@ void MonitorDialog::showBuffers()
     rtksvrlock(rtksvr);
 
     if (displayType == 16) { // input buffer
-        if (inputStream >= 3) {
+        if (inputStream >= RTKSVRNIN) {
             // Combined
             len = 0;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < RTKSVRNIN; i++)
                 len += rtksvr->npb[i];
             if (len > 0 && (msg = (uint8_t *)malloc(size_t(len)))) {
-                for (int i = 0, j = 0; i < 3; i++) {
+                for (int i = 0, j = 0; i < RTKSVRNIN; i++) {
                     int ilen = rtksvr->npb[i];
                     if (ilen > 0) {
                         memcpy(msg + j, rtksvr->pbuf[i], size_t(ilen));
@@ -390,10 +392,10 @@ void MonitorDialog::observationModeChanged()
 void MonitorDialog::setRtk()
 {
     header << tr("Parameter") << tr("Value");
-    int width[] = {500, 500};
+    int width[] = {500, 640};
 
     ui->tWConsole->setColumnCount(2);
-    ui->tWConsole->setRowCount(53 + NFREQ*2);
+    ui->tWConsole->setRowCount(54 + NFREQ*2);
     ui->tWConsole->setHorizontalHeaderLabels(header);
 
     for (int i = 0; (i < ui->tWConsole->columnCount()) && (i < 2); i++)
@@ -417,8 +419,8 @@ void MonitorDialog::showRtk()
     double *del, *off, rt[3] = {0}, dop[4] = {0};
     double azel[MAXSAT * 2], pos[3], vel[3], rr[3] = {0}, enu[3] = {0};
     int row, j, k, cycle, state, rtkstat, nsat0, nsat1, prcout, nave;
-    int cputime, nb[3] = {0}, ne;
-    unsigned int nmsg[3][10] = {{0}};
+    int cputime, nb[RTKSVRNIN] = {0}, ne;
+    unsigned int nmsg[RTKSVRNIN][10] = {{0}};
     char tstr[40], id[8], s1[40] = "-", s2[40] = "-", s3[40] = "-";
     char file[1024] = "";
     const QString ionoopt[] = {tr("OFF"), tr("Broadcast"), tr("SBAS"), tr("Dual-Frequency"), tr("Estimate STEC"), tr("IONEX TEC"), tr("QZSS LEX")};
@@ -440,9 +442,9 @@ void MonitorDialog::showRtk()
     prcout = rtksvr->prcout;
     nave = rtksvr->nave;
 
-    for (row = 0; row < 3; row++) nb[row] = rtksvr->nb[row];
+    for (row = 0; row < RTKSVRNIN; row++) nb[row] = rtksvr->nb[row];
 
-    for (row = 0; row < 3; row++)
+    for (row = 0; row < RTKSVRNIN; row++)
     {
         for (j = 0; j < 10; j++)
             nmsg[row][j] = rtksvr->nmsg[row][j];
@@ -486,7 +488,7 @@ void MonitorDialog::showRtk()
     if (rtk->opt.navsys & SYS_IRN) navsys = navsys + tr("NavIC ");
     if (rtk->opt.navsys & SYS_SBS) navsys = navsys + tr("SBAS ");
 
-    if (ui->tWConsole->rowCount() < 53 + NFREQ * 2) {
+    if (ui->tWConsole->rowCount() < 54 + NFREQ * 2) {
       free(rtk);
       return;
     }
@@ -582,10 +584,15 @@ void MonitorDialog::showRtk()
                               .arg(nmsg[1][0]).arg(nmsg[1][1] + nmsg[1][6]).arg(nmsg[1][2]).arg(nmsg[1][3])
                               .arg(nmsg[1][4]).arg(nmsg[1][5]).arg(nmsg[1][7]).arg(nmsg[1][9]));
 
-    ui->tWConsole->item(row,   0)->setText(tr("# of Input Data Ephemeris"));
+    ui->tWConsole->item(row,   0)->setText(tr("# of Input Data Correction 1"));
     ui->tWConsole->item(row++, 1)->setText(tr("Obs(%1), Nav(%2), Ion(%3), Sbs (%4), Pos(%5), Dgps(%6), Ssr(%7), Err(%8)")
                               .arg(nmsg[2][0]).arg(nmsg[2][1] + nmsg[2][6]).arg(nmsg[2][2]).arg(nmsg[2][3])
                               .arg(nmsg[2][4]).arg(nmsg[2][5]).arg(nmsg[2][7]).arg(nmsg[2][9]));
+
+    ui->tWConsole->item(row,   0)->setText(tr("# of Input Data Correction 2"));
+    ui->tWConsole->item(row++, 1)->setText(tr("Obs(%1), Nav(%2), Ion(%3), Sbs (%4), Pos(%5), Dgps(%6), Ssr(%7), Err(%8)")
+                              .arg(nmsg[3][0]).arg(nmsg[3][1] + nmsg[3][6]).arg(nmsg[3][2]).arg(nmsg[3][3])
+                              .arg(nmsg[3][4]).arg(nmsg[3][5]).arg(nmsg[3][7]).arg(nmsg[3][9]));
 
     ui->tWConsole->item(row,   0)->setText(tr("Solution Status"));
     ui->tWConsole->item(row++, 1)->setText(sol[rtkstat]);
@@ -1592,10 +1599,10 @@ void MonitorDialog::setStream()
     header	<< tr("STR") << tr("Stream") << tr("Type") << tr("Format") << tr("Mode") << tr("State") << tr("Input (bytes)") << tr("Input (bps)")
         << tr("Output (bytes)") << tr("Output (bps)") << tr("Path") << tr("Message");
 
-    int i, width[] = {40, 150, 120, 110, 50, 50, 140, 140, 140, 140, 220, 220};
+    int i, width[] = {45, 180, 120, 150, 60, 55, 120, 110, 135, 120, 220, 220};
 
     ui->tWConsole->setColumnCount(12);
-    ui->tWConsole->setRowCount(9);
+    ui->tWConsole->setRowCount(MAXSTRRTK + 1);
     ui->tWConsole->setHorizontalHeaderLabels(header);
 
     for (i = 0; i < ui->tWConsole->columnCount(); i++)
@@ -1610,11 +1617,8 @@ void MonitorDialog::setStream()
 //---------------------------------------------------------------------------
 void MonitorDialog::showStream()
 {
-    const QString ch[] = {
-        tr("Input Rover"), tr("Input Base"), tr("Input Correction"), tr("Output Solution 1"),
-        tr("Output Solution 2"), tr("Log Rover"), tr("Log Base"), tr("Log Correction"),
-        tr("Monitor")
-	};
+    const QString inch[] = {tr("Input Rover"), tr("Input Base")};
+    const QString logch[] = {tr("Log Rover"), tr("Log Base")};
     const QString type[] = {
         tr("-"), tr("Serial"), tr("File"), tr("TCP Server"), tr("TCP Client"), tr("NTRIP Server"),
         tr("NTRIP Client"), tr("FTP"), tr("HTTP"), tr("NTRIP Caster"), tr("UDP Server"),
@@ -1624,27 +1628,33 @@ void MonitorDialog::showStream()
         tr("Lat/Lon/Height"), tr("X/Y/Z-ECEF"), tr("E/N/U-Baseline"), tr("NMEA-0183"),
         tr("Solution stats"), tr("GSI F1/F2")};
     const QString state[] = {tr("Error"), tr("-"), tr("OK")};
-    QString mode, form;
-	stream_t stream[9];
-    int i, format[9] = {0};
+    QString mode, form, ch;
+	stream_t stream[MAXSTRRTK + 1];
+    int i, format[MAXSTRRTK + 1] = {0};
     char path[MAXSTRPATH] = "", *p, *q;
 
     rtksvrlock(rtksvr); // lock
-    for (i = 0; i < 8; i++) stream[i] = rtksvr->stream[i];
-    for (i = 0; i < 3; i++) format[i] = rtksvr->format[i];
-    for (i = 3; i < 5; i++) format[i] = rtksvr->solopt[i - 3].posf;
-    stream[8] = *monistr;
-    format[8] = SOLF_LLH;
+    for (i = 0; i < MAXSTRRTK; i++) stream[i] = rtksvr->stream[i];
+    for (i = 0; i < RTKSVRNIN; i++) format[i] = rtksvr->format[i];
+    for (i = 0; i < RTKSVRNSOL; i++) format[RTKSVRNIN*2+i] = rtksvr->solopt[i].posf;
+    stream[MAXSTRRTK] = *monistr;
+    format[MAXSTRRTK] = SOLF_LLH;
     rtksvrunlock(rtksvr); // unlock
 
-    for (i = 0; i < 9; i++) {
+    for (i = 0; i < MAXSTRRTK + 1; i++) {
         int j = 0;
         ui->tWConsole->item(i, j++)->setText(QString("(%1)").arg(i+1));
-        ui->tWConsole->item(i, j++)->setText(ch[i]);
+        if (i < 2) ch = inch[i];
+        else if (i < RTKSVRNIN) ch = QString("Input Correction %1").arg(i - 2 + 1);
+        else if (i < RTKSVRNIN + 2) ch = logch[i - RTKSVRNIN];
+        else if (i < RTKSVRNIN * 2) ch = QString("Log Correction %1").arg(i - RTKSVRNIN - 2 + 1);
+        else if (i < MAXSTRRTK) ch = QString("Output Solution %1").arg(i - RTKSVRNIN * 2 + 1);
+        else ch = "Monitor";
+        ui->tWConsole->item(i, j++)->setText(ch);
         ui->tWConsole->item(i, j++)->setText(type[stream[i].type]);
         if (!stream[i].type) form = "-";
-        else if (i < 3) form = formatstrs[format[i]];
-        else if (i < 5 || i == 8) form = outformat[format[i]];
+        else if (i < RTKSVRNIN) form = formatstrs[format[i]];
+        else if (i >= RTKSVRNIN * 2) form = outformat[format[i]];
         else form = "-";
         ui->tWConsole->item(i, j++)->setText(form);
         if (stream[i].mode & STR_MODE_R) mode = tr("R"); else mode = "";
@@ -1952,7 +1962,7 @@ void MonitorDialog::showRtcm()
     QString mstr1, mstr2;
     char tstr[40] = "-";
 
-    int effectiveStream = (inputStream < 0 || inputStream > 2) ? 0 : inputStream;
+    int effectiveStream = (inputStream < 0 || inputStream >= RTKSVRNIN) ? 0 : inputStream;
 
     rtcm_t *rtcm = (rtcm_t *)malloc(sizeof(rtcm_t));
     if (rtcm == NULL) return;
@@ -2104,15 +2114,17 @@ void MonitorDialog::showRtcmSsr()
     char tstr[40], id[8];
     QString s;
 
-    int effectiveStream = (inputStream < 0 || inputStream > 2) ? 0 : inputStream;
+    int effectiveStream = (inputStream < 0 || inputStream >= RTKSVRNIN) ? 0 : inputStream;
 
     rtksvrlock(rtksvr);
     time = rtksvr->rtk.sol.time;
     for (i = n = 0; i < MAXSAT; i++) {
         if (!(satsys(i + 1, NULL) & sys)) continue;
-        bool valid = rtksvr->rtcm[effectiveStream].ssr[i].t0[0].time &&
-            fabs(timediff(time, rtksvr->rtcm[effectiveStream].ssr[i].t0[0])) <= 1800.0 &&
-            rtksvr->rtcm[effectiveStream].ssr[i].iode >= 0;
+        if (inputStream == RTKSVRNIN)
+          ssr[n] = rtksvr->nav.ssr[i];
+        else
+          ssr[n] = rtksvr->rtcm[effectiveStream].ssr[i];
+        bool valid = ssr[n].t0[0].time && fabs(timediff(time, ssr[n].t0[0])) <= 1800.0 && ssr[n].iode >= 0;
         if (ui->cBSelectSatellites->currentIndex() && !valid) continue;
         ssr[n] = rtksvr->rtcm[effectiveStream].ssr[i];
         sat[n++] = i + 1;
@@ -2171,7 +2183,7 @@ void MonitorDialog::showRtcmSsr()
 void MonitorDialog::setReferenceStation()
 {
     header << tr("Parameter") << tr("Value");
-    int width[] = {400, 520};
+    int width[] = {400, 640};
     int i;
 
     ui->tWConsole->setColumnCount(2);
@@ -2195,7 +2207,7 @@ void MonitorDialog::showReferenceStation()
     int i = 0, format;
     char tstr[40] = "-";
 
-    int effectiveStream = (inputStream < 0 || inputStream > 2) ? 0 : inputStream;
+    int effectiveStream = (inputStream < 0 || inputStream >= RTKSVRNIN) ? 0 : inputStream;
 
     rtksvrlock(rtksvr);
     format = rtksvr->format[effectiveStream];

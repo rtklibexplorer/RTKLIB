@@ -151,7 +151,7 @@ public:
     int inputTimeTag, inputTimeTag64bit;
     int outputTimeTag, outputAppend, logTimeTag;
     int streamType[MAXSTRRTK], streamEnabled[MAXSTRRTK], inputFormat[MAXSTRRTK];
-    int commandEnabled[3][3], commandEnableTcp[3][3];
+    int commandEnabled[RTKSVRNIN][3], commandEnableTcp[RTKSVRNIN][3];
     int timeSystem, solutionType;
     int plotType[4], frequencyType[4];
     int trackType[4];
@@ -167,10 +167,10 @@ public:
     double *solutionRover, *solutionReference, *solutionQr, *velocityRover, *ages, *ratioAR;
     double trackOrigin[3], maxBaseLine;
 
-    QString paths[MAXSTRRTK][4], commands[3][3], commandsTcp[3][3];
+    QString paths[MAXSTRRTK][4], commands[RTKSVRNIN][3], commandsTcp[RTKSVRNIN][3];
     QString inputTimeSpeed;
     double inputTimeStart;
-    QString receiverOptions[3];
+    QString receiverOptions[RTKSVRNIN];
     QString outputSwapInterval, logSwapInterval, resetCommand;
 
     int nmeaRequestType;
