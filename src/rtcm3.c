@@ -101,9 +101,9 @@ const char *msm_sig_gal[32] = {
     "", "",   "",   "",   "",   "",   "",   ""};                           // 25-32
 const char *msm_sig_qzs[32] = {
     // QZSS: ref [17] table 3.5-105.
-    // 1E(4), 1Z, 1B, 6E, 6Z, 5D, 5P, 5Z are tentative from the PocketSDR extensions
-    // 1E(2) seen from Trimble station.
-    "",   "1C", "1E", "",   "1E", "1Z", "1B", "",  "6S", "6L", "6X", "6E",  //  1-12
+    // 1Z, 1B, 6E, 6Z, 5D, 5P, 5Z are tentative from the PocketSDR extensions
+    // 1E tentative, noted from Trimble Alloy and Septentrio PolaRx5 receivers.
+    "",   "1C", "1E", "",     "", "1Z", "1B", "",  "6S", "6L", "6X", "6E",  //  1-12
     "6Z", "",   "2S", "2L", "2X", "",   "",   "",  "",   "5I", "5Q", "5X",  // 13-24
     "5D", "5P", "5Z", "",   "",   "1S", "1L", "1X"};                        // 25-32
 const char *msm_sig_sbs[32] = {
