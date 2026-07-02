@@ -32,7 +32,9 @@
 #define _POSIX_C_SOURCE 200112L
 #include <fcntl.h>
 #include <signal.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include "rtklib.h"
 
 #define PRGNAME     "str2str"          /* program name */
@@ -60,7 +62,7 @@ static const char *help[]={
 " respective -out options. To specify the log file use the -log option before",
 " a respective -in or -out option, and the streams should have separate",
 " log files. If the options -in or -out are omitted then stdin for input or",
-" stdout for output are used. If the stream for the option -in or -out is null,"
+" stdout for output are used. If the stream for the option -in or -out is null,",
 " the stdin or stdout are used. Command options are as follows.",
 "",
 " -in  stream[#format] input  stream path and format",
@@ -94,7 +96,7 @@ static const char *help[]={
 "",
 " -msg \"type[(tint)][,type[(tint)]...]\"",
 "                   rtcm message types and output intervals (s)",
-" -log file         input log file or output return log file"
+" -log file         input log file or output return log file",
 " -sta sta          station id",
 " -opt opt          receiver dependent options",
 " -s  msec          timeout time (ms) [10000]",
@@ -116,7 +118,9 @@ static const char *help[]={
 " -b  str_no        relay back messages from output str to input str [no]",
 " -t  level         trace level [0]",
 " -fl file          log file [str2str.trace]",
+#ifndef WIN32
 " --daemon          detach from the console",
+#endif
 " --version         print version",
 " -h                print help",
 "",
@@ -142,6 +146,7 @@ static void printhelp(void)
 /* signal handler ------------------------------------------------------------*/
 static void sigfunc(int sig)
 {
+    (void)sig;
     intrflg=1;
 }
 /* decode format -------------------------------------------------------------*/
@@ -246,9 +251,9 @@ static void readcmd(const char *file, char *cmd, size_t size, int type)
   fclose(fp);
 }
 
+#ifndef WIN32
 static void daemonise(void)
 {
-#ifndef WIN32
     /* In case we were not started in the background, fork and let the parent
      * exit.  Guarantees that the child is not a process group leader. */
     int childpid = fork();
@@ -275,8 +280,8 @@ static void daemonise(void)
     reppath(LOGFILE, path, time, "", "");
     open(path, O_WRONLY|O_CREAT|O_TRUNC, 0666);
     dup(1);
-#endif
 }
+#endif
 
 /* str2str -------------------------------------------------------------------*/
 int main(int argc, char **argv)
@@ -407,11 +412,13 @@ int main(int argc, char **argv)
         matcpy(conv[i]->out.sta.pos,stapos,3,1);
         matcpy(conv[i]->out.sta.del,stadel,3,1);
     }
+#ifndef WIN32
     if (daemon) daemonise();
-    signal(SIGTERM,sigfunc);
-    signal(SIGINT ,sigfunc);
     signal(SIGHUP ,SIG_IGN);
     signal(SIGPIPE,SIG_IGN);
+#endif
+    signal(SIGTERM,sigfunc);
+    signal(SIGINT ,sigfunc);
     
     strsvrinit(&strsvr,n+1);
     
