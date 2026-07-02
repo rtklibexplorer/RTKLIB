@@ -35,7 +35,7 @@ __fastcall TMonitorDialog::TMonitorDialog(TComponent* Owner)
 	
 	ScrollPos=0;
 	ObsMode=0;
-	ConFmt=-1;
+	ConFmt = 1; // ASCII
 	ConBuff=new TStringList;
 	ConBuff->Add("");
 	DoubleBuffered=true;
@@ -45,7 +45,7 @@ __fastcall TMonitorDialog::TMonitorDialog(TComponent* Owner)
 		SelFmt->Items->Add(formatstrs[i]);
 	}
 	init_rtcm(&rtcm);
-	init_raw(&raw,-1);
+        memset(&raw, 0, sizeof(raw));
 }
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::FormShow(TObject *Sender)
@@ -90,16 +90,17 @@ void __fastcall TMonitorDialog::TypeChange(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::SelFmtChange(TObject *Sender)
 {
-	AddConsole((uint8_t *)"\n",1,1);
-    
-    if (ConFmt>=3&&ConFmt<17) {
-        free_raw(&raw);
-    }
-    ConFmt=SelFmt->ItemIndex;
-    
-    if (ConFmt>=3&&ConFmt<17) {
-        init_raw(&raw,ConFmt-2);
-    }
+  AddConsole((uint8_t *)"\n", 1, 1);
+
+  if (ConFmt >= 2) {
+    int fmt = ConFmt - 2;
+    if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX) free_raw(&raw);
+  }
+  ConFmt = SelFmt->ItemIndex;
+  if (ConFmt >= 2) {
+    int fmt = ConFmt - 2;
+    if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX) init_raw(&raw, fmt);
+  }
 }
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::SelStrChange(TObject *Sender)
@@ -183,79 +184,77 @@ void __fastcall TMonitorDialog::ClearTable(void)
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::Timer2Timer(TObject *Sender)
 {
-	uint8_t *msg;
-	char buff[256];
-	int i,n,len;
-	
-	if (TypeF<16) return;
-	
-	rtksvrlock(&rtksvr);
-	
-	if (TypeF==16) { // input buffer
-		len=rtksvr.npb[Str1];
-		if (len>0&&(msg=(uint8_t *)malloc(len))) {
-			memcpy(msg,rtksvr.pbuf[Str1],len);
-			rtksvr.npb[Str1]=0;
-		}
-	}
-	else if (TypeF==17) { // solution buffer
-		len=rtksvr.nsb[Str2];
-		if (len>0&&(msg=(uint8_t *)malloc(len))) {
-			memcpy(msg,rtksvr.sbuf[Str2],len);
-			rtksvr.nsb[Str2]=0;
-		}
-	}
-	else { // error message buffer
-		len=rtksvr.rtk.neb;
-		if (len>0&&(msg=(uint8_t *)malloc(len))) {
-			memcpy(msg,rtksvr.rtk.errbuf,len);
-			rtksvr.rtk.neb=0;
-		}
-	}
-	rtksvrunlock(&rtksvr);
-	
-	if (len<=0||!msg) return;
-	
-	rtcm.outtype=raw.outtype=1;
-	
-	if (TypeF>=17) {
-		AddConsole(msg,len,1);
-	}
-	else if (ConFmt<2) {
-		AddConsole(msg,len,ConFmt);
-	}
-	else if (ConFmt==2) {
-		for (i=0;i<len;i++) {
-			input_rtcm2(&rtcm,msg[i]);
-			if (rtcm.msgtype[0]) {
-				n=sprintf(buff,"%s\n",rtcm.msgtype);
-				AddConsole((uint8_t *)buff,n,1);
-				rtcm.msgtype[0]='\0';
-			}
-	    }
-	}
-	else if (ConFmt==3) {
-		for (i=0;i<len;i++) {
-			input_rtcm3(&rtcm,msg[i]);
-			if (rtcm.msgtype[0]) {
-				n=sprintf(buff,"%s\n",rtcm.msgtype);
-				AddConsole((uint8_t *)buff,n,1);
-				rtcm.msgtype[0]='\0';
-			}
-	    }
-	}
-	else if (ConFmt<17) {
-		for (i=0;i<len;i++) {
-			input_raw(&raw,ConFmt-2,msg[i]);
-			if (raw.msgtype[0]) {
-				n=sprintf(buff,"%s\n",raw.msgtype);
-				AddConsole((uint8_t *)buff,n,1);
-				raw.msgtype[0]='\0';
-			}
-	    }
-	}
-	free(msg);
-	Console->Invalidate();
+  if (TypeF < 16) return;
+
+  rtksvrlock(&rtksvr);
+
+  int len = 0;
+  uint8_t *msg = NULL;
+  if (TypeF == 16) {  // Input buffer.
+    len = rtksvr.npb[Str1];
+    if (len > 0 && (msg = (uint8_t *)malloc(len))) {
+      memcpy(msg, rtksvr.pbuf[Str1], len);
+      rtksvr.npb[Str1] = 0;
+    }
+  } else if (TypeF == 17) {  // Solution buffer.
+    len = rtksvr.nsb[Str2];
+    if (len > 0 && (msg = (uint8_t *)malloc(len))) {
+      memcpy(msg, rtksvr.sbuf[Str2], len);
+      rtksvr.nsb[Str2] = 0;
+    }
+  } else {  // Error message buffer.
+    len = rtksvr.rtk.neb;
+    if (len > 0 && (msg = (uint8_t *)malloc(len))) {
+      memcpy(msg, rtksvr.rtk.errbuf, len);
+      rtksvr.rtk.neb = 0;
+    }
+  }
+  rtksvrunlock(&rtksvr);
+
+  if (len <= 0 || !msg) return;
+
+  rtcm.outtype = raw.outtype = 1;
+
+  if (TypeF >= 17) {
+    AddConsole(msg, len, 1);
+  } else if (ConFmt == 0 || ConFmt == 1) {  // Hex or ASCII.
+    AddConsole(msg, len, ConFmt);
+  } else {
+    int fmt = ConFmt - 2;
+    if (fmt == STRFMT_RTCM2) {
+      for (int i = 0; i < len; i++) {
+        input_rtcm2(&rtcm, msg[i]);
+        if (rtcm.msgtype[0]) {
+          char buff[256];
+          int n = sprintf(buff, "%s\n", rtcm.msgtype);
+          AddConsole((uint8_t *)buff, n, 1);
+          rtcm.msgtype[0] = '\0';
+        }
+      }
+    } else if (fmt == STRFMT_RTCM3) {
+      for (int i = 0; i < len; i++) {
+        input_rtcm3(&rtcm, msg[i]);
+        if (rtcm.msgtype[0]) {
+          char buff[256];
+          int n = sprintf(buff, "%s\n", rtcm.msgtype);
+          AddConsole((uint8_t *)buff, n, 1);
+          rtcm.msgtype[0] = '\0';
+        }
+      }
+    } else if (fmt < STRFMT_RINEX + 2) {
+      for (int i = 0; i < len; i++) {
+        input_raw(&raw, msg[i]);
+        if (raw.msgtype[0]) {
+          char buff[256];
+          int n = sprintf(buff, "%s\n", raw.msgtype);
+          AddConsole((uint8_t *)buff, n, 1);
+          raw.msgtype[0] = '\0';
+        }
+      }
+    }
+  }
+  free(msg);
+  Console->Invalidate();
 }
 //---------------------------------------------------------------------------
 void __fastcall TMonitorDialog::AddConsole(uint8_t *msg, int len, int mode)

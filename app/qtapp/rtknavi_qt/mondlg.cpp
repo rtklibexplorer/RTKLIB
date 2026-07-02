@@ -33,14 +33,14 @@ MonitorDialog::MonitorDialog(QWidget *parent, rtksvr_t *server, stream_t* stream
 
     fontScale = QFontMetrics(ui->tWConsole->font()).height() * 4;
 
-    consoleFormat = 1;
+    consoleFormat = 1; // ASCII
     ui->cBSelectFormat->setCurrentIndex(consoleFormat);
     inputStream = solutionStream = 0;
 
     for (int i = 0; i <= MAXRCVFMT; i++) ui->cBSelectFormat->addItem(formatstrs[i]);
 
-	init_rtcm(&rtcm);
-    init_raw(&raw, -1);
+    init_rtcm(&rtcm);
+    memset(&raw, 0, sizeof(raw));
 
     connect(ui->btnClear, &QPushButton::clicked, this, &MonitorDialog::clearOutput);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &MonitorDialog::reject);
@@ -106,14 +106,18 @@ int MonitorDialog::getDisplayType()
 //---------------------------------------------------------------------------
 void MonitorDialog::consoleFormatChanged()
 {
-    if (consoleFormat >= 3 && consoleFormat < 17)
-        free_raw(&raw);
+  if (consoleFormat >= 2) {
+    int fmt = consoleFormat - 2;
+    if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX) free_raw(&raw);
+  }
 
-    // update format marker
-    consoleFormat = ui->cBSelectFormat->currentIndex();
+  // Update format marker.
+  consoleFormat = ui->cBSelectFormat->currentIndex();
 
-    if (consoleFormat >= 3 && consoleFormat < 17)
-        init_raw(&raw, consoleFormat - 2);
+  if (consoleFormat >= 2) {
+    int fmt = consoleFormat - 2;
+    if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX) init_raw(&raw, fmt);
+  }
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::inputStreamChanged()
@@ -285,36 +289,38 @@ void MonitorDialog::showBuffers()
     rtcm.outtype = raw.outtype = 1;
 
     if (displayType >= 17) {
-        addConsole(msg, len, 1, false);
+      addConsole(msg, len, 1, false);
+    } else if (consoleFormat == 0 || consoleFormat == 1) {  // Hex or ASCII.
+      addConsole(msg, len, consoleFormat, false);
+    } else {
+      int fmt = consoleFormat - 2;
+      if (fmt == STRFMT_RTCM2) {
+        for (i = 0; i < len; i++) {
+          input_rtcm2(&rtcm, msg[i]);
+          if (rtcm.msgtype[0]) {
+            addConsole((uint8_t *)rtcm.msgtype, strlen(rtcm.msgtype), 1, true);
+            rtcm.msgtype[0] = '\0';
+          }
+        }
+      } else if (fmt == STRFMT_RTCM3) {
+        for (i = 0; i < len; i++) {
+          input_rtcm3(&rtcm, msg[i]);
+          if (rtcm.msgtype[0]) {
+            addConsole((uint8_t *)rtcm.msgtype, strlen(rtcm.msgtype), 1, true);
+            rtcm.msgtype[0] = '\0';
+          }
+        }
+      } else if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX) {  // Raw
+        for (i = 0; i < len; i++) {
+          input_raw(&raw, msg[i]);
+          if (raw.msgtype[0]) {
+            addConsole((uint8_t *)raw.msgtype, strlen(raw.msgtype), 1, true);
+            raw.msgtype[0] = '\0';
+          }
+        }
+      }
     }
-    else if (consoleFormat < 2) {  // ASCII or HEX
-        addConsole(msg, len, consoleFormat, false);
-    } else if (consoleFormat - 2 == STRFMT_RTCM2) {
-        for (i = 0; i < len; i++) {
-            input_rtcm2(&rtcm, msg[i]);
-			if (rtcm.msgtype[0]) {
-                addConsole((uint8_t*)rtcm.msgtype, strlen(rtcm.msgtype), 1, true);
-                rtcm.msgtype[0] = '\0';
-			}
-        }
-    } else if (consoleFormat - 2 == STRFMT_RTCM3) {
-        for (i = 0; i < len; i++) {
-            input_rtcm3(&rtcm, msg[i]);
-			if (rtcm.msgtype[0]) {
-                addConsole((uint8_t*)rtcm.msgtype, strlen(rtcm.msgtype), 1, true);
-                rtcm.msgtype[0] = '\0';
-			}
-        }
-    } else if (consoleFormat < 17) {
-        for (i = 0; i < len; i++) {
-            input_raw(&raw, consoleFormat - 2, msg[i]);
-			if (raw.msgtype[0]) {
-                addConsole((uint8_t*)raw.msgtype, strlen(raw.msgtype), 1, true);
-                raw.msgtype[0] = '\0';
-			}
-        }
-	}
-	free(msg);
+    free(msg);
 }
 //---------------------------------------------------------------------------
 void MonitorDialog::addConsole(const uint8_t *msg, int n, int mode, bool newline)
