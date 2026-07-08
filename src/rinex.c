@@ -934,17 +934,15 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
 /* save cycle slips ----------------------------------------------------------*/
 static void saveslips(uint8_t slips[][NFREQ+NEXOBS], obsd_t *data)
 {
-    int i;
-    for (i=0;i<NFREQ+NEXOBS;i++) {
-        if (data->LLI[i]&1) slips[data->sat-1][i]|=LLI_SLIP;
+    for (int i=0;i<NFREQ+NEXOBS;i++) {
+        if (data->LLI[i]&LLI_SLIP) slips[data->sat-1][i]=1;
     }
 }
 /* restore cycle slips -------------------------------------------------------*/
 static void restslips(uint8_t slips[][NFREQ+NEXOBS], obsd_t *data)
 {
-    int i;
-    for (i=0;i<NFREQ+NEXOBS;i++) {
-        if (slips[data->sat-1][i]&1) data->LLI[i]|=LLI_SLIP;
+    for (int i=0;i<NFREQ+NEXOBS;i++) {
+        if (slips[data->sat-1][i]!=0) data->LLI[i]|=LLI_SLIP;
         slips[data->sat-1][i]=0;
     }
 }
