@@ -1381,7 +1381,7 @@ void Plot::mousePressEvent(QMouseEvent *event)
 #endif
     dragCentX = centX;
 
-    trace(3, "mousePressEvent: X=%d Y=%d\n", dragStartX, dragStartY);
+    trace(3, "mousePressEvent: X=%f Y=%f\n", dragStartX, dragStartY);
 
     dragState = event->buttons().testFlag(Qt::LeftButton) ? 1 : (event->buttons().testFlag(Qt::RightButton) ? 11 : 0);
 
@@ -1435,7 +1435,7 @@ void Plot::mouseMove(QMouseEvent *event)
 void Plot::mouseReleaseEvent(QMouseEvent *event)
 {
 #if QT_VERSION > QT_VERSION_CHECK(6, 0, 0)
-    trace(3, "mouseReleaseEvent: X=%d Y=%d\n", ui->lblDisplay->mapFromGlobal(event->globalPosition()).x(),
+    trace(3, "mouseReleaseEvent: X=%f Y=%f\n", ui->lblDisplay->mapFromGlobal(event->globalPosition()).x(),
           ui->lblDisplay->mapFromGlobal(event->globalPosition()).y());
 #else
     trace(3, "mouseReleaseEvent: X=%d Y=%d\n", ui->lblDisplay->mapFromGlobal(event->globalPos()).x(),

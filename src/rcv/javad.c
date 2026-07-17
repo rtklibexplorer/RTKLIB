@@ -943,7 +943,7 @@ static int decode_L2nav(uint8_t *buff, int len, int sat, raw_t *raw)
     alert =getbitu(msg,i, 1); i+= 1;
     
     if (preamb!=PREAMB_CNAV) {
-        trace(2,"javad *d sat=%2d L2 CNAV preamble error preamb=%02X\n",preamb);
+        trace(2,"javad L2nav sat=%2d L2 CNAV preamble error preamb=%02X\n",sat,preamb);
         return -1;
     }
     trace(3,"L2CNAV: sat=%2d prn=%2d msgid=%2d tow=%6d alert=%d\n",sat,prn,
@@ -971,7 +971,7 @@ static int decode_L5nav(uint8_t *buff, int len, int sat, raw_t *raw)
     alert =getbitu(msg,i, 1); i+= 1;
     
     if (preamb!=PREAMB_CNAV) {
-        trace(2,"javad *d sat=%2d L5 CNAV preamble error preamb=%02X\n",preamb);
+        trace(2,"javad L5nav sat=%2d L5 CNAV preamble error preamb=%02X\n",sat,preamb);
         return -1;
     }
     trace(3,"L5CNAV: sat=%2d prn=%2d msgid=%2d tow=%6d alert=%d\n",sat,prn,
