@@ -406,7 +406,7 @@ void MainForm::casterTableSelectItem(int row, int col)
 {
     Q_UNUSED(col);
 
-    if (ui->tWTableStr->columnCount() < 3) return;
+    if (ui->tWTableCas->columnCount() < 3) return;
 
     if (0 <= row && row < ui->tWTableCas->rowCount()) {
 
@@ -564,17 +564,21 @@ void MainForm::showTable()
     table[type]->setRowCount(numStations);
     j = 0;
     foreach(QString line, lines) {
-		switch (type) {
-            case 0: if (line.startsWith("STR")) break; else continue;
-            case 1: if (line.startsWith("CAS")) break; else continue;
-            case 2: if (line.startsWith("NET")) break; else continue;
-		}
-        table[type]->setItem(j, 0, new QTableWidgetItem(QString::number(j)));
-        QStringList tokens = line.split(";");
-        for (int i = 0; i < table[type]->columnCount() && i < tokens.size(); i++)
-            table[type]->setItem(j, i, new QTableWidgetItem(tokens.at(i)));
-		j++;
-	}
+      switch (type) {
+        case 0: if (line.startsWith("STR")) break; else continue;
+        case 1: if (line.startsWith("CAS")) break; else continue;
+        case 2: if (line.startsWith("NET")) break; else continue;
+      }
+      table[type]->setItem(j, 0, new QTableWidgetItem(QString::number(j)));
+      QStringList tokens = line.split(";");
+      for (int i = 0; i < table[type]->columnCount(); i++) {
+        if (i < tokens.size())
+          table[type]->setItem(j, i, new QTableWidgetItem(tokens.at(i)));
+        else
+          table[type]->setItem(j, i, new QTableWidgetItem());
+      }
+      j++;
+    }
     updateMap();
 }
 //---------------------------------------------------------------------------
