@@ -29,8 +29,8 @@ REF_FILE = [
 #     r"\mrtklib_results\mrtk_tokyo_run3_rtklib.pos"]
 
 # RTKLIB_EX 2.5.1
-#file = r'\0621b_comb_.pos'
-file = r'\f9p_ppk_.pos'
+file = r'\ppc_benchmark_0622_.pos'
+#file = r'\f9p_ppk_.pos'
 #file = r'\b243_b.pos'
 SOL_FILE = [
     r"\nagoya\run1"+ file,
@@ -47,6 +47,7 @@ USE_DISTANCE_WEIGHTING = True   # True = PPC distance score, False = epoch perce
 import csv
 import math
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 def llh_to_ecef(lat_deg, lon_deg, h):
     a = 6378137.0
@@ -65,6 +66,16 @@ def llh_to_ecef(lat_deg, lon_deg, h):
 def norm3(a, b):
     return math.sqrt(sum((a[i] - b[i]) ** 2 for i in range(3)))
 
+def datetime_to_gps(date, time):
+    gps_epoch = datetime(1980, 1, 6)
+    dt = datetime.strptime(f"{date} {time}", "%Y/%m/%d %H:%M:%S.%f")
+
+    gps_seconds = (dt - gps_epoch).total_seconds()
+    week = int(gps_seconds // 604800)
+    tow = gps_seconds % 604800
+
+    return week, tow
+
 def read_rtklib_pos(path):
     sol = []
     with open(path, "r", encoding="utf-8", errors="ignore") as f:
@@ -77,7 +88,10 @@ def read_rtklib_pos(path):
                 continue
 
             try:
-                t = float(p[1])
+                try:
+                    t = float(p[1])
+                except:
+                    w, t = datetime_to_gps(p[0], p[1])
                 lat      = float(p[2])
                 lon      = float(p[3])
                 h        = float(p[4])
@@ -143,6 +157,9 @@ def calc_score(ref, sol, distance_weighted=False):
     return score, good, total, good_epochs, total_epochs, times, errors
 
 # main code
+#print('Results: %s' % file)
+total_good = 0.0
+total_weight = 0.0
 total_good_ep = 0
 total_ep = 0
 route_scores = []
@@ -154,11 +171,15 @@ for i in range(nfiles):
     ref, sol, distance_weighted=USE_DISTANCE_WEIGHTING)
     
     route_scores.append(score)
+    total_good += good
+    total_weight += total
     total_good_ep += good_ep
     total_ep += total_ep_i
     
     ref_file = REF_FILE[i].split('\\')
-    print('%14s: %5.2f%%  (%d/%d, missing=%d)' % (ref_file[-3] + ' ' + ref_file[-2], score, good_ep, total_ep_i, len(ref)-len(sol)))
+    print('%14s: %5.2f%%  (%d/%d, missing=%d)' %
+          (ref_file[-3] + ' ' + ref_file[-2],
+           score, good_ep, total_ep_i, len(ref) - len(sol)))
     
     plt.figure(figsize=(12,4))
     plt.plot(times, errors, '.', markersize=1)
@@ -171,13 +192,12 @@ for i in range(nfiles):
     plt.show()
 
 
-
 print()
 
 if USE_DISTANCE_WEIGHTING:
-    # PPC wording says route percentages are averaged.
-    overall = sum(route_scores) / len(route_scores) if route_scores else 0.0
-    print("Average route score: %6.2f%%" % overall)
+    overall = 100.0 * total_good / total_weight if total_weight else 0.0
+    print("Overall PPC score: %6.2f%%  (%.1f/%.1f m)" %
+          (overall, total_good, total_weight))
 
 else:
     overall = 100.0 * total_good_ep / total_ep if total_ep else 0.0
