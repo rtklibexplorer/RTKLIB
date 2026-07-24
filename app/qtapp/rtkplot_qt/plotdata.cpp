@@ -1093,10 +1093,11 @@ void Plot::connectStream()
         }
         if (rtStream[i] == STR_SERIAL) mode |= STR_MODE_W;
 
-        if ((p = path.indexOf("::"))) path = path.left(p);
-        if ((p = path.indexOf("/:")))  path = path.left(p);
-        if ((p = path.indexOf("@"))) name[i] = path.mid(p+1);
-        else name[i] = path;
+        QString buff = path;
+        if ((p = buff.indexOf("::"))) buff = buff.left(p);
+        if ((p = buff.indexOf("/:")))  buff = buff.left(p);
+        if ((p = buff.indexOf("@"))) name[i] = buff.mid(p+1);
+        else name[i] = buff;
 
         if (!stropen(stream + i, rtStream[i], mode, qPrintable(path))) {
             showMessage(tr("Connect error: %1").arg(name[0]));
