@@ -103,11 +103,12 @@ static int checkpri(const char* opt, int sys, int code, int idx)
 
     if (sys == SYS_GPS) {
         if (strstr(opt, "-GL1L") && idx == 0) return (code == CODE_L1L) ? 0 : -1;
-        if (strstr(opt, "-GL2S") && idx == 1) return (code == CODE_L2X) ? 1 : -1;
-        if (strstr(opt, "-GL2P") && idx == 1) return (code == CODE_L2P) ? 1 : -1;
+        if (strstr(opt, "-GL2S") && idx == 1) return (code == CODE_L2S) ? 1 : -1;
+        if (strstr(opt, "-GL2L") && idx == 1) return (code == CODE_L2L) ? 1 : -1;
+        if (strstr(opt, "-GL2P") && idx == 1) return (code == CODE_L2W) ? 1 : -1;
         if (code == CODE_L1L) return (nex < 1) ? -1 : NFREQ;
         if (code == CODE_L2S) return (nex < 2) ? -1 : NFREQ + 1;
-        if (code == CODE_L2P) return (nex < 3) ? -1 : NFREQ + 2;
+        if (code == CODE_L2L) return (nex < 3) ? -1 : NFREQ + 2;
     }
     else if (sys == SYS_GLO) {
         if (strstr(opt, "-RL2C") && idx == 1) return (code == CODE_L2C) ? 1 : -1;
