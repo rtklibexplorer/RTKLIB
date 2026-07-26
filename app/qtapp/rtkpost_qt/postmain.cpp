@@ -560,45 +560,53 @@ void MainForm::showStopTimeDialog()
 // callback on button-inputfile-1 -------------------------------------------
 void MainForm::selectInputFile1()
 {
-    ui->cBInputFile1->setCurrentText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("RINEX OBS (Rover) File"), ui->cBInputFile1->currentText(),
-                                                                                           tr("All (*.*);;RINEX OBS (*.rnx *.obs *.*O *.*D)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("RINEX OBS (Rover) File"), ui->cBInputFile1->currentText(),
+                                                    tr("All (*.*);;RINEX OBS (*.rnx *.obs *.*O *.*D)"));
+    if (filename.isEmpty()) return;
+    ui->cBInputFile1->setCurrentText(QDir::toNativeSeparators(filename));
     setOutputFile();
 }
 // callback on button-inputfile-2 ------------------------------------------
 void MainForm::selectInputFile2()
 {
-    ui->cBInputFile2->setCurrentText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("RINEX OBS (Base Station) File"), ui->cBInputFile2->currentText(),
-                                                                                           tr("All (*.*);;RINEX OBS (*.rnx *.obs *.*O *.*D)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("RINEX OBS (Base Station) File"), ui->cBInputFile2->currentText(),
+                                                    tr("All (*.*);;RINEX OBS (*.rnx *.obs *.*O *.*D)"));
+    if (!filename.isEmpty()) ui->cBInputFile2->setCurrentText(QDir::toNativeSeparators(filename));
 }
 // callback on button-inputfile-3 -------------------------------------------
 void MainForm::selectInputFile3()
 {
-    ui->cBInputFile3->setCurrentText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("RINEX NAV/CLK,SP3,Bias-SINEX,IONEX or SBAS/EMS File"), ui->cBInputFile3->currentText(),
-                                                                                           tr("All (*.*);;RINEX NAV (*.rnx *.*nav *.*N *.*P *.*G *.*H *.*Q)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("RINEX NAV/CLK,SP3,Bias-SINEX,IONEX or SBAS/EMS File"), ui->cBInputFile3->currentText(),
+                                                    tr("All (*.*);;RINEX NAV (*.rnx *.*nav *.*N *.*P *.*G *.*H *.*Q)"));
+    if (!filename.isEmpty()) ui->cBInputFile3->setCurrentText(QDir::toNativeSeparators(filename));
 }
 // callback on button-inputfile-4 -------------------------------------------
 void MainForm::selectInputFile4()
 {
-    ui->cBInputFile4->setCurrentText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("RINEX NAV/CLK,SP3,Bias-SINEX,IONEX or SBAS/EMS File"), ui->cBInputFile4->currentText(),
-                                                                                           tr("All (*.*);;Precise Ephemeris/Clock/Biases (*.SP3 *.sp3 *.eph* *.CLK *.clk* *.BIA)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("RINEX NAV/CLK,SP3,Bias-SINEX,IONEX or SBAS/EMS File"), ui->cBInputFile4->currentText(),
+                                                    tr("All (*.*);;Precise Ephemeris/Clock/Biases (*.SP3 *.sp3 *.eph* *.CLK *.clk* *.BIA)"));
+    if (!filename.isEmpty()) ui->cBInputFile4->setCurrentText(QDir::toNativeSeparators(filename));
 }
 // callback on button-inputfile-5 -------------------------------------------
 void MainForm::selectInputFile5()
 {
-    ui->cBInputFile5->setCurrentText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("RINEX NAV/CLK,SP3,Bias-SINEX,IONEX or SBAS/EMS File"), ui->cBInputFile5->currentText(),
-                                                                                           tr("All (*.*);;Precise Ephemeris/Clock/Biases (*.SP3 *.sp3 *.eph* *.CLK *.clk* *.BIA)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("RINEX NAV/CLK,SP3,Bias-SINEX,IONEX or SBAS/EMS File"), ui->cBInputFile5->currentText(),
+                                                    tr("All (*.*);;Precise Ephemeris/Clock/Biases (*.SP3 *.sp3 *.eph* *.CLK *.clk* *.BIA)"));
+    if (!filename.isEmpty()) ui->cBInputFile5->setCurrentText(QDir::toNativeSeparators(filename));
 }
 // callback on button-inputfile-6 -------------------------------------------
 void MainForm::selectInputFile6()
 {
-    ui->cBInputFile6->setCurrentText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("RINEX NAV/CLK,SP3,Bias-SINEX,IONEX or SBAS/EMS File"), ui->cBInputFile6->currentText(),
-                                                                                           tr("All (*.*);;Bias-SINEX (*.BIA *.BSX),IONEX (*.*i *.ionex, *.inx),SBAS (*.sbs *.ems)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("RINEX NAV/CLK,SP3,Bias-SINEX,IONEX or SBAS/EMS File"), ui->cBInputFile6->currentText(),
+                                                    tr("All (*.*);;Bias-SINEX (*.BIA *.BSX),IONEX (*.*i *.ionex, *.inx),SBAS (*.sbs *.ems)"));
+    if (!filename.isEmpty()) ui->cBInputFile6->setCurrentText(QDir::toNativeSeparators(filename));
 }
 // callback on button-outputfile --------------------------------------------
 void MainForm::selectOutputFile()
 {
-    ui->cBOutputFile->setCurrentText(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Output File"), ui->cBOutputFile->currentText(),
-                                                                                           tr("All (*.*);;Position Files (*.pos)"))));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Output File"), ui->cBOutputFile->currentText(),
+                                                    tr("All (*.*);;Position Files (*.pos)"));
+    if (!filename.isEmpty()) ui->cBOutputFile->setCurrentText(QDir::toNativeSeparators(filename));
 }
 // callback on button-inputview-1 -------------------------------------------
 void MainForm::viewInputFile1()
@@ -711,7 +719,8 @@ void MainForm::plotInputFile2()
 // callback on button-output-directory --------------------------------------
 void MainForm::selectOutputDirectory()
 {
-    ui->lEOutputDirectory->setText(QDir::toNativeSeparators(QFileDialog::getExistingDirectory(this, tr("Output Directory"), ui->lEOutputDirectory->text())));
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Output Directory"), ui->lEOutputDirectory->text());
+    if (!dir.isEmpty()) ui->lEOutputDirectory->setText(QDir::toNativeSeparators(dir));
 }
 // callback on button keyword -----------------------------------------------
 void MainForm::showKeyDialog()

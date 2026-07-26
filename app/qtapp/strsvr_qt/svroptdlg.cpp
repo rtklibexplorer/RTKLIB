@@ -178,6 +178,7 @@ void SvrOptDialog::updateEnable()
 //---------------------------------------------------------------------------
 void SvrOptDialog::logFileSelect()
 {
-    ui->lELogFile->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Log File"), ui->lELogFile->text(), tr("All (*.*)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Log File"), ui->lELogFile->text(), tr("All (*.*)"));
+    if (!filename.isEmpty()) ui->lELogFile->setText(QDir::toNativeSeparators(filename));
 }
 //---------------------------------------------------------------------------

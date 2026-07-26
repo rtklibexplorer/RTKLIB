@@ -57,10 +57,13 @@ void TextViewer::reloadText()
 //---------------------------------------------------------------------------
 void TextViewer::readSaveFile()
 {
-    if (ui->btnReadSave->text() == tr("&Save..."))
-        save(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, QString(), file)));
-    else
-        read(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, QString(), file)));
+    if (ui->btnReadSave->text() == tr("&Save...")) {
+        QString filename = QFileDialog::getSaveFileName(this, QString(), file);
+        if (!filename.isEmpty()) save(QDir::toNativeSeparators(filename));
+    } else {
+        QString filename = QFileDialog::getOpenFileName(this, QString(), file);
+        if (!filename.isEmpty()) read(QDir::toNativeSeparators(filename));
+    }
 }
 //---------------------------------------------------------------------------
 void TextViewer::showOptions()

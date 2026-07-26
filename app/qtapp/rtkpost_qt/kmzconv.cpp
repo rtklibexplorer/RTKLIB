@@ -80,7 +80,9 @@ void ConvDialog::setInput(const QString &filename)
 //---------------------------------------------------------------------------
 void ConvDialog::selectInputFile()
 {
-    ui->lEInputFile->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open..."), ui->lEInputFile->text(), tr("All (*.*)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open..."), ui->lEInputFile->text(), tr("All (*.*)"));
+    if (filename.isEmpty()) return;
+    ui->lEInputFile->setText(QDir::toNativeSeparators(filename));
     updateOutputFile();
 }
 //---------------------------------------------------------------------------
@@ -232,7 +234,8 @@ void ConvDialog::updateOutputFile()
 //---------------------------------------------------------------------------
 void ConvDialog::selectGoogleEarthFile()
 {
-    ui->lEGoogleEarthFile->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Google Earth Exe File"), ui->lEGoogleEarthFile->text())));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Google Earth Exe File"), ui->lEGoogleEarthFile->text());
+    if (!filename.isEmpty()) ui->lEGoogleEarthFile->setText(QDir::toNativeSeparators(filename));
 }
 //---------------------------------------------------------------------------
 void ConvDialog::callGoogleEarth()

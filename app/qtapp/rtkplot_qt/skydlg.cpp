@@ -116,8 +116,9 @@ void SkyImgDialog::updateSkyEnabled()
 //---------------------------------------------------------------------------
 void SkyImgDialog::loadSkyImageTag()
 {
-    readSkyTag(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Tag"), plot->getSkyImageFileName(), tr("Tag File (*.tag);;All (*.*)"))));
-
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Tag"), plot->getSkyImageFileName(), tr("Tag File (*.tag);;All (*.*)"));
+    if (filename.isEmpty()) return;
+    readSkyTag(QDir::toNativeSeparators(filename));
     updateSky();
 }
 //---------------------------------------------------------------------------
