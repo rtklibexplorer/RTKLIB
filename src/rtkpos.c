@@ -753,50 +753,71 @@ static void detslp_gf(rtk_t *rtk, const obsd_t *obs, int i, int j,
 static void detslp_dop(rtk_t *rtk, const obsd_t *obs, const int *ix, int ns,
                        int rcv, const nav_t *nav)
 {
-    (void)nav;
-    int i,ii,f,sat,ndop=0,nf=rtk->opt.nf;
-    double dph,dpt,mean_dop=0;
+    int i,j,ii,f,sat,ndop=0,nf=rtk->opt.nf;
+    double dph,dpt,lam,med_dop,tmp;
     double dopdif[MAXSAT][NFREQ], tt[MAXSAT][NFREQ];
+    double doplist[MAXSAT*NFREQ];
 
     trace(4,"detslp_dop: rcv=%d\n", rcv);
+    
     if (rtk->opt.thresdop<=0) return;  /* skip test if doppler thresh <= 0 */
 
-    /* calculate doppler differences for all sats and freqs */
-    for (i=0;i<ns;i++) {
+    /* calculate phase-doppler differences in m/s for all sats and freqs */
+        for (i=0;i<ns;i++) {
         ii = ix[i];
         sat=obs[ii].sat;
 
         for (f=0;f<nf;f++) {
-            dopdif[i][f]=0;tt[i][f]=0.00;
-            if (obs[ii].L[f]==0.0||obs[ii].D[f]==0.0||rtk->ssat[sat-1].ph[rcv-1][f]==0.0) continue;
-            if (fabs(tt[i][f]=timediff(obs[ii].time,rtk->ssat[sat-1].pt[rcv-1][f]))<DTTOL) continue;
+            dopdif[i][f]=0.0;
+            tt[i][f]=0.0;
+            if (obs[ii].L[f]==0.0||obs[ii].D[f]==0.0||
+                rtk->ssat[sat-1].ph[rcv-1][f]==0.0) continue;
 
-            /* calc phase difference and doppler x time (cycle) */
-            dph=(obs[ii].L[f]-rtk->ssat[sat-1].ph[rcv-1][f])/tt[i][f];
+            tt[i][f]=timediff(obs[ii].time,
+                              rtk->ssat[sat-1].pt[rcv-1][f]);
+
+            if (fabs(tt[i][f])<DTTOL) continue;
+
+            double freq;
+            freq=sat2freq(sat,obs[ii].code[f],nav);
+            if (freq<=0.0) continue;
+            lam=CLIGHT/freq;
+
+            /* phase rate and current doppler in cycles/s */
+            dph=(obs[ii].L[f]-
+                 rtk->ssat[sat-1].ph[rcv-1][f])/tt[i][f];
             dpt=-obs[ii].D[f];
-            dopdif[i][f]=dph-dpt;
 
-            /* if not outlier, use this to calculate mean */
-            if (fabs(dopdif[i][f])<3*rtk->opt.thresdop) {
-                mean_dop+=dopdif[i][f];
-                ndop++;
+            /* convert to m/s for consistent scaling across frequencies */
+            dopdif[i][f]=(dph-dpt)*lam;
+            doplist[ndop++]=dopdif[i][f];
             }
         }
-    }
-    /* calc mean doppler diff, most likely due to clock error */
-    if (ndop==0) return;  /* unable to calc mean doppler, usually very large clock err */
-    mean_dop=mean_dop/ndop;
+    if (ndop==0) return;
 
-    /* set slip if doppler difference with mean removed exceeds threshold */
+    /* median common range-rate error */
+    for (i=1;i<ndop;i++) {
+        tmp=doplist[i];
+        for (j=i;j>0&&doplist[j-1]>tmp;j--) {
+            doplist[j]=doplist[j-1];
+        }
+        doplist[j]=tmp;
+    }
+    /* calc median doppler diff, most likely due to clock error */
+    med_dop=ndop%2?doplist[ndop/2]:
+                       (doplist[ndop/2-1]+doplist[ndop/2])/2.0;
+
+    /* set slip if corrected phase-doppler rate exceeds threshold */
     for (i=0;i<ns;i++) {
         sat=obs[ix[i]].sat;
 
         for (f=0;f<nf;f++) {
-            if (dopdif[i][f]==0.00) continue;
-            if (fabs(dopdif[i][f]-mean_dop)>rtk->opt.thresdop) {
+            if (tt[i][f]==0.0) continue;
+            if (fabs(dopdif[i][f]-med_dop)>rtk->opt.thresdop) {
                 rtk->ssat[sat-1].slip[f]|=LLI_SLIP;
+                
                 errmsg(rtk,"slip detected doppler (sat=%2d rcv=%d dL%d=%.3f off=%.3f tt=%.2f)\n",
-                   sat,rcv,f+1,dopdif[i][f]-mean_dop,mean_dop,tt[i][f]);
+                   sat,rcv,f+1,dopdif[i][f]-med_dop,med_dop,tt[i][f]);
             }
         }
     }
@@ -816,8 +837,9 @@ static void udbias(rtk_t *rtk, double tt, const obsd_t *obs, const int *sat,
     }
 
     /* detect cycle slip by doppler and phase difference */
-    detslp_dop(rtk,obs,iu,ns,1,nav);
-    detslp_dop(rtk,obs,ir,ns,2,nav);
+    detslp_dop(rtk,obs,iu,ns,1,nav);  // rover
+    if (rtk->opt.mode==PMODE_MOVEB)  // only check base if moving baseline
+        detslp_dop(rtk,obs,ir,ns,2,nav);
 
     for (i=0;i<ns;i++) {
         // Detect cycle slip by code change.

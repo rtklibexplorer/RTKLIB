@@ -114,7 +114,7 @@ EXPORT opt_t sysopts[]={
     {"pos2-maxage",     1,  (void *)&prcopt_.maxtdiff,   "s"    },
     {"pos2-syncsol",    3,  (void *)&prcopt_.syncsol,    SWTOPT },
     {"pos2-slipthres",  1,  (void *)&prcopt_.thresslip,  "m"    },
-    {"pos2-dopthres",   1,  (void *)&prcopt_.thresdop,   "m"    },
+    {"pos2-dopthres",   1,  (void *)&prcopt_.thresdop,   "m/s"  },
     {"pos2-rejionno",   1,  (void *)&prcopt_.maxinno[0], "m (DEPRECATED)"},
     {"pos2-rejphase",   1,  (void *)&prcopt_.maxinno[0], "m"    },
     {"pos2-rejcode",    1,  (void *)&prcopt_.maxinno[1], "m"    },
