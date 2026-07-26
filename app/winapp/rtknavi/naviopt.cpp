@@ -465,6 +465,7 @@ void __fastcall TOptDialog::GetOpt(void)
 	PosOpt3		 ->Checked  =PrcOpt.posopt[2];
 	PosOpt4		 ->Checked  =PrcOpt.posopt[3];
 	PosOpt5		 ->Checked  =PrcOpt.posopt[4];
+	PosOpt6		 ->Checked  =PrcOpt.posopt[5];
 	
 	SolFormat	 ->ItemIndex=SolOpt.posf;
 	TimeFormat	 ->ItemIndex=SolOpt.timef==0?0:SolOpt.times+1;
