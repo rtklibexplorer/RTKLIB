@@ -219,7 +219,8 @@ void TcpOptDialog::btnNtripClicked()
     ui->cBMountPoint->clear();
     for (p = buff; (p  = strstr(p, "STR;")); p+=4) {
         if (sscanf(p, "STR;%255[^;]", mntpnt) == 1) {
-            ui->cBMountPoint->addItem(mntpnt, QString(p).split('\n', Qt::SkipEmptyParts).first());
+            QString str = QString(p).split('\n', Qt::SkipEmptyParts).first().trimmed();
+            ui->cBMountPoint->addItem(mntpnt, str);
         }
     }
     btn->setEnabled(true);
