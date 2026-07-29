@@ -1484,7 +1484,7 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->cBPositionMode->setCurrentIndex(settings.value("prcopt/mode", 0).toInt());
     ui->cBSolution->setCurrentIndex(settings.value("prcopt/soltype", 0).toInt());
     ui->cBFrequencies->setCurrentIndex(settings.value("prcopt/nf", 2).toInt() > NFREQ - 1 ? NFREQ - 1 : settings.value("prcopt/nf", 2).toInt() - 1);
-    int navsys = settings.value("prcopt/navsys", SYS_GPS).toInt();
+    int navsys = settings.value("prcopt/navsys", SYS_GPS | SYS_GLO | SYS_GAL | SYS_CMP).toInt();
     ui->cBNavSys1->setChecked(navsys & SYS_GPS);
     ui->cBNavSys2->setChecked(navsys & SYS_GLO);
     ui->cBNavSys3->setChecked(navsys & SYS_GAL);
