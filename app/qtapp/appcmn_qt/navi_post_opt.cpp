@@ -1546,11 +1546,11 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->sBProcessNoise4->setValue(settings.value("prcopt/prn3", 10.0).toDouble());
     ui->sBProcessNoise5->setValue(settings.value("prcopt/prn4", 10.0).toDouble());
     ui->sBSatelliteClockStability->setValue(settings.value("prcopt/sclkstab", 5E-12).toDouble());
-    ui->sBValidThresAR->setValue(settings.value("prcopt/thresar0", 100.0).toDouble());
-    ui->sBMaxPositionVarAR->setValue(settings.value("prcopt/thresar1", 100.0).toDouble());
-    ui->sBGlonassHwBias->setValue(settings.value("prcopt/thresar2", 100.0).toDouble());
-    ui->sBValidThresARMin->setValue(settings.value("prcopt/thresar5", 100.0).toDouble());
-    ui->sBValidThresARMax->setValue(settings.value("prcopt/thresar6", 100.0).toDouble());
+    ui->sBValidThresAR->setValue(settings.value("prcopt/thresar0", 3.0).toDouble());
+    ui->sBMaxPositionVarAR->setValue(settings.value("prcopt/thresar1", 0.25).toDouble());
+    ui->sBGlonassHwBias->setValue(settings.value("prcopt/thresar2", 0.0).toDouble());
+    ui->sBValidThresARMin->setValue(settings.value("prcopt/thresar5", 3.0).toDouble());
+    ui->sBValidThresARMax->setValue(settings.value("prcopt/thresar6", 3.0).toDouble());
     ui->sBElevationMaskAR->setValue(settings.value("prcopt/elmaskar", 0.0).toDouble());
     ui->sBElevationMaskHold->setValue(settings.value("prcopt/elmaskhold", 0.0).toDouble());
     ui->sBSlipThreshold->setValue(settings.value("prcopt/thresslip", 0.05).toDouble());
