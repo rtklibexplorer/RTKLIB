@@ -749,12 +749,17 @@ static void detslp_gf(rtk_t *rtk, const obsd_t *obs, int i, int j,
         }
     }
 }
+static int cmpdop(const void *dop1, const void *dop2) {
+  double d1 = *(const double *)dop1;
+  double d2 = *(const double *)dop2;
+  return (d1 > d2) - (d1 < d2);
+}
 /* detect cycle slip by doppler and phase difference -------------------------*/
 static void detslp_dop(rtk_t *rtk, const obsd_t *obs, const int *ix, int ns,
                        int rcv, const nav_t *nav)
 {
-    int i,j,ii,f,sat,ndop=0,nf=rtk->opt.nf;
-    double dph,dpt,lam,med_dop,tmp;
+    int i,ii,f,sat,ndop=0,nf=rtk->opt.nf;
+    double dph,dpt,lam,med_dop;
     double dopdif[MAXSAT][NFREQ], tt[MAXSAT][NFREQ];
     double doplist[MAXSAT*NFREQ];
 
@@ -796,13 +801,7 @@ static void detslp_dop(rtk_t *rtk, const obsd_t *obs, const int *ix, int ns,
     if (ndop==0) return;
 
     /* median common range-rate error */
-    for (i=1;i<ndop;i++) {
-        tmp=doplist[i];
-        for (j=i;j>0&&doplist[j-1]>tmp;j--) {
-            doplist[j]=doplist[j-1];
-        }
-        doplist[j]=tmp;
-    }
+    qsort(doplist, ndop, sizeof(double), cmpdop);
     /* calc median doppler diff, most likely due to clock error */
     med_dop=ndop%2?doplist[ndop/2]:
                        (doplist[ndop/2-1]+doplist[ndop/2])/2.0;

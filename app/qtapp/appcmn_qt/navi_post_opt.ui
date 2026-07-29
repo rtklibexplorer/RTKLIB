@@ -956,7 +956,7 @@
        <item row="9" column="1" colspan="2">
         <widget class="QDoubleSpinBox" name="sBDopplerThreshold">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the cycle-slip threshold (Hz) of difference between doppler and carrier phase difference between epochs, 0 = disabled (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-dopthres).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the cycle-slip threshold (m/s) of difference between doppler and carrier phase difference between epochs, 0 = disabled (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-dopthres).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="suffix">
           <string> Hz</string>
