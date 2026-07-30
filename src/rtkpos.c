@@ -1656,7 +1656,9 @@ static void restamb(rtk_t *rtk, const double *bias, int nb, double *xa)
 static void holdamb(rtk_t *rtk, const double *xa)
 {
     double *v,*H,*R;
-    int i,j,n,m,f,info,index[MAXSAT],nb=rtk->nx-rtk->na,nv=0,nf=NF(&rtk->opt);
+    int i,j,n,m,f,info,index[MAXSAT];
+    int sat[MAXSAT],nb=rtk->nx-rtk->na,nv=0,ns=0,nf=NF(&rtk->opt);
+    int used[MAXSAT]={0};
     double dd;
     
     trace(3,"holdamb :\n");
@@ -1670,8 +1672,17 @@ static void holdamb(rtk_t *rtk, const double *xa)
                 rtk->ssat[i].azel[1]<rtk->opt.elmaskhold) {
                 continue;
             }
-            index[n++]=IB(i+1,f,&rtk->opt);
-            rtk->ssat[i].fix[f]=3; /* hold */
+            index[n]=IB(i+1,f,&rtk->opt);
+            sat[n++]=i;
+        }
+        if (n<2) continue; /* need at least two sats to form a double difference */
+        /* mark and count unique sats actually used for hold */
+        for (i=0;i<n;i++) {
+            rtk->ssat[sat[i]].fix[f]=3; /* hold */
+            if (!used[sat[i]]) {
+                used[sat[i]]=1;
+                ns++;
+            }
         }
         /* use ambiguity resolution results to generate a set of pseudo-innovations
                 to feed to kalman filter based on error between fixed and float solutions */
@@ -1686,8 +1697,9 @@ static void holdamb(rtk_t *rtk, const double *xa)
         }
     }
     /* return if less than min sats for hold (skip if fix&hold for GLONASS only) */
-    if (rtk->opt.modear==ARMODE_FIXHOLD&&nv<rtk->opt.minholdsats) {
-        trace(3,"holdamb: not enough sats to hold ambiguity\n");
+    if (rtk->opt.modear==ARMODE_FIXHOLD&&ns<rtk->opt.minholdsats) {
+        trace(3,"holdamb: not enough sats to hold ambiguity (ns=%d min=%d nv=%d)\n",
+              ns,rtk->opt.minholdsats,nv);
         free(v); free(H);
         return;
     }
@@ -1765,8 +1777,21 @@ static int resamb_LAMBDA(rtk_t *rtk, double *bias, double *xa,int gps,int glo,in
     /* Create index of single to double-difference transformation matrix (D')
           used to translate phase biases to double difference */
     ix=imat(nx,2);
-    if ((nb=ddidx(rtk,ix,gps,glo,sbs))<(rtk->opt.minfixsats-1)) {  /* nb is sat pairs */
-        errmsg(rtk,"not enough valid double-differences\n");
+    nb=ddidx(rtk,ix,gps,glo,sbs);
+
+    /* count unique sats used for AR on at least one frequency */
+    int ns=0,f;
+    for (i=0;i<MAXSAT;i++) {
+        for (f=0;f<NF(opt);f++) {
+            if (rtk->ssat[i].fix[f]==2) {
+                ns++;
+                break;
+            }
+        }
+    }
+    if (nb<=0||ns<opt->minfixsats) {
+        errmsg(rtk,"not enough valid sats for AR: ns=%d min=%d\n",
+               ns,opt->minfixsats);
         free(ix);
         return -1; /* flag abort */
     }
@@ -1899,8 +1924,16 @@ static int manage_amb_LAMBDA(rtk_t *rtk, double *bias, double *xa, const int *sa
         return 0;
     }
     // If no fix on previous sample and enough sats, exclude next sat in list.
-    int lockc[NFREQ], excsat = 0;
-    if (rtk->sol.prev_ratio2 < rtk->sol.thres && rtk->nb_ar >= rtk->opt.mindropsats) {
+    int lockc[NFREQ],excsat=0,nbsat=0;
+    for (int i=0;i<ns;i++) {
+      for (int f=0;f<nf;f++) {
+        if (rtk->ssat[sat[i]-1].fix[f]==2) {
+          nbsat++;
+          break;
+        }
+      }
+    }
+    if (rtk->sol.prev_ratio2<rtk->sol.thres&&nbsat>=rtk->opt.mindropsats) { 
       // Find the position of the last excluded sat.
       int i = 0;
       if (rtk->excsat != 0) {
