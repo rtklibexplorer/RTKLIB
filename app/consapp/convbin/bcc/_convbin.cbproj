@@ -273,7 +273,6 @@
             <CfgParent>Base</CfgParent>
         </BuildConfiguration>
     </ItemGroup>
-    <Import Project="$(BDS)\Bin\CodeGear.Cpp.Targets"/>
     <ProjectExtensions>
         <Borland.Personality>CPlusPlusBuilder.Personality.12</Borland.Personality>
         <Borland.ProjectType>CppConsoleApplication</Borland.ProjectType>
