@@ -73,8 +73,9 @@ void RefDialog::accept()
 //---------------------------------------------------------------------------
 void RefDialog::loadStations()
 {
-    stationPositionFile = QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Load Station List..."), stationPositionFile, tr("Position File (*.pos *.snx);;All (*.*)")));
-
+    QString filename = QFileDialog::getOpenFileName(this, tr("Load Station List..."), stationPositionFile, tr("Position File (*.pos *.snx);;All (*.*)"));
+    if (filename.isEmpty()) return;
+    stationPositionFile = QDir::toNativeSeparators(filename);
     loadList(stationPositionFile);
 }
 //---------------------------------------------------------------------------

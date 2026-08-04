@@ -153,10 +153,12 @@ QString FileOptDialog::getPath()
 //---------------------------------------------------------------------------
 void FileOptDialog::filePathSelect()
 {
+    QString filename;
     if (!options)
-        ui->lEFilePath->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, QString(), ui->lEFilePath->text())));
+        filename = QFileDialog::getOpenFileName(this, QString(), ui->lEFilePath->text());
     else
-        ui->lEFilePath->setText(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, QString(), ui->lEFilePath->text())));
+        filename = QFileDialog::getSaveFileName(this, QString(), ui->lEFilePath->text());
+    if (!filename.isEmpty()) ui->lEFilePath->setText(QDir::toNativeSeparators(filename));
 }
 //---------------------------------------------------------------------------
 void FileOptDialog::keyDialogShow()

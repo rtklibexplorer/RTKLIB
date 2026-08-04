@@ -62,17 +62,20 @@ LogStrDialog::LogStrDialog(QWidget *parent)
 //---------------------------------------------------------------------------
 void LogStrDialog::selectFile1()
 {
-    ui->lEFilePath1->setText(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Open..."), ui->lEFilePath1->text())));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Open..."), ui->lEFilePath1->text());
+    if (!filename.isEmpty()) ui->lEFilePath1->setText(QDir::toNativeSeparators(filename));
 }
 //---------------------------------------------------------------------------
 void LogStrDialog::selectFile2()
 {
-    ui->lEFilePath2->setText(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Open..."), ui->lEFilePath2->text())));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Open..."), ui->lEFilePath2->text());
+    if (!filename.isEmpty()) ui->lEFilePath2->setText(QDir::toNativeSeparators(filename));
 }
 //---------------------------------------------------------------------------
 void LogStrDialog::selectFile3()
 {
-    ui->lEFilePath3->setText(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Open..."), ui->lEFilePath3->text())));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Open..."), ui->lEFilePath3->text());
+    if (!filename.isEmpty()) ui->lEFilePath3->setText(QDir::toNativeSeparators(filename));
 }
 //---------------------------------------------------------------------------
 void LogStrDialog::showKeyDialog()

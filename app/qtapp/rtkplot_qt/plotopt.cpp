@@ -200,17 +200,20 @@ void PlotOptDialog::fontSelect()
 //---------------------------------------------------------------------------
 void PlotOptDialog::shapeFileOpen()
 {
-    ui->lEShapeFile->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open"), ui->lEShapeFile->text())));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open"), ui->lEShapeFile->text());
+    if (!filename.isEmpty()) ui->lEShapeFile->setText(QDir::toNativeSeparators(filename));
 }
 //---------------------------------------------------------------------------
 void PlotOptDialog::tleFileOpen()
 {
-    ui->lETLEFile->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open"), ui->lETLEFile->text(), tr("Text Files (*.txt);;Position Files (*.pos *.snx);;All (*.*)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open"), ui->lETLEFile->text(), tr("Text Files (*.txt);;Position Files (*.pos *.snx);;All (*.*)"));
+    if (!filename.isEmpty()) ui->lETLEFile->setText(QDir::toNativeSeparators(filename));
 }
 //---------------------------------------------------------------------------
 void PlotOptDialog::tleSatelliteFileOpen()
 {
-    ui->lETLESatelliteFile->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open"), ui->lETLESatelliteFile->text(), tr("Text Files (*.txt);;Position Files (*.pos *.snx);;All (*.*)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open"), ui->lETLESatelliteFile->text(), tr("Text Files (*.txt);;Position Files (*.pos *.snx);;All (*.*)"));
+    if (!filename.isEmpty()) ui->lETLESatelliteFile->setText(QDir::toNativeSeparators(filename));
 }
 //---------------------------------------------------------------------------
 void PlotOptDialog::referencePositionSelect()

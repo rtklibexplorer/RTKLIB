@@ -670,29 +670,29 @@ void Plot::dropEvent(QDropEvent *event)
 void Plot::openSolution1()
 {
     trace(3, "openSolution1\n");
-
-    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 1"), solutionFiles[0].value(0), tr("Solution File (*.pos *.stat *.nmea *.nma *.txt *.ubx);;All (*.*)")))), 0);
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Solution 1"), solutionFiles[0].value(0), tr("Solution File (*.pos *.stat *.nmea *.nma *.txt *.ubx);;All (*.*)"));
+    if (!filename.isEmpty()) readSolution(QStringList(QDir::toNativeSeparators(filename)), 0);
 }
 // callback on menu-open-solution-2 -----------------------------------------
 void Plot::openSolution2()
 {
     trace(3, "openSolution2\n");
-
-    readSolution(QStringList(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Solution 2"), solutionFiles[1].value(0), tr("Solution File (*.pos *.stat *.nmea *.nma *.txt *.ubx);;All (*.*)")))), 1);
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Solution 2"), solutionFiles[1].value(0), tr("Solution File (*.pos *.stat *.nmea *.nma *.txt *.ubx);;All (*.*)"));
+    if (!filename.isEmpty()) readSolution(QStringList(QDir::toNativeSeparators(filename)), 1);
 }
 // callback on menu-open-map-image ------------------------------------------
 void Plot::openMapImage()
 {
     trace(3, "openMapImage\n");
-
-    readMapData(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Map Image"), mapImageFile, tr("JPEG File (*.jpg *.jpeg);;All (*.*)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Map Image"), mapImageFile, tr("JPEG File (*.jpg *.jpeg);;All (*.*)"));
+    if (!filename.isEmpty()) readMapData(QDir::toNativeSeparators(filename));
 }
 // callback on menu-open-track-points ---------------------------------------
 void Plot::openShapeFile()
 {
     trace(3, "openShapeFile\n");
-
     QStringList files = QFileDialog::getOpenFileNames(this, tr("Open Shape File"), QString(), tr("Shape File (*.shp);;All (*.*)"));
+    if (files.isEmpty()) return;
     for (int i = 0; i < files.size(); i++)
         files[i] = QDir::toNativeSeparators(files.at(i));
 
@@ -702,35 +702,37 @@ void Plot::openShapeFile()
 void Plot::openSkyImage()
 {
     trace(3, "openSkyImage\n");
-
-    readSkyData(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Sky Image"), skyImageFile, tr("JPEG File (*.jpg *.jpeg);;All (*.*)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Sky Image"), skyImageFile, tr("JPEG File (*.jpg *.jpeg);;All (*.*)"));
+    if (!filename.isEmpty()) readSkyData(QDir::toNativeSeparators(filename));
 }
 // callback on menu-oepn-waypoint -------------------------------------------
 void Plot::openWaypointsFile()
 {
     trace(3, "openWaypointFile\n");
-
-    readWaypoints(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Waypoints"), QString(), tr("Waypoints File (*.gpx *.pos);;All (*.*)"))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Waypoints"), QString(), tr("Waypoints File (*.gpx *.pos);;All (*.*)"));
+    if (!filename.isEmpty()) readWaypoints(QDir::toNativeSeparators(filename));
 }
 // callback on menu-open-obs-data -------------------------------------------
 void Plot::openObservationFile()
 {
     trace(3, "openObservationFile\n");
-    readObservation(QFileDialog::getOpenFileNames(this, tr("Open Obs/Nav Data"), observationFiles.value(0), tr("RINEX OBS (*.obs *.*o *.*O *.*d *.O.rnx *O.rnx *O.rnx.gz *O.crx *O.crx.gz *.*o.gz *.*o.Z *.d.gz *.d.Z);;All (*.*)")));
+    QStringList files = QFileDialog::getOpenFileNames(this, tr("Open Obs/Nav Data"), observationFiles.value(0), tr("RINEX OBS (*.obs *.*o *.*O *.*d *.O.rnx *O.rnx *O.rnx.gz *O.crx *O.crx.gz *.*o.gz *.*o.Z *.d.gz *.d.Z);;All (*.*)"));
+    if (!files.isEmpty()) readObservation(files);
 }
 // callback on menu-open-nav-data -------------------------------------------
 void Plot::openNavigationFile()
 {
     trace(3, "openNavigationFile\n");
-
-    readNavigation(QFileDialog::getOpenFileNames(this, tr("Open Raw Obs/Nav Messages"), navigationFiles.value(0), tr("RINEX NAV (*.nav *.gnav *.hnav *.qnav *.*n *.*g *.*h *.*q *.*p *N.rnx *N.rnx.gz);;All (*.*)")));
+    QStringList files = QFileDialog::getOpenFileNames(this, tr("Open Raw Obs/Nav Messages"), navigationFiles.value(0), tr("RINEX NAV (*.nav *.gnav *.hnav *.qnav *.*n *.*g *.*h *.*q *.*p *N.rnx *N.rnx.gz);;All (*.*)"));
+    if (!files.isEmpty()) readNavigation(files);
 }
 // callback on menu-open-elev-mask ------------------------------------------
 void Plot::openElevationMaskFile()
 {
     trace(3, "openElevationMaskFile\n");
 
-    readElevationMaskData(QDir::toNativeSeparators(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Open Elevation Mask"), QString(), tr("Text File (*.txt);;All (*.*)")))));
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Elevation Mask"), QString(), tr("Text File (*.txt);;All (*.*)"));
+    if (!filename.isEmpty()) readElevationMaskData(QDir::toNativeSeparators(filename));
 }
 // callback on menu-vis-analysis --------------------------------------------
 void Plot::visibilityAnalysis()
@@ -776,35 +778,36 @@ void Plot::visibilityAnalysis()
 void Plot::savePlotImage()
 {
     trace(3, "savePlotImage\n");
-    buffer.save(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Save Image"), QString(), tr("JPEG  (*.jpg);;Windows Bitmap (*.bmp)"))));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Image"), QString(), tr("JPEG  (*.jpg);;Windows Bitmap (*.bmp)"));
+    if (!filename.isEmpty()) buffer.save(QDir::toNativeSeparators(filename));
 }
 // callback on menu-save-waypoint -------------------------------------------
 void Plot::saveWaypointsFile()
 {
     trace(3, "saveWaypointsFile\n");
-
-    saveWaypoints(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Save Waypoints"), QString(), tr("GPX File (*.gpx *.pos);;All (*.*)"))));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Waypoints"), QString(), tr("GPX File (*.gpx *.pos);;All (*.*)"));
+    if (!filename.isEmpty()) saveWaypoints(QDir::toNativeSeparators(filename));
 }
 // callback on menu-save-# of sats/dop --------------------------------------
 void Plot::saveDopFile()
 {
     trace(3, "saveDopFile\n");
-
-    saveDop(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Save Data"), QString(), tr("All (*.*);;Text File (*.txt)"))));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Data"), QString(), tr("All (*.*);;Text File (*.txt)"));
+    if (!filename.isEmpty()) saveDop(QDir::toNativeSeparators(filename));
 }
 // callback on menu-save-snr,azel -------------------------------------------
 void Plot::saveSnrMpFile()
 {
     trace(3, "saveSnrMpFile\n");
-
-    saveSnrMp(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Save Data"), QString(), tr("All (*.*);;Text File (*.txt)"))));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Data"), QString(), tr("All (*.*);;Text File (*.txt)"));
+    if (!filename.isEmpty()) saveSnrMp(QDir::toNativeSeparators(filename));
 }
 // callback on menu-save-elmask ---------------------------------------------
 void Plot::saveElevationMaskFile()
 {
     trace(3, "saveElevationMaskFile\n");
-
-    saveElevationMask(QDir::toNativeSeparators(QFileDialog::getSaveFileName(this, tr("Save Data"), QString(), tr("All (*.*);;Text File (*.txt)"))));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Data"), QString(), tr("All (*.*);;Text File (*.txt)"));
+    if (!filename.isEmpty()) saveElevationMask(QDir::toNativeSeparators(filename));
 }
 // callback on menu-connection-settings -------------------------------------
 void Plot::showConnectionSettingsDialog()
