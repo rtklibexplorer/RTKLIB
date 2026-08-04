@@ -1143,7 +1143,7 @@
        <item row="13" column="3" colspan="2">
         <widget class="QDoubleSpinBox" name="sBRejectPhase">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the reject threshold of the kalman filter innovations (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-rejionn&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the carrier phase innovation is over the value, the observable is excluded for the estimation process as an outlier. The innovation threshold is multiplied by the carrier phase/pseudorange error ratio to generate the threshold for pseudorange innovations.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the reject threshold (m) of the kalman filter innovations (option: &lt;span style=&quot; font-style:italic;&quot;&gt;pos2-rejphase&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the carrier phase innovation is over the value, the observable is excluded for the estimation process as an outlier. The innovation threshold is multiplied by the carrier phase/pseudorange error ratio to generate the threshold for pseudorange innovations.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="suffix">
           <string> m</string>
@@ -2823,7 +2823,7 @@
        <item row="3" column="5">
         <widget class="QSpinBox" name="sBReconnectTime">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the re-connect interval for TCP client and NTRIP client connections (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-reconnect&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the timeout time expired without sever response, RTKNAVI retries to connect to server after waiting for the re-connect interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the re-connect interval for TCP client and NTRIP client connections (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-reconnect&lt;/span&gt;). &lt;/p&gt;&lt;p&gt;If the timeout time expired without server response, RTKNAVI retries to connect to server after waiting for the re-connect interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="suffix">
           <string> ms</string>
@@ -2949,7 +2949,7 @@
        <item row="3" column="4">
         <widget class="QSpinBox" name="sBTimeoutTime">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the timeout interval for TCP client and NTRIP client connections (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-timeout&lt;/span&gt;).&lt;/p&gt;&lt;p&gt;If the timeout time expired without sever response, RTKNAVI retries to connect to server after waiting for the reconnect interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the timeout interval for TCP client and NTRIP client connections (option &lt;span style=&quot; font-style:italic;&quot;&gt;misc-timeout&lt;/span&gt;).&lt;/p&gt;&lt;p&gt;If the timeout time expired without server response, RTKNAVI retries to connect to server after waiting for the reconnect interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="suffix">
           <string> ms</string>
