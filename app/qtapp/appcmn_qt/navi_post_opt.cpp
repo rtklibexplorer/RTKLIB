@@ -1536,9 +1536,9 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->sBMeasurementError3->setValue(settings.value("prcopt/err2", 0.003).toDouble());
     ui->sBMeasurementError4->setValue(settings.value("prcopt/err3", 0.0).toDouble());
     ui->sBMeasurementError5->setValue(settings.value("prcopt/err4", 1.0).toDouble());
-    ui->sBMeasurementErrorSNR_Max->setValue(settings.value("prcopt/err5", 1.0).toDouble());
-    ui->sBMeasurementErrorSNR->setValue(settings.value("prcopt/err6", 1.0).toDouble());
-    ui->sBMeasurementErrorReceiver->setValue(settings.value("prcopt/err7", 1.0).toDouble());
+    ui->sBMeasurementErrorSNR_Max->setValue(settings.value("prcopt/err5", 52.0).toDouble());
+    ui->sBMeasurementErrorSNR->setValue(settings.value("prcopt/err6", 0.000).toDouble());
+    ui->sBMeasurementErrorReceiver->setValue(settings.value("prcopt/err7", 0.000).toDouble());
     // std
     ui->sBProcessNoise1->setValue(settings.value("prcopt/prn0", 1E-4).toDouble());
     ui->sBProcessNoise2->setValue(settings.value("prcopt/prn1", 1E-3).toDouble());
