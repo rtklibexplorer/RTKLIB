@@ -2796,6 +2796,9 @@ void __fastcall TMainForm::SaveOpt(void)
     ini->WriteFloat  ("prcopt", "err2",       PrcOpt.err[2]      );
     ini->WriteFloat  ("prcopt", "err3",       PrcOpt.err[3]      );
     ini->WriteFloat  ("prcopt", "err4",       PrcOpt.err[4]      );
+    ini->WriteFloat  ("prcopt", "err5",       PrcOpt.err[5]      );
+    ini->WriteFloat  ("prcopt", "err6",       PrcOpt.err[6]      );
+    ini->WriteFloat  ("prcopt", "err7",       PrcOpt.err[7]      );
     ini->WriteFloat  ("prcopt", "prn0",       PrcOpt.prn[0]      );
     ini->WriteFloat  ("prcopt", "prn1",       PrcOpt.prn[1]      );
     ini->WriteFloat  ("prcopt", "prn2",       PrcOpt.prn[2]      );
