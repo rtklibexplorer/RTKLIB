@@ -96,6 +96,10 @@
 #include <netdb.h>
 #endif
 
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
 /* constants -----------------------------------------------------------------*/
 
 #define TINTACT             200         /* period for stream active (ms) */

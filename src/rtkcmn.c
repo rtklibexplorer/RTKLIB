@@ -2041,7 +2041,8 @@ extern int adjgpsweek(int week)
 extern uint32_t tickget(void)
 {
 #ifdef WIN32
-    return (uint32_t)timeGetTime();
+    // To avoid needing all windows.h and lib WinMM for timeGetTime().
+    return (uint32_t)GetTickCount64();
 #else
     struct timespec tp={0};
     struct timeval  tv={0};

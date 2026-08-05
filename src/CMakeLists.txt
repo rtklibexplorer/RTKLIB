@@ -48,7 +48,7 @@ target_include_directories(rtklib
 )
 
 if(WIN32)
-  target_link_libraries(rtklib wsock32 ws2_32 winmm)
+  target_link_libraries(rtklib wsock32 ws2_32)
   add_definitions(-DWIN_DLL)
 else()
   target_link_libraries(rtklib m pthread)

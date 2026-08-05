@@ -15,7 +15,7 @@ IERS_MODEL {
 }
 
 win* {
-    LIBS += -lws2_32 -lwinmm
+    LIBS += -lws2_32
 }
 
 
