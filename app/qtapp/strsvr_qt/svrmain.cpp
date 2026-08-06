@@ -822,7 +822,7 @@ void MainForm::loadOptions()
     svrOptDialog->traceLevel = settings.value("set/tracelevel", 0).toInt();
     svrOptDialog->nmeaRequest = settings.value("set/nmeareq", 0).toInt();
     svrOptDialog->fileSwapMargin = settings.value("set/fswapmargin", 30).toInt();
-    svrOptDialog->relayBack = settings.value("set/relayback", 30).toInt();
+    svrOptDialog->relayBack = settings.value("set/relayback", 0).toInt();
     svrOptDialog->progressBarRange = settings.value("set/progbarrange", 30).toInt();
     svrOptDialog->stationId = settings.value("set/staid", 0).toInt();
     svrOptDialog->stationSelect = settings.value("set/stasel", 0).toInt();
