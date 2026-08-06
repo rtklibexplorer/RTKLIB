@@ -2001,6 +2001,9 @@
             <property name="decimals">
              <number>3</number>
             </property>
+            <property name="singleStep">
+             <double>0.001</double>
+            </property>
            </widget>
           </item>
           <item row="3" column="3" colspan="2">
@@ -2104,6 +2107,12 @@
            <widget class="QDoubleSpinBox" name="sBMeasurementErrorSNR">
             <property name="toolTip">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the SNR dependent terms of carrier-phase error standard deviation (option: &lt;span style=&quot; font-style:italic;&quot;&gt;stats-errsnr&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;e * 10^(0.1*(SNR_MAX - snr))&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="singleStep">
+             <double>0.001</double>
             </property>
            </widget>
           </item>
