@@ -522,7 +522,7 @@ static int cmdopts(int argc, char **argv, rnxopt_t *opt, char **ifile,
             }
         }
         else if (!strcmp(argv[i],"-v" )&&i+1<argc) {
-            opt->rnxver=(int)(atof(argv[++i])*100.0);
+            opt->rnxver=(int)round(atof(argv[++i])*100.0);
         }
         else if (!strcmp(argv[i],"-od")) {
             opt->obstype|=OBSTYPE_DOP;
