@@ -206,6 +206,7 @@ static int ubx_sig(int sys, int sigid)
         if (sigid==5) return CODE_L2L; /* L2CL */
         if (sigid==8) return CODE_L5I; /* L5I */
         if (sigid==9) return CODE_L5Q; /* L5Q */
+        if (sigid==12) return CODE_L1E; /* L1C/B */
     }
     else if (sys == SYS_CMP) {
         if (sigid==0) return CODE_L2I; /* B1I D1 */
