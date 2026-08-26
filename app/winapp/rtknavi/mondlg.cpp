@@ -1964,11 +1964,9 @@ void __fastcall TMonitorDialog::ShowRtcmSsr(void)
 	time=rtksvr.rtk.sol.time;
 	for (i=n=0;i<MAXSAT;i++) {
 		if (!(satsys(i+1,NULL)&sys)) continue;
-		int valid = rtksvr.rtcm[Str1].ssr[i].t0[0].time &&
-			fabs(timediff(time, rtksvr.rtcm[Str1].ssr[i].t0[0])) <= 1800.0 &&
-			rtksvr.rtcm[Str1].ssr[i].iode >= 0;
-		if (SelSat->ItemIndex == 1 && !valid) continue;
 		ssr[n]=rtksvr.rtcm[Str1].ssr[i];
+		int valid = ssr[n].t0[0].time && fabs(timediff(time, ssr[n].t0[0])) <= 1800.0 && ssr[n].iode >= 0;
+		if (SelSat->ItemIndex == 1 && !valid) continue;
 		sat[n++]=i+1;
 	}
 	rtksvrunlock(&rtksvr);

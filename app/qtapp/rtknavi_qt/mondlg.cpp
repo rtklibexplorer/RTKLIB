@@ -2110,11 +2110,12 @@ void MonitorDialog::showRtcmSsr()
     time = rtksvr->rtk.sol.time;
     for (i = n = 0; i < MAXSAT; i++) {
         if (!(satsys(i + 1, NULL) & sys)) continue;
-        bool valid = rtksvr->rtcm[effectiveStream].ssr[i].t0[0].time &&
-            fabs(timediff(time, rtksvr->rtcm[effectiveStream].ssr[i].t0[0])) <= 1800.0 &&
-            rtksvr->rtcm[effectiveStream].ssr[i].iode >= 0;
+        if (inputStream == 3)
+          ssr[n] = rtksvr->nav.ssr[i];
+        else
+          ssr[n] = rtksvr->rtcm[effectiveStream].ssr[i];
+        bool valid = ssr[n].t0[0].time && fabs(timediff(time, ssr[n].t0[0])) <= 1800.0 && ssr[n].iode >= 0;
         if (ui->cBSelectSatellites->currentIndex() && !valid) continue;
-        ssr[n] = rtksvr->rtcm[effectiveStream].ssr[i];
         sat[n++] = i + 1;
     }
     rtksvrunlock(rtksvr);
