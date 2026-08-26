@@ -1058,11 +1058,10 @@ static void prstream(vt_t *vt)
 /* print ssr correction ------------------------------------------------------*/
 static void prssr(vt_t *vt, int ri, int cbias, int pbias)
 {
-    static char buff[128*MAXSAT];
     gtime_t time;
     ssr_t ssr[MAXSAT];
     int i,valid;
-    char tstr[40],id[8],*p=buff;
+    char tstr[40],id[8];
     
     rtksvrlock(&svr);
     time=svr.rtk.sol.time;
@@ -1074,6 +1073,10 @@ static void prssr(vt_t *vt, int ri, int cbias, int pbias)
     }
     rtksvrunlock(&svr);
     
+    char *buff = (char *)malloc(128 * MAXSAT);
+    if (buff == NULL) return;
+    char *p = buff;
+
     p+=sprintf(p,"\n%s%3s %3s %3s %3s %3s %19s %6s %6s %6s %6s %6s %6s %8s "
                "%6s %6s %6s%s%s%s\n",
                ESC_BOLD,"SAT","S","UDI","IOD","URA","T0","D0-A","D0-C","D0-R",
@@ -1111,6 +1114,7 @@ static void prssr(vt_t *vt, int ri, int cbias, int pbias)
         p += sprintf(p, "\n");
     }
     vt_puts(vt,buff);
+    free(buff);
 }
 /* start command -------------------------------------------------------------*/
 static void cmd_start(char **args, int narg, vt_t *vt)
