@@ -1567,7 +1567,7 @@ void OptDialog::loadOptions(QSettings &settings)
     ui->sBElevationMaskAR->setValue(settings.value("prcopt/elmaskar", 0.0).toDouble());
     ui->sBElevationMaskHold->setValue(settings.value("prcopt/elmaskhold", 0.0).toDouble());
     ui->sBSlipThreshold->setValue(settings.value("prcopt/thresslip", 0.05).toDouble());
-    ui->sBDopplerThreshold->setValue(settings.value("prcopt/thresdop", 0.05).toDouble());
+    ui->sBDopplerThreshold->setValue(settings.value("prcopt/thresdop", 0.00).toDouble());
     ui->sBVarHoldAmb->setValue(settings.value("prcopt/varholdamb", 0.1).toDouble());
     ui->sBGainHoldAmb->setValue(settings.value("prcopt/gainholdamb", 0.01).toDouble());
     ui->sBMaxAgeDifferences->setValue(settings.value("prcopt/maxtdiff", 30.0).toDouble());

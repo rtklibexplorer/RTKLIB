@@ -1396,7 +1396,7 @@ void __fastcall TMainForm::LoadOpt(void)
     ElMaskHold         =ini->ReadFloat  ("opt","elmaskhold",  15.0);
     OutCntResetAmb     =ini->ReadInteger("opt","outcntresetbias",20);
     SlipThres          =ini->ReadFloat  ("opt","slipthres",   0.05);
-    DopThres           =ini->ReadFloat  ("opt","dopthres",     0.0);
+    DopThres           =ini->ReadFloat  ("opt","dopthres",    0.00);
     MaxAgeDiff         =ini->ReadFloat  ("opt","maxagediff",  30.0);
     RejectPhase        =ini->ReadFloat  ("opt","rejectphase",  5.0);
     VarHoldAmb         =ini->ReadFloat  ("opt","varholdamb",   0.1);

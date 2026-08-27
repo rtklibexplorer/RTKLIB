@@ -439,7 +439,7 @@ object OptDialog: TOptDialog
         Top = 117
         Width = 206
         Height = 13
-        Caption = 'Slip Threshs: Doppler (Hz) / Geom-Free (m)'
+        Caption = 'Slip Threshs: Doppler (m/s) / Geom-Free (m)'
       end
       object Label14: TLabel
         Left = 24
@@ -608,7 +608,7 @@ object OptDialog: TOptDialog
         Width = 75
         Height = 21
         TabOrder = 11
-        Text = '0.0'
+        Text = '0.00'
       end
       object SlipThres: TEdit
         Left = 325
