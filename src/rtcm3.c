@@ -485,7 +485,7 @@ static int decode_type1005(rtcm_t *rtcm)
     if (!test_staid(rtcm,staid)) return -1;
     
     sprintf(rtcm->sta.name,"%04d",staid);
-    rtcm->sta.deltype=0; /* xyz */
+    rtcm->sta.deltype=0; // ENU
     for (j=0;j<3;j++) {
         rtcm->sta.pos[j]=rr[j]*0.0001;
         rtcm->sta.del[j]=0.0;
@@ -524,7 +524,7 @@ static int decode_type1006(rtcm_t *rtcm)
     if (!test_staid(rtcm,staid)) return -1;
     
     sprintf(rtcm->sta.name,"%04d",staid);
-    rtcm->sta.deltype=1; /* xyz */
+    rtcm->sta.deltype=0; // ENU
     for (j=0;j<3;j++) {
         rtcm->sta.pos[j]=rr[j]*0.0001;
         rtcm->sta.del[j]=0.0;
