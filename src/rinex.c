@@ -1139,7 +1139,7 @@ static int readrnxobs(FILE *fp, gtime_t ts, gtime_t te, double tint,
 
     if (!obs||rcv>MAXRCV) return 0;
 
-    if (!(data=(obsd_t *)malloc(sizeof(obsd_t)*MAXOBS))) return 0;
+    if (!(data=(obsd_t *)malloc(sizeof(obsd_t)*MAXOBS))) return -1;
 
     /* read RINEX observation data body */
     while ((n=readrnxobsb(fp,opt,ver,tsys,tobs,&flag,data,sta))>=0&&stat>=0) {
