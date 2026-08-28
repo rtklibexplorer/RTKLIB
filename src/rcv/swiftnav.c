@@ -782,7 +782,7 @@ static int decode_gpsnav_dep_e(raw_t *raw) {
             eph.iode,
             raw->nav.eph[sat - 1].iode);
       trace(3,
-            "%decode_gpsnav_dep_e: eph.iodc %d raw->nav.eph[sat - 1].iodc %d\n",
+            "decode_gpsnav_dep_e: eph.iodc %d raw->nav.eph[sat - 1].iodc %d\n",
             eph.iode,
             raw->nav.eph[sat - 1].iode);
       return 0;

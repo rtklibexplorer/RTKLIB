@@ -1933,7 +1933,7 @@ static int GetWeek(raw_t *Raw, double Tow)
             {
                 rt17->Week = Week;
                 rt17->Flags |= M_WEEK_OPTION;
-                tracet(2, "RT17: Initial GPS WEEK explicitly set to %d by user.\n", Week, Week);
+                tracet(2, "RT17: Initial GPS WEEK explicitly set to %d by user.\n", Week);
             }
         }
     }
