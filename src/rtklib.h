@@ -328,7 +328,7 @@ extern "C" {
 #define CODE_L1B    11                  /* obs code: E1B        (GAL) */
 #define CODE_L1X    12                  /* obs code: E1B+C,L1C(D+P),B1D+P (GAL,QZS,BDS) */
 #define CODE_L1Z    13                  /* obs code: E1A+B+C,L1S (GAL,QZS) */
-#define CODE_L2C    14                  /* obs code: L2C/A,G1C/A (GPS,GLO) */
+#define CODE_L2C    14                  /* obs code: L2C/A,G2C/A (GPS,GLO) */
 #define CODE_L2D    15                  /* obs code: L2 L1C/A-(P2-P1) (GPS) */
 #define CODE_L2S    16                  /* obs code: L2C(M)     (GPS,QZS) */
 #define CODE_L2L    17                  /* obs code: L2C(L)     (GPS,QZS) */
