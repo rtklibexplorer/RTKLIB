@@ -26,9 +26,9 @@ endif()
 
 # add additional libraries to compile on windows
 if(WIN32)
-  target_link_libraries(rnx2rtkp wsock32 ws2_32 winmm)
-  target_link_libraries(convbin wsock32 ws2_32 winmm)
-  target_link_libraries(pos2kml wsock32 ws2_32 winmm)
+  target_link_libraries(rnx2rtkp wsock32 ws2_32)
+  target_link_libraries(convbin wsock32 ws2_32)
+  target_link_libraries(pos2kml wsock32 ws2_32)
 endif()
 
 
