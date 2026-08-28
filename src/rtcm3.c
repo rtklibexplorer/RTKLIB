@@ -377,7 +377,7 @@ static int decode_type1002(rtcm_t *rtcm)
             rtcm->obs.data[index].L[0]=pr1*freq/CLIGHT+cp1;
         }
         rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,0,lock1);
-        rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
+        rtcm->obs.data[index].SNR[0]=(float)snratio(cnr1*0.25);
         rtcm->obs.data[index].code[0]=code?CODE_L1P:CODE_L1C;
     }
     return sync?0:1;
@@ -434,7 +434,7 @@ static int decode_type1004(rtcm_t *rtcm)
             rtcm->obs.data[index].L[0]=pr1*freq[0]/CLIGHT+cp1;
         }
         rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,0,lock1);
-        rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
+        rtcm->obs.data[index].SNR[0]=(float)snratio(cnr1*0.25);
         rtcm->obs.data[index].code[0]=code1?CODE_L1P:CODE_L1C;
         
         if (pr21!=(int)0xFFFFE000) {
@@ -445,7 +445,7 @@ static int decode_type1004(rtcm_t *rtcm)
             rtcm->obs.data[index].L[1]=pr1*freq[1]/CLIGHT+cp2;
         }
         rtcm->obs.data[index].LLI[1]=lossoflock(rtcm,sat,1,lock2);
-        rtcm->obs.data[index].SNR[1]=snratio(cnr2*0.25);
+        rtcm->obs.data[index].SNR[1]=(float)snratio(cnr2*0.25);
         rtcm->obs.data[index].code[1]=L2codes[code2];
     }
     rtcm->obsflag=!sync;
@@ -682,7 +682,7 @@ static int decode_type1010(rtcm_t *rtcm)
             rtcm->obs.data[index].L[0]=pr1*freq1/CLIGHT+cp1;
         }
         rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,0,lock1);
-        rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
+        rtcm->obs.data[index].SNR[0]=(float)snratio(cnr1*0.25);
         rtcm->obs.data[index].code[0]=code?CODE_L1P:CODE_L1C;
     }
     return sync?0:1;
@@ -737,7 +737,7 @@ static int decode_type1012(rtcm_t *rtcm)
             rtcm->obs.data[index].L[0]=pr1*freq1/CLIGHT+cp1;
         }
         rtcm->obs.data[index].LLI[0]=lossoflock(rtcm,sat,0,lock1);
-        rtcm->obs.data[index].SNR[0]=snratio(cnr1*0.25);
+        rtcm->obs.data[index].SNR[0]=(float)snratio(cnr1*0.25);
         rtcm->obs.data[index].code[0]=code1?CODE_L1P:CODE_L1C;
         
         if (pr21!=(int)0xFFFFE000) {
@@ -749,7 +749,7 @@ static int decode_type1012(rtcm_t *rtcm)
             rtcm->obs.data[index].L[1]=pr1*freq2/CLIGHT+cp2;
         }
         rtcm->obs.data[index].LLI[1]=lossoflock(rtcm,sat,1,lock2);
-        rtcm->obs.data[index].SNR[1]=snratio(cnr2*0.25);
+        rtcm->obs.data[index].SNR[1]=(float)snratio(cnr2*0.25);
         rtcm->obs.data[index].code[1]=code2?CODE_L2P:CODE_L2C;
     }
     rtcm->obsflag=!sync;
@@ -759,7 +759,7 @@ static int decode_type1012(rtcm_t *rtcm)
 static int decode_type1013(rtcm_t *rtcm)
 {
   unsigned i = 24 + 12;
-  if (i + 58 > rtcm->len * 8) {
+  if (i + 58 > (size_t)rtcm->len * 8) {
     trace(2,"rtcm3 1013 length error: len=%d\n", rtcm->len);
     return -1;
   }
@@ -775,14 +775,14 @@ static int decode_type1013(rtcm_t *rtcm)
   unsigned leaps = getbitu(rtcm->buff, i, 8);
   i += 8;
 
-  if (i + nmsg * 29 > rtcm->len * 8) {
+  if (i + nmsg * 29 > (size_t)rtcm->len * 8) {
     trace(2,"rtcm3 1013 length error: len=%d nm=%d\n", rtcm->len, nmsg);
     return -1;
   }
 
   rtcm->nmsg = nmsg;
   uint8_t sync[32];
-  for (int n = 0; n < nmsg; n++) {
+  for (unsigned n = 0; n < nmsg; n++) {
     rtcm->msgs[n] = getbitu(rtcm->buff, i, 12);
     i += 12;
     sync[n] = getbitu(rtcm->buff, i, 1);
@@ -2266,7 +2266,7 @@ static void save_msm_obs(rtcm_t *rtcm, int sys, msm_h_t *h, const double *r,
                 }
                 rtcm->obs.data[index].LLI[idx[k]]=
                     lossoflock(rtcm,sat,idx[k],lock[j])+(half[j]?2:0);
-                rtcm->obs.data[index].SNR [idx[k]]=cnr[j];
+                rtcm->obs.data[index].SNR[idx[k]]=(float)cnr[j];
                 rtcm->obs.data[index].code[idx[k]]=code[k];
             }
             j++;

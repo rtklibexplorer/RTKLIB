@@ -233,7 +233,7 @@ private:
 	void __fastcall SaveOpt      (void);
 	void __fastcall SetTrayIcon  (int index);
 	int  __fastcall ExecCmd      (AnsiString cmd, int show);
-	TColor __fastcall SnrColor   (int snr);
+	TColor __fastcall SnrColor   (double snr);
 public:
 	AnsiString IniFile;
 	
@@ -254,7 +254,8 @@ public:
 	int MoniPort,OpenPort,AutoRun;
 	
 	int PSol,PSolS,PSolE,Nsat[2],SolCurrentStat;
-	int Sat[2][MAXSAT],Snr[2][MAXSAT][NFREQ],Vsat[2][MAXSAT][NFREQ];
+	int Sat[2][MAXSAT],Vsat[2][MAXSAT][NFREQ];
+	double Snr[2][MAXSAT][NFREQ];
 	double Az[2][MAXSAT],El[2][MAXSAT];
 	gtime_t *Time;
 	int *SolStat,*Nvsat;

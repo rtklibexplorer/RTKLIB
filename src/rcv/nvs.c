@@ -67,7 +67,6 @@ static int decode_xf5raw(raw_t *raw)
 {
     gtime_t time;
     double tadj=0.0,toff=0.0,tn;
-    int dTowInt;
     double dTowUTC, dTowGPS, dTowFrac, L1, P1, D1;
     double gpsutcTimescale;
     uint8_t rcvTimeScaleCorr, sys, carrNo;
@@ -105,7 +104,7 @@ static int decode_xf5raw(raw_t *raw)
     dTowGPS = dTowUTC + gpsutcTimescale;
     
     /* Tweak pseudoranges to allow Rinex to represent the NVS time of measure */
-    dTowInt  = 10.0*floor((dTowGPS/10.0)+0.5);
+    int dTowInt  = (int)(10.0*floor((dTowGPS/10.0)+0.5));
     dTowFrac = dTowGPS - (double) dTowInt;
     time=gpst2time(week, dTowInt*0.001);
     
@@ -145,7 +144,7 @@ static int decode_xf5raw(raw_t *raw)
                   sat,L1,P1,D1);
             continue;
         }
-        raw->obs.data[n].SNR[0]=I1(p+3);
+        raw->obs.data[n].SNR[0]=(float)I1(p+3);
         if (sys==SYS_GLO) {
             raw->obs.data[n].L[0]  =  L1 - toff*(FREQ1_GLO+DFRQ1_GLO*carrNo);
         } else {
@@ -164,7 +163,7 @@ static int decode_xf5raw(raw_t *raw)
         
         for (j=1;j<NFREQ+NEXOBS;j++) {
             raw->obs.data[n].L[j]=raw->obs.data[n].P[j]=0.0;
-            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0;
+            raw->obs.data[n].D[j]=raw->obs.data[n].SNR[j]=0.0f;
             raw->obs.data[n].LLI[j]=0;
             raw->obs.data[n].code[j]=CODE_NONE;
         }
@@ -262,7 +261,7 @@ static int decode_gloephem(int sat, raw_t *raw)
         geph.acc[0]=R8(p+51) * 1e+6;
         geph.acc[1]=R8(p+59) * 1e+6;
         geph.acc[2]=R8(p+67) * 1e+6;
-        tb = R8(p+75) * 1e-3;
+        tb = (int)(R8(p+75) * 1e-3);
         tk = tb;
         geph.gamn  =R4(p+83);
         geph.taun  =R4(p+87) * 1e-3;

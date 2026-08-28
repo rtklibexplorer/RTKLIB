@@ -1445,7 +1445,7 @@ void __fastcall TPlot::DispDblClick(TObject *Sender)
     TPoint p((int)X0,(int)Y0);
     double x,y;
     
-    trace(3,"DispDblClick X=%d Y=%d\n",p.x,p.y);
+    trace(3,"DispDblClick X=%ld Y=%ld\n",p.x,p.y);
     
     if (BtnFixHoriz->Down) return;
     

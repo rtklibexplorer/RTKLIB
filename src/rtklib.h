@@ -1456,7 +1456,7 @@ EXPORT void add_fatal(fatalfunc_t *func);
 /* time and string functions -------------------------------------------------*/
 EXPORT void    setstr(char *dst, const char *src, int n);
 EXPORT double  str2num(const char *s, int i, int n);
-EXPORT int     str2time(const char *s, int i, int n, gtime_t *t);
+EXPORT int     str2time(const char *s, size_t i, size_t n, gtime_t *t);
 EXPORT char    *time2str(gtime_t t, char str[40], int n);
 EXPORT gtime_t epoch2time(const double *ep);
 EXPORT void    time2epoch(gtime_t t, double *ep);
@@ -1843,7 +1843,7 @@ EXPORT void strunlock(stream_t *stream);
 EXPORT int  stropen  (stream_t *stream, int type, int mode, const char *path);
 EXPORT void strclose (stream_t *stream);
 EXPORT int  strread  (stream_t *stream, uint8_t *buff, int n);
-EXPORT int  strwrite (stream_t *stream, uint8_t *buff, int n);
+EXPORT int  strwrite (stream_t *stream, const uint8_t *buff, int n);
 EXPORT void strsync  (stream_t *stream1, stream_t *stream2);
 EXPORT int  strstat  (stream_t *stream, char *msg);
 EXPORT int  strstatx (stream_t *stream, char *msg);
@@ -1918,7 +1918,7 @@ EXPORT void rtksvrclosestr(rtksvr_t *svr, int index);
 EXPORT void rtksvrlock  (rtksvr_t *svr);
 EXPORT void rtksvrunlock(rtksvr_t *svr);
 EXPORT int  rtksvrostat (rtksvr_t *svr, int type, gtime_t *time, int sat[MAXSAT],
-                         double *az, double *el, int snr[MAXSAT][NFREQ], int vsat[MAXSAT][NFREQ]);
+                         double *az, double *el, double snr[MAXSAT][NFREQ], int vsat[MAXSAT][NFREQ]);
 EXPORT void rtksvrsstat (rtksvr_t *svr, int *sstat, char *msg);
 EXPORT int  rtksvrmark(rtksvr_t *svr, const char *name, const char *comment);
 
