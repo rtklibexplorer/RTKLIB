@@ -78,7 +78,8 @@ Results: UrbanNav Tokyo
     Trimble Shinjuku: 72.1%
     Overall score:  75.7% 
 
-For more information on running the benchmarks, see https://rtklibexplorer.wordpress.com/2026/07/09/benchmarking-rtk-solutions-with-the-ppc-dataset/
+For more information on running the benchmarks, see https://rtklibexplorer.wordpress.com/2026/07/09/benchmarking-rtk-solutions-with-the-ppc-dataset/ and https://rtklibexplorer.wordpress.com/2026/08/31/updates-to-urban-rtk-benchmarking-with-rtklib/
+
 For more typical, post-processed, less severe RTK conditions, the f9p_ppk.conf config file in the same folder is recommended.
 
 The CRX2RNX utility needs to be available in the search path for the decompression of CRX compressed RINEX files. For Linux the 'CRX2RNX' command needs to be renamed to 'crx2rnx'. This utility is available at https://terras.gsi.go.jp/ja/crx2rnx.html.
