@@ -2060,8 +2060,8 @@ static int decode_ssr7(rtcm_t *rtcm, int sys, int subtype)
 /* decode SSR 8: VTEC ionosphere --------------------------------------------- */
 static int decode_ssr8(rtcm_t *rtcm, int subtype)
 {
-    double udint,hgt,cosC,sinC,tow;
-    int i=0,j,k,l,type,sync,iod,udi,nlay,nmax,mmax,np,offp,qi;
+    double udint,hgt,cosC,sinC;
+    int i=0,type,sync,iod,udi,nlay,nmax,mmax,qi;
     char *msg,tstr[40];
 
     type=getbitu(rtcm->buff,24,12);
@@ -2087,7 +2087,7 @@ static int decode_ssr8(rtcm_t *rtcm, int subtype)
         return -1;
     }
 
-    for (j=0;j<nlay&&i+16<=rtcm->len*8;j++) {
+    for (int j=0;j<nlay&&i+16<=rtcm->len*8;j++) {
         hgt         =getbitu(rtcm->buff,i,8)*10;     i+=8; /* height (km) DF472 */
         nmax        =getbitu(rtcm->buff,i, 4)+1;     i+= 4; /* degree DF473 */
         mmax        =getbitu(rtcm->buff,i, 4)+1;     i+= 4; /* order  DF474 */
@@ -2100,17 +2100,17 @@ static int decode_ssr8(rtcm_t *rtcm, int subtype)
         memset(rtcm->nav.vtec.cosC, 0, sizeof(rtcm->nav.vtec.cosC));
         memset(rtcm->nav.vtec.sinC, 0, sizeof(rtcm->nav.vtec.sinC));
         /* cosine coefficients: for order o=0..mmax, degree n=o..nmax */
-        for (k=0;k<=mmax;k++) {
-            for (l=k;l<=nmax;l++) {
+        for (int m=0;m<=mmax;m++) {
+            for (int n=m;n<=nmax&&i+16<=rtcm->len*8;n++) {
                 cosC=getbits(rtcm->buff,i,16); i+=16;
-                rtcm->nav.vtec.cosC[j][l][k]=cosC/200.0;
+                rtcm->nav.vtec.cosC[j][n][m]=cosC/200.0;
             }
         }
         /* sine coefficients: for order o=1..mmax, degree n=o..nmax */
-        for (k=1;k<=mmax;k++) {
-            for (l=k;l<=nmax;l++) {
+        for (int m=1;m<=mmax;m++) {
+            for (int n=m;n<=nmax&&i+16<=rtcm->len*8;n++) {
                 sinC=getbits(rtcm->buff,i,16); i+=16;
-                rtcm->nav.vtec.sinC[j][l][k]=sinC/200.0;
+                rtcm->nav.vtec.sinC[j][n][m]=sinC/200.0;
             }
         }
     }
@@ -2718,6 +2718,7 @@ static int decode_type4076(rtcm_t *rtcm)
         case 125: return decode_ssr3(rtcm,SYS_SBS,subtype);
         case 126: return decode_ssr7(rtcm,SYS_SBS,subtype);
         case 127: return decode_ssr5(rtcm,SYS_SBS,subtype);
+        case 201: return decode_ssr8(rtcm, subtype);
     }
     trace(2,"rtcm3 4076: unsupported message subtype=%d\n",subtype);
     return 0;

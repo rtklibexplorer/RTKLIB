@@ -421,7 +421,7 @@ void MonitorDialog::showRtk()
     unsigned int nmsg[3][10] = {{0}};
     char tstr[40], id[8], s1[40] = "-", s2[40] = "-", s3[40] = "-";
     char file[1024] = "";
-    const QString ionoopt[] = {tr("OFF"), tr("Broadcast"), tr("SBAS"), tr("Dual-Frequency"), tr("Estimate STEC"), tr("IONEX TEC"), tr("QZSS LEX")};
+    const QString ionoopt[] = {tr("OFF"), tr("Broadcast"), tr("SBAS"), tr("Dual-Frequency"), tr("Estimate STEC"), tr("IONEX TEC"), tr("QZSS LEX"), tr("SSR VTEC")};
     const QString tropopt[] = {tr("OFF"), tr("Saastamoinen"), tr("SBAS"), tr("Estimate ZTD"), tr("Estimate ZTD+Grad")};
     const QString ephopt [] = {tr("Broadcast"), tr("Precise"), tr("Broadcast+SBAS"), tr("Broadcast+SSR APC"), tr("Broadcast+SSR CoM"), tr("QZSS LEX")};
 
@@ -542,7 +542,7 @@ void MonitorDialog::showRtk()
     ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1").arg(tideopts[rtk->opt.tidecorr & 7]));
 
     ui->tWConsole->item(row,   0)->setText(tr("Ionosphere/Troposphere Model"));
-    ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1, %2").arg(ionoopt[rtk->opt.ionoopt < 0 || rtk->opt.ionoopt > 6 ? 0 : rtk->opt.ionoopt],
+    ui->tWConsole->item(row++, 1)->setText(QStringLiteral("%1, %2").arg(ionoopt[rtk->opt.ionoopt < 0 || rtk->opt.ionoopt > 7 ? 0 : rtk->opt.ionoopt],
                                                                         tropopt[rtk->opt.tropopt < 0 || rtk->opt.tropopt > 4 ? 0 : rtk->opt.tropopt]));
 
     ui->tWConsole->item(row,   0)->setText(tr("Satellite Ephemeris"));
