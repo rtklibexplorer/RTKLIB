@@ -52,9 +52,17 @@ __published:
 	TButton *BtnStr3;
 	TComboBox *Format3;
 	TButton *BtnCmd3;
+	TEdit *FilePath4;
+	TButton *BtnFile4;
+	TCheckBox *StreamC4;
+	TComboBox *Stream4;
+	TButton *BtnStr4;
+	TComboBox *Format4;
+	TButton *BtnCmd4;
 	TButton *BtnRcvOpt1;
 	TButton *BtnRcvOpt2;
 	TButton *BtnRcvOpt3;
+	TButton *BtnRcvOpt4;
 	TLabel *Label1;
 	TEdit *NmeaPos3;
 	TEdit *EditResetCmd;
@@ -79,13 +87,20 @@ __published:
 	void __fastcall BtnPosClick(TObject *Sender);
 	void __fastcall StreamC1Click(TObject *Sender);
 	void __fastcall StreamC2Click(TObject *Sender);
+	void __fastcall StreamC3Click(TObject *Sender);
+	void __fastcall StreamC4Click(TObject *Sender);
 	void __fastcall Stream3Change(TObject *Sender);
 	void __fastcall BtnStr3Click(TObject *Sender);
 	void __fastcall BtnFile3Click(TObject *Sender);
 	void __fastcall BtnCmd3Click(TObject *Sender);
+	void __fastcall Stream4Change(TObject *Sender);
+	void __fastcall BtnStr4Click(TObject *Sender);
+	void __fastcall BtnFile4Click(TObject *Sender);
+	void __fastcall BtnCmd4Click(TObject *Sender);
 	void __fastcall BtnRcvOpt1Click(TObject *Sender);
 	void __fastcall BtnRcvOpt2Click(TObject *Sender);
 	void __fastcall BtnRcvOpt3Click(TObject *Sender);
+	void __fastcall BtnRcvOpt4Click(TObject *Sender);
 private:
 	AnsiString __fastcall GetFilePath(AnsiString path);
 	AnsiString __fastcall SetFilePath(AnsiString path);
@@ -94,11 +109,11 @@ private:
 	void __fastcall FtpOpt(int index, int opt);
 	void __fastcall UpdateEnable(void);
 public:
-	int StreamC[3],Stream[3],Format[3],CmdEna[3][3],CmdEnaTcp[3][3];
+	int StreamC[RTKSVRNIN],Stream[RTKSVRNIN],Format[RTKSVRNIN],CmdEna[RTKSVRNIN][3],CmdEnaTcp[RTKSVRNIN][3];
 	int NmeaReq,TimeTag,Time64Bit,NRcv;
 	double NmeaPos[3],MaxBL;
-	AnsiString Paths[3][4],Cmds[3][3],CmdsTcp[3][3],TimeStart,TimeSpeed;
-	AnsiString RcvOpt[3],ResetCmd;
+	AnsiString Paths[RTKSVRNIN][4],Cmds[RTKSVRNIN][3],CmdsTcp[RTKSVRNIN][3],TimeStart,TimeSpeed;
+	AnsiString RcvOpt[RTKSVRNIN],ResetCmd;
 	AnsiString History[10];
 	__fastcall TInputStrDialog(TComponent* Owner);
 };
