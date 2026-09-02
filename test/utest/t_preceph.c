@@ -132,9 +132,9 @@ void utest4(void)
         assert(nav.ne>0);
     readrnxc(file2,&nav);
         assert(nav.nc>0);
-    stat=peph2pos(time,0,&nav,0,rs,dts,&var);
+    stat=peph2pos(time,0,&nav,rs,dts,&var);
         assert(!stat);
-    stat=peph2pos(time,160,&nav,0,rs,dts,&var);
+    stat=peph2pos(time,160,&nav,rs,dts,&var);
         assert(!stat);
 
     fp=fopen("testpeph1.out","w");
@@ -145,7 +145,7 @@ void utest4(void)
         t=timeadd(time,(double)i);
         for (j=0;j<6;j++) rs [j]=0.0;
         for (j=0;j<2;j++) dts[j]=0.0;
-        peph2pos(t,sat,&nav,0,rs,dts,&var);
+        peph2pos(t,sat,&nav,rs,dts,&var);
         fprintf(fp,"%02d %6d %14.3f %14.3f %14.3f %14.3f %10.3f %10.3f %10.3f %10.3f\n",
                 sat,i,rs[0],rs[1],rs[2],dts[0]*1E9,rs[3],rs[4],rs[5],dts[1]*1E9);
     }
@@ -198,6 +198,84 @@ void utest5(void)
     fclose(fp);
     printf("%s utest5 : OK\n",__FILE__);
 }
+/* satantoff_s() */
+void utest6(void)
+{
+    FILE *fp;
+    char *file1="../data/sp3/igs1590*.sp3"; /* 2010/7/1 */
+    char *file3="../../data/ant/igs14.atx";
+    char *file4="../data/rinex/brdc*.10n";
+    pcvs_t pcvs={0};
+    pcv_t *pcv;
+    nav_t nav={0};
+    int i,j,stat,sat,svh;
+    double ep[]={2010,7,1,0,0,0};
+    double rs1[6]={0},dts1[2]={0};
+    double var;
+    gtime_t t,time;
+    double danto[NFREQ*3];
+
+    time=epoch2time(ep);
+
+    readsp3(file1,&nav,0);
+        assert(nav.ne>0);
+    stat=readpcv(file3,&pcvs);
+        assert(stat);
+    readrnx(file4,1,"",NULL,&nav,NULL);
+        assert(nav.n>0);
+    for (i=0;i<MAXSAT;i++) {
+        if (!(pcv=searchpcv(i+1,"",time,&pcvs))) continue;
+        nav.pcvs[i]=*pcv;
+    }
+    fp=fopen("testpeph3.out","w");
+
+    sat=3;
+    
+    for (i=0;i<86400;i+=30) {
+        t=timeadd(time,(double)i);
+        satpos(t,t,sat,EPHOPT_PREC,&nav,rs1,dts1,&var,&svh);
+        satantoff_s(t,rs1,sat,&nav,danto);
+        for (j=0;j<3;j++) rs1[j]+=danto[0*3+j];
+        fprintf(fp,"%02d %6d com %14.3f %14.3f %14.3f\n",
+                sat,i,
+                rs1[0],rs1[1],rs1[2]);
+    }
+    fclose(fp);
+    printf("%s utest6 : OK\n",__FILE__);
+}
+/* readbiaf() */
+void utest7(void)
+{
+    FILE *fp;
+    char *file1="../data/biassinex/COD0MGXFIN_20242230000_01D_01D_OSB.BIA";
+    nav_t nav={0};
+    osb_t *osb;
+    int i;
+    char prn[8],*obs,strs[40],stre[40];
+    const double ns2m = 1e-9*CLIGHT;
+
+    assert(readdcb(file1,&nav,NULL)!=0);
+
+    fp=fopen("testpeph4.out","w");
+
+    for (i=0;i<nav.nb;i++) {
+
+      osb = &nav.osb[i];
+
+      satno2id(osb->sat,prn);
+      obs = code2obs(osb->code);
+      time2str(osb->ts, strs, 0);
+      time2str(osb->te, stre, 0);
+
+      fprintf(fp,"% 3d  %3s  %c%2s  %s - %s  %8.4f  %8.4f\n",
+             i,prn,osb->isPhase?'L':'C',obs,
+             strs,stre,osb->value/ns2m,osb->sigma/ns2m);
+    }
+
+    fclose(fp);
+    printf("%s utest7 : OK\n",__FILE__);
+}
+
 int main(int argc, char **argv)
 {
     utest1();
@@ -205,5 +283,7 @@ int main(int argc, char **argv)
     utest3();
     utest4();
     utest5();
+    utest6();
+    utest7();
     return 0;
 }

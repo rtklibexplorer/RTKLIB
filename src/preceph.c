@@ -81,6 +81,9 @@ static void init_bias_ix(void) {
     code_bias_ix[0][CODE_L2L]=1;
     code_bias_ix[0][CODE_L2S]=2;
     code_bias_ix[0][CODE_L2X]=3;
+    code_bias_ix[0][CODE_L5Q]=0;
+    code_bias_ix[0][CODE_L5I]=1;
+    code_bias_ix[0][CODE_L5X]=2;
     /* GLONASS */
     code_bias_ix[1][CODE_L1P]=0;
     code_bias_ix[1][CODE_L1C]=1;
@@ -92,9 +95,15 @@ static void init_bias_ix(void) {
     code_bias_ix[2][CODE_L5Q]=0;
     code_bias_ix[2][CODE_L5I]=1;
     code_bias_ix[2][CODE_L5X]=2;
+    code_bias_ix[2][CODE_L6B]=0;
+    code_bias_ix[2][CODE_L6C]=1;
+    code_bias_ix[2][CODE_L6X]=2;
     code_bias_ix[2][CODE_L7Q]=0;
     code_bias_ix[2][CODE_L7I]=1;
     code_bias_ix[2][CODE_L7X]=2;
+    code_bias_ix[2][CODE_L8Q]=0;
+    code_bias_ix[2][CODE_L8I]=1;
+    code_bias_ix[2][CODE_L8X]=2;
     /* Beidou */
     code_bias_ix[3][CODE_L2I]=0;
     code_bias_ix[3][CODE_L6I]=0;
@@ -459,55 +468,142 @@ extern double code2bias(const nav_t *nav, int sys, int sat, int code, int mode) 
     }
     return bias;
 }
-/* read DCB parameters from BIA or BSX file ------------------------------------
-*    - supports satellite code biases only
+/* Parse time in Bias-SINEX file -----------------------------------------------*/
+static gtime_t str2time_bsx(const char *s)
+{
+    double ep[6] = {0};
+
+    /* YYYY:DOY:SSSSS */
+    int year = atoi(s);
+    int doy  = atoi(s + 5);
+    int sod  = atoi(s + 9);
+
+    ep[0] = year;
+    ep[1] = 1;
+    ep[2] = 1;
+    ep[3] = 0;
+    ep[4] = 0;
+    ep[5] = sod;
+
+    gtime_t t = epoch2time(ep);
+    t.time += (doy - 1) * 86400;
+
+    return t;
+}
+/* Bias comparator -----------------------------------------------*/
+static int cmp_osb(const void *p1, const void *p2)
+{
+    const osb_t *a = (const osb_t *)p1;
+    const osb_t *b = (const osb_t *)p2;
+
+    if (a->sat != b->sat)       return a->sat - b->sat;
+    if (a->code != b->code)     return a->code - b->code;
+    if (a->isPhase != b->isPhase)
+        return a->isPhase - b->isPhase;
+
+    /* earlier start time first */
+    if (timediff(a->ts, b->ts) < 0.0) return -1;
+    if (timediff(a->ts, b->ts) > 0.0) return  1;
+
+    return 0;
+}
+/* read Bias-SINEX data line -------------------------------------------------*/
+static int readbsxb(const char *line, osb_t *osb)
+{
+    char prn[4] = "", obs[4] = "", ts[16] = "", te[16] = "";
+
+    if (strncmp(line + 1, "OSB", 3)!=0) return 0;
+    if (strncmp(line +65, "ns",  2)!=0) return 0;
+
+    sscanf(line+11,"%3s",prn);
+    sscanf(line+25,"%3s",obs); obs[3] = '\0';
+    sscanf(line+35,"%15s",ts); ts[15] = '\0';
+    sscanf(line+50,"%15s",te); te[15] = '\0';
+
+    osb->sat = satid2no(prn);
+    if (osb->sat==0) return 0;
+
+    osb->code = obs2code(obs+1);
+    if (!osb->code) return 0;
+
+    osb->isPhase = (obs[0]=='L');
+    osb->ts = str2time_bsx(ts);
+    osb->te = str2time_bsx(te);
+    osb->value = str2num(line, 70, 21)*1e-9*CLIGHT;
+    osb->sigma = str2num(line, 92, 11)*1e-9*CLIGHT;
+
+    return 1;
+}
+/* add new bias data and re-allocate memory if necessary */
+static int add_osb(nav_t *nav, const osb_t *osb)
+{
+    if (nav->nb >= nav->nbmax) {
+
+        int nbmax = nav->nbmax <= 0 ? 1024 : nav->nbmax + 1024;
+        osb_t *tmp = (osb_t *)realloc(nav->osb, nbmax * sizeof(osb_t));
+
+        if (!tmp) return 0;
+
+        nav->osb  = tmp;
+        nav->nbmax = nbmax;
+    }
+
+    nav->osb[nav->nb++] = *osb;
+    return 1;
+}
+/* read bias values from Bias-SINEX file ------------------------------------
+*    - supports satellite code and phase biases only
 *-----------------------------------------------------------------------------*/
 static int readbiaf(const char *file, nav_t *nav)
 {
     FILE *fp;
-    double cbias;
-    char buff[256],bias[4]="",svn[4]="",prn[4]="",obs1[4]="",obs2[4];
-    int sat,sys_ix,frq_ix,code1,code2,bias_ix1,bias_ix2,sys;
+    char buff[256],str[15]="";
+    osb_t osb;
 
-    trace(3,"readbiaf: file=%s\n",file);
+    trace(3, "readbiaf: file=%s\n", file);
 
-    if (!(fp=fopen(file,"r"))) {
-        trace(2,"BIA/BSX parameters file open error: %s\n",file);
+    if (!(fp = fopen(file, "r"))) {
+        trace(2, "Bias-SINEX file open error: %s\n", file);
         return 0;
     }
-    while (fgets(buff,sizeof(buff),fp)) {
-        if ((int)strlen(buff)<91) continue;
-        strncpy(bias, buff+1,  3); bias[3] ='\0';
-        strncpy(prn,  buff+11, 3); prn[3]  ='\0';
-        strncpy(obs1, buff+25, 3); obs1[3] ='\0';
-        strncpy(obs2, buff+29, 3); obs2[3] ='\0';
-        if (obs1[0]!='C') continue;  /* skip phase biases for now */
-        if ((cbias=str2num(buff,70,21))==0.0) continue;
-        sat=satid2no(prn);
-        sys=satsys(sat,NULL);
-        sys_ix=sys2ix(sys);
-        if (sys_ix < 0 || sys_ix >= MAX_BIAS_SYS) continue;
-        if (!(code1=obs2code(&obs1[1]))) continue; /* skip if code not valid */
-        if ((frq_ix=code2idx(sys,code1))<0) continue;
-        if ((bias_ix1=code_bias_ix[sys_ix][code1])<0) continue;
-        if (strcmp(bias,"OSB")==0) {
-            nav->cbias[sat-1][frq_ix][bias_ix1]=cbias*1E-9*CLIGHT; /* ns -> m */
-        }
-        else if (strcmp(bias,"DSB")==0) {
-            /* differential signal bias */
-            if (obs1[1]!=obs2[1]) continue; /* skip biases between freqs for now */
-            if (!(code2=obs2code(&obs2[1]))) continue; /* skip if code not valid */
-            if ((bias_ix2=code_bias_ix[sys_ix][code2])<0) continue;
-            if (bias_ix1==0) /* this is ref code */
-                nav->cbias[sat-1][frq_ix][bias_ix2]=-cbias*1E-9*CLIGHT; /* ns -> m */
-            else if (bias_ix2==0) /* this is ref code */
-                nav->cbias[sat-1][frq_ix][bias_ix1]=cbias*1E-9*CLIGHT; /* ns -> m */
-        }
 
+    /* read first line of file and check for '%=BIA' identifier */
+    fgets(buff,sizeof(buff),fp);
+    sscanf(buff,"%5s",str);
+    if (strncmp(str,"%=BIA",5)!=0) {
+        trace(3,"readbiaf: wrong format %s of file=%s\n",str,file);
+        return 0;
     }
+
+    /* search for start of BIAS/SOLUTION block */
+    while (fgets(buff,sizeof(buff),fp)) {
+        if (strncmp(buff,"+BIAS/SOLUTION",14)==0) break;
+    }
+
+    if (strncmp(buff,"+BIAS/SOLUTION",14)!=0) {
+        trace(3,"readbiaf: no BIAS/SOLUTION block in file=%s\n",file);
+        return 0;
+    }
+
+    /* read BIAS/SOLUTION block */
+    while (fgets(buff, sizeof(buff), fp)) {
+        if (strncmp(buff,"-BIAS/SOLUTION",14)==0) break;
+        /* skip comment lines */
+        if (strncmp(buff,"*",1)==0) continue;
+        if (readbsxb(buff, &osb)==0) continue;
+        if (!add_osb(nav, &osb)) {
+            trace(3, "readbiaf: memory allocation error\n");
+            return 0;
+        }
+    }
+
     fclose(fp);
 
-    return 1;
+    qsort(nav->osb, nav->nb, sizeof(osb_t), cmp_osb);
+
+    trace(3, "readbiaf: n=%d\n", nav->nb);
+    return nav->nb;
+
 }
 /* read DCB parameters ---------------------------------------------------------
 * read differential code bias (DCB) parameters
@@ -794,13 +890,56 @@ extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
         dant[i]=C1*dant1+C2*dant2;
     }
 }
+/* satellite antenna phase center offset for single frequencies-----------------
+* compute satellite antenna phase center offset in ecef
+* args   : gtime_t time       I   time (gpst)
+*          double *rs         I   satellite position and velocity (ecef)
+*                                 {x,y,z,vx,vy,vz} (m|m/s)
+*          int    sat         I   satellite number
+*          nav_t  *nav        I   navigation data
+*          double *dant       O   satellite antenna phase center offsets (ecef)
+*                                 NFREQ*{dx,dy,dz} (m)
+* return : none
+*-----------------------------------------------------------------------------*/
+extern void satantoff_s(gtime_t time, const double *rs, int sat, const nav_t *nav,
+                        double *dant)
+{
+    const pcv_t *pcv=nav->pcvs+sat-1;
+    double ex[3],ey[3],ez[3],es[3],r[3],rsun[3],gmst,erpv[5]={0};
+    int i,j;
+
+    char tstr[40];
+    trace(4,"satantoff_s: time=%s sat=%2d\n",time2str(time,tstr,3),sat);
+
+    for (j=0;j<NFREQ;j++) {
+        for (i=0;i<3;i++) {
+            dant[j*3+i]=0.0;
+        }
+    }
+
+    /* sun position in ecef */
+    sunmoonpos(gpst2utc(time),erpv,rsun,NULL,&gmst);
+
+    /* unit vectors of satellite fixed coordinates */
+    for (i=0;i<3;i++) r[i]=-rs[i];
+    if (!normv3(r,ez)) return;
+    for (i=0;i<3;i++) r[i]=rsun[i]-rs[i];
+    if (!normv3(r,es)) return;
+    cross3(ez,es,r);
+    if (!normv3(r,ey)) return;
+    cross3(ey,ez,ex);
+
+    for (j=0;j<NFREQ;j++) {
+        for (i=0;i<3;i++) {
+            dant[j*3+i]=pcv->off[j][0]*ex[i]+pcv->off[j][1]*ey[i]+pcv->off[j][2]*ez[i];
+        }
+    }
+}
 /* satellite position/clock by precise ephemeris/clock -------------------------
 * compute satellite position/clock with precise ephemeris/clock
 * args   : gtime_t time       I   time (gpst)
 *          int    sat         I   satellite number
 *          nav_t  *nav        I   navigation data
-*          int    opt         I   sat position option
-*                                 (0: center of mass, 1: antenna phase center)
 *          double *rs         O   sat position and velocity (ecef)
 *                                 {x,y,z,vx,vy,vz} (m|m/s)
 *          double *dts        O   sat clock {bias,drift} (s|s/s)
@@ -812,15 +951,15 @@ extern void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
 *          nav->nc must be set by calling readsp3(), readrnx() or readrnxt()
 *          if precise clocks are not set, clocks in sp3 are used instead
 *-----------------------------------------------------------------------------*/
-extern int peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
+extern int peph2pos(gtime_t time, int sat, const nav_t *nav,
                     double *rs, double *dts, double *var)
 {
     gtime_t time_tt;
-    double rss[3],rst[3],dtss[1],dtst[1],dant[3]={0},vare=0.0,varc=0.0,tt=1E-3;
+    double rss[3],rst[3],dtss[1],dtst[1],vare=0.0,varc=0.0,tt=1E-3;
     int i;
 
     char tstr[40];
-    trace(4,"peph2pos: time=%s sat=%2d opt=%d\n",time2str(time,tstr,3),sat,opt);
+    trace(4,"peph2pos: time=%s sat=%2d\n",time2str(time,tstr,3),sat);
 
     if (sat<=0||MAXSAT<sat) return 0;
 
@@ -832,12 +971,8 @@ extern int peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
     if (!pephpos(time_tt,sat,nav,rst,dtst,NULL,NULL)) return 0;
     pephclk1(time_tt, sat, nav, dtst, NULL);
 
-    /* satellite antenna offset correction */
-    if (opt) {
-        satantoff(time,rss,sat,nav,dant);
-    }
     for (i=0;i<3;i++) {
-        rs[i  ]=rss[i]+dant[i];
+        rs[i  ]=rss[i];
         rs[i+3]=(rst[i]-rss[i])/tt;
     }
     /* relativistic effect correction */

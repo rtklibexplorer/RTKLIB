@@ -859,6 +859,15 @@ typedef struct {        /* SSR correction type */
     uint8_t update;     /* update flag (0:no update,1:update) */
 } ssr_t;
 
+typedef struct {           /* bias data type */
+    int     sat;           /* satellite number */
+    uint8_t code;          /* code indicator (CODE_???) */
+    int     isPhase;       /* code or phase bias indicator */
+    gtime_t ts,te;         /* valid time start and end */
+    double  value;         /* bias value (m) */
+    double  sigma;         /* bias sigma (m) */
+} osb_t;
+
 typedef struct {        /* navigation data type */
     int n,nmax;         /* number of broadcast ephemeris */
     int ng,ngmax;       /* number of glonass ephemeris */
@@ -867,6 +876,7 @@ typedef struct {        /* navigation data type */
     int nc,ncmax;       /* number of precise clock */
     int na,namax;       /* number of almanac data */
     int nt,ntmax;       /* number of tec grid data */
+    int nb,nbmax;       /* number of bias data */
     eph_t *eph;         /* GPS/QZS/GAL/BDS/IRN ephemeris */
     geph_t *geph;       /* GLONASS ephemeris */
     seph_t *seph;       /* SBAS ephemeris */
@@ -875,6 +885,7 @@ typedef struct {        /* navigation data type */
     alm_t *alm;         /* almanac data */
     tec_t *tec;         /* tec grid data */
     erp_t  erp;         /* earth rotation parameters */
+    osb_t *osb;         /* observable-specific signal biases for satellites */
     double utc_gps[8];  /* GPS delta-UTC parameters {A0,A1,Tot,WNt,dt_LS,WN_LSF,DN,dt_LSF} */
     double utc_glo[8];  /* GLONASS UTC time parameters {tau_C,tau_GPS} */
     double utc_gal[8];  /* Galileo UTC parameters */
@@ -1660,10 +1671,12 @@ EXPORT void geph2pos(gtime_t time, const geph_t *geph, double *rs, double *dts,
                      double *var);
 EXPORT void seph2pos(gtime_t time, const seph_t *seph, double *rs, double *dts,
                      double *var);
-EXPORT int  peph2pos(gtime_t time, int sat, const nav_t *nav, int opt,
+EXPORT int  peph2pos(gtime_t time, int sat, const nav_t *nav,
                      double *rs, double *dts, double *var);
 EXPORT void satantoff(gtime_t time, const double *rs, int sat, const nav_t *nav,
                       double *dant);
+EXPORT void satantoff_s(gtime_t time, const double *rs, int sat, const nav_t *nav,
+                        double *dant);
 EXPORT int  satpos(gtime_t time, gtime_t teph, int sat, int ephopt,
                    const nav_t *nav, double *rs, double *dts, double *var,
                    int *svh);

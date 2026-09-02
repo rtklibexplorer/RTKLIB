@@ -95,15 +95,15 @@ static void ekf_pred(ekf_t *ekf, double *F, double *Q, int ix, int nx)
     A=mat(ekf->nx,nx);
     
     /* x(ix)=F*x(ix) */
-    matmul("NN",nx,1,nx,1.0,F,ekf->x+ix,0.0,A);
+    matmul("NN",nx,1,nx,F,ekf->x+ix,A);
     matcpy(ekf->x+ix,A,nx,1);
     
     /* P(ix,:)=F*P(ix,:); P(:,ix)=P(:,ix)*F' */
     for (i=0;i<ekf->nx;i++) {
-        matmul("NN",nx,1,nx,1.0,F,ekf->P+ekf->nx*i+ix,0.0,A);
+        matmul("NN",nx,1,nx,F,ekf->P+ekf->nx*i+ix,A);
         matcpy(ekf->P+ekf->nx*i+ix,A,nx,1);
     }
-    matmul("NT",ekf->nx,nx,nx,1.0,ekf->P+ekf->nx*ix,F,0.0,A);
+    matmul("NT",ekf->nx,nx,nx,ekf->P+ekf->nx*ix,F,A);
     matcpy(ekf->P+ekf->nx*ix,A,ekf->nx,nx);
     
     /* P(ix,ix)+=diag(Q) */
@@ -116,17 +116,20 @@ static void ekf_pred(ekf_t *ekf, double *F, double *Q, int ix, int nx)
 static int raw_obs(const obsd_t *obs, const nav_t *nav, double *P1, double *P2,
                    double *L1, double *L2)
 {
-    double gamma=SQR(lam[0]/lam[1]);
+    double lam0=CLIGHT*sat2freq(obs->sat,obs->code[0],nav);
+    double lam1=CLIGHT*sat2freq(obs->sat,obs->code[1],nav);
+
+    double gamma=SQR(lam1/lam0);
     
-    *L1=obs->L[0]*lam[0];
-    *L2=obs->L[1]*lam[1];
+    *L1=obs->L[0]*lam0;
+    *L2=obs->L[1]*lam1;
     *P1=obs->P[0];
     *P2=obs->P[1];
     if (*L1==0.0||*L2==0.0||*P1==0.0||*P2==0.0) return 0;
     
-    *P1+=nav->cbias[obs->sat-1][0];
-    *P2+=nav->cbias[obs->sat-1][0]*gamma;
-    if (obs->code[0]==CODE_L1C) *P1+=nav->cbias[obs->sat-1][1];
+    *P1+=nav->cbias[obs->sat-1][0][0];
+    *P2+=nav->cbias[obs->sat-1][0][1]*gamma;
+    if (obs->code[0]==CODE_L1C) *P1+=nav->cbias[obs->sat-1][1][0];
     return 1;
 }
 /* temporal update of states --------------------------------------------------*/
@@ -134,8 +137,10 @@ static void ud_state(const obsd_t *obs, int n, const nav_t *nav,
                      const double *pos, const double *azel, ekf_t *ekf,
                      sstat_t *sstat)
 {
+    double lam0=CLIGHT*sat2freq(obs->sat,obs->code[0],nav);
+    double lam1=CLIGHT*sat2freq(obs->sat,obs->code[1],nav);
     double P1,P2,L1,L2,PG,LG,tt,F[4]={0},Q[2]={0};
-    double x[2]={0},P[2],c_iono=1.0-SQR(lam[1]/lam[0]);
+    double x[2]={0},P[2],c_iono=1.0-SQR(lam1/lam0);
     int i,sat,slip;
     
     for (i=0;i<n;i++) {
@@ -187,7 +192,9 @@ static int res_iono(const obsd_t *obs, int n, const nav_t *nav,
                     const double *azel, const pcv_t *pcv, const ekf_t *ekf,
                     double *phw, double *v, double *H, double *R)
 {
-    double *sig,P1,P2,L1,L2,c_iono=1.0-SQR(lam[1]/lam[0]);
+    double lam0=CLIGHT*sat2freq(obs->sat,obs->code[0],nav);
+    double lam1=CLIGHT*sat2freq(obs->sat,obs->code[1],nav);
+    double *sig,P1,P2,L1,L2,c_iono=1.0-SQR(lam1/lam0);
     double LG,PG,antdel[3]={0},dant[NFREQ]={0};
     int i,j,nv=0,sat;
     
@@ -200,17 +207,17 @@ static int res_iono(const obsd_t *obs, int n, const nav_t *nav,
         
         /* ionosphere-LC model */
         LG=-c_iono*ekf->x[II(sat)]+ekf->x[IB(sat)];
-        PG= c_iono*ekf->x[II(sat)]+nav->cbias[sat-1][0];
+        PG= c_iono*ekf->x[II(sat)]+nav->cbias[sat-1][0][0];
         
         /* receiver antenna phase center offset and variation */
         if (pcv) {
-            antmodel(pcv,antdel,azel+i*2,dant);
+            antmodel(pcv,antdel,azel+i*2,0,dant);
             LG+=dant[0]-dant[1];
             PG+=dant[0]-dant[1];
         }
         /* phase windup correction */
         windupcorr(obs[i].time,rs+i*6,rr,phw+obs[i].sat-1);
-        LG+=(lam[0]-lam[1])*phw[obs[i].sat-1];
+        LG+=(lam0-lam1)*phw[obs[i].sat-1];
         
         /* residuals of ionosphere (geometriy-free) LC */
         v[nv  ]=(L1-L2)-LG;
@@ -310,7 +317,7 @@ static int est_iono(obs_t *obs, nav_t *nav, const pcv_t *pcv, double *rr,
             fprintf(stderr,"filter error: info=%d\n",info);
             break;
         }
-        /* output ionopshere parameters */
+        /* output ionosphere parameters */
         if (tint<=0.0||fmod(time2gpst(time,NULL)+0.005,tint)<0.01) {
             out_iono(obs->data[i].time,ekf,sstat,fp);
         }
@@ -388,13 +395,13 @@ int main(int argc, char **argv)
         }
     }
     /* read p1-c1 dcb parameters */
-    if (*dfile) readdcb(dfile,&nav);
+    if (*dfile) readdcb(dfile,&nav,NULL);
     
     /* set p1-p2 dcb parameters */
     for (i=0;i<MAXSAT;i++) {
         for (j=0;j<nav.n;j++) {
             if (nav.eph[j].sat!=i+1) continue;
-            nav.cbias[i][0]=nav.eph[j].tgd[0]*CLIGHT;
+            nav.cbias[i][0][0]=nav.eph[j].tgd[0]*CLIGHT;
             break;
         }
     }

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------
-* rtklib unit test driver : atomospheric models
+* rtklib unit test driver : atmospheric models
 *-----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <assert.h>

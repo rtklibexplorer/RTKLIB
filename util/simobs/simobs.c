@@ -68,7 +68,8 @@ static void printhelp(void)
     int i;
     for (i=0;i<(int)(sizeof(help)/sizeof(*help));i++) fprintf(stderr,"%s\n",help[i]);
     exit(0);
-};
+}
+
 /* processing options --------------------------------------------------------*/
 typedef struct {        /* processing options type */
     gtime_t ts;
@@ -95,7 +96,7 @@ static double randn(double myu, double sig)
   a=((double)rand()+1.0)/((double)RAND_MAX+1.0);  /* 0<a<=1 */
   b=((double)rand()+1.0)/((double)RAND_MAX+1.0);  /* 0<b<=1 */
   return myu+sqrt(-2.0*log(a))*sin(2.0*PI*b)*sig;
-};
+}
 
 /* set string without tail space ---------------------------------------------*/
 static void setstr(char *dst, const char *src, int n)
@@ -105,7 +106,7 @@ static void setstr(char *dst, const char *src, int n)
   while (*q&&q<src+n) *p++=*q++;
   *p--='\0';
   while (p>=dst&&*p==' ') *p--='\0';
-};
+}
 
 /* set signal mask -----------------------------------------------------------*/
 static void setmask(const char *argv, rnxopt_t *opt, int mask)
@@ -128,7 +129,7 @@ static void setmask(const char *argv, rnxopt_t *opt, int mask)
       opt->mask[i][code-1]=mask?'1':'0';
     };
   };
-};
+}
 
 /*
  * GPS,GLO,GAL,QZS,SBS,CMP,IRN
@@ -144,7 +145,8 @@ static int sys2idx(int sys) {
     case(SYS_IRN): return 6;
     default      : return -1;
   };
-};
+}
+
 /* generate snr --------------------------------------------------------------*/
 static double snrmodel(const double *azel, uint8_t code)
 {
@@ -154,14 +156,14 @@ static double snrmodel(const double *azel, uint8_t code)
   int j;
   j=(int)(azel[1]*R2D/5.0);
   return snrs[j] + randn(0.0,sdvs[j]) - (code==CODE_L1W||code==CODE_L2W? 10: 0);
-};
+}
 
 /* generate errors------------------------------------------------------------*/
 static void errmodel(const double *azel, double *ecp, double *epr)
 {
   ecp[0]=randn(0.0,errcp1)+randn(0.0,errcp2)/sin(azel[1]);
   epr[0]=randn(0.0,errpr1)+randn(0.0,errpr2)/sin(azel[1]);
-};
+}
 
 /* generate simulated observation data ---------------------------------------*/
 static int simobs(simopt_t simopt, rnxopt_t rnxopt, nav_t *nav, obs_t *obs) {
@@ -308,7 +310,7 @@ static int simobs(simopt_t simopt, rnxopt_t rnxopt, nav_t *nav, obs_t *obs) {
 
   return 1;
 
-};
+}
 
 /* simobs main ---------------------------------------------------------------*/
 int main(int argc, char **argv) {
@@ -484,7 +486,7 @@ int main(int argc, char **argv) {
       simopt.tidecorr = 5;
     }
     else if (!strcmp(argv[i],"-x")&&i+1<argc) {
-      simopt.trace = argv[++i];
+      simopt.trace=atoi(argv[++i]);
     }
     else if (*argv[i]=='-') {
       printhelp();
@@ -644,4 +646,4 @@ int main(int argc, char **argv) {
 
   return 0;
 
-};
+}

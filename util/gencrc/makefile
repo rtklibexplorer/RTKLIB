@@ -1,7 +1,5 @@
 # makefile for gencrc
 
-BINDIR = /usr/local/bin
-SRC    = ../../../src
 CFLAGS = -std=c99 -Wall -O3 -pedantic
 LDLIBS  = -lm
 

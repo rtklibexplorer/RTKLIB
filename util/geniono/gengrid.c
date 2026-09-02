@@ -156,7 +156,7 @@ int main(int argc, char **argv)
     /* read stec file */
     stec_read(ifile,&nav);
     
-    if (nav.nn<=0) {
+    if (nav.nt<=0) {
         fprintf(stderr,"stec file open error: %s\n",ifile);
         return -1;
     }

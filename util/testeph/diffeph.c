@@ -51,17 +51,6 @@ static void updatertcm(gtime_t time, rtcm_t *rtcm, nav_t *nav, FILE *fp)
     }
     for (i=0;i<MAXSAT;i++) nav->ssr[i]=rtcm->ssr[i];
 }
-/* update lex ephemeris ------------------------------------------------------*/
-static int updatelex(int index, gtime_t time, lex_t *lex, nav_t *nav)
-{
-    gtime_t tof;
-    
-    for (;index<lex->n;index++) {
-        if (!lexupdatecorr(lex->msgs+index,nav,&tof)) continue;
-        if (timediff(tof,time)>=0.0) break;
-    }
-    return index;
-}
 /* print difference ----------------------------------------------------------*/
 static void printephdiff(gtime_t time, int sat, int eph1, int eph2,
                          const nav_t *nav1, const nav_t *nav2, int topt,
@@ -126,7 +115,6 @@ int main(int argc, char **argv)
     FILE *fp=NULL;
     nav_t nav={0},nav2={0};
     rtcm_t rtcm;
-    lex_t lex={0};
     gtime_t t0,time;
     double ep0[]={2000,1,1,0,0,0},tspan=24.0,tint=300,pos[]={0};
     int i,s,n=0,nx=0,sat=0,topt=0,eopt=0,mopt=0,trl=0,index=0;
@@ -177,12 +165,12 @@ int main(int argc, char **argv)
     for (i=0;i<n;i++) {
         if (!(ext=strrchr(files[i],'.'))) ext="";
         if (!strcmp(ext,".sp3")||!strcmp(ext,".SP3")||
-           !strcmp(ext,".eph")||!strcmp(ext,".EPH")) {
+            !strcmp(ext,".eph")||!strcmp(ext,".EPH")) {
            if (nav.ne>0) {
-               readsp3(files[i],&nav2); /* second precise ephemeris */
+               readsp3(files[i],&nav2,0); /* second precise ephemeris */
            }
            else {
-               readsp3(files[i],&nav);
+               readsp3(files[i],&nav,0);
            }
         }
         else if (!strcmp(ext,".atx")) {
@@ -191,12 +179,6 @@ int main(int argc, char **argv)
         else if (!strcmp(ext,".rtcm3")||!strcmp(ext,".log")) {
            if (!(fp=fopen(files[i],"rb"))) {
                fprintf(stderr,"file open error: %s\n",files[i]);
-               return -1;
-           }
-        }
-        else if (!strcmp(ext,".lex")) {
-           if (!lexreadmsg(files[i],0,&lex)) {
-               fprintf(stderr,"file read error: %s\n",files[i]);
                return -1;
            }
         }
@@ -221,9 +203,6 @@ int main(int argc, char **argv)
        if (fp) {
            updatertcm(time,&rtcm,&nav,fp);
        }
-       else if (lex.n>0) {
-           index=updatelex(index,time,&lex,&nav);
-       }  
        for (s=1;s<=MAXSAT;s++) {
            if (sat&&s!=sat) continue;
            

@@ -448,7 +448,7 @@ static void procpos(FILE *fp, FILE *fptm, const prcopt_t *popt, const solopt_t *
 
     solstatic=sopt->solstatic&&
               (popt->mode==PMODE_STATIC||popt->mode==PMODE_STATIC_START||popt->mode==PMODE_PPP_STATIC);
-    
+
     rtcm_path[0]='\0';
 
     while ((nobs=inputobs(obs_ptr,rtk->sol.stat,popt))>=0) {
@@ -847,7 +847,6 @@ static int avepos(double *ra, int rcv, const obs_t *obs, const nav_t *nav,
     for (i=0;i<3;i++) ra[i]/=n;
     return 1;
 }
-
 /* antenna phase center position ---------------------------------------------*/
 static int antpos(prcopt_t *opt, int rcvno, const obs_t *obs, const nav_t *nav,
                   const sta_t *stas, const char *posfile)
@@ -1437,6 +1436,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
                     /* include next day precise ephemeris or rinex brdc nav */
                     ttte=tte;
                     if (ext&&(!strcmp(ext,".sp3")||!strcmp(ext,".SP3")||
+                              !strcmp(ext,".clk")||!strcmp(ext,".CLK")||
                               !strcmp(ext,".eph")||!strcmp(ext,".EPH"))) {
                         ttte=timeadd(ttte,3600.0);
                     }
