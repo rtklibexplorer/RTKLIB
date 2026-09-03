@@ -793,7 +793,7 @@ static int sync_stq(uint8_t *buff, uint8_t data)
 *          -INVCP     : inverse polarity of carrier-phase
 *
 *-----------------------------------------------------------------------------*/
-extern int input_stq(raw_t *raw, uint8_t data)
+int input_stq(raw_t *raw, uint8_t data)
 {
     trace(5,"input_stq: data=%02x\n",data);
     
@@ -824,7 +824,7 @@ extern int input_stq(raw_t *raw, uint8_t data)
 *          FILE   *fp       I   file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_stqf(raw_t *raw, FILE *fp)
+int input_stqf(raw_t *raw, FILE *fp)
 {
     int i,data;
     
@@ -865,7 +865,7 @@ extern int input_stqf(raw_t *raw, FILE *fp)
 * return : length of binary message (0: error)
 * note   : see reference [1][2][3][4] for details.
 *-----------------------------------------------------------------------------*/
-extern int gen_stq(const char *msg, uint8_t *buff)
+int gen_stq(const char *msg, uint8_t *buff)
 {
     const char *hz[]={"1Hz","2Hz","4Hz","5Hz","10Hz","20Hz",""};
     uint8_t *q=buff;

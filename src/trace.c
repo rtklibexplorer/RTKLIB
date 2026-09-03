@@ -34,7 +34,7 @@ static void traceswap(void)
     }
     rtklib_unlock(&lock_trace);
 }
-extern void traceopen(const char *file)
+void traceopen(const char *file)
 {
     gtime_t time = utc2gpst(timeget());
     char path[1024];
@@ -46,15 +46,15 @@ extern void traceopen(const char *file)
     time_trace = time;
     rtklib_initlock(&lock_trace);
 }
-extern void traceclose(void)
+void traceclose(void)
 {
     if (fp_trace && fp_trace != stderr) fclose(fp_trace);
     fp_trace = NULL;
     file_trace[0] = '\0';
 }
-extern void tracelevel(int level) { level_trace = level; }
-extern int gettracelevel(void) { return level_trace; }
-extern void trace_impl(int level, const char *format, ...)
+void tracelevel(int level) { level_trace = level; }
+int gettracelevel(void) { return level_trace; }
+void trace_impl(int level, const char *format, ...)
 {
     va_list ap;
 
@@ -72,7 +72,7 @@ extern void trace_impl(int level, const char *format, ...)
     va_end(ap);
     fflush(fp_trace);
 }
-extern void tracet_impl(int level, const char *format, ...)
+void tracet_impl(int level, const char *format, ...)
 {
     va_list ap;
 
@@ -84,14 +84,14 @@ extern void tracet_impl(int level, const char *format, ...)
     va_end(ap);
     fflush(fp_trace);
 }
-extern void tracemat_impl(int level, const double *A, int n, int m, int p,
+void tracemat_impl(int level, const double *A, int n, int m, int p,
                           int q)
 {
     if (!fp_trace || level > level_trace) return;
     matfprint(A, n, m, p, q, fp_trace);
     fflush(fp_trace);
 }
-extern void traceobs_impl(int level, const obsd_t *obs, int n)
+void traceobs_impl(int level, const obsd_t *obs, int n)
 {
     char str[40], id[8];
     int i;
@@ -110,7 +110,7 @@ extern void traceobs_impl(int level, const obsd_t *obs, int n)
     }
     fflush(fp_trace);
 }
-extern void tracenav_impl(int level, const nav_t *nav)
+void tracenav_impl(int level, const nav_t *nav)
 {
     char s1[40], s2[40], id[8];
     int i;
@@ -130,7 +130,7 @@ extern void tracenav_impl(int level, const nav_t *nav)
     fprintf(fp_trace, "(ion) %9.4e %9.4e %9.4e %9.4e\n", nav->ion_gal[0],
             nav->ion_gal[1], nav->ion_gal[2], nav->ion_gal[3]);
 }
-extern void tracegnav_impl(int level, const nav_t *nav)
+void tracegnav_impl(int level, const nav_t *nav)
 {
     char s1[40], s2[40], id[8];
     int i;
@@ -145,7 +145,7 @@ extern void tracegnav_impl(int level, const nav_t *nav)
                 nav->geph[i].taun * 1E6);
     }
 }
-extern void tracehnav_impl(int level, const nav_t *nav)
+void tracehnav_impl(int level, const nav_t *nav)
 {
     char s1[40], s2[40], id[8];
     int i;
@@ -159,7 +159,7 @@ extern void tracehnav_impl(int level, const nav_t *nav)
                 nav->seph[i].svh, nav->seph[i].sva);
     }
 }
-extern void tracepeph_impl(int level, const nav_t *nav)
+void tracepeph_impl(int level, const nav_t *nav)
 {
     char s[40], id[8];
     int i, j;
@@ -181,7 +181,7 @@ extern void tracepeph_impl(int level, const nav_t *nav)
         }
     }
 }
-extern void tracepclk_impl(int level, const nav_t *nav)
+void tracepclk_impl(int level, const nav_t *nav)
 {
     char s[40], id[8];
     int i, j;
@@ -198,7 +198,7 @@ extern void tracepclk_impl(int level, const nav_t *nav)
         }
     }
 }
-extern void traceb_impl(int level, const uint8_t *p, int n)
+void traceb_impl(int level, const uint8_t *p, int n)
 {
     int i;
     if (!fp_trace || level > level_trace) return;

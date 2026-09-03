@@ -1380,7 +1380,7 @@ static int sync_oem3(uint8_t *buff, uint8_t data)
 *          -GALFNAV: select F/NAV for Galileo ephemeris (default: all)
 *          -GLOBIAS=bias: GLONASS code-phase bias (m)
 *-----------------------------------------------------------------------------*/
-extern int input_oem4(raw_t *raw, uint8_t data)
+int input_oem4(raw_t *raw, uint8_t data)
 {
     trace(5,"input_oem4: data=%02x\n",data);
     
@@ -1408,7 +1408,7 @@ extern int input_oem4(raw_t *raw, uint8_t data)
 *          uint8_t data     I   stream data (1 byte)
 * return : same as above
 *-----------------------------------------------------------------------------*/
-extern int input_oem3(raw_t *raw, uint8_t data)
+int input_oem3(raw_t *raw, uint8_t data)
 {
     trace(5,"input_oem3: data=%02x\n",data);
     
@@ -1436,7 +1436,7 @@ extern int input_oem3(raw_t *raw, uint8_t data)
 *          FILE   *fp       I   file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_oem4f(raw_t *raw, FILE *fp)
+int input_oem4f(raw_t *raw, FILE *fp)
 {
     int i,data;
     
@@ -1470,7 +1470,7 @@ extern int input_oem4f(raw_t *raw, FILE *fp)
 *          FILE   *fp       I   file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_oem3f(raw_t *raw, FILE *fp)
+int input_oem3f(raw_t *raw, FILE *fp)
 {
     int i,data;
     

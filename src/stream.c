@@ -2689,7 +2689,7 @@ static int statexmembuf(const membuf_t *membuf, char *msg)
 * args   : none
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strinitcom(void)
+void strinitcom(void)
 {
 #ifdef WIN32
     WSADATA data;
@@ -2705,7 +2705,7 @@ extern void strinitcom(void)
 * args   : stream_t *stream IO  stream
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strinit(stream_t *stream)
+void strinit(stream_t *stream)
 {
     tracet(3,"strinit:\n");
     
@@ -2829,7 +2829,7 @@ extern void strinit(stream_t *stream)
 *                    tret  = download retry interval (s) (0:no retry)
 *
 *-----------------------------------------------------------------------------*/
-extern int stropen(stream_t *stream, int type, int mode, const char *path)
+int stropen(stream_t *stream, int type, int mode, const char *path)
 {
     tracet(3,"stropen: type=%d mode=%d path=%s\n",type,mode,path);
     
@@ -2864,7 +2864,7 @@ extern int stropen(stream_t *stream, int type, int mode, const char *path)
 * args   : stream_t *stream IO  stream
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strclose(stream_t *stream)
+void strclose(stream_t *stream)
 {
     tracet(3,"strclose: type=%d mode=%d\n",stream->type,stream->mode);
     
@@ -2906,7 +2906,7 @@ extern void strclose(stream_t *stream)
 * return : none
 * notes  : for replay files with time tags
 *-----------------------------------------------------------------------------*/
-extern void strsync(stream_t *stream1, stream_t *stream2)
+void strsync(stream_t *stream1, stream_t *stream2)
 {
     file_t *file1,*file2;
     if (stream1->type!=STR_FILE||stream2->type!=STR_FILE) return;
@@ -2919,8 +2919,8 @@ extern void strsync(stream_t *stream1, stream_t *stream2)
 * args   : stream_t *stream I  stream
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strlock  (stream_t *stream) {rtklib_lock  (&stream->lock);}
-extern void strunlock(stream_t *stream) {rtklib_unlock(&stream->lock);}
+void strlock  (stream_t *stream) {rtklib_lock  (&stream->lock);}
+void strunlock(stream_t *stream) {rtklib_unlock(&stream->lock);}
 
 /* read stream -----------------------------------------------------------------
 * read data from stream (unblocked)
@@ -2930,7 +2930,7 @@ extern void strunlock(stream_t *stream) {rtklib_unlock(&stream->lock);}
 * return : read data length
 * notes  : if no data, return immediately with no data
 *-----------------------------------------------------------------------------*/
-extern int strread(stream_t *stream, uint8_t *buff, int n)
+int strread(stream_t *stream, uint8_t *buff, int n)
 {
     uint32_t tick=tickget();
     char *msg=stream->msg;
@@ -2980,7 +2980,7 @@ extern int strread(stream_t *stream, uint8_t *buff, int n)
 * return : status (0:error,1:ok)
 * notes  : write data to buffer and return immediately
 *-----------------------------------------------------------------------------*/
-extern int strwrite(stream_t *stream, const uint8_t *buff, int n)
+int strwrite(stream_t *stream, const uint8_t *buff, int n)
 {
     uint32_t tick=tickget();
     char *msg=stream->msg;
@@ -3028,7 +3028,7 @@ extern int strwrite(stream_t *stream, const uint8_t *buff, int n)
 *          char   *msg      IO  status message (NULL: no output)
 * return : status (-1:error,0:close,1:wait,2:connect,3:active)
 *-----------------------------------------------------------------------------*/
-extern int strstat(stream_t *stream, char *msg)
+int strstat(stream_t *stream, char *msg)
 {
     int state=0;
     
@@ -3069,7 +3069,7 @@ extern int strstat(stream_t *stream, char *msg)
 *          char   *msg      IO  extended status message
 * return : status (-1:error,0:close,1:wait,2:connect,3:active)
 *-----------------------------------------------------------------------------*/
-extern int strstatx(stream_t *stream, char *msg)
+int strstatx(stream_t *stream, char *msg)
 {
     int state=0;
     
@@ -3112,7 +3112,7 @@ extern int strstatx(stream_t *stream, char *msg)
 *          int    *outr     IO   bps of output   (NULL: no output)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsum(stream_t *stream, int *inb, int *inr, int *outb, int *outr)
+void strsum(stream_t *stream, int *inb, int *inr, int *outb, int *outr)
 {
     tracet(4,"strsum:\n");
     
@@ -3136,7 +3136,7 @@ extern void strsum(stream_t *stream, int *inb, int *inr, int *outb, int *outr)
 *              opt[7]= reserved
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsetopt(const int *opt)
+void strsetopt(const int *opt)
 {
     tracet(3,"strsetopt: opt=%d %d %d %d %d %d %d %d\n",opt[0],opt[1],opt[2],
            opt[3],opt[4],opt[5],opt[6],opt[7]);
@@ -3154,7 +3154,7 @@ extern void strsetopt(const int *opt)
 *          int     tirecon  I   reconnect interval (ms) (0: no reconnect)
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsettimeout(stream_t *stream, int toinact, int tirecon)
+void strsettimeout(stream_t *stream, int toinact, int tirecon)
 {
     tcpcli_t *tcpcli;
     
@@ -3176,7 +3176,7 @@ extern void strsettimeout(stream_t *stream, int toinact, int tirecon)
 * args   : char   *dir      I   directory for download files
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsetdir(const char *dir)
+void strsetdir(const char *dir)
 {
     tracet(3,"strsetdir: dir=%s\n",dir);
     
@@ -3187,7 +3187,7 @@ extern void strsetdir(const char *dir)
 * args   : char   *addr     I   http/ntrip proxy address <address>:<port>
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsetproxy(const char *addr)
+void strsetproxy(const char *addr)
 {
     tracet(3,"strsetproxy: addr=%s\n",addr);
     
@@ -3198,7 +3198,7 @@ extern void strsetproxy(const char *addr)
 * args   : stream_t *stream I   stream
 * return : current time or replay time for playback file
 *-----------------------------------------------------------------------------*/
-extern gtime_t strgettime(stream_t *stream)
+gtime_t strgettime(stream_t *stream)
 {
     file_t *file;
     if (stream->type==STR_FILE&&(stream->mode&STR_MODE_R)&&
@@ -3213,7 +3213,7 @@ extern gtime_t strgettime(stream_t *stream)
 *          sol_t *sol       I   solution
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsendnmea(stream_t *stream, const sol_t *sol)
+void strsendnmea(stream_t *stream, const sol_t *sol)
 {
     uint8_t buff[1024];
     int n;
@@ -3269,7 +3269,7 @@ static int set_brate(stream_t *str, int brate)
 *          char   *cmd      I   receiver command strings
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsendcmd(stream_t *str, const char *cmd)
+void strsendcmd(stream_t *str, const char *cmd)
 {
     uint8_t buff[1024];
     const char *p=cmd,*q;

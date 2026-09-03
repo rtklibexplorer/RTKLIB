@@ -784,7 +784,7 @@ static void readsolopt(FILE *fp, solopt_t *opt)
 *          solbuf_t *solbuf IO solution buffer
 * return : status (1:solution received,0:no solution,-1:disconnect received)
 *-----------------------------------------------------------------------------*/
-extern int inputsol(uint8_t data, gtime_t ts, gtime_t te, double tint,
+int inputsol(uint8_t data, gtime_t ts, gtime_t te, double tint,
                     int qflag, const solopt_t *opt, solbuf_t *solbuf)
 {
     sol_t sol={{0}};
@@ -875,7 +875,7 @@ static int sort_solbuf(solbuf_t *solbuf)
 *          solbuf_t *solbuf O  solution buffer
 * return : status (1:ok,0:no data or error)
 *-----------------------------------------------------------------------------*/
-extern int readsolt(const char *files[], int nfile, gtime_t ts, gtime_t te,
+int readsolt(const char *files[], int nfile, gtime_t ts, gtime_t te,
                     double tint, int qflag, int mean, solbuf_t *solbuf)
 {
     FILE *fp;
@@ -923,7 +923,7 @@ extern int readsolt(const char *files[], int nfile, gtime_t ts, gtime_t te,
     }
     return sort_solbuf(solbuf);
 }
-extern int readsol(const char *files[], int nfile, solbuf_t *sol)
+int readsol(const char *files[], int nfile, solbuf_t *sol)
 {
     gtime_t time={0};
     
@@ -937,7 +937,7 @@ extern int readsol(const char *files[], int nfile, solbuf_t *sol)
 *          sol_t  *sol      I  solution data
 * return : status (1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int addsol(solbuf_t *solbuf, const sol_t *sol)
+int addsol(solbuf_t *solbuf, const sol_t *sol)
 {
     sol_t *solbuf_data;
     
@@ -972,7 +972,7 @@ extern int addsol(solbuf_t *solbuf, const sol_t *sol)
 *          int    index     I  index of solution (0...)
 * return : solution data pointer (NULL: no solution, out of range)
 *-----------------------------------------------------------------------------*/
-extern sol_t *getsol(solbuf_t *solbuf, int index)
+sol_t *getsol(solbuf_t *solbuf, int index)
 {
     trace(4,"getsol: index=%d\n",index);
     
@@ -989,7 +989,7 @@ extern sol_t *getsol(solbuf_t *solbuf, int index)
 *          int    nmax      I  initial number of solution data
 * return : status (1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern void initsolbuf(solbuf_t *solbuf, int cyclic, int nmax)
+void initsolbuf(solbuf_t *solbuf, int cyclic, int nmax)
 {
     int i;
     
@@ -1019,7 +1019,7 @@ extern void initsolbuf(solbuf_t *solbuf, int cyclic, int nmax)
 * args   : solbuf_t *solbuf I  solution buffer
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void freesolbuf(solbuf_t *solbuf)
+void freesolbuf(solbuf_t *solbuf)
 {
     int i;
     
@@ -1032,7 +1032,7 @@ extern void freesolbuf(solbuf_t *solbuf)
         solbuf->rb[i]=0.0;
     }
 }
-extern void freesolstatbuf(solstatbuf_t *solstatbuf)
+void freesolstatbuf(solstatbuf_t *solstatbuf)
 {
     trace(3,"freesolstatbuf: n=%d\n",solstatbuf->n);
     
@@ -1164,7 +1164,7 @@ static int readsolstatdata(FILE *fp, gtime_t ts, gtime_t te, double tint,
 *          solstatbuf_t *statbuf O  solution status buffer
 * return : status (1:ok,0:no data or error)
 *-----------------------------------------------------------------------------*/
-extern int readsolstatt(const char *files[], int nfile, gtime_t ts, gtime_t te,
+int readsolstatt(const char *files[], int nfile, gtime_t ts, gtime_t te,
                         double tint, solstatbuf_t *statbuf)
 {
     FILE *fp;
@@ -1195,7 +1195,7 @@ extern int readsolstatt(const char *files[], int nfile, gtime_t ts, gtime_t te,
     }
     return sort_solstat(statbuf);
 }
-extern int readsolstat(const char *files[], int nfile, solstatbuf_t *statbuf)
+int readsolstat(const char *files[], int nfile, solstatbuf_t *statbuf)
 {
     gtime_t time={0};
     
@@ -1299,7 +1299,7 @@ static int outenu(uint8_t *buff, const char *s, const sol_t *sol,
     return (int)(p-(char *)buff);
 }
 /* output solution in the form of NMEA RMC sentence --------------------------*/
-extern int outnmea_rmc(uint8_t *buff, const sol_t *sol)
+int outnmea_rmc(uint8_t *buff, const sol_t *sol)
 {
     static double dirp=0.0;
     gtime_t time;
@@ -1344,7 +1344,7 @@ extern int outnmea_rmc(uint8_t *buff, const sol_t *sol)
     return (int)(p-(char *)buff);
 }
 /* output solution in the form of NMEA GGA sentence --------------------------*/
-extern int outnmea_gga(uint8_t *buff, const sol_t *sol)
+int outnmea_gga(uint8_t *buff, const sol_t *sol)
 {
     gtime_t time;
     double h,ep[6],pos[3],dms1[3],dms2[3],dop=1.0;
@@ -1378,7 +1378,7 @@ extern int outnmea_gga(uint8_t *buff, const sol_t *sol)
     return (int)(p-(char *)buff);
 }
 // Output NMEA GST sentence (Estimated error in position) ----------------------
-extern int outnmea_gst(uint8_t *buff, const sol_t *sol)
+int outnmea_gst(uint8_t *buff, const sol_t *sol)
 {
     trace(3,"outnmea_gst:\n");
 
@@ -1443,7 +1443,7 @@ extern int outnmea_gst(uint8_t *buff, const sol_t *sol)
     return (int)(p - (char *)buff);
 }
 /* output solution in the form of NMEA GSA sentences -------------------------*/
-extern int outnmea_gsa(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
+int outnmea_gsa(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 {
     double azel[MAXSAT*2],dop[4];
     char *p=(char *)buff,*q,*s,sum;
@@ -1491,7 +1491,7 @@ extern int outnmea_gsa(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
     return (int)(p-(char *)buff);
 }
 /* output solution in the form of NMEA GSV sentences -------------------------*/
-extern int outnmea_gsv(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
+int outnmea_gsv(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 {
     (void)sol;
     double az,el,snr;
@@ -1536,7 +1536,7 @@ extern int outnmea_gsv(uint8_t *buff, const sol_t *sol, const ssat_t *ssat)
 *          prcopt_t *opt    I   processing options
 * return : number of output bytes
 *-----------------------------------------------------------------------------*/
-extern int outprcopts(uint8_t *buff, const prcopt_t *opt)
+int outprcopts(uint8_t *buff, const prcopt_t *opt)
 {
     const int sys[]={
         SYS_GPS,SYS_GLO,SYS_GAL,SYS_QZS,SYS_CMP,SYS_IRN,SYS_SBS,0
@@ -1630,7 +1630,7 @@ extern int outprcopts(uint8_t *buff, const prcopt_t *opt)
 *          solopt_t *opt    I   solution options
 * return : number of output bytes
 *-----------------------------------------------------------------------------*/
-extern int outsolheads(uint8_t *buff, const solopt_t *opt)
+int outsolheads(uint8_t *buff, const solopt_t *opt)
 {
     const char *s1[]={"WGS84","Tokyo"},*s2[]={"ellipsoidal","geodetic"};
     const char *s3[]={"GPST","UTC ","JST "},*sep=opt2sep(opt);
@@ -1722,7 +1722,7 @@ static double sol_std(const sol_t *sol)
 *          solopt_t *opt    I   solution options
 * return : number of output bytes
 *-----------------------------------------------------------------------------*/
-extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
+int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
                    const solopt_t *opt)
 {
     gtime_t time,ts={0};
@@ -1780,7 +1780,7 @@ extern int outsols(uint8_t *buff, const sol_t *sol, const double *rb,
 * return : number of output bytes
 * notes  : only support nmea
 *-----------------------------------------------------------------------------*/
-extern int outsolexs(uint8_t *buff, const sol_t *sol, const ssat_t *ssat,
+int outsolexs(uint8_t *buff, const sol_t *sol, const ssat_t *ssat,
                      const solopt_t *opt)
 {
     gtime_t ts={0};
@@ -1806,7 +1806,7 @@ extern int outsolexs(uint8_t *buff, const sol_t *sol, const ssat_t *ssat,
 *          prcopt_t *opt    I   processing options
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void outprcopt(FILE *fp, const prcopt_t *opt)
+void outprcopt(FILE *fp, const prcopt_t *opt)
 {
     uint8_t buff[MAXSOLMSG+1];
     int n;
@@ -1823,7 +1823,7 @@ extern void outprcopt(FILE *fp, const prcopt_t *opt)
 *          solopt_t *opt    I   solution options
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void outsolhead(FILE *fp, const solopt_t *opt)
+void outsolhead(FILE *fp, const solopt_t *opt)
 {
     uint8_t buff[MAXSOLMSG+1];
     int n;
@@ -1842,7 +1842,7 @@ extern void outsolhead(FILE *fp, const solopt_t *opt)
 *          solopt_t *opt    I   solution options
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void outsol(FILE *fp, const sol_t *sol, const double *rb,
+void outsol(FILE *fp, const sol_t *sol, const double *rb,
                    const solopt_t *opt)
 {
     uint8_t buff[MAXSOLMSG+1];
@@ -1863,7 +1863,7 @@ extern void outsol(FILE *fp, const sol_t *sol, const double *rb,
 * return : output size (bytes)
 * notes  : only support nmea
 *-----------------------------------------------------------------------------*/
-extern void outsolex(FILE *fp, const sol_t *sol, const ssat_t *ssat,
+void outsolex(FILE *fp, const sol_t *sol, const ssat_t *ssat,
                      const solopt_t *opt)
 {
     uint8_t buff[MAXSOLMSG+1];

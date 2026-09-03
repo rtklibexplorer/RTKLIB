@@ -201,7 +201,7 @@ static double prange(const obsd_t *obs, const nav_t *nav, const prcopt_t *opt,
 *          double *var      O   ionospheric delay (L1) variance (m^2)
 * return : status(1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
+int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
                     const double *azel, int ionoopt, double *ion, double *var)
 {
     int err=0;
@@ -248,7 +248,7 @@ extern int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
 *          double *var      O   tropospheric delay variance (m^2)
 * return : status(1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int tropcorr(gtime_t time, const nav_t *nav, const double *pos,
+int tropcorr(gtime_t time, const nav_t *nav, const double *pos,
                     const double *azel, int tropopt, double *trp, double *var)
 {
     (void)nav;
@@ -643,7 +643,7 @@ static void estvel(const obsd_t *obs, int n, const double *rs, const double *dts
 *          char   *msg      O   error message for error exit
 * return : status(1:ok,0:error)
 *-----------------------------------------------------------------------------*/
-extern int pntpos(const obsd_t *obs, int n, const nav_t *nav,
+int pntpos(const obsd_t *obs, int n, const nav_t *nav,
                   const prcopt_t *opt, sol_t *sol, double *azel, ssat_t *ssat,
                   char *msg)
 {

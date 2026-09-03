@@ -1199,7 +1199,7 @@ static int sync_bnx(uint8_t *buff, uint8_t data)
 *          -GALINAV : select I/NAV for Galileo ephemeris (default: all)
 *          -GALFNAV : select F/NAV for Galileo ephemeris (default: all)
 *-----------------------------------------------------------------------------*/
-extern int input_bnx(raw_t *raw, uint8_t data)
+int input_bnx(raw_t *raw, uint8_t data)
 {
     uint32_t len;
     int len_h,len_c;
@@ -1238,7 +1238,7 @@ extern int input_bnx(raw_t *raw, uint8_t data)
 *          FILE   *fp       I   file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_bnxf(raw_t *raw, FILE *fp)
+int input_bnxf(raw_t *raw, FILE *fp)
 {
     uint32_t len;
     int i,data,len_h,len_c;
