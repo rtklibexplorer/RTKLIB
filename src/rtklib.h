@@ -1709,8 +1709,8 @@ EXPORT int decode_irn_nav(const uint8_t *buff, eph_t *eph, double *ion,
 
 EXPORT int init_raw   (raw_t *raw, int format);
 EXPORT void free_raw  (raw_t *raw);
-EXPORT int input_raw  (raw_t *raw, int format, uint8_t data);
-EXPORT int input_rawf (raw_t *raw, int format, FILE *fp);
+EXPORT int input_raw  (raw_t *raw, uint8_t data);
+EXPORT int input_rawf (raw_t *raw, FILE *fp);
 
 EXPORT int init_rt17  (raw_t *raw);
 EXPORT int init_sbf   (raw_t *raw);
