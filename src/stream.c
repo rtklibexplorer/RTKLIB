@@ -1906,6 +1906,7 @@ static ntripc_t *openntripc(const char *path, char *msg)
     if (!(ntripc=(ntripc_t *)malloc(sizeof(ntripc_t)))) return NULL;
     
     ntripc->state=0;
+    ntripc->type=0;
     ntripc->mntpnt[0]=ntripc->user[0]=ntripc->passwd[0]=ntripc->srctbl[0]='\0';
     for (i=0;i<MAXCLI;i++) {
         ntripc->con[i].state=0;

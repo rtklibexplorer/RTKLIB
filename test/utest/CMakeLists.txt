@@ -1,6 +1,11 @@
 
 set(RTKLBI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 
+add_executable(t_ntripc t_ntripc.c)
+target_link_libraries(t_ntripc rtklib)
+add_test(NAME ntripc_status_test COMMAND t_ntripc)
+set_tests_properties(ntripc_status_test PROPERTIES TIMEOUT 10)
+
 add_executable(t_matrix t_matrix.c ${RTKLBI_DIR}/rtkcmn.c ${RTKLBI_DIR}/trace.c ${RTKLBI_DIR}/preceph.c)
 target_link_libraries(t_matrix m lapack blas)
 
