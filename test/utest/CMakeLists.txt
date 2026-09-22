@@ -1,6 +1,19 @@
 
 set(RTKLBI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 
+# The deterministic command/thread test doubles use POSIX APIs.
+if(UNIX)
+    add_executable(t_ftp_lifecycle t_ftp_lifecycle.c)
+    target_link_libraries(t_ftp_lifecycle rtklib)
+    foreach(protocol ftp http)
+        foreach(scenario inactive cached missing-directory create-error close-active success error)
+            add_test(NAME ftp_${protocol}_${scenario}
+                     COMMAND t_ftp_lifecycle ${scenario} ${protocol})
+            set_tests_properties(ftp_${protocol}_${scenario} PROPERTIES TIMEOUT 15)
+        endforeach()
+    endforeach()
+endif()
+
 add_executable(t_matrix t_matrix.c ${RTKLBI_DIR}/rtkcmn.c ${RTKLBI_DIR}/trace.c ${RTKLBI_DIR}/preceph.c)
 target_link_libraries(t_matrix m lapack blas)
 

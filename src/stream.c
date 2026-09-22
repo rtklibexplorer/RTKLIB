@@ -260,6 +260,9 @@ typedef struct {            /* ftp download control type */
     int topts[4];           /* time options {poff,tint,toff,tretry} (s) */
     gtime_t tnext;          /* next retry time (gpst) */
     rtklib_thread_t thread; /* download thread */
+    int thread_started;    /* joinable worker (owned by stream API thread) */
+    rtklib_lock_t lock;     /* protects worker state, error and result */
+    gtime_t time;           /* download time captured before worker starts */
 } ftp_t;
 
 typedef struct {            /* memory buffer type */
@@ -2396,6 +2399,27 @@ static gtime_t nextdltime(const int *topts, int stat)
     
     return time;
 }
+/* publish download result --------------------------------------------------*/
+static void finishftp(ftp_t *ftp, int error, const char *local)
+{
+    rtklib_lock(&ftp->lock);
+    ftp->error=error;
+    if (local) strcpy(ftp->local,local);
+    ftp->state=error?3:2;
+    rtklib_unlock(&ftp->lock);
+}
+/* reap worker; caller holds the stream lock, never the download lock ---------*/
+static void waitftp(ftp_t *ftp)
+{
+    if (!ftp->thread_started) return;
+#ifdef WIN32
+    WaitForSingleObject(ftp->thread,INFINITE);
+    CloseHandle(ftp->thread);
+#else
+    pthread_join(ftp->thread,NULL);
+#endif
+    ftp->thread_started=0;
+}
 /* ftp thread ----------------------------------------------------------------*/
 #ifdef WIN32
 static DWORD WINAPI ftpthread(void *arg)
@@ -2414,12 +2438,11 @@ static void *ftpthread(void *arg)
     
     if (!*localdir) {
         tracet(2,"no local directory\n");
-        ftp->error=11;
-        ftp->state=3;
+        finishftp(ftp,11,NULL);
         return 0;
     }
     /* replace keyword in file path and local path */
-    time=timeadd(utc2gpst(timeget()),ftp->topts[0]);
+    time=ftp->time;
     reppath(ftp->file,remote,time,"","");
     
     if ((p=strrchr(remote,'/'))) p++; else p=remote;
@@ -2435,9 +2458,8 @@ static void *ftpthread(void *arg)
     }
     if ((fp=fopen(tmpfile,"rb"))) {
         fclose(fp);
-        sprintf(ftp->local,"%.1023s",tmpfile);
-        tracet(3,"ftpthread: file exists %s\n",ftp->local);
-        ftp->state=2;
+        tracet(3,"ftpthread: file exists %s\n",tmpfile);
+        finishftp(ftp,0,tmpfile);
         return 0;
     }
     /* proxy settings for wget (ref [2]) */
@@ -2464,8 +2486,7 @@ static void *ftpthread(void *arg)
     if ((ret=execcmd(cmd))) {
         remove(local);
         tracet(2,"execcmd error: cmd=%s ret=%d\n",cmd,ret);
-        ftp->error=ret;
-        ftp->state=3;
+        finishftp(ftp,ret,NULL);
         return 0;
     }
     remove(errfile);
@@ -2481,13 +2502,11 @@ static void *ftpthread(void *arg)
         }
         else {
             tracet(2,"file uncompact error: %s\n",local);
-            ftp->error=12;
-            ftp->state=3;
+            finishftp(ftp,12,NULL);
             return 0;
         }
     }
-    strcpy(ftp->local,local);
-    ftp->state=2; /* ftp completed */
+    finishftp(ftp,0,local);
     
     tracet(3,"ftpthread: complete cmd=%s\n",cmd);
     return 0;
@@ -2506,7 +2525,8 @@ static ftp_t *openftp(const char *path, int type, char *msg)
     ftp->state=0;
     ftp->proto=type;
     ftp->error=0;
-    ftp->thread=0;
+    ftp->thread_started=0;
+    rtklib_initlock(&ftp->lock);
     ftp->local[0]='\0';
     
     /* decode ftp path */
@@ -2520,9 +2540,15 @@ static ftp_t *openftp(const char *path, int type, char *msg)
 /* close ftp -----------------------------------------------------------------*/
 static void closeftp(ftp_t *ftp)
 {
+    /* A worker may still reference ftp after publishing its result. */
+    waitftp(ftp);
     tracet(3,"closeftp: state=%d\n",ftp->state);
-    
-    if (ftp->state!=1) free(ftp);
+#ifdef WIN32
+    DeleteCriticalSection(&ftp->lock);
+#else
+    pthread_mutex_destroy(&ftp->lock);
+#endif
+    free(ftp);
 }
 /* read ftp ------------------------------------------------------------------*/
 static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
@@ -2537,7 +2563,9 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
     if (timediff(time,ftp->tnext)<0.0) { /* until download time? */
         return 0;
     }
+    rtklib_lock(&ftp->lock);
     if (ftp->state<=0) { /* ftp/http not executed? */
+        ftp->time=timeadd(time,ftp->topts[0]);
         ftp->state=1;
         sprintf(msg,"%s://%s",ftp->proto?"http":"ftp",ftp->addr);
     
@@ -2549,10 +2577,18 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
             tracet(2,"readftp: ftp thread create error\n");
             ftp->state=3;
             strcpy(msg,"ftp thread error");
+            rtklib_unlock(&ftp->lock);
             return 0;
         }
+        ftp->thread_started=1;
     }
-    if (ftp->state<=1) return 0; /* ftp/http on going? */
+    if (ftp->state<=1) {
+        rtklib_unlock(&ftp->lock);
+        return 0; /* ftp/http on going */
+    }
+    rtklib_unlock(&ftp->lock);
+    waitftp(ftp);
+    rtklib_lock(&ftp->lock);
     
     if (ftp->state==3) { /* ftp error */
         sprintf(msg,"%s error (%d)",ftp->proto?"http":"ftp",ftp->error);
@@ -2560,6 +2596,7 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
         /* set next retry time */
         ftp->tnext=nextdltime(ftp->topts,0);
         ftp->state=0;
+        rtklib_unlock(&ftp->lock);
         return 0;
     }
     /* return local file path if ftp completed */
@@ -2573,19 +2610,24 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
     ftp->state=0;
     
     strcpy(msg,"");
-    
+    rtklib_unlock(&ftp->lock);
     return (int)(p-buff);
 }
 /* get state ftp -------------------------------------------------------------*/
-static int stateftp(const ftp_t *ftp)
+static int stateftp(ftp_t *ftp)
 {
-    return !ftp?0:(ftp->state==0?2:(ftp->state<=2?3:-1));
+    int state;
+    if (!ftp) return 0;
+    rtklib_lock(&ftp->lock);
+    state=ftp->state==0?2:(ftp->state<=2?3:-1);
+    rtklib_unlock(&ftp->lock);
+    return state;
 }
 /* get extended state ftp ----------------------------------------------------*/
-static int statexftp(const ftp_t *ftp, char *msg)
+static int statexftp(ftp_t *ftp, char *msg)
 {
     (void)msg;
-    return !ftp?0:(ftp->state==0?2:(ftp->state<=2?3:-1));
+    return stateftp(ftp);
 }
 /* open memory buffer --------------------------------------------------------*/
 static membuf_t *openmembuf(const char *path, char *msg)
