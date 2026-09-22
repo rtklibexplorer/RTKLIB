@@ -1,6 +1,13 @@
 
 set(RTKLBI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 
+add_executable(t_rtksvr_cleanup t_rtksvr_cleanup.c)
+target_link_libraries(t_rtksvr_cleanup rtklib)
+add_test(NAME rtksvr_cleanup_empty COMMAND t_rtksvr_cleanup 0)
+add_test(NAME rtksvr_cleanup_peph COMMAND t_rtksvr_cleanup 1)
+add_test(NAME rtksvr_cleanup_pclk COMMAND t_rtksvr_cleanup 2)
+add_test(NAME rtksvr_cleanup_both COMMAND t_rtksvr_cleanup 3)
+
 add_executable(t_matrix t_matrix.c ${RTKLBI_DIR}/rtkcmn.c ${RTKLBI_DIR}/trace.c ${RTKLBI_DIR}/preceph.c)
 target_link_libraries(t_matrix m lapack blas)
 
