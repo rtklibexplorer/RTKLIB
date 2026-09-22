@@ -482,6 +482,35 @@ static void periodic_cmd(int cycle, const char *cmd, stream_t *stream)
         if (!*q) break;
     }
 }
+/* Lifecycle calls are serialized by the caller. The worker and peek/status
+ * readers use the server lock; joins must run without holding that lock.
+ */
+static int get_server_state(strsvr_t *svr)
+{
+    int state;
+    rtklib_lock(&svr->lock);
+    state=svr->state;
+    rtklib_unlock(&svr->lock);
+    return state;
+}
+static void set_server_state(strsvr_t *svr, int state)
+{
+    rtklib_lock(&svr->lock);
+    svr->state=state;
+    rtklib_unlock(&svr->lock);
+}
+/* release streams and buffers after the worker stops, or creation fails */
+static void free_server_run(strsvr_t *svr)
+{
+    int i;
+    rtklib_lock(&svr->lock);
+    for (i=0;i<svr->nstr;i++) strclose(svr->stream+i);
+    for (i=0;i<svr->nstr;i++) strclose(svr->strlog+i);
+    svr->npb=0;
+    free(svr->buff); svr->buff=NULL;
+    free(svr->pbuf); svr->pbuf=NULL;
+    rtklib_unlock(&svr->lock);
+}
 /* stearm server thread ------------------------------------------------------*/
 #ifdef WIN32
 static DWORD WINAPI strsvrthread(void *arg)
@@ -500,11 +529,11 @@ static void *strsvrthread(void *arg)
     svr->tick=tickget();
     tick_nmea=svr->tick-1000;
     
-    for (cyc=0;svr->state;cyc++) {
+    for (cyc=0;get_server_state(svr);cyc++) {
         tick=tickget();
         
         /* read data from input stream */
-        while ((n=strread(svr->stream,svr->buff,svr->buffsize))>0&&svr->state) {
+        while ((n=strread(svr->stream,svr->buff,svr->buffsize))>0&&get_server_state(svr)) {
             
             /* write data to output streams */
             for (i=1;i<svr->nstr;i++) {
@@ -552,11 +581,7 @@ static void *strsvrthread(void *arg)
         }
         sleepms(svr->cycle-(int)(tickget()-tick));
     }
-    for (i=0;i<svr->nstr;i++) strclose(svr->stream+i);
-    for (i=0;i<svr->nstr;i++) strclose(svr->strlog+i);
-    svr->npb=0;
-    free(svr->buff); svr->buff=NULL;
-    free(svr->pbuf); svr->pbuf=NULL;
+    free_server_run(svr);
     
     return 0;
 }
@@ -648,7 +673,7 @@ extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
     
     tracet(3,"strsvrstart:\n");
     
-    if (svr->state) return 0;
+    if (get_server_state(svr)) return 0;
     
     strinitcom();
     
@@ -706,7 +731,7 @@ extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
         sleepms(100);
         strsendcmd(svr->stream+i,cmds[i]);
     }
-    svr->state=1;
+    set_server_state(svr,1);
     
     /* create stream server thread */
 #ifdef WIN32
@@ -714,10 +739,8 @@ extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
 #else
     if (pthread_create(&svr->thread,NULL,strsvrthread,svr)) {
 #endif
-        for (i=0;i<svr->nstr;i++) strclose(svr->stream+i);
-        svr->state=0;
-        free(svr->buff); free(svr->pbuf);
-        svr->buff = svr->pbuf = NULL;
+        set_server_state(svr,0);
+        free_server_run(svr);
         return 0;
     }
     return 1;
@@ -742,10 +765,10 @@ extern void strsvrstop(strsvr_t *svr, const char **cmds)
     for (i=0;i<svr->nstr;i++) {
         if (cmds[i]) strsendcmd(svr->stream+i,cmds[i]);
     }
-    svr->state=0;
+    set_server_state(svr,0);
     
 #ifdef WIN32
-    WaitForSingleObject(svr->thread,10000);
+    WaitForSingleObject(svr->thread,INFINITE);
     CloseHandle(svr->thread);
 #else
     pthread_join(svr->thread,NULL);
@@ -769,6 +792,7 @@ extern void strsvrstat(strsvr_t *svr, int *stat, int *log_stat, int *byte,
     
     tracet(4,"strsvrstat:\n");
     
+    rtklib_lock(&svr->lock);
     for (i=0;i<svr->nstr;i++) {
         if (i==0) {
             strsum(svr->stream,byte,bps,NULL,NULL);
@@ -780,6 +804,7 @@ extern void strsvrstat(strsvr_t *svr, int *stat, int *log_stat, int *byte,
         if (*s) p+=sprintf(p,"(%d) %s ",i,s);
         log_stat[i]=strstat(svr->strlog+i,s);
     }
+    rtklib_unlock(&svr->lock);
 }
 /* peek input/output stream ----------------------------------------------------
 * peek input/output stream of stream server
@@ -792,9 +817,11 @@ extern int strsvrpeek(strsvr_t *svr, uint8_t *buff, int nmax)
 {
     int n;
     
-    if (!svr->state) return 0;
-    
     rtklib_lock(&svr->lock);
+    if (!svr->state) {
+        rtklib_unlock(&svr->lock);
+        return 0;
+    }
     n=svr->npb<nmax?svr->npb:nmax;
     if (n>0) {
         memcpy(buff,svr->pbuf,n);

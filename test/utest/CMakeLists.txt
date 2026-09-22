@@ -1,6 +1,15 @@
 
 set(RTKLBI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 
+if(UNIX)
+    add_executable(t_strsvr_lifecycle t_strsvr_lifecycle.c)
+    target_link_libraries(t_strsvr_lifecycle rtklib)
+    foreach(scenario relay immediate-stop polling peek-stop create-failure)
+        add_test(NAME strsvr_lifecycle_${scenario} COMMAND t_strsvr_lifecycle ${scenario})
+        set_tests_properties(strsvr_lifecycle_${scenario} PROPERTIES TIMEOUT 15)
+    endforeach()
+endif()
+
 add_executable(t_matrix t_matrix.c ${RTKLBI_DIR}/rtkcmn.c ${RTKLBI_DIR}/trace.c ${RTKLBI_DIR}/preceph.c)
 target_link_libraries(t_matrix m lapack blas)
 
