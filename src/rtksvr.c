@@ -634,33 +634,31 @@ static void send_nmea(rtksvr_t *svr, uint32_t *tickreset)
             sol_nmea.stat, sol_nmea.ns, sol_nmea.age, sol_nmea.refstationid,
             sol_nmea.rr[0], sol_nmea.rr[1], sol_nmea.rr[2]);
 }
-/* Lifecycle calls are serialized by the caller. Status readers and the
- * worker share the server mutex; never hold it while joining the worker.
- */
-static int server_running(rtksvr_t *svr)
-{
-    int running;
+// Lifecycle calls are serialized by the caller. Status readers and the
+// worker share the server mutex; never hold it while joining the worker.
+static int server_running(rtksvr_t *svr) {
     rtksvrlock(svr);
-    running=svr->state;
+    int running = svr->state;
     rtksvrunlock(svr);
     return running;
 }
-/* release resources owned by one run, including partially initialized runs */
-static void free_server_run(rtksvr_t *svr)
-{
-    int i;
+// release resources owned by one run, including partially initialized runs
+static void free_server_run(rtksvr_t *svr) {
     rtksvrlock(svr);
-    for (i=0;i<MAXSTRRTK;i++) strclose(svr->stream+i);
-    for (i=0;i<3;i++) {
-        svr->nb[i]=svr->npb[i]=0;
-        free(svr->buff[i]); svr->buff[i]=NULL;
-        free(svr->pbuf[i]); svr->pbuf[i]=NULL;
-        free_raw (svr->raw +i);
-        free_rtcm(svr->rtcm+i);
+    for (int i = 0; i < MAXSTRRTK; i++) strclose(svr->stream + i);
+    for (int i = 0; i < 3; i++) {
+        svr->nb[i] = svr->npb[i] = 0;
+        free(svr->buff[i]);
+        svr->buff[i] = NULL;
+        free(svr->pbuf[i]);
+        svr->pbuf[i] = NULL;
+        free_raw(svr->raw + i);
+        free_rtcm(svr->rtcm + i);
     }
-    for (i=0;i<2;i++) {
-        svr->nsb[i]=0;
-        free(svr->sbuf[i]); svr->sbuf[i]=NULL;
+    for (int i = 0; i < 2; i++) {
+        svr->nsb[i] = 0;
+        free(svr->sbuf[i]);
+        svr->sbuf[i] = NULL;
     }
     rtksvrunlock(svr);
 }
@@ -1088,7 +1086,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     for (i=3;i<5;i++) {
         writesolhead(svr->stream+i,svr->solopt+(i-3), prcopt);
     }
-    /* Publish before creating the worker so an immediate stop cannot be lost. */
+    // Publish before creating the worker so an immediate stop cannot be lost.
     rtksvrlock(svr);
     svr->state=1;
     rtksvrunlock(svr);
