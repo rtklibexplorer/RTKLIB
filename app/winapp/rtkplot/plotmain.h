@@ -407,6 +407,7 @@ private:
     stream_t Stream[2];
     stream_t StrTimeSync;
     solbuf_t SolData[2];
+    int SolHasVel[2]; // true if loaded .pos file(s) contain velocity fields
     solstatbuf_t SolStat[2];
     int SolIndex[2];
     obs_t Obs;

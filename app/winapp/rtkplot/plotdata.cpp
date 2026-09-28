@@ -16,6 +16,25 @@
 static char path_str[MAXNFILE][1024];
 static const char *XMLNS="http://www.topografix.com/GPX/1/1";
 
+// Check the .pos header for velocity fields. RTKLIB writes vx/vy/vz for
+// XYZ output or vn/ve/vu for LLH output, with each set written together.
+static int hassolvel(const char *file)
+{
+    FILE *fp;
+    char buff[4096];
+    int i;
+
+    if (!(fp=fopen(file,"r"))) return 0;
+
+    for (i=0;i<100&&fgets(buff,sizeof(buff),fp);i++) {
+        if (strstr(buff,"vx(m/s)")||strstr(buff,"vn(m/s)")) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
 // read solutions -----------------------------------------------------------
 void __fastcall TPlot::ReadSol(TStrings *files, int sel)
 {
@@ -70,6 +89,16 @@ void __fastcall TPlot::ReadSol(TStrings *files, int sel)
     }
     freesolbuf(SolData+sel);
     SolData[sel]=sol;
+
+    // Use stored velocity only if every file in this solution set contains it.
+    // This makes the choice once per solution set instead of once per epoch.
+    SolHasVel[sel]=1;
+    for (i=0;i<n;i++) {
+        if (!hassolvel(paths[i])) {
+            SolHasVel[sel]=0;
+            break;
+        }
+    }
     
     if (SolFiles[sel]!=files) {
         SolFiles[sel]->Assign(files);
@@ -1410,6 +1439,7 @@ void __fastcall TPlot::ClearSol(void)
     for (i=0;i<2;i++) {
         freesolbuf(SolData+i);
         free(SolStat[i].data);
+        SolHasVel[i]=0;
         SolStat[i].n=0;
         SolStat[i].data=NULL;
     }
