@@ -260,9 +260,9 @@ typedef struct {            /* ftp download control type */
     int topts[4];           /* time options {poff,tint,toff,tretry} (s) */
     gtime_t tnext;          /* next retry time (gpst) */
     rtklib_thread_t thread; /* download thread */
-    int thread_started;    /* joinable worker (owned by stream API thread) */
-    rtklib_lock_t lock;     /* protects worker state, error and result */
-    gtime_t time;           /* download time captured before worker starts */
+    int thread_started;    // joinable worker (owned by stream API thread)
+    rtklib_lock_t lock;     // protects worker state, error and result
+    gtime_t time;           // download time captured before worker starts
 } ftp_t;
 
 typedef struct {            /* memory buffer type */
@@ -2399,26 +2399,24 @@ static gtime_t nextdltime(const int *topts, int stat)
     
     return time;
 }
-/* publish download result --------------------------------------------------*/
-static void finishftp(ftp_t *ftp, int error, const char *local)
-{
+// publish download result --------------------------------------------------
+static void finishftp(ftp_t *ftp, int error, const char *local) {
     rtklib_lock(&ftp->lock);
-    ftp->error=error;
-    if (local) strcpy(ftp->local,local);
-    ftp->state=error?3:2;
+    ftp->error = error;
+    if (local) strcpy(ftp->local, local);
+    ftp->state = error ? 3 : 2;
     rtklib_unlock(&ftp->lock);
 }
-/* reap worker; caller holds the stream lock, never the download lock ---------*/
-static void waitftp(ftp_t *ftp)
-{
+// reap worker; caller holds the stream lock, never the download lock ---------
+static void waitftp(ftp_t *ftp) {
     if (!ftp->thread_started) return;
 #ifdef WIN32
-    WaitForSingleObject(ftp->thread,INFINITE);
+    WaitForSingleObject(ftp->thread, INFINITE);
     CloseHandle(ftp->thread);
 #else
-    pthread_join(ftp->thread,NULL);
+    pthread_join(ftp->thread, NULL);
 #endif
-    ftp->thread_started=0;
+    ftp->thread_started = 0;
 }
 /* ftp thread ----------------------------------------------------------------*/
 #ifdef WIN32
@@ -2540,7 +2538,7 @@ static ftp_t *openftp(const char *path, int type, char *msg)
 /* close ftp -----------------------------------------------------------------*/
 static void closeftp(ftp_t *ftp)
 {
-    /* A worker may still reference ftp after publishing its result. */
+    // A worker may still reference ftp after publishing its result.
     waitftp(ftp);
     tracet(3,"closeftp: state=%d\n",ftp->state);
 #ifdef WIN32
@@ -2584,7 +2582,7 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
     }
     if (ftp->state<=1) {
         rtklib_unlock(&ftp->lock);
-        return 0; /* ftp/http on going */
+        return 0; // ftp/http on going
     }
     rtklib_unlock(&ftp->lock);
     waitftp(ftp);
@@ -2614,12 +2612,10 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
     return (int)(p-buff);
 }
 /* get state ftp -------------------------------------------------------------*/
-static int stateftp(ftp_t *ftp)
-{
-    int state;
+static int stateftp(ftp_t *ftp) {
     if (!ftp) return 0;
     rtklib_lock(&ftp->lock);
-    state=ftp->state==0?2:(ftp->state<=2?3:-1);
+    int state = ftp->state == 0 ? 2 : (ftp->state <= 2 ? 3 : -1);
     rtklib_unlock(&ftp->lock);
     return state;
 }
