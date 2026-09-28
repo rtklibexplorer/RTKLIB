@@ -482,33 +482,29 @@ static void periodic_cmd(int cycle, const char *cmd, stream_t *stream)
         if (!*q) break;
     }
 }
-/* Lifecycle calls are serialized by the caller. The worker and peek/status
- * readers use the server lock; joins must run without holding that lock.
- */
-static int get_server_state(strsvr_t *svr)
-{
-    int state;
+// Lifecycle calls are serialized by the caller. The worker and peek/status
+// readers use the server lock; joins must run without holding that lock.
+static int get_server_state(strsvr_t *svr) {
     rtklib_lock(&svr->lock);
-    state=svr->state;
+    int state = svr->state;
     rtklib_unlock(&svr->lock);
     return state;
 }
-static void set_server_state(strsvr_t *svr, int state)
-{
+static void set_server_state(strsvr_t *svr, int state) {
     rtklib_lock(&svr->lock);
-    svr->state=state;
+    svr->state = state;
     rtklib_unlock(&svr->lock);
 }
-/* release streams and buffers after the worker stops, or creation fails */
-static void free_server_run(strsvr_t *svr)
-{
-    int i;
+// release streams and buffers after the worker stops, or creation fails
+static void free_server_run(strsvr_t *svr) {
     rtklib_lock(&svr->lock);
-    for (i=0;i<svr->nstr;i++) strclose(svr->stream+i);
-    for (i=0;i<svr->nstr;i++) strclose(svr->strlog+i);
-    svr->npb=0;
-    free(svr->buff); svr->buff=NULL;
-    free(svr->pbuf); svr->pbuf=NULL;
+    for (int i = 0; i < svr->nstr; i++) strclose(svr->stream + i);
+    for (int i = 0; i < svr->nstr; i++) strclose(svr->strlog + i);
+    svr->npb = 0;
+    free(svr->buff);
+    svr->buff = NULL;
+    free(svr->pbuf);
+    svr->pbuf = NULL;
     rtklib_unlock(&svr->lock);
 }
 /* stearm server thread ------------------------------------------------------*/
