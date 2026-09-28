@@ -634,6 +634,34 @@ static void send_nmea(rtksvr_t *svr, uint32_t *tickreset)
             sol_nmea.stat, sol_nmea.ns, sol_nmea.age, sol_nmea.refstationid,
             sol_nmea.rr[0], sol_nmea.rr[1], sol_nmea.rr[2]);
 }
+// Lifecycle calls are serialized by the caller. Status readers and the
+// worker share the server mutex; never hold it while joining the worker.
+static int server_running(rtksvr_t *svr) {
+    rtksvrlock(svr);
+    int running = svr->state;
+    rtksvrunlock(svr);
+    return running;
+}
+// release resources owned by one run, including partially initialized runs
+static void free_server_run(rtksvr_t *svr) {
+    rtksvrlock(svr);
+    for (int i = 0; i < MAXSTRRTK; i++) strclose(svr->stream + i);
+    for (int i = 0; i < 3; i++) {
+        svr->nb[i] = svr->npb[i] = 0;
+        free(svr->buff[i]);
+        svr->buff[i] = NULL;
+        free(svr->pbuf[i]);
+        svr->pbuf[i] = NULL;
+        free_raw(svr->raw + i);
+        free_rtcm(svr->rtcm + i);
+    }
+    for (int i = 0; i < 2; i++) {
+        svr->nsb[i] = 0;
+        free(svr->sbuf[i]);
+        svr->sbuf[i] = NULL;
+    }
+    rtksvrunlock(svr);
+}
 /* rtk server thread ---------------------------------------------------------*/
 #ifdef WIN32
 static DWORD WINAPI rtksvrthread(void *arg)
@@ -655,18 +683,23 @@ static void *rtksvrthread(void *arg)
     obsd_t *data = (obsd_t *)calloc(MAXOBS * 2, sizeof(obsd_t));
     if (data == NULL) {
       trace(1, "rtksvrthread: obsd_t alloc failed\n");
+      rtksvrlock(svr);
+      svr->state=0;
+      rtksvrunlock(svr);
+      free_server_run(svr);
       return 0;
     }
     obs.data = data;
     obs.n = 0;
     obs.nmax = MAXOBS * 2;
 
-    svr->state=1;
+    rtksvrlock(svr);
     svr->tick=tickget();
+    rtksvrunlock(svr);
     ticknmea=tick1hz=svr->tick-1000;
     tickreset=svr->tick-MIN_INT_RESET;
 
-    for (cycle=0;svr->state;cycle++) {
+    for (cycle=0;server_running(svr);cycle++) {
         tick=tickget();
         for (i=0;i<3;i++) {
             p=svr->buff[i]+svr->nb[i]; q=svr->buff[i]+svr->buffsize;
@@ -761,18 +794,7 @@ static void *rtksvrthread(void *arg)
         sleepms(svr->cycle-cputime);
     }
     free(data);
-    for (i=0;i<MAXSTRRTK;i++) strclose(svr->stream+i);
-    for (i=0;i<3;i++) {
-        svr->nb[i]=svr->npb[i]=0;
-        free(svr->buff[i]); svr->buff[i]=NULL;
-        free(svr->pbuf[i]); svr->pbuf[i]=NULL;
-        free_raw (svr->raw +i);
-        free_rtcm(svr->rtcm+i);
-    }
-    for (i=0;i<2;i++) {
-        svr->nsb[i]=0;
-        free(svr->sbuf[i]); svr->sbuf[i]=NULL;
-    }
+    free_server_run(svr);
     return 0;
 }
 /* initialize rtk server -------------------------------------------------------
@@ -949,7 +971,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     tracet(3,"rtksvrstart: cycle=%d buffsize=%d navsel=%d nmeacycle=%d nmeareq=%d\n",
            cycle,buffsize,navsel,nmeacycle,nmeareq);
     
-    if (svr->state) {
+    if (server_running(svr)) {
         sprintf(errmsg,"server already started");
         return 0;
     }
@@ -977,6 +999,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
             !(svr->pbuf[i]=(uint8_t *)malloc(buffsize))) {
             tracet(1,"rtksvrstart: malloc error\n");
             sprintf(errmsg,"rtk server malloc error");
+            free_server_run(svr);
             return 0;
         }
         for (j=0;j<10;j++) svr->nmsg[i][j]=0;
@@ -984,8 +1007,11 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
         strcpy(svr->cmds_periodic[i],!cmds_periodic[i]?"":cmds_periodic[i]);
         
         /* initialize receiver raw and rtcm control */
-        init_raw(svr->raw+i,formats[i]);
-        init_rtcm(svr->rtcm+i);
+        if (!init_raw(svr->raw+i,formats[i])||!init_rtcm(svr->rtcm+i)) {
+            sprintf(errmsg,"receiver initialization error");
+            free_server_run(svr);
+            return 0;
+        }
         
         /* set receiver and rtcm option */
         strcpy(svr->raw [i].opt,rcvopts[i]);
@@ -998,6 +1024,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
         if (!(svr->sbuf[i]=(uint8_t *)malloc(buffsize))) {
             tracet(1,"rtksvrstart: malloc error\n");
             sprintf(errmsg,"rtk server malloc error");
+            free_server_run(svr);
             return 0;
         }
     }
@@ -1028,7 +1055,7 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
         if (strs[i]!=STR_FILE) rw|=STR_MODE_W;
         if (!stropen(svr->stream+i,strs[i],rw,paths[i])) {
             sprintf(errmsg,"str%d open error path=%s",i+1,paths[i]);
-            for (i--;i>=0;i--) strclose(svr->stream+i);
+            free_server_run(svr);
             return 0;
         }
         /* set initial time for rtcm and raw */
@@ -1059,13 +1086,20 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
     for (i=3;i<5;i++) {
         writesolhead(svr->stream+i,svr->solopt+(i-3), prcopt);
     }
+    // Publish before creating the worker so an immediate stop cannot be lost.
+    rtksvrlock(svr);
+    svr->state=1;
+    rtksvrunlock(svr);
     /* create rtk server thread */
 #ifdef WIN32
     if (!(svr->thread=CreateThread(NULL,0,rtksvrthread,svr,0,NULL))) {
 #else
     if (pthread_create(&svr->thread,NULL,rtksvrthread,svr)) {
 #endif
-        for (i=0;i<MAXSTRRTK;i++) strclose(svr->stream+i);
+        rtksvrlock(svr);
+        svr->state=0;
+        rtksvrunlock(svr);
+        free_server_run(svr);
         sprintf(errmsg,"thread create error\n");
         return 0;
     }
@@ -1091,14 +1125,13 @@ extern void rtksvrstop(rtksvr_t *svr, const char **cmds)
     for (i=0;i<3;i++) {
         if (cmds[i]) strsendcmd(svr->stream+i,cmds[i]);
     }
-    rtksvrunlock(svr);
-    
     /* stop rtk server */
     svr->state=0;
+    rtksvrunlock(svr);
     
     /* free rtk server thread */
 #ifdef WIN32
-    WaitForSingleObject(svr->thread,10000);
+    WaitForSingleObject(svr->thread,INFINITE);
     CloseHandle(svr->thread);
 #else
     pthread_join(svr->thread,NULL);
@@ -1120,9 +1153,12 @@ extern int rtksvropenstr(rtksvr_t *svr, int index, int str, const char *path,
 {
     tracet(3,"rtksvropenstr: index=%d str=%d path=%s\n",index,str,path);
     
-    if (index<3||index>7||!svr->state) return 0;
-    
+    if (index<3||index>7) return 0;
     rtksvrlock(svr);
+    if (!svr->state) {
+        rtksvrunlock(svr);
+        return 0;
+    }
     
     if (svr->stream[index].state>0) {
         rtksvrunlock(svr);
@@ -1154,9 +1190,12 @@ extern void rtksvrclosestr(rtksvr_t *svr, int index)
 {
     tracet(3,"rtksvrclosestr: index=%d\n",index);
     
-    if (index<3||index>7||!svr->state) return;
-    
+    if (index<3||index>7) return;
     rtksvrlock(svr);
+    if (!svr->state) {
+        rtksvrunlock(svr);
+        return;
+    }
     
     strclose(svr->stream+index);
     
@@ -1180,8 +1219,11 @@ extern int rtksvrostat(rtksvr_t *svr, int rcv, gtime_t *time, int sat[MAXSAT],
 {
     tracet(4,"rtksvrostat: rcv=%d\n",rcv);
     
-    if (!svr->state) return 0;
     rtksvrlock(svr);
+    if (!svr->state) {
+        rtksvrunlock(svr);
+        return 0;
+    }
     int ns=svr->obs[rcv][0].n;
     if (ns>0) {
         *time=svr->obs[rcv][0].data[0].time;
@@ -1237,9 +1279,11 @@ extern int rtksvrmark(rtksvr_t *svr, const char *name, const char *comment)
     
     tracet(4,"rtksvrmark:name=%s comment=%s\n",name,comment);
     
-    if (!svr->state) return 0;
-    
     rtksvrlock(svr);
+    if (!svr->state) {
+        rtksvrunlock(svr);
+        return 0;
+    }
     
     time2str(svr->rtk.sol.time,tstr,3);
     tow=time2gpst(svr->rtk.sol.time,&week);
