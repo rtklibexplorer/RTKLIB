@@ -221,6 +221,11 @@ extern int ionocorr(gtime_t time, const nav_t *nav, int sat, const double *pos,
         if (iontec(time,nav,pos,azel,1,ion,var)) return 1;
         err=1;
     }
+    // IONEX VTEC model.
+    if (ionoopt == IONOOPT_VTEC) {
+        if (ionvtec(time, nav, pos, azel, FREQL1, ion, var)) return 1;
+        err=1;
+    }
     /* QZSS broadcast ionosphere model */
     if (ionoopt==IONOOPT_QZS&&norm(nav->ion_qzs,8)>0.0) {
         *ion=ionmodel(time,nav->ion_qzs,pos,azel);

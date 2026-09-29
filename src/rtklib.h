@@ -97,6 +97,7 @@ extern "C" {
 #define FE_WGS84    (1.0/298.257223563) /* earth flattening (WGS84) */
 
 #define HION        350000.0            /* ionosphere height (m) */
+#define TECK        40.308193E16        // TEC scaling factor (m^3/s^2 or m*m^2*Hz^2)
 
 #define MAXFREQ     6                   /* max NFREQ */
 
@@ -433,6 +434,7 @@ extern "C" {
 #define IONOOPT_EST 4                   /* ionosphere option: estimation */
 #define IONOOPT_TEC 5                   /* ionosphere option: IONEX TEC model */
 #define IONOOPT_QZS 6                   /* ionosphere option: QZSS broadcast model */
+#define IONOOPT_VTEC 7                  /* ionosphere option: IONEX VTEC model */
 
 #define TROPOPT_OFF 0                   /* troposphere option: correction off */
 #define TROPOPT_SAAS 1                  /* troposphere option: Saastamoinen model */
