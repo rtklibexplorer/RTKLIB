@@ -388,6 +388,21 @@ static char *decode_soltime(char *buff, const solopt_t *opt, gtime_t *time)
     const char *sep = opt2sep(opt);
     size_t sep_len = strlen(sep);
 
+
+    if (opt->posf == SOLF_PPCREF) {
+        // ssss, wwww
+        for (p=buff,n=0;n<2;p=q+sep_len) {
+            q=strstr(p,sep);
+            if (!q) return NULL;
+            *q='\0';
+            if (sscanf(p,"%lf",v+n)==1) n++;
+        }
+        if (n >= 2 && 0.0 <= v[0] && v[0] < 604800.0 && 0.0 <= v[1] && v[1] <= 3000.0) {
+            *time = gpst2time((int)v[1], v[0]);
+            return p;
+        }
+    }
+
     if (opt->posf==SOLF_GSIF) {
         if (sscanf(buff,"%lf %lf %lf %lf:%lf:%lf",v,v+1,v+2,v+3,v+4,v+5)<6) {
             return NULL;
@@ -645,6 +660,21 @@ static int decode_solgsi(char *buff, const solopt_t *opt, sol_t *sol)
     sol->stat=SOLQ_FIX;
     return 1;
 }
+// Decode PPC ref pos solution -------------------------------------------
+static int decode_solppcref(char *buff, const solopt_t *opt, sol_t *sol)
+{
+    trace(4,"decode_solppcref:\n");
+
+    double val[MAXFIELD];
+    int n = tonum(buff, ",", val);
+    if (n < 6) return 0;
+
+    int i = 3; // Skip lat/lon/height
+    for (int j = 0; j < 3; j++) sol->rr[j] = val[i++]; // xyz
+    sol->ns = 10;
+    sol->stat = SOLQ_FIX;
+    return 1;
+}
 /* decode solution position --------------------------------------------------*/
 static int decode_solpos(char *buff, const solopt_t *opt, sol_t *sol)
 {
@@ -665,6 +695,7 @@ static int decode_solpos(char *buff, const solopt_t *opt, sol_t *sol)
         case SOLF_LLH : return decode_solllh(p,opt,sol);
         case SOLF_ENU : return decode_solenu(p,opt,sol);
         case SOLF_GSIF: return decode_solgsi(p,opt,sol);
+        case SOLF_PPCREF: return decode_solppcref(p,opt,sol);
     }
     return 0;
 }
@@ -724,6 +755,14 @@ static void decode_solopt(char *buff, solopt_t *opt)
     
     trace(4,"decode_solhead: buff=%s\n",buff);
     
+    if (strstr(buff, "GPS TOW (s),GPS Week,Latitude (deg),Longitude (deg),Ellipsoid Height (m),ECEF X (m),ECEF Y (m),ECEF Z (m)")) {
+        opt->times = TIMES_GPST;
+        opt->posf = SOLF_PPCREF;
+        opt->degf = 0;
+        strcpy(opt->sep, ",");
+        return;
+    }
+
     if (strncmp(buff,COMMENTH,1)&&strncmp(buff,"+",1)) return;
     
     if      (strstr(buff,"GPST")) opt->times=TIMES_GPST;

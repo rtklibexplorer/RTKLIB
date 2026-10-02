@@ -404,6 +404,7 @@ extern "C" {
 #define SOLF_NMEA   3                   /* solution format: NMEA-183 */
 #define SOLF_STAT   4                   /* solution format: solution status */
 #define SOLF_GSIF   5                   /* solution format: GSI F1/F2 */
+#define SOLF_PPCREF 6                   // Solution format: PPC reference pos.
 
 #define SOLQ_NONE   0                   /* solution status: no solution */
 #define SOLQ_FIX    1                   /* solution status: fix */
