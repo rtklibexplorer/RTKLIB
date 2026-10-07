@@ -3,6 +3,16 @@ set(RTKLBI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 
 # The deterministic command/thread test doubles use POSIX APIs.
 if(UNIX)
+    add_executable(t_stream_network t_stream_network.c)
+    set_property(TARGET t_stream_network PROPERTY C_STANDARD 99)
+    target_link_libraries(t_stream_network rtklib)
+    foreach(scenario paths tcp_ipv4 tcp_ipv6 tcp_dual tcp_fallback tcp_listener_fallback
+                     udp_ipv4 udp_ipv6 udp_dual udp_listener_fallback
+                     ntrip_ipv4 ntrip_ipv6 ntrip_source proxy server server_tcp)
+        add_test(NAME stream_${scenario} COMMAND t_stream_network ${scenario})
+        set_tests_properties(stream_${scenario} PROPERTIES TIMEOUT 15 SKIP_RETURN_CODE 77)
+    endforeach()
+
     add_executable(t_ftp_lifecycle t_ftp_lifecycle.c)
     target_link_libraries(t_ftp_lifecycle rtklib)
     foreach(protocol ftp http)

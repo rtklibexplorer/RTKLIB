@@ -22,6 +22,14 @@
 #define ENDSRCTBL               "ENDSOURCETABLE"        // end marker of table
 #define MAXLINE                 1024                    // max line size (byte)
 
+// Brackets distinguish IPv6 colons from the separate port field.
+static QString hostPort(QString host, const QString &port)
+{
+    if (host.contains(':') && !host.startsWith('['))
+        host = '[' + host + ']';
+    return port.isEmpty() ? host : host + ':' + port;
+}
+
 //---------------------------------------------------------------------------
 TcpOptDialog::TcpOptDialog(QWidget *parent, int options)
     : QDialog(parent), ui(new Ui::TcpOptDialog)
@@ -50,10 +58,14 @@ void TcpOptDialog::setOptions(int options)
                     tr("UDP Server Options"),
                     tr("UDP Client Options")};
 
-    ui->lblAddress->setText((options >= 2 && options <= 5) ? tr("NTRIP Caster Address") : tr("Server Address"));
-    ui->lblAddress->setEnabled((options >= 1 && options <= 3) || options == 7);
-
-    ui->cBAddress->setEnabled((options >= 1 && options <= 3) || options == 7);
+    const bool listener = options == OPT_TCP_SERVER || options == OPT_UDP_SERVER
+        || options == OPT_NTRIP_CASTER_CLIENT || options == OPT_NTRIP_CASTER_SERVER;
+    ui->lblAddress->setText(listener ? tr("Listen Address") :
+        (options >= 2 && options <= 5) ? tr("NTRIP Caster Address") : tr("Server Address"));
+    ui->lblAddress->setEnabled(true);
+    ui->cBAddress->setEnabled(true);
+    ui->cBAddress->setToolTip(listener ? tr("Local address to listen on; leave empty for IPv4 and IPv6") :
+        tr("Hostname, IPv4 address or IPv6 address"));
     ui->lblMountPoint->setEnabled(options >= 2 && options <= 4);
     ui->cBMountPoint->setEnabled(options >= 2 && options <= 4);
     ui->lblUser->setEnabled(options >= 3 && options <= 4);
@@ -132,12 +144,23 @@ void TcpOptDialog::setPath(QString path)
     ui->lEPassword->setText(password);
 
     int port = 0;
-    int portSep = addrport.indexOf(":");
+    QString addr = addrport;
+    int portSep = -1;
+    if (addrport.startsWith('[')) {
+        int bracketEnd = addrport.indexOf(']');
+        if (bracketEnd >= 0) {
+            addr = addrport.mid(1, bracketEnd - 1);
+            if (addrport.mid(bracketEnd + 1, 1) == ":")
+                portSep = bracketEnd + 1;
+        }
+    } else if (addrport.count(':') == 1) {
+        portSep = addrport.indexOf(':');
+        addr = addrport.left(portSep);
+    }
     if (portSep >= 0)
         port = addrport.mid(portSep + 1).toInt();
     ui->sBPort->setValue(port);
 
-    QString addr = addrport.mid(0, portSep);
     ui->cBAddress->insertItem(0, addr);
     ui->cBAddress->setCurrentText(addr);
     addHistory(ui->cBAddress, history);
@@ -153,10 +176,8 @@ QString TcpOptDialog::getPath() {
             path = QStringLiteral("%1:%2").arg(path, password);
         path += "@";
     }
-    path = QStringLiteral("%1%2").arg(path, ui->cBAddress->currentText());
     QString port = ui->sBPort->text();
-    if (!port.isEmpty())
-        path = QStringLiteral("%1:%2").arg(path, port);
+    path += hostPort(ui->cBAddress->currentText(), port);
     QString mntpnt = ui->cBMountPoint->currentText();
     QString str = ui->cBMountPoint->currentData().toString();
     if (!mntpnt.isEmpty() || !str.isEmpty()) {
@@ -190,13 +211,14 @@ void TcpOptDialog::addHistory(QComboBox *list, QString *hist)
     list->clear();
     for (int i = 0; i < MAXHIST; i++)
         if (!hist[i].isEmpty()) list->addItem(hist[i]);
-    list->setCurrentIndex(0);
+    // An empty address selects the wildcard listener, even with prior history.
+    list->setCurrentIndex(hist[0].isEmpty() ? -1 : 0);
 }
 //---------------------------------------------------------------------------
 void TcpOptDialog::btnNtripClicked()
 {
     QPushButton *btn = (QPushButton *)sender();
-    QString path = ui->cBAddress->currentText() + ":" + ui->sBPort->text();
+    QString path = hostPort(ui->cBAddress->currentText(), ui->sBPort->text());
     stream_t str;
     uint32_t tick = tickget();
     static char buff[MAXSRCTBL];
@@ -230,10 +252,7 @@ void TcpOptDialog::btnBrowseClicked()
 {
     QStringList cmds = {"srctblbrows_qt", "../../../bin/srctblbrows_qt", "../srctblbrows_qt/srctblbrows_qt"};
     QDir appDir = QDir(QCoreApplication::applicationDirPath());
-    QString addrText = ui->cBAddress->currentText();
-    QString portText = ui->sBPort->text();
-
-    if (!portText.isEmpty()) addrText += ":" + portText;
+    QString addrText = hostPort(ui->cBAddress->currentText(), ui->sBPort->text());
 
     for (const auto& path: cmds)
         if (execCommand(appDir.filePath(path), QStringList(addrText), 1)) {
