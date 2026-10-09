@@ -76,6 +76,12 @@
 *                           use integer types in stdint.h
 *-----------------------------------------------------------------------------*/
 #define _POSIX_C_SOURCE 200112L
+
+#ifndef WIN32
+// For 64 bit file offsets on Linux and MacOS.
+#define _FILE_OFFSET_BITS 64
+#endif
+
 #include <ctype.h>
 #include "rtklib.h"
 #ifndef WIN32
@@ -163,7 +169,7 @@ typedef struct {            /* file control type */
     gtime_t wtime;          /* write time */
     uint32_t tick;          /* start tick */
     uint32_t tick_f;        /* start tick in file */
-    long fpos_n;            /* next file position */
+    int64_t fpos_n;         // Next file position
     uint32_t tick_n;        /* next tick */
     double start;           /* start offset (s) */
     double speed;           /* replay speed (time factor) */
@@ -260,6 +266,9 @@ typedef struct {            /* ftp download control type */
     int topts[4];           /* time options {poff,tint,toff,tretry} (s) */
     gtime_t tnext;          /* next retry time (gpst) */
     rtklib_thread_t thread; /* download thread */
+    int thread_started;    // joinable worker (owned by stream API thread)
+    rtklib_lock_t lock;     // protects worker state, error and result
+    gtime_t time;           // download time captured before worker starts
 } ftp_t;
 
 typedef struct {            /* memory buffer type */
@@ -731,7 +740,8 @@ static file_t *openfile(const char *path, int mode, char *msg)
     file->offset=0;
     file->size_fpos=size_fpos;
     file->time=file->wtime=time0;
-    file->tick=file->tick_f=file->tick_n=file->fpos_n=0;
+    file->tick=file->tick_f=file->tick_n=0;
+    file->fpos_n=0;
     file->start=start;
     file->speed=speed;
     file->swapintv=swapintv;
@@ -820,15 +830,29 @@ static int statexfile(const file_t *file, char *msg)
     sprintf(p,"  swapintv= %.3f\n",file->swapintv);
     return state;
 }
+
+static int64_t xftell(FILE *stream)
+{
+#ifdef WIN32
+  return _ftelli64(stream);
+#else
+  return ftello(stream);
+#endif
+}
+static int xfseek(FILE *stream, int64_t offset, int whence)
+{
+#ifdef WIN32
+  return _fseeki64(stream, offset, whence);
+#else
+  return fseeko(stream, offset, whence);
+#endif
+}
+
 /* read file -----------------------------------------------------------------*/
 static int readfile(file_t *file, uint8_t *buff, int nmax, char *msg)
 {
     struct timeval tv={0};
-    fd_set rs;
-    uint64_t fpos_8B;
-    uint32_t t,tick,fpos_4B;
-    long pos,n;
-    int nr=0;
+    uint32_t t,tick;
     
     tracet(4,"readfile: fp=%d nmax=%d\n",file->fp,nmax);
     
@@ -837,10 +861,12 @@ static int readfile(file_t *file, uint8_t *buff, int nmax, char *msg)
     if (file->fp==stdin) {
 #ifndef WIN32
         /* input from stdin */
+        fd_set rs;
         FD_ZERO(&rs); FD_SET(0,&rs);
         if (!select(1,&rs,NULL,NULL,&tv)) return 0;
-        if ((nr=(int)read(0,buff,nmax))<0) return 0;
-        return nr;
+        ssize_t nr = read(0, buff, nmax);
+        if (nr < 0) return 0;
+        return (int)nr;
 #else
         return 0;
 #endif
@@ -857,18 +883,19 @@ static int readfile(file_t *file, uint8_t *buff, int nmax, char *msg)
         }
         /* seek time-tag file to get next tick and file position */
         while ((int)(file->tick_n-t)<=0) {
-            
+            uint32_t fpos_4B;
+            uint64_t fpos_8B;
             if (fread(&file->tick_n,sizeof(tick),1,file->fp_tag)<1||
                 fread((file->size_fpos==4)?(void *)&fpos_4B:(void *)&fpos_8B,
                       file->size_fpos,1,file->fp_tag)<1) {
                 file->tick_n=(uint32_t)(-1);
-                pos=ftell(file->fp);
-                fseek(file->fp,0L,SEEK_END);
-                file->fpos_n=ftell(file->fp);
-                fseek(file->fp,pos,SEEK_SET);
+                int64_t pos = xftell(file->fp);
+                xfseek(file->fp, 0, SEEK_END);
+                file->fpos_n = xftell(file->fp);
+                xfseek(file->fp, pos, SEEK_SET);
                 break;
             }
-            file->fpos_n=(long)((file->size_fpos==4)?fpos_4B:fpos_8B);
+            file->fpos_n = file->size_fpos == 4 ? (int64_t)fpos_4B : (int64_t)fpos_8B;
         }
         if (file->tick_n==(uint32_t)(-1)) {
             sprintf(msg,"end");
@@ -878,29 +905,25 @@ static int readfile(file_t *file, uint8_t *buff, int nmax, char *msg)
             file->wtime=timeadd(file->time,(int)t*0.001);
             timeset(timeadd(gpst2utc(file->time),(int)file->tick_n*0.001));
         }
-        if ((n=file->fpos_n-ftell(file->fp))<nmax) {
-            nmax=n;
-        }
+        int64_t n = file->fpos_n - xftell(file->fp);
+        if (n < nmax) nmax = (int)n;
     }
+    size_t nr = 0;
     if (nmax>0) {
-        nr=(int)fread(buff,1,nmax,file->fp);
+        nr = fread(buff,1,nmax,file->fp);
     }
-    if (feof(file->fp)) {
-        sprintf(msg,"end");
-    }
-    tracet(5,"readfile: fp=%d nr=%d\n",file->fp,nr);
-    return nr;
+    if (feof(file->fp)) sprintf(msg,"end");
+    tracet(5,"readfile: fp=%d nr=%zu\n",file->fp,nr);
+    return (int)nr;
 }
 /* write file ----------------------------------------------------------------*/
 static int writefile(file_t *file, const uint8_t *buff, int n, char *msg)
 {
     gtime_t wtime;
-    uint64_t fpos_8B;
-    uint32_t tick=tickget(),fpos_4B;
-    int week1,week2,ns;
+    uint32_t tick=tickget();
+    int week1,week2;
     double tow1,tow2,intv;
-    long fpos,fpos_tmp=0;
-    
+
     tracet(4,"writefile: fp=%d n=%d\n",file->fp,n);
     
     if (!file) return 0;
@@ -925,25 +948,26 @@ static int writefile(file_t *file, const uint8_t *buff, int n, char *msg)
     }
     if (!file->fp) return 0;
     
-    ns=(int)fwrite(buff,1,n,file->fp);
-    fpos=ftell(file->fp);
+    size_t ns = fwrite(buff, 1, n, file->fp);
+    int64_t fpos = xftell(file->fp);
+    int64_t fpos_tmp = 0;
     fflush(file->fp);
     file->wtime=wtime;
     
     if (file->fp_tmp) {
         fwrite(buff,1,n,file->fp_tmp);
-        fpos_tmp=ftell(file->fp_tmp);
+        fpos_tmp = xftell(file->fp_tmp);
         fflush(file->fp_tmp);
     }
     if (file->fp_tag) {
         tick-=file->tick;
         fwrite(&tick,1,sizeof(tick),file->fp_tag);
         if (file->size_fpos==4) {
-            fpos_4B=(uint32_t)fpos;
+            uint32_t fpos_4B = (uint32_t)fpos;
             fwrite(&fpos_4B,1,sizeof(fpos_4B),file->fp_tag);
         }
         else {
-            fpos_8B=(uint64_t)fpos;
+            uint64_t fpos_8B = (uint64_t)fpos;
             fwrite(&fpos_8B,1,sizeof(fpos_8B),file->fp_tag);
         }
         fflush(file->fp_tag);
@@ -951,17 +975,17 @@ static int writefile(file_t *file, const uint8_t *buff, int n, char *msg)
         if (file->fp_tag_tmp) {
             fwrite(&tick,1,sizeof(tick),file->fp_tag_tmp);
             if (file->size_fpos==4) {
-                fpos_4B=(uint32_t)fpos_tmp;
+                uint32_t fpos_4B = (uint32_t)fpos_tmp;
                 fwrite(&fpos_4B,1,sizeof(fpos_4B),file->fp_tag_tmp);
             }
             else {
-                fpos_8B=(uint64_t)fpos_tmp;
+                uint64_t fpos_8B = (uint64_t)fpos_tmp;
                 fwrite(&fpos_8B,1,sizeof(fpos_8B),file->fp_tag_tmp);
             }
             fflush(file->fp_tag_tmp);
         }
     }
-    tracet(5,"writefile: fp=%d ns=%d tick=%5d fpos=%d\n",file->fp,ns,tick,fpos);
+    tracet(5,"writefile: fp=%d ns=%zu tick=%5d fpos=%lld\n",file->fp,ns,tick,(long long)fpos);
     
     return ns;
 }
@@ -1906,6 +1930,7 @@ static ntripc_t *openntripc(const char *path, char *msg)
     if (!(ntripc=(ntripc_t *)malloc(sizeof(ntripc_t)))) return NULL;
     
     ntripc->state=0;
+    ntripc->type=0;
     ntripc->mntpnt[0]=ntripc->user[0]=ntripc->passwd[0]=ntripc->srctbl[0]='\0';
     for (i=0;i<MAXCLI;i++) {
         ntripc->con[i].state=0;
@@ -2396,6 +2421,25 @@ static gtime_t nextdltime(const int *topts, int stat)
     
     return time;
 }
+// publish download result --------------------------------------------------
+static void finishftp(ftp_t *ftp, int error, const char *local) {
+    rtklib_lock(&ftp->lock);
+    ftp->error = error;
+    if (local) strcpy(ftp->local, local);
+    ftp->state = error ? 3 : 2;
+    rtklib_unlock(&ftp->lock);
+}
+// reap worker; caller holds the stream lock, never the download lock ---------
+static void waitftp(ftp_t *ftp) {
+    if (!ftp->thread_started) return;
+#ifdef WIN32
+    WaitForSingleObject(ftp->thread, INFINITE);
+    CloseHandle(ftp->thread);
+#else
+    pthread_join(ftp->thread, NULL);
+#endif
+    ftp->thread_started = 0;
+}
 /* ftp thread ----------------------------------------------------------------*/
 #ifdef WIN32
 static DWORD WINAPI ftpthread(void *arg)
@@ -2414,12 +2458,11 @@ static void *ftpthread(void *arg)
     
     if (!*localdir) {
         tracet(2,"no local directory\n");
-        ftp->error=11;
-        ftp->state=3;
+        finishftp(ftp,11,NULL);
         return 0;
     }
     /* replace keyword in file path and local path */
-    time=timeadd(utc2gpst(timeget()),ftp->topts[0]);
+    time=ftp->time;
     reppath(ftp->file,remote,time,"","");
     
     if ((p=strrchr(remote,'/'))) p++; else p=remote;
@@ -2435,9 +2478,8 @@ static void *ftpthread(void *arg)
     }
     if ((fp=fopen(tmpfile,"rb"))) {
         fclose(fp);
-        sprintf(ftp->local,"%.1023s",tmpfile);
-        tracet(3,"ftpthread: file exists %s\n",ftp->local);
-        ftp->state=2;
+        tracet(3,"ftpthread: file exists %s\n",tmpfile);
+        finishftp(ftp,0,tmpfile);
         return 0;
     }
     /* proxy settings for wget (ref [2]) */
@@ -2464,8 +2506,7 @@ static void *ftpthread(void *arg)
     if ((ret=execcmd(cmd))) {
         remove(local);
         tracet(2,"execcmd error: cmd=%s ret=%d\n",cmd,ret);
-        ftp->error=ret;
-        ftp->state=3;
+        finishftp(ftp,ret,NULL);
         return 0;
     }
     remove(errfile);
@@ -2481,13 +2522,11 @@ static void *ftpthread(void *arg)
         }
         else {
             tracet(2,"file uncompact error: %s\n",local);
-            ftp->error=12;
-            ftp->state=3;
+            finishftp(ftp,12,NULL);
             return 0;
         }
     }
-    strcpy(ftp->local,local);
-    ftp->state=2; /* ftp completed */
+    finishftp(ftp,0,local);
     
     tracet(3,"ftpthread: complete cmd=%s\n",cmd);
     return 0;
@@ -2506,7 +2545,8 @@ static ftp_t *openftp(const char *path, int type, char *msg)
     ftp->state=0;
     ftp->proto=type;
     ftp->error=0;
-    ftp->thread=0;
+    ftp->thread_started=0;
+    rtklib_initlock(&ftp->lock);
     ftp->local[0]='\0';
     
     /* decode ftp path */
@@ -2520,9 +2560,15 @@ static ftp_t *openftp(const char *path, int type, char *msg)
 /* close ftp -----------------------------------------------------------------*/
 static void closeftp(ftp_t *ftp)
 {
+    // A worker may still reference ftp after publishing its result.
+    waitftp(ftp);
     tracet(3,"closeftp: state=%d\n",ftp->state);
-    
-    if (ftp->state!=1) free(ftp);
+#ifdef WIN32
+    DeleteCriticalSection(&ftp->lock);
+#else
+    pthread_mutex_destroy(&ftp->lock);
+#endif
+    free(ftp);
 }
 /* read ftp ------------------------------------------------------------------*/
 static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
@@ -2537,7 +2583,9 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
     if (timediff(time,ftp->tnext)<0.0) { /* until download time? */
         return 0;
     }
+    rtklib_lock(&ftp->lock);
     if (ftp->state<=0) { /* ftp/http not executed? */
+        ftp->time=timeadd(time,ftp->topts[0]);
         ftp->state=1;
         sprintf(msg,"%s://%s",ftp->proto?"http":"ftp",ftp->addr);
     
@@ -2549,10 +2597,18 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
             tracet(2,"readftp: ftp thread create error\n");
             ftp->state=3;
             strcpy(msg,"ftp thread error");
+            rtklib_unlock(&ftp->lock);
             return 0;
         }
+        ftp->thread_started=1;
     }
-    if (ftp->state<=1) return 0; /* ftp/http on going? */
+    if (ftp->state<=1) {
+        rtklib_unlock(&ftp->lock);
+        return 0; // ftp/http on going
+    }
+    rtklib_unlock(&ftp->lock);
+    waitftp(ftp);
+    rtklib_lock(&ftp->lock);
     
     if (ftp->state==3) { /* ftp error */
         sprintf(msg,"%s error (%d)",ftp->proto?"http":"ftp",ftp->error);
@@ -2560,6 +2616,7 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
         /* set next retry time */
         ftp->tnext=nextdltime(ftp->topts,0);
         ftp->state=0;
+        rtklib_unlock(&ftp->lock);
         return 0;
     }
     /* return local file path if ftp completed */
@@ -2573,19 +2630,22 @@ static int readftp(ftp_t *ftp, uint8_t *buff, int n, char *msg)
     ftp->state=0;
     
     strcpy(msg,"");
-    
+    rtklib_unlock(&ftp->lock);
     return (int)(p-buff);
 }
 /* get state ftp -------------------------------------------------------------*/
-static int stateftp(const ftp_t *ftp)
-{
-    return !ftp?0:(ftp->state==0?2:(ftp->state<=2?3:-1));
+static int stateftp(ftp_t *ftp) {
+    if (!ftp) return 0;
+    rtklib_lock(&ftp->lock);
+    int state = ftp->state == 0 ? 2 : (ftp->state <= 2 ? 3 : -1);
+    rtklib_unlock(&ftp->lock);
+    return state;
 }
 /* get extended state ftp ----------------------------------------------------*/
-static int statexftp(const ftp_t *ftp, char *msg)
+static int statexftp(ftp_t *ftp, char *msg)
 {
     (void)msg;
-    return !ftp?0:(ftp->state==0?2:(ftp->state<=2?3:-1));
+    return stateftp(ftp);
 }
 /* open memory buffer --------------------------------------------------------*/
 static membuf_t *openmembuf(const char *path, char *msg)

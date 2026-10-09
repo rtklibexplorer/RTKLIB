@@ -140,19 +140,30 @@ int __fastcall TPlot::GetCenterPos(double *rr)
 // get position, velocity or accel from solutions ---------------------------
 TIMEPOS * __fastcall TPlot::SolToPos(solbuf_t *sol, int index, int qflag, int type)
 {
-    TIMEPOS *pos,*vel,*acc;
+    TIMEPOS *pos,*vel=NULL,*acc;
     gtime_t ts={0};
     sol_t *data;
-    double tint,xyz[3],xyzs[4];
-    int i;
+    double tint,xyz[3],xyzs[4],opos[3],pos0[3],v[3],tt;
+    int i,j,sel=sol==SolData?0:sol==SolData+1?1:-1;
+
+    // Prefer stored .pos velocity; otherwise derive velocity from position.
+    int usevel=sel>=0&&SolHasVel[sel]&&(type==1||type==2);
     
     trace(3,"SolToPos: n=%d\n",sol->n);
     
     pos=new TIMEPOS(index<0?sol->n:3,1);
+    if (usevel) vel=new TIMEPOS(index<0?sol->n:3,1);
     
     if (index>=0) {
-        if (type==1&&index>sol->n-2) index=sol->n-2;
-        if (type==2&&index>sol->n-3) index=sol->n-3;
+        if (usevel) {
+            // Acceleration from stored velocity needs two velocity epochs.
+            if (type==2&&index>sol->n-2) index=sol->n-2;
+        }
+        else {
+            // Derived velocity needs two positions; acceleration needs three.
+            if (type==1&&index>sol->n-2) index=sol->n-2;
+            if (type==2&&index>sol->n-3) index=sol->n-3;
+        }
     }
     for (i=(index<0)?0:index;(data=getsol(sol,i));i++) {
         
@@ -175,15 +186,50 @@ TIMEPOS * __fastcall TPlot::SolToPos(solbuf_t *sol, int index, int qflag, int ty
         pos->xys[pos->n]=xyzs[3]; // cov xy
         pos->q  [pos->n]=data->stat;
         pos->n++;
+
+        if (usevel) {
+            if (data->type==0) {
+                // rr[3..5] is ECEF velocity. Rotate it into the same local ENU
+                // frame used by RTKPLOT position, accounting for moving origin.
+                tt=(data->time.time==0||OEpoch.time==0)?0.0:
+                   timediff(data->time,OEpoch);
+                for (j=0;j<3;j++) {
+                    opos[j]=OPos[j]+OVel[j]*tt;
+                    v[j]=data->rr[j+3]-OVel[j];
+                }
+                ecef2pos(opos,pos0);
+                ecef2enu(pos0,v,xyz);
+
+                // qv[] is velocity covariance. Put it in the same ENU frame.
+                // Existing RTKPLOT error bars/circles use xs/ys/zs below.
+                CovToXyz(opos,data->qv,0,xyzs);
+            }
+            else { // ENU solution
+                for (j=0;j<3;j++) xyz[j]=data->rr[j+3];
+                CovToXyz(data->rr,data->qv,data->type,xyzs);
+            }
+            vel->t  [vel->n]=data->time;
+            vel->x  [vel->n]=xyz [0];
+            vel->y  [vel->n]=xyz [1];
+            vel->z  [vel->n]=xyz [2];
+            vel->xs [vel->n]=xyzs[0];
+            vel->ys [vel->n]=xyzs[1];
+            vel->zs [vel->n]=xyzs[2];
+            vel->xys[vel->n]=xyzs[3];
+            vel->q  [vel->n]=data->stat;
+            vel->n++;
+        }
         
         if (index>=0&&pos->n>=3) break;
     }
     if (type!=1&&type!=2) return pos; // position
     
-    vel=pos->tdiff();
+    if (!usevel) vel=pos->tdiff();
     delete pos;
     if (type==1) return vel; // velocity
     
+    // Stored velocity -> differentiated velocity. No stored velocity ->
+    // RTKPLOT's original double-differentiated position.
     acc=vel->tdiff();
     delete vel;
     return acc; // acceleration
@@ -572,16 +618,38 @@ TIMEPOS * TIMEPOS::tdiff(void)
 TIMEPOS *TIMEPOS::diff(const TIMEPOS *pos2, int qflag)
 {
     TIMEPOS *pos1=this,*pos=new TIMEPOS(MIN(n,pos2->n),1);
-    double tt;
-    int i,j,q;
-    
-    for (i=0,j=0;i<pos1->n&&j<pos2->n;i++,j++) {
-        
+    double tt,di,dj;
+    int i=0,j=0,q;
+
+    while (i<pos1->n&&j<pos2->n) {
+
         tt=timediff(pos1->t[i],pos2->t[j]);
-        
-        if      (tt<-TTOL) {j--; continue;}
-        else if (tt> TTOL) {i--; continue;}
-        
+
+        if (tt<-TTOL) {
+            i++;
+            continue;
+        }
+        if (tt>TTOL) {
+            j++;
+            continue;
+        }
+
+        // Select the closest pair inside the tolerance instead of accepting
+        // the first pair encountered.
+        di=i+1<pos1->n
+           ?fabs(timediff(pos1->t[i+1],pos2->t[j])):1E99;
+        dj=j+1<pos2->n
+           ?fabs(timediff(pos1->t[i],pos2->t[j+1])):1E99;
+
+        if (di<fabs(tt)&&di<=dj) {
+            i++;
+            continue;
+        }
+        if (dj<fabs(tt)) {
+            j++;
+            continue;
+        }
+
         pos->t[pos->n]=pos1->t[i];
         pos->x[pos->n]=pos1->x[i]-pos2->x[j];
         pos->y[pos->n]=pos1->y[i]-pos2->y[j];
@@ -597,6 +665,8 @@ TIMEPOS *TIMEPOS::diff(const TIMEPOS *pos2, int qflag)
         if (!qflag||qflag==q) {
             pos->q[pos->n++]=q;
         }
+        i++;
+        j++;
     }
     return pos;
 }

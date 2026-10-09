@@ -93,6 +93,7 @@ __fastcall TPlot::TPlot(TComponent* Owner) : TForm(Owner)
     AnimCycle=1;
     for (int i=0;i<2;i++) {
         initsolbuf(SolData+i,0,0);
+        SolHasVel[i]=0;
         SolStat[i]=solstat0;
         SolIndex[i]=0;
     }
