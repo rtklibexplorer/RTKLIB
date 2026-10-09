@@ -9,7 +9,7 @@ set(PATCH_LEVEL ${CMAKE_MATCH_1})
 
 message("RTKLIB version: ${VERSION}-${PATCH_LEVEL}")
 
-project(rtklib LANGUAGES C CXX VERSION 2.4.3)
+project(rtklib LANGUAGES CXX C VERSION 2.4.3)
 
 include(GNUInstallDirs)
 include(CTest)
