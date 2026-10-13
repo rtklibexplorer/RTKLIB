@@ -673,9 +673,12 @@ extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
     }
     /* open streams */
     for (i=0;i<svr->nstr;i++) {
-        strcpy(file1,paths[0]); if ((p=strstr(file1,"::"))) *p='\0';
-        strcpy(file2,paths[i]); if ((p=strstr(file2,"::"))) *p='\0';
-        if (i>0&&*file1&&!strcmp(file1,file2)) {
+        strcpy(file1,paths[0]);
+        strcpy(file2,paths[i]);
+        /* Only file streams use :: options. IPv6 endpoints contain :: too. */
+        if (strs[0]==STR_FILE&&(p=strstr(file1,"::"))) *p='\0';
+        if (strs[i]==STR_FILE&&(p=strstr(file2,"::"))) *p='\0';
+        if (i>0&&strs[0]==strs[i]&&*file1&&!strcmp(file1,file2)) {
             sprintf(svr->stream[i].msg,"output path error: %-512.512s",file2);
             for (i--;i>=0;i--) strclose(svr->stream+i);
             free(svr->buff); free(svr->pbuf);

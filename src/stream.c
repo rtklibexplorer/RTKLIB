@@ -104,6 +104,7 @@
 
 #ifdef WIN32
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #endif
 
 /* constants -----------------------------------------------------------------*/
@@ -181,7 +182,11 @@ typedef struct {            /* tcp control type */
     int state;              /* state (0:close,1:wait,2:connect) */
     char saddr[256];        /* address string */
     int port;               /* port */
-    struct sockaddr_in addr; /* address resolved */
+    struct sockaddr_storage addr; /* IPv4 or IPv6 address resolved */
+    socklen_t addrlen;       /* resolved address length */
+    struct addrinfo *addresses; /* owned client resolution results */
+    struct addrinfo *nextaddr; /* next client address to try */
+    int connecting;         /* non-blocking connection in progress */
     socket_t sock;          /* socket descriptor */
     int tcon;               /* reconnect time (ms) (-1:never,0:now) */
     uint32_t tact;          /* data active tick */
@@ -248,8 +253,9 @@ typedef struct {            /* udp type */
     int state;              /* state (0:close,1:open) */
     int type;               /* type (0:server,1:client) */
     int port;               /* port */
-    char saddr[256];        /* address (server:filter,client:server) */
-    struct sockaddr_in addr; /* address resolved */
+    char saddr[256];        /* address (server:local bind,client:server) */
+    struct sockaddr_storage addr; /* IPv4 or IPv6 address resolved */
+    socklen_t addrlen;       /* resolved address length */
     socket_t sock;          /* socket descriptor */
 } udp_t;
 
@@ -1030,7 +1036,13 @@ static void decodetcppath(const char *path, char *addr, char *port, char *user,
     }
     else p=buff;
     
-    if ((q=strchr(p,':'))) {
+    if (*p=='[') { /* bracketed IPv6, optionally with a scope ID */
+        if ((q=strchr(p+1,']'))) {
+            if (q[1]==':'&&port) sprintf(port,"%.255s",q+2);
+            *q='\0'; p++;
+        }
+    }
+    else if ((q=strchr(p,':'))&&!strchr(q+1,':')) {
         *q='\0'; if (port) sprintf(port,"%.255s",q+1);
     }
     if (addr) sprintf(addr,"%.255s",p);
@@ -1099,39 +1111,46 @@ static socket_t accept_nb(socket_t sock, struct sockaddr *addr, socklen_t *len, 
     return nsock;
 }
 /* non-block connect ---------------------------------------------------------*/
-static int connect_nb(socket_t sock, struct sockaddr *addr, socklen_t len, int *err)
+static int connect_nb(socket_t sock, struct sockaddr *addr, socklen_t len,
+                      int *pending, int *err)
 {
+    fd_set ws,es;
+    struct timeval tv={0};
+    socklen_t optlen=sizeof(*err);
+    int ret;
+
+    if (!*pending) {
 #ifdef WIN32
-    u_long mode=1; 
-    ioctlsocket(sock,FIONBIO,&mode);
-    if (connect(sock,addr,len)==-1) {
-        *err=errsock();
-        if (*err==WSAEWOULDBLOCK||*err==WSAEINPROGRESS||
-            *err==WSAEALREADY   ||*err==WSAEINVAL) return 0;
-        if (*err!=WSAEISCONN) return -1;
-    }
+        u_long mode=1;
+        if (ioctlsocket(sock,FIONBIO,&mode)) { *err=errsock(); return -1; }
 #else
-    int flag = fcntl(sock, F_GETFL, 0);
-    fcntl(sock, F_SETFL, flag | O_NONBLOCK);
-    if (connect(sock, addr, len) == -1) {
-        *err = errsock();
-        if (*err != EISCONN && *err != EINPROGRESS && *err != EALREADY) return -1;
-        fd_set rs, ws;
-        FD_ZERO(&rs); FD_SET(sock, &rs); ws = rs;
-        struct timeval tv = {0};
-#ifdef WIN32
-        if (select(0, &rs, &ws, NULL, &tv) == 0) {
-#else
-        if (select(sock + 1, &rs, &ws, NULL, &tv) == 0) {
-#endif
-          *err = 0;
-          return 0;
+        int flag=fcntl(sock,F_GETFL,0);
+        if (flag==-1||fcntl(sock,F_SETFL,flag|O_NONBLOCK)==-1) {
+            *err=errsock(); return -1;
         }
-        *err = 0;
-        return 1;
-    }
 #endif
-    *err = 0;
+        if (connect(sock,addr,len)==0) { *err=0; return 1; }
+        *err=errsock();
+#ifdef WIN32
+        if (*err!=WSAEWOULDBLOCK&&*err!=WSAEINPROGRESS&&*err!=WSAEALREADY) return -1;
+#else
+        if (*err!=EINPROGRESS&&*err!=EALREADY) return -1;
+#endif
+        *pending=1;
+    }
+    FD_ZERO(&ws); FD_SET(sock,&ws); es=ws;
+#ifdef WIN32
+    ret=select(0,NULL,&ws,&es,&tv);
+#else
+    ret=select(sock+1,NULL,&ws,&es,&tv);
+#endif
+    if (ret<0) { *err=errsock(); return -1; }
+    if (!ret) { *err=0; return 0; }
+    if (getsockopt(sock,SOL_SOCKET,SO_ERROR,(char *)err,&optlen)==-1) {
+        *err=errsock(); return -1;
+    }
+    if (*err) return -1;
+    *pending=0;
     return 1;
 }
 /* non-block receive ---------------------------------------------------------*/
@@ -1192,82 +1211,112 @@ static int send_nb(socket_t sock, const uint8_t *buff, int n, int *err)
     *err = 0;
     return ns;
 }
+/* resolve IPv4/IPv6 endpoints (keep IPv6 loopback without AI_ADDRCONFIG) -------*/
+static int resolveaddr(const char *host, int port, int socktype, int server,
+                       struct addrinfo **addresses, char *msg)
+{
+    struct addrinfo hints={0};
+    char service[16];
+    int error;
+
+    if (port<0||port>65535||(!server&&!port)||(!server&&!*host)) {
+        sprintf(msg,"address/port error (%s:%d)",host,port);
+        return 0;
+    }
+    hints.ai_family=AF_UNSPEC;
+    hints.ai_socktype=socktype;
+    hints.ai_flags=server?AI_PASSIVE:0;
+    sprintf(service,"%d",port);
+    error=getaddrinfo(*host?host:NULL,service,&hints,addresses);
+    if (error) {
+        sprintf(msg,"address error (%s)",host);
+        tracet(1,"resolveaddr: addr=%s error=%d\n",host,error);
+        return 0;
+    }
+    return 1;
+}
+/* wildcard IPv6 listeners also accept IPv4; specific binds stay specific -----*/
+static int setlistener(socket_t sock, int family, const char *host)
+{
+    int opt;
+#ifdef SVR_REUSEADDR
+    opt=1;
+    setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(const char *)&opt,sizeof(opt));
+#endif
+    if (family==AF_INET6) {
+        opt=(*host&&strcmp(host,"::"))?1:0;
+        if (setsockopt(sock,IPPROTO_IPV6,IPV6_V6ONLY,(const char *)&opt,sizeof(opt))==-1) {
+            return 0;
+        }
+    }
+    return 1;
+}
+/* release client address candidates -----------------------------------------*/
+static void freetcpaddr(tcp_t *tcp)
+{
+    if (tcp->addresses) freeaddrinfo(tcp->addresses);
+    tcp->addresses=tcp->nextaddr=NULL;
+}
 /* generate tcp socket -------------------------------------------------------*/
 static int gentcp(tcp_t *tcp, int type, char *msg)
 {
-    const struct hostent *hp;
-#ifdef SVR_REUSEADDR
-    int opt=1;
-#endif
-    
+    struct addrinfo *ai;
+    int pass,wildcard=type==0&&!*tcp->saddr;
+
     tracet(3,"gentcp: type=%d\n",type);
-    
-    /* generate socket */
-    if ((tcp->sock=socket(AF_INET,SOCK_STREAM,0))==(socket_t)-1) {
-        sprintf(msg,"socket error (%d)",errsock());
-        tracet(1,"gentcp: socket error err=%d\n",errsock());
-        tcp->state=-1;
-        return 0;
-    }
-    if (!setsock(tcp->sock,msg)) {
-        tcp->state=-1;
-        return 0;
-    }
-    memset(&tcp->addr,0,sizeof(tcp->addr));
-    tcp->addr.sin_family=AF_INET;
-    tcp->addr.sin_port=htons(tcp->port);
-    
-    if (type==0) { /* server socket */
-    
-#ifdef SVR_REUSEADDR
-        /* multiple-use of server socket */
-        setsockopt(tcp->sock,SOL_SOCKET,SO_REUSEADDR,(const char *)&opt,
-                   sizeof(opt));
-#endif
-        if(tcp->saddr[0])
-        {
-            if(!(hp=gethostbyname(tcp->saddr))) {
-                sprintf(msg,"address error (%s)",tcp->saddr);
-                tracet(1,"gentcp: gethostbyname error addr=%s err=%d\n",tcp->saddr,errsock());
-                closesocket(tcp->sock);
-                tcp->state=-1;
-                return 0;
-            }
-            memcpy(&tcp->addr.sin_addr,hp->h_addr,hp->h_length);
-        }
-        if (bind(tcp->sock,(struct sockaddr *)&tcp->addr,sizeof(tcp->addr))==-1) {
-            sprintf(msg,"bind error (%d) : %d",errsock(),tcp->port);
-            tracet(1,"gentcp: bind error port=%d err=%d\n",tcp->port,errsock());
-            closesocket(tcp->sock);
-            tcp->state=-1;
-            return 0;
-        }
-        listen(tcp->sock,5);
-    }
-    else { /* client socket */
-        if (!(hp=gethostbyname(tcp->saddr))) {
-            sprintf(msg,"address error (%s)",tcp->saddr);
-            // h_errno ?
-            tracet(1,"gentcp: gethostbyname error addr=%s err=%d\n",tcp->saddr,errsock());
-            closesocket(tcp->sock);
-            tcp->state=0;
+
+    if (!tcp->addresses) {
+        if (!resolveaddr(tcp->saddr,tcp->port,SOCK_STREAM,type==0,&tcp->addresses,msg)) {
+            tcp->state=type?0:-1;
             tcp->tcon=ticonnect;
             tcp->tdis=tickget();
             return 0;
         }
-        memcpy(&tcp->addr.sin_addr,hp->h_addr,hp->h_length);
+        tcp->nextaddr=tcp->addresses;
     }
-    tcp->state=1;
-    tcp->tact=tickget();
-    tracet(5,"gentcp: exit sock=%" PRISOCK "\n",tcp->sock);
-    return 1;
+    /* Prefer a dual-stack wildcard listener, with IPv4 fallback. */
+    for (pass=0;pass<(wildcard?2:1);pass++) {
+        for (ai=tcp->nextaddr;ai;ai=ai->ai_next) {
+            if (wildcard&&((pass==0)!=(ai->ai_family==AF_INET6))) continue;
+            tcp->nextaddr=ai->ai_next;
+            if ((tcp->sock=socket(ai->ai_family,ai->ai_socktype,ai->ai_protocol))==(socket_t)-1) {
+                sprintf(msg,"socket error (%d)",errsock());
+                continue;
+            }
+            if (!setsock(tcp->sock,msg)) { tcp->sock=(socket_t)-1; continue; }
+            if (!type&&(!setlistener(tcp->sock,ai->ai_family,tcp->saddr)||
+                bind(tcp->sock,ai->ai_addr,(socklen_t)ai->ai_addrlen)==-1||
+                listen(tcp->sock,5)==-1)) {
+                sprintf(msg,"bind/listen error (%d) : %d",errsock(),tcp->port);
+                closesocket(tcp->sock); tcp->sock=(socket_t)-1;
+                continue;
+            }
+            memset(&tcp->addr,0,sizeof(tcp->addr));
+            memcpy(&tcp->addr,ai->ai_addr,ai->ai_addrlen);
+            tcp->addrlen=(socklen_t)ai->ai_addrlen;
+            tcp->connecting=0;
+            if (!type) freetcpaddr(tcp);
+            tcp->state=1;
+            tcp->tact=tickget();
+            return 1;
+        }
+        tcp->nextaddr=tcp->addresses;
+    }
+    freetcpaddr(tcp);
+    tcp->state=type?0:-1;
+    tcp->tcon=ticonnect;
+    tcp->tdis=tickget();
+    return 0;
 }
 /* disconnect tcp ------------------------------------------------------------*/
 static void discontcp(tcp_t *tcp, int tcon)
 {
     tracet(3,"discontcp: sock=%" PRISOCK " tcon=%d\n",tcp->sock,tcon);
     
-    closesocket(tcp->sock);
+    if (tcp->sock!=(socket_t)-1) closesocket(tcp->sock);
+    tcp->sock=(socket_t)-1;
+    tcp->connecting=0;
+    freetcpaddr(tcp);
     tcp->state=0;
     tcp->tcon=tcon;
     tcp->tdis=tickget();
@@ -1335,7 +1384,7 @@ static void updatetcpsvr(tcpsvr_t *tcpsvr, char *msg)
 /* accept client connection --------------------------------------------------*/
 static int accsock(tcpsvr_t *tcpsvr, char *msg)
 {
-    struct sockaddr_in addr;
+    struct sockaddr_storage addr;
     socket_t sock;
     socklen_t len=sizeof(addr);
     int i,err;
@@ -1361,7 +1410,11 @@ static int accsock(tcpsvr_t *tcpsvr, char *msg)
     
     tcpsvr->cli[i].sock=sock;
     memcpy(&tcpsvr->cli[i].addr,&addr,sizeof(addr));
-    strcpy(tcpsvr->cli[i].saddr,inet_ntoa(addr.sin_addr));
+    tcpsvr->cli[i].addrlen=len;
+    if (getnameinfo((struct sockaddr *)&addr,len,tcpsvr->cli[i].saddr,
+                    sizeof(tcpsvr->cli[i].saddr),NULL,0,NI_NUMERICHOST)) {
+        strcpy(tcpsvr->cli[i].saddr,"unknown");
+    }
     sprintf(msg,"%s",tcpsvr->cli[i].saddr);
     tracet(3,"accsock: connected sock=%" PRISOCK " addr=%s i=%d\n",
            tcpsvr->cli[i].sock,tcpsvr->cli[i].saddr,i);
@@ -1487,12 +1540,30 @@ static int consock(tcpcli_t *tcpcli, char *msg)
         return 0;
     }
     /* non-block connect */
-    if ((stat=connect_nb(tcpcli->svr.sock,(struct sockaddr *)&tcpcli->svr.addr,
-                         sizeof(tcpcli->svr.addr),&err))==-1) {
+    stat=connect_nb(tcpcli->svr.sock,(struct sockaddr *)&tcpcli->svr.addr,
+                    tcpcli->svr.addrlen,&tcpcli->svr.connecting,&err);
+    if (!stat&&tcpcli->toinact>0&&
+        (int)(tickget()-tcpcli->svr.tact)>=tcpcli->toinact) {
+#ifdef WIN32
+        err=WSAETIMEDOUT;
+#else
+        err=ETIMEDOUT;
+#endif
+        stat=-1;
+    }
+    if (stat==-1) {
         sprintf(msg,"connect error (%d)",err);
         tracet(2,"consock: connect error sock=%" PRISOCK " err=%d\n",tcpcli->svr.sock,err);
         closesocket(tcpcli->svr.sock);
+        tcpcli->svr.sock=(socket_t)-1;
+        tcpcli->svr.connecting=0;
         tcpcli->svr.state=0;
+        if (tcpcli->svr.nextaddr) tcpcli->svr.tcon=0;
+        else {
+            freetcpaddr(&tcpcli->svr);
+            tcpcli->svr.tcon=tcpcli->tirecon;
+            tcpcli->svr.tdis=tickget();
+        }
         return 0;
     }
     if (!stat) { /* not connect */
@@ -1502,6 +1573,7 @@ static int consock(tcpcli_t *tcpcli, char *msg)
     sprintf(msg,"%s",tcpcli->svr.saddr);
     tracet(3,"consock: connected sock=%" PRISOCK " addr=%s\n",tcpcli->svr.sock,tcpcli->svr.saddr);
     tcpcli->svr.state=2;
+    freetcpaddr(&tcpcli->svr);
     tcpcli->svr.tact=tickget();
     return 1;
 }
@@ -1515,6 +1587,7 @@ static tcpcli_t *opentcpcli(const char *path, char *msg)
     
     if (!(tcpcli=(tcpcli_t *)malloc(sizeof(tcpcli_t)))) return NULL;
     *tcpcli=tcpcli0;
+    tcpcli->svr.sock=(socket_t)-1;
     decodetcppath(path,tcpcli->svr.saddr,port,NULL,NULL,NULL,NULL);
     if (sscanf(port,"%d",&tcpcli->svr.port)<1) {
         sprintf(msg,"port error: %s",port);
@@ -1532,7 +1605,8 @@ static void closetcpcli(tcpcli_t *tcpcli)
 {
     tracet(3,"closetcpcli: sock=%" PRISOCK "\n",tcpcli->svr.sock);
     
-    closesocket(tcpcli->svr.sock);
+    if (tcpcli->svr.sock!=(socket_t)-1) closesocket(tcpcli->svr.sock);
+    freetcpaddr(&tcpcli->svr);
     free(tcpcli);
 }
 /* wait socket connect -------------------------------------------------------*/
@@ -1543,6 +1617,8 @@ static int waittcpcli(tcpcli_t *tcpcli, char *msg)
     if (tcpcli->svr.state<0) return 0;
     
     if (tcpcli->svr.state==0) { /* close */
+        if (tcpcli->svr.tcon<0||(tcpcli->svr.tcon>0&&
+            (int)(tickget()-tcpcli->svr.tdis)<tcpcli->svr.tcon)) return 0;
         if (!gentcp(&tcpcli->svr,1,msg)) return 0;
     }
     if (tcpcli->svr.state==1) { /* wait */
@@ -1836,7 +1912,8 @@ static ntrip_t *openntrip(const char *path, int type, char *msg)
     if (!*port) {
         sprintf(port,"%d",type?NTRIP_CLI_PORT:NTRIP_SVR_PORT);
     }
-    sprintf(tpath,"%s:%s",addr,port);
+    if (strchr(addr,':')) sprintf(tpath,"[%s]:%s",addr,port);
+    else sprintf(tpath,"%s:%s",addr,port);
     
     /* ntrip access via proxy server */
     if (*proxyaddr) {
@@ -1923,7 +2000,7 @@ static ntripc_t *openntripc(const char *path, char *msg)
 {
     ntripc_t *ntripc;
     int i;
-    char port[256]="",tpath[MAXSTRPATH];
+    char addr[256]="",port[256]="",tpath[MAXSTRPATH];
     
     tracet(3,"openntripc: path=%s\n",path);
     
@@ -1938,7 +2015,7 @@ static ntripc_t *openntripc(const char *path, char *msg)
         memset(ntripc->con[i].buff,0,NTRIP_MAXRSP);
     }
     /* decode tcp/ntrip path */
-    decodetcppath(path,NULL,port,ntripc->user,ntripc->passwd,ntripc->mntpnt,
+    decodetcppath(path,addr,port,ntripc->user,ntripc->passwd,ntripc->mntpnt,
                   ntripc->srctbl);
     
     if (!*ntripc->mntpnt) {
@@ -1950,7 +2027,8 @@ static ntripc_t *openntripc(const char *path, char *msg)
     if (!*port) {
         sprintf(port,"%d",NTRIP_CLI_PORT);
     }
-    sprintf(tpath,":%s",port);
+    if (strchr(addr,':')) sprintf(tpath,"[%s]:%s",addr,port);
+    else sprintf(tpath,"%s:%s",addr,port);
     
     /* open tcp server stream */
     if (!(ntripc->tcp=opentcpsvr(tpath,msg))) {
@@ -2183,77 +2261,71 @@ static int statexntripc(const ntripc_t *ntripc, char *msg)
 static udp_t *genudp(int type, int port, const char *saddr, char *msg)
 {
     udp_t *udp;
-    const struct hostent *hp;
-    int bs=buffsize,opt=1;
-    
+    struct addrinfo *addresses=NULL,*ai;
+    int pass,bs=buffsize,opt=1,wildcard=!type&&!*saddr;
+
     tracet(3,"genudp: type=%d\n",type);
-    
-    if (!(udp=(udp_t *)malloc(sizeof(udp_t)))) return NULL;
+
+    if (!resolveaddr(saddr,port,SOCK_DGRAM,!type,&addresses,msg)) return NULL;
+    if (!(udp=(udp_t *)calloc(1,sizeof(udp_t)))) {
+        freeaddrinfo(addresses); return NULL;
+    }
     udp->state=2;
     udp->type=type;
     udp->port=port;
     strcpy(udp->saddr,saddr);
-    
-    if ((udp->sock=socket(AF_INET,SOCK_DGRAM,0))==(socket_t)-1) {
-        free(udp);
-        sprintf(msg,"socket error (%d)",errsock());
-        return NULL;
-    }
-    if (setsockopt(udp->sock,SOL_SOCKET,SO_RCVBUF,(const char *)&bs,sizeof(bs))==-1||
-        setsockopt(udp->sock,SOL_SOCKET,SO_SNDBUF,(const char *)&bs,sizeof(bs))==-1) {
-        tracet(2,"genudp: setsockopt error sock=%" PRISOCK " err=%d bs=%d\n",udp->sock,errsock(),bs);
-        sprintf(msg,"sockopt error: bufsiz");
-    }
-    memset(&udp->addr,0,sizeof(udp->addr));
-    udp->addr.sin_family=AF_INET;
-    udp->addr.sin_port=htons(port);
-    
-    if (!udp->type) { /* udp server */
-        udp->addr.sin_addr.s_addr=htonl(INADDR_ANY);
-#ifdef SVR_REUSEADDR
-        setsockopt(udp->sock,SOL_SOCKET,SO_REUSEADDR,(const char *)&opt, sizeof(opt));
-#endif
-        if (bind(udp->sock,(struct sockaddr *)&udp->addr,sizeof(udp->addr))==-1) {
-            tracet(2,"genudp: bind error sock=%" PRISOCK " port=%d err=%d\n",udp->sock,port,errsock());
-            sprintf(msg,"bind error (%d): %d",errsock(),port);
-            closesocket(udp->sock);
-            free(udp);
-            return NULL;
+    udp->sock=(socket_t)-1;
+
+    for (pass=0;pass<(wildcard?2:1);pass++) {
+        for (ai=addresses;ai;ai=ai->ai_next) {
+            if (wildcard&&((pass==0)!=(ai->ai_family==AF_INET6))) continue;
+            udp->sock=socket(ai->ai_family,ai->ai_socktype,ai->ai_protocol);
+            if (udp->sock==(socket_t)-1) {
+                sprintf(msg,"socket error (%d)",errsock());
+                continue;
+            }
+            if (setsockopt(udp->sock,SOL_SOCKET,SO_RCVBUF,(const char *)&bs,sizeof(bs))==-1||
+                setsockopt(udp->sock,SOL_SOCKET,SO_SNDBUF,(const char *)&bs,sizeof(bs))==-1) {
+                sprintf(msg,"sockopt error: bufsiz");
+            }
+            if (!type&&(!setlistener(udp->sock,ai->ai_family,saddr)||
+                bind(udp->sock,ai->ai_addr,(socklen_t)ai->ai_addrlen)==-1)) {
+                sprintf(msg,"bind error (%d): %d",errsock(),port);
+                closesocket(udp->sock); udp->sock=(socket_t)-1;
+                continue;
+            }
+            if (type&&!strcmp(saddr,"255.255.255.255")&&
+                setsockopt(udp->sock,SOL_SOCKET,SO_BROADCAST,(const char *)&opt,sizeof(opt))==-1) {
+                sprintf(msg,"sockopt error: broadcast");
+                closesocket(udp->sock); udp->sock=(socket_t)-1;
+                continue;
+            }
+            memcpy(&udp->addr,ai->ai_addr,ai->ai_addrlen);
+            udp->addrlen=(socklen_t)ai->ai_addrlen;
+            freeaddrinfo(addresses);
+            return udp;
         }
     }
-    else { /* udp client */
-        if (!strcmp(saddr,"255.255.255.255")&&
-            setsockopt(udp->sock,SOL_SOCKET,SO_BROADCAST,(const char *)&opt,
-                       sizeof(opt))==-1) {
-            tracet(2,"genudp: setsockopt error sock=%" PRISOCK " err=%d\n",udp->sock,errsock());
-            sprintf(msg,"sockopt error: broadcast");
-        }
-        if (!(hp=gethostbyname(saddr))) {
-            sprintf(msg,"address error (%s)",saddr);
-            closesocket(udp->sock);
-            free(udp);
-            return NULL;
-        }
-        memcpy(&udp->addr.sin_addr,hp->h_addr,hp->h_length);
-    }
-    return udp;
+    freeaddrinfo(addresses);
+    free(udp);
+    return NULL;
 }
 /* open udp server -----------------------------------------------------------*/
 static udp_t *openudpsvr(const char *path, char *msg)
 {
-    char sport[256]="";
+    char saddr[256]="",sport[256]="";
     int port;
     
     tracet(3,"openudpsvr: path=%s\n",path);
     
-    decodetcppath(path,NULL,sport,NULL,NULL,NULL,NULL);
+    decodetcppath(path,saddr,sport,NULL,NULL,NULL,NULL);
     
     if (sscanf(sport,"%d",&port)<1) {
         sprintf(msg,"port error: %s",sport);
         tracet(2,"openudpsvr: port error port=%s\n",sport);
         return NULL;
     }
-    return genudp(0,port,"",msg);
+    return genudp(0,port,saddr,msg);
 }
 /* close udp server ----------------------------------------------------------*/
 static void closeudpsvr(udp_t *udpsvr)
@@ -2334,7 +2406,7 @@ static int writeudpcli(udp_t *udpcli, const uint8_t *buff, int n, char *msg)
     tracet(4,"writeudpcli: sock=%" PRISOCK " n=%d\n",udpcli->sock,n);
     
     return (int)sendto(udpcli->sock,(char *)buff,n,0,
-                       (struct sockaddr *)&udpcli->addr,sizeof(udpcli->addr));
+                       (struct sockaddr *)&udpcli->addr,udpcli->addrlen);
 }
 /* get state udp client ------------------------------------------------------*/
 static int stateudpcli(const udp_t *udpcli)
@@ -2829,8 +2901,12 @@ extern void strinit(stream_t *stream)
 *                    swap  = output swap interval (hr) (0: no swap)
 *                    ::P={4|8} = file pointer size (4:32bit,8:64bit)
 *
-*   STR_TCPSVR   :port
+*   STR_TCPSVR   [addr]:port
+*                    addr  = optional local bind address (empty: IPv4/IPv6)
 *                    port  = TCP server port to accept
+*
+*   Network addresses accept hostnames, IPv4 or bracketed IPv6, e.g.
+*   [::1]:2101 or [fe80::1%en0]:2101 (scope ID for link-local addresses).
 *
 *   STR_TCPCLI   addr:port
 *                    addr  = TCP server address to connect
@@ -2850,7 +2926,8 @@ extern void strinit(stream_t *stream)
 *                    passwd= NTRIP caster client password to connect
 *                    mpoint= NTRIP mountpoint
 *
-*   STR_NTRIPCAS [user[:passwd]@][:port]/mpoint[:srctbl]
+*   STR_NTRIPCAS [user[:passwd]@][addr][:port]/mpoint[:srctbl]
+*                    addr  = optional local bind address (empty: IPv4/IPv6)
 *                    port  = NTRIP caster client port to accept connection
 *                    user  = NTRIP caster client user to accept connection
 *                    passwd= NTRIP caster client password to accept connection
@@ -2860,7 +2937,8 @@ extern void strinit(stream_t *stream)
 *                       country;latitude;longitude;nmea;solution;generator;
 *                       compr-encrp;autentication;fee;bitrate;...;misc)
 *
-*   STR_UDPSVR   :port
+*   STR_UDPSVR   [addr]:port
+*                    addr  = optional local bind address (empty: IPv4/IPv6)
 *                    port  = UDP server port to receive
 *
 *   STR_UDPCLI   addr:port
