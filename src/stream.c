@@ -120,6 +120,7 @@
 #define NTRIP_SVR_PORT      80          /* default ntrip-server connection port */
 #define NTRIP_MAXRSP        32768       /* max size of ntrip response */
 #define NTRIP_MAXSTR        256         /* max length of mountpoint string */
+#define NTRIP_TOREQ         10000       /* ntrip caster client request timeout (ms) */
 #define NTRIP_RSP_OK_CLI    "ICY 200 OK\r\n" /* ntrip response: client */
 #define NTRIP_RSP_OK_SVR    "OK\r\n"    /* ntrip response: server */
 #define NTRIP_RSP_SRCTBL    "SOURCETABLE 200 OK\r\n" /* ntrip response: source table */
@@ -2075,6 +2076,13 @@ static void wait_ntripc(ntripc_t *ntripc, char *msg)
     for (i=0;i<MAXCLI;i++) {
         if (ntripc->tcp->cli[i].state!=2||ntripc->con[i].state) continue;
         
+        /* disconnect client without valid request within timeout */
+        if ((int)(tickget()-ntripc->tcp->cli[i].tact)>NTRIP_TOREQ) {
+            tracet(2,"wait_ntripc: request timeout sock=%" PRISOCK "\n",
+                   ntripc->tcp->cli[i].sock);
+            discon_ntripc(ntripc,i);
+            continue;
+        }
         /* receive ntrip client request */
         buff=ntripc->con[i].buff+ntripc->con[i].nb;
         nmax=NTRIP_MAXRSP-ntripc->con[i].nb-1;
