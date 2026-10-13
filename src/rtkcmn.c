@@ -2534,6 +2534,18 @@ static int readngspcv(const char *file, pcvs_t *pcvs)
 
     return 1;
 }
+/* antex frequency number to frequency index ---------------------------------*/
+static int antfreq2idx(int sys, int f)
+{
+    uint8_t code;
+
+    // Take any valid obs code of frequency f: code2idx() uses only its
+    // frequency to get the frequency index for the system.
+    for (code=1;code<=MAXCODE;code++) {
+        if (code2obs(code)[0]=='0'+f) return code2idx(sys,code);
+    }
+    return -1;
+}
 /* read antex file ----------------------------------------------------------*/
 static int readantex(const char *file, pcvs_t *pcvs)
 {
@@ -2541,7 +2553,7 @@ static int readantex(const char *file, pcvs_t *pcvs)
     static const pcv_t pcv0={0};
     pcv_t pcv;
     double neu[3];
-    int i,f,freq=0,state=0,freqs[]={1,2,5,0};
+    int i,f,freq=0,state=0;
     char buff[256];
 
     trace(3,"readantex: file=%s\n",file);
@@ -2580,10 +2592,7 @@ static int readantex(const char *file, pcvs_t *pcvs)
         else if (strstr(buff+60,"START OF FREQUENCY")) {
             if (!pcv.sat&&buff[3]!='G') continue; /* only read rec ant for GPS */
             if (sscanf(buff+4,"%d",&f)<1) continue;
-            for (i=0;freqs[i];i++) if (freqs[i]==f) break;
-            if (freqs[i]) freq=i+1;
-            /* for Galileo E5b: save to E2, not E7  */
-            if (satsys(pcv.sat,NULL)==SYS_GAL&&f==7) freq=2;
+            freq=antfreq2idx(pcv.sat?satsys(pcv.sat,NULL):SYS_GPS,f)+1;
         }
         else if (strstr(buff+60,"END OF FREQUENCY")) {
             freq=0;
