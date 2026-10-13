@@ -1086,8 +1086,8 @@ static int zdres(int base, const obsd_t *obs, int n, const double *rs,
         r+=mapfh*zhd;
 
         /* calc receiver antenna phase center correction */
-        antmodel(opt->pcvr+base,opt->antdel[base],azel+i*2,opt->posopt[1],
-                 dant);
+        antmodel(rcvpcv(opt,base,satsys(obs[i].sat,NULL)),opt->antdel[base],
+                 azel+i*2,opt->posopt[1],dant);
 
         /* calc undifferenced phase/code residual for satellite */
         trace(4,"sat=%d r=%.6f c*dts=%.6f zhd=%.6f map=%.6f\n",obs[i].sat,r,CLIGHT*dts[i*2],zhd,mapfh);

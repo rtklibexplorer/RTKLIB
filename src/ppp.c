@@ -1001,7 +1001,8 @@ static int ppp_res(int post, const obsd_t *obs, int n, const double *rs,
         }
         /* satellite and receiver antenna model */
         if (opt->posopt[0]) satantpcv(rs+i*6,rr,nav->pcvs+sat-1,dants);
-        antmodel(opt->pcvr,opt->antdel[0],azel+i*2,opt->posopt[1],dantr);
+        antmodel(rcvpcv(opt,0,sys),opt->antdel[0],azel+i*2,opt->posopt[1],
+                 dantr);
 
         /* phase windup model */
         if (!model_phw(rtk->sol.time,sat,nav->pcvs[sat-1].type,
