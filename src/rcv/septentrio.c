@@ -90,7 +90,7 @@ typedef struct {
   int8_t meas3_freqAssignment[MEAS3_SYS_MAX][MEAS3_SAT_MAX][MEAS3_SIG_MAX];
 } sbf_t;
 
-extern void free_sbf(raw_t *raw) {
+void free_sbf(raw_t *raw) {
   if (raw->format != STRFMT_SEPT) return;
   sbf_t *sbf = (sbf_t *)raw->rcv_data;
   if (sbf) {
@@ -99,7 +99,7 @@ extern void free_sbf(raw_t *raw) {
   }
 }
 
-extern int init_sbf(raw_t *raw) {
+int init_sbf(raw_t *raw) {
   if (raw->format != STRFMT_SEPT) return 0;
   sbf_t *sbf = (sbf_t *)calloc(1, sizeof(sbf_t));
   if (!sbf) {
@@ -4136,7 +4136,7 @@ static int sync_sbf(unsigned char *buff, unsigned char data)
 *          -NO_MEAS3: ignore range measurements version 3 blocks
 *          -RCVSTDS : save receiver stdevs to unused RINEX fields
 *-----------------------------------------------------------------------------*/
-extern int input_sbf(raw_t *raw, unsigned char data)
+int input_sbf(raw_t *raw, unsigned char data)
 {
     trace(5, "input_sbf: data=%02x\n",data);
 
@@ -4164,7 +4164,7 @@ extern int input_sbf(raw_t *raw, unsigned char data)
 *          FILE   *fp    I      file pointer
 * return : status(-2: end of file, -1...9: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_sbff(raw_t *raw, FILE *fp)
+int input_sbff(raw_t *raw, FILE *fp)
 {
     int i, data;
     trace(4, "input_sbff:\n");
