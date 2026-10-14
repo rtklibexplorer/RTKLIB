@@ -280,7 +280,7 @@ static int input_strfile(strfile_t *str)
         }
     }
     else if (str->format<=MAXRCVFMT) {
-        if ((type=input_rawf(&str->raw,str->format,str->fp))>=1) {
+        if ((type=input_rawf(&str->raw,str->fp))>=1) {
             str->time=str->raw.time;
             str->ephsat=str->raw.ephsat;
             str->ephset=str->raw.ephset;
