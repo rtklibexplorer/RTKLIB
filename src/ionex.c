@@ -283,7 +283,7 @@ static void combtec(nav_t *nav)
 * return : none
 * notes  : see ref [1]
 *-----------------------------------------------------------------------------*/
-extern void readtec(const char *file, nav_t *nav, int opt)
+void readtec(const char *file, nav_t *nav, int opt)
 {
     FILE *fp;
     double dcb[MAXSAT]={0},rms[MAXSAT]={0};
@@ -433,7 +433,7 @@ static int iondelay(gtime_t time, const tec_t *tec, const double *pos,
 * notes  : before calling the function, read tec grid data by calling readtec()
 *          return ok with delay=0 and var=VAR_NOTEC if el<MIN_EL or h<MIN_HGT
 *-----------------------------------------------------------------------------*/
-extern int iontec(gtime_t time, const nav_t *nav, const double *pos,
+int iontec(gtime_t time, const nav_t *nav, const double *pos,
                   const double *azel, int opt, double *delay, double *var)
 {
     double dels[2],vars[2],a,tt;
@@ -496,7 +496,7 @@ extern int iontec(gtime_t time, const nav_t *nav, const double *pos,
 * return : status (1:ok, 0:error)
 * notes  : delay is positive for code (L1 scale), i.e. corrected = meas - delay
 *-----------------------------------------------------------------------------*/
-extern int ionvtec(gtime_t time, const nav_t *nav, const double *pos,
+int ionvtec(gtime_t time, const nav_t *nav, const double *pos,
                    const double *azel, double freq, double *delay, double *var)
 {
     const double re=6371.0; /* fallback single-layer height (km) */
