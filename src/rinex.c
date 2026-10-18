@@ -129,6 +129,9 @@
 #define MINFREQ_GLO -7                  /* min frequency number GLONASS */
 #define MAXFREQ_GLO 13                  /* max frequency number GLONASS */
 #define NINCOBS     262144              /* incremental number of obs data */
+#define VER_EPS     0.0001              /* tolerance for RINEX version comparisons,
+                                            allows for fp rounding of the parsed
+                                            version number */
 
 static const int navsys[RNX_NUMSYS]={ /* satellite systems */
     SYS_GPS,SYS_GLO,SYS_GAL,SYS_QZS,SYS_SBS,SYS_CMP,SYS_IRN
@@ -276,7 +279,7 @@ static void convcode(double ver, int sys, const char *str, char *type)
         else if (sys==SYS_GLO) sprintf(type,"%c2P",'C');
     }
     else if (!strcmp(str,"C1")) { /* ver.2.11 GPS L1C,GLO L1C/A */
-        if      (ver>=2.12) ; /* reject C1 for 2.12 */
+        if      (ver>=2.12-VER_EPS) ; /* reject C1 for 2.12 */
         else if (sys==SYS_GPS) sprintf(type,"%c1C",'C');
         else if (sys==SYS_GLO) sprintf(type,"%c1C",'C');
         else if (sys==SYS_GAL) sprintf(type,"%c1X",'C'); /* ver.2.12 */
@@ -285,37 +288,37 @@ static void convcode(double ver, int sys, const char *str, char *type)
     }
     else if (!strcmp(str,"C2")) {
         if (sys==SYS_GPS) {
-            if (ver>=2.12) sprintf(type,"%c2W",'C'); /* L2P(Y) */
+            if (ver>=2.12-VER_EPS) sprintf(type,"%c2W",'C'); /* L2P(Y) */
             else           sprintf(type,"%c2X",'C'); /* L2C */
         }
         else if (sys==SYS_GLO) sprintf(type,"%c2C",'C');
         else if (sys==SYS_QZS) sprintf(type,"%c2X",'C');
         else if (sys==SYS_CMP) sprintf(type,"%c2X",'C'); /* ver.2.12 B1_2 */
     }
-    else if (ver>=2.12&&str[1]=='A') { /* ver.2.12 L1C/A */
+    else if (ver>=2.12-VER_EPS&&str[1]=='A') { /* ver.2.12 L1C/A */
         if      (sys==SYS_GPS) sprintf(type,"%c1C",str[0]);
         else if (sys==SYS_GLO) sprintf(type,"%c1C",str[0]);
         else if (sys==SYS_QZS) sprintf(type,"%c1C",str[0]);
         else if (sys==SYS_SBS) sprintf(type,"%c1C",str[0]);
     }
-    else if (ver>=2.12&&str[1]=='B') { /* ver.2.12 GPS L1C */
+    else if (ver>=2.12-VER_EPS&&str[1]=='B') { /* ver.2.12 GPS L1C */
         if      (sys==SYS_GPS) sprintf(type,"%c1X",str[0]);
         else if (sys==SYS_QZS) sprintf(type,"%c1X",str[0]);
     }
-    else if (ver>=2.12&&str[1]=='C') { /* ver.2.12 GPS L2C */
+    else if (ver>=2.12-VER_EPS&&str[1]=='C') { /* ver.2.12 GPS L2C */
         if      (sys==SYS_GPS) sprintf(type,"%c2X",str[0]);
         else if (sys==SYS_QZS) sprintf(type,"%c2X",str[0]);
     }
-    else if (ver>=2.12&&str[1]=='D') { /* ver.2.12 GLO L2C/A */
+    else if (ver>=2.12-VER_EPS&&str[1]=='D') { /* ver.2.12 GLO L2C/A */
         if      (sys==SYS_GLO) sprintf(type,"%c2C",str[0]);
     }
-    else if (ver>=2.12&&str[1]=='1') { /* ver.2.12 GPS L1PY,GLO L1P */
+    else if (ver>=2.12-VER_EPS&&str[1]=='1') { /* ver.2.12 GPS L1PY,GLO L1P */
         if      (sys==SYS_GPS) sprintf(type,"%c1W",str[0]);
         else if (sys==SYS_GLO) sprintf(type,"%c1P",str[0]);
         else if (sys==SYS_GAL) sprintf(type,"%c1X",str[0]); /* tentative */
         else if (sys==SYS_CMP) sprintf(type,"%c2X",str[0]); /* extension */
     }
-    else if (ver<2.12&&str[1]=='1') {
+    else if (ver<2.12-VER_EPS&&str[1]=='1') {
         if      (sys==SYS_GPS) sprintf(type,"%c1C",str[0]);
         else if (sys==SYS_GLO) sprintf(type,"%c1C",str[0]);
         else if (sys==SYS_GAL) sprintf(type,"%c1X",str[0]); /* tentative */
@@ -457,7 +460,7 @@ static void decode_obsh(FILE *fp, char *buff, double ver, int *tsys,
                 j=10;
             }
             if (nt>=MAXOBSTYPE-1) continue;
-            if (ver<=2.99) {
+            if (ver<3.00-VER_EPS) {
                 setstr(str,buff+j,2);
                 convcode(ver,SYS_GPS,str,tobs[RNX_SYS_GPS][nt]);
                 convcode(ver,SYS_GLO,str,tobs[RNX_SYS_GLO][nt]);
@@ -672,7 +675,7 @@ static int readrnxh(FILE *fp, double *ver, char *type, int *sys, int *tsys,
         else if (strstr(label,"RINEX VERSION / TYPE")) {
             *ver=str2num(buff,0,9);
             char sc;
-            if (*ver >= 3.04) {
+            if (*ver >= 3.04-VER_EPS) {
               // The format changed for clock files >=3.04.
               if (flag == 1) { // Expecting a clock file.
                 *type = buff[21];
@@ -740,7 +743,7 @@ static int decode_obsepoch(FILE *fp, char *buff, double ver, gtime_t *time,
 
     trace(4,"decode_obsepoch: ver=%.2f\n",ver);
 
-    if (ver<=2.99) { /* ver.2 */
+    if (ver<3.00-VER_EPS) { /* ver.2 */
         /* epoch flag: 3:new site,4:header info,5:external event */
         *flag=(int)str2num(buff,28,1);
 
@@ -802,7 +805,7 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
 
     trace(4,"decode_obsdata: ver=%.2f\n",ver);
 
-    if (ver>2.99) { /* ver.3 */
+    if (ver>=3.00-VER_EPS) { /* ver.3 */
         snprintf(satid,8,"%.3s",buff);
         obs->sat=(uint8_t)satid2no(satid);
     }
@@ -823,9 +826,9 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
         case SYS_IRN: ind=index+6; break;
         default:      ind=index  ; break;
     }
-    for (i=0,j=ver<=2.99?0:3;i<ind->n;i++,j+=16) {
+    for (i=0,j=ver<3.00-VER_EPS?0:3;i<ind->n;i++,j+=16) {
 
-        if (ver<=2.99&&j>=80) { /* ver.2 */
+        if (ver<3.00-VER_EPS&&j>=80) { /* ver.2 */
             if (!fgets(buff,MAXRNXLEN,fp)) break;
             j=0;
         }
@@ -847,7 +850,7 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
     /* assign position in observation data */
     for (i=n=m=q=0;i<ind->n;i++) {
 
-        p[i]=(ver<=2.11)?ind->idx[i]:ind->pos[i];
+        p[i]=(ver<2.12-VER_EPS)?ind->idx[i]:ind->pos[i];
 
         if (ind->type[i]==0&&p[i]==0) k[n++]=i; /* C1? index */
         if (ind->type[i]==0&&p[i]==1) l[m++]=i; /* C2? index */
@@ -855,7 +858,7 @@ static int decode_obsdata(FILE *fp, char *buff, double ver, int mask,
     }
 
     /* if multiple codes (C1/P1,C2/P2), select higher priority */
-    if (ver<=2.11) {
+    if (ver<2.12-VER_EPS) {
         if (n>=2) {
             if (val[k[0]]==0.0&&val[k[1]]==0.0) {
                 p[k[0]]=-1; p[k[1]]=-1;
@@ -1326,7 +1329,7 @@ static int decode_geph(double ver, int sat, gtime_t toc, double *data,
     dow=(int)floor(tow/86400.0);
 
     /* time of frame in UTC */
-    tod=ver<=2.99?data[2]:fmod(data[2],86400.0); /* Tod (v.2), Tow (v.3) in UTC */
+    tod=ver<3.00-VER_EPS?data[2]:fmod(data[2],86400.0); /* Tod (v.2), Tow (v.3) in UTC */
     tof=gpst2time(week,tod+dow*86400.0);
     tof=adjday(tof,toc);
 
@@ -1347,7 +1350,7 @@ static int decode_geph(double ver, int sat, gtime_t toc, double *data,
     geph->frq=(int)data[10];
     geph->age=(int)data[14];
 
-    if (ver >= 3.05) {
+    if (ver >= 3.05-VER_EPS) {
       geph->flags = (int)data[15]; // Status flags
       geph->dtaun = data[16];
       geph->sva = (int)data[17];
@@ -1409,18 +1412,18 @@ static int readrnxnavb(FILE *fp, const char *opt, double ver, int sys,
     mask=set_sysmask(opt);
 
     // Number of elements for GLONASS.
-    int nglo = ver >= 3.05 ? 19 : 15;
+    int nglo = ver >= 3.05-VER_EPS ? 19 : 15;
 
     while (fgets(buff,MAXRNXLEN,fp)) {
 
         if (i==0) {
 
             /* decode satellite field */
-            if (ver>=3.0||sys==SYS_GAL||sys==SYS_QZS) { /* ver.3 or GAL/QZS */
+            if (ver>=3.00-VER_EPS||sys==SYS_GAL||sys==SYS_QZS) { /* ver.3 or GAL/QZS */
                 snprintf(id,8,"%.3s",buff);
                 sat=satid2no(id);
                 sp=4;
-                if (ver>=3.0) {
+                if (ver>=3.00-VER_EPS) {
                     sys=satsys(sat,NULL);
                     if (!sys) {
                         sys=(id[0]=='S')?SYS_SBS:((id[0]=='R')?SYS_GLO:SYS_GPS);
@@ -1564,7 +1567,7 @@ static int readrnxclk(FILE *fp, const char *opt, double ver, int index, nav_t *n
     char buff[MAXRNXLEN];
     /* set system mask */
     int mask=set_sysmask(opt);
-    int off=ver>=3.04?5:0; /* format change for ver>=3.04 */
+    int off=ver>=3.04-VER_EPS?5:0; /* format change for ver>=3.04 */
 
     while (fgets(buff,sizeof(buff),fp)) {
         gtime_t time;
