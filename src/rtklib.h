@@ -767,8 +767,8 @@ typedef struct {
     int nmax[4];
     int mmax[4];
     double hgt[4];
-    double cosC[4][16][16];
-    double sinC[4][16][16];
+    double cosC[4][17][17];
+    double sinC[4][17][17];
 } vtec_t;
 
 typedef struct {        /* SBAS message type */

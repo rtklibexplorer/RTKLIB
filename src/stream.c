@@ -1762,7 +1762,7 @@ static int rspntrip_c(ntrip_t *ntrip, char *msg)
     else if ((p=strstr((char *)ntrip->buff,NTRIP_RSP_HTTP))) { /* http response */
         char *q;
         if ((q=strchr(p,'\r'))) *q='\0'; else ntrip->buff[128]='\0';
-        strcpy(msg,p);
+        snprintf(msg,MAXSTRMSG,"%s",p);
         tracet(3,"rspntrip_s: %s nb=%d\n",msg,ntrip->nb);
         ntrip->nb=0;
         ntrip->buff[0]='\0';
