@@ -429,7 +429,7 @@ void MainWindow::updateEnable()
 {
     QPushButton *btnFrequencyType[] = {ui->btnFrequencyType1, ui->btnFrequencyType2, ui->btnFrequencyType3, ui->btnFrequencyType4};
     QPushButton *btnExpand[] = {ui->btnExpand1, ui->btnExpand2, ui->btnExpand3, ui->btnExpand4};
-    QPushButton *btnShrink[] = {ui->btnShrink1, ui->btnShrink3, ui->btnShrink3, ui->btnShrink4};
+    QPushButton *btnShrink[] = {ui->btnShrink1, ui->btnShrink2, ui->btnShrink3, ui->btnShrink4};
 
     for (int i = 0; i < 4; i++)
     {

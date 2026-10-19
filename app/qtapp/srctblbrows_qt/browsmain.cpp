@@ -189,6 +189,9 @@ void MainForm::showEvent(QShowEvent *event)
             ui->cBAddress->setCurrentIndex(-1);
     }
 
+    connect(&casterWatcher, &QFutureWatcher<char*>::finished, this, &MainForm::updateCaster);
+    connect(&tableWatcher, &QFutureWatcher<char*>::finished, this, &MainForm::updateTable);
+
     fontScale = QFontMetrics(ui->tWTableStr->font()).height() * 4;
 
     colw = settings.value("srctbl/colwidth0", default_column_width0).toString().split(',');
@@ -441,7 +444,6 @@ void MainForm::getCaster()
 
     // update source table in background and call updateCaster() when finished
     QFuture<char *> tblFuture = QtConcurrent::run(getsrctbl, addr);
-    connect(&casterWatcher, &QFutureWatcher<char*>::finished, this, &MainForm::updateCaster);
     casterWatcher.setFuture(tblFuture);
 }
 //---------------------------------------------------------------------------
@@ -488,7 +490,6 @@ void MainForm::getTable()
 
     // retrieve data in background and call updateTable() when finished
     QFuture<char *> tblFuture = QtConcurrent::run(getsrctbl, addr);
-    connect(&tableWatcher, &QFutureWatcher<char*>::finished, this, &MainForm::updateTable);
     tableWatcher.setFuture(tblFuture);
 }
 //---------------------------------------------------------------------------
@@ -584,7 +585,7 @@ void MainForm::showTable()
 //---------------------------------------------------------------------------
 void MainForm::showMsg(const QString &msg)
 {
-    ui->lblMessage->setText(tr(qPrintable(msg)));
+    ui->lblMessage->setText(msg);
 }
 //---------------------------------------------------------------------------
 void MainForm::updateMap()

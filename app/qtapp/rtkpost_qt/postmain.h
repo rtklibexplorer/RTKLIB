@@ -132,7 +132,7 @@ public:
     explicit MainForm(QWidget *parent = 0);
 
     QString iniFile;
-    bool abortFlag;
+    std::atomic_bool abortFlag;
 	
     void viewFile(const QString &file);
 };

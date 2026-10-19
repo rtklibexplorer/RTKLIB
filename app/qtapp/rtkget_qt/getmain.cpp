@@ -66,7 +66,6 @@ extern "C" {
     extern int showmsg(const char *format, ...)
     {
         va_list arg;
-        QString str;
         static QString buff2;
         char buff[1024], *p;
 
@@ -75,11 +74,13 @@ extern "C" {
         va_end(arg);
 
         if ((p = strstr(buff, "STAT="))) {
+            QString status = QString::fromLocal8Bit(p + 5);
+            buff2.append(status);
+            if (buff2.endsWith('_'))
+                buff2.chop(1);
             // keep only the last 66 characters of buff
-            buff2.append(QStringView{str}.right(66));
-            if (buff2.endsWith('_')) buff2.remove(buff2.length() - 1, 1);
-            // append everthing which follows after "STAT="
-            buff2.append(p + 5);
+            if (buff2.size() > 66)
+              buff2.remove(0, buff2.size() - 66);
             QMetaObject::invokeMethod(mainForm, "showMessage", Qt::QueuedConnection, Q_ARG(int, 3), Q_ARG(QString, QString(buff2)));
         } else if ((p = strstr(buff, "->"))) {
             *p = '\0';  // split message at "->"
@@ -703,15 +704,18 @@ void MainForm::loadStationFile(const QString &file)
 {
     QFile f(file);
     QByteArray buff;
+    int pos;
 
     if (!f.open(QIODevice::ReadOnly)) return;
 
     ui->stationListWidget->clear();
 
     while (!f.atEnd()) {
-        buff = f.readLine();
-        buff = buff.mid(buff.indexOf('#'));
-        ui->stationListWidget->addItem(buff);
+      buff = f.readLine();
+      pos = buff.indexOf('#');
+      if (pos > 0)  // remove comments
+        buff = buff.mid(pos);
+      ui->stationListWidget->addItem(buff);
     }
 
     updateStationListLabel();
@@ -745,7 +749,7 @@ void MainForm::getTime(gtime_t *ts, gtime_t *te, double *ti)
     if (tokens.size() == 0) return;
 
     val = tokens.at(0).toDouble();
-    if (tokens.size() == 1) {
+    if (tokens.size() == 2) {
         if (tokens.at(1) == tr("day"))
             *ti = val * 86400.0;
         else if (tokens.at(1) == tr("min"))
@@ -770,7 +774,7 @@ int MainForm::selectUrl(url_t *urls)
         if (!ui->dataListWidget->item(i)->isSelected()) continue;
 
         str = ui->dataListWidget->item(i)->text();
-        types[nurl_in] = new char[str.length()];
+        types[nurl_in] = new char[str.length()+1];
         strncpy(types[nurl_in++], qPrintable(str), str.length());
     }
     if (downOptDialog->urlFile.isEmpty()) file = URL_FILE;

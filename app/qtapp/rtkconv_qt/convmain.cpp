@@ -154,7 +154,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnTimeStop, &QPushButton::clicked, this, &MainWindow::showStopTimeDialog);
     connect(ui->btnKey, &QPushButton::clicked, this, &MainWindow::showKeyDialog);
     connect(ui->btnPost, &QPushButton::clicked, this, &MainWindow::callRtkPost);
-    connect(ui->btnAbort, &QCheckBox::clicked, this, &MainWindow::abort);
+    connect(ui->btnAbort, &QPushButton::clicked, this, &MainWindow::abort);
     connect(ui->btnInputFile, &QPushButton::clicked, this, &MainWindow::selectInputFile);
     connect(ui->btnInputFileView, &QPushButton::clicked, this, &MainWindow::viewInputFile);
     connect(ui->cBOutputFileEnable1, &QCheckBox::clicked, this, &MainWindow::updateEnable);
@@ -394,7 +394,7 @@ void MainWindow::callRtkPost()
     if (ui->cBOutputFileEnable9->isChecked())
         opts << "-n" << ui->lEOutputFile9->text();
 
-    if (ui->cBTimeStart->isChecked()) opts << + "-ts" << ui->dateTimeStart->dateTime().toString("yyyy/MM/dd hh:mm:ss");
+    if (ui->cBTimeStart->isChecked()) opts << "-ts" << ui->dateTimeStart->dateTime().toString("yyyy/MM/dd hh:mm:ss");
     if (ui->cBTimeEnd->isChecked()) opts << "-te" << ui->dateTimeStop->dateTime().toString("yyyy/MM/dd hh:mm:ss");
     if (ui->cBTimeInterval->isChecked()) opts << "-ti" << ui->comboTimeInterval->currentText();
     if (ui->cBTimeUnit->isChecked()) opts << "-tu" << ui->cBTimeUnit->text();

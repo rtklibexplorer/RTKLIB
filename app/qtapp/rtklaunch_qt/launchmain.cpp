@@ -42,7 +42,7 @@ MainForm::MainForm(QWidget *parent)
 
     QString prgFilename = QApplication::applicationFilePath();
     QFileInfo prgFileInfo(prgFilename);
-    iniFile = prgFileInfo.absoluteDir().filePath(prgFileInfo.baseName()) + ".ini";;
+    iniFile = prgFileInfo.absoluteDir().filePath(prgFileInfo.baseName()) + ".ini";
 
     launchOptDlg = new LaunchOptDialog(this);
 
@@ -116,7 +116,7 @@ MainForm::MainForm(QWidget *parent)
     popup_menu->addAction(ui->actionRtkPlot);
     popup_menu->addAction(ui->actionRtkPost);
     popup_menu->addAction(ui->actionRtkStr);
-    popup_menu->addAction(ui->actionRtkVideo);
+    //popup_menu->addAction(ui->actionRtkVideo);
     popup_menu->addSeparator();
     popup_menu->addAction(tr("E&xit"),this, &MainForm::accept);
     ui->btnRtklib->setMenu(popup_menu);
@@ -140,8 +140,6 @@ MainForm::MainForm(QWidget *parent)
     connect(ui->actionRtkPlot, &QAction::triggered, this, &MainForm::launchRTKPlot);
     connect(ui->actionRtkPost, &QAction::triggered, this, &MainForm::launchRTKPost);
     connect(ui->actionRtkStr, &QAction::triggered, this, &MainForm::launchStrSvr);
-
-    updatePanel();
 }
 //---------------------------------------------------------------------------
 void MainForm::showEvent(QShowEvent *event)
@@ -155,6 +153,8 @@ void MainForm::showEvent(QShowEvent *event)
 
     resize(settings.value("pos/width", 310).toInt(),
            settings.value("pos/height", 79).toInt());
+
+    updatePanel();
 }
 //---------------------------------------------------------------------------
 void MainForm::closeEvent(QCloseEvent *ev)

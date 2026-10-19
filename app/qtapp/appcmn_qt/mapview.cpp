@@ -132,7 +132,8 @@ void MapView::pageLoaded(bool ok)
 
 #ifdef QWEBENGINE
     QFile webchannel(":/html/qwebchannel.js");
-    webchannel.open(QIODevice::ReadOnly);
+    if (!webchannel.open(QIODevice::ReadOnly))
+      return;
     webBrowser->page()->runJavaScript(webchannel.readAll());
     webBrowser->page()->runJavaScript("new QWebChannel(qt.webChannelTransport,function(channel) {channel.objects.state.text=document.getElementById('state').value;});");
 #endif

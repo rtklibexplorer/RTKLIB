@@ -568,7 +568,7 @@ void MainForm::startServer()
     }
 
     // clean up
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < MAXSTR; i++) {
         if (cmds[i]) delete[] cmds[i];
         if (cmds_periodic[i]) delete[] cmds_periodic[i];
     };
@@ -587,7 +587,7 @@ void MainForm::stopServer()
 
     streamTypes[0] = inputTypes[ui->cBInput->currentIndex()];
     for (int i = 1; i < MAXSTR; i++) {
-        streamTypes[1] = outputTypes[type[i]->currentIndex()];
+        streamTypes[i] = outputTypes[type[i]->currentIndex()];
     }
 
     // get stop commands

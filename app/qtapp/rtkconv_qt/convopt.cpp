@@ -341,7 +341,7 @@ void ConvOptDialog::saveOptions(QSettings &ini)
     ini.setValue("opt/codemask_6", codeMask[5]);
     ini.setValue("opt/codemask_7", codeMask[6]);
     ini.setValue("opt/autopos", autoPosition);
-    ini.setValue("opt/phasewhift", phaseShift);
+    ini.setValue("opt/phaseShift", phaseShift);
     ini.setValue("opt/halfcyc", halfCycle);
     ini.setValue("opt/sortsats", sortSats);
     ini.setValue("opt/outiono", outputIonoCorr);

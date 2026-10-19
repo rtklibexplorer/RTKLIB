@@ -90,7 +90,7 @@ extern int showmsg(const char *format, ...)
         QMetaObject::invokeMethod(mainForm, "showMessage", Qt::QueuedConnection,
                                   Q_ARG(QString, QString(buff)));
     }
-    return mainForm->abortFlag;
+    return mainForm->abortFlag.load(std::memory_order_acquire);
 }
 // set time span of progress bar --------------------------------------------
 extern void settspan(gtime_t ts, gtime_t te)
@@ -462,7 +462,7 @@ void MainForm::startPostProcessing()
 {
     QString outputFile = ui->cBOutputFile->currentText();
     static QRegularExpression reg = QRegularExpression(R"(\.\d\d[ondg])", QRegularExpression::CaseInsensitiveOption);
-    abortFlag = false;
+    abortFlag.store(false, std::memory_order_release);
 
     if (ui->cBInputFile1->currentText().isEmpty()) {
         showMessage(tr("Error: No rinex observation file (rover)"));
@@ -532,7 +532,7 @@ void MainForm::processingFinished(int stat)
 // callback on button-abort -------------------------------------------------
 void MainForm::abortProcessing()
 {
-    abortFlag = true;
+    abortFlag.store(true, std::memory_order_release);
     showMessage(tr("Aborted"));
 }
 // callback on button-about -------------------------------------------------

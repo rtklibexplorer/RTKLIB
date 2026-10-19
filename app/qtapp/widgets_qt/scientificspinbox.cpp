@@ -11,7 +11,7 @@ ScientificSpinBox::ScientificSpinBox(QWidget * parent)
     setDecimals(2);
     QDoubleSpinBox::setDecimals(1000);  // internal number of decimals
 
-    setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
+    setRange(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
 
     m_validator = new QDoubleValidator(this);
     m_validator->setDecimals(1000);
@@ -209,7 +209,7 @@ QVariant ScientificSpinBox::validateAndInterpret(QString &input, int &pos, QVali
                 // remove thousand-chars
                 QString copy2 = copy;
                 copy2.remove(loc.groupSeparator());
-                num = loc.toDouble(copy, &ok);
+                num = loc.toDouble(copy2, &ok);
 
                 // if conversion still not valid, then reason unknown -> Invalid
                 if (!ok) {

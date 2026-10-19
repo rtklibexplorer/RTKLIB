@@ -11,7 +11,6 @@ class MainForm;
 }
 
 class QCloseEvent;
-class QCloseEvent;
 class LaunchOptDialog;
 
 //---------------------------------------------------------------------------

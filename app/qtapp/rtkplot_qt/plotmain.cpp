@@ -2137,7 +2137,7 @@ void Plot::updateTime()
     if (observationIndex < 0) return;
 
     // time-cursor change on solution-plot
-    if (plotType <= PLOT_SDOP || plotType <= PLOT_RES) {
+    if (plotType <= PLOT_SDOP || plotType == PLOT_RES) {
         ui->sBTime->setMaximum(qMax(1, solutionData[sel].n - 1));
         ui->sBTime->setValue(solutionIndex[sel]);
         if (!(sol = getsol(solutionData + sel, solutionIndex[sel]))) return;
