@@ -14,7 +14,7 @@
 #include "rtklib.h"
 
 /* ambiguity resolution in ppp -----------------------------------------------*/
-extern int ppp_ar(rtk_t *rtk, const obsd_t *obs, int n, int *exc,
+int ppp_ar(rtk_t *rtk, const obsd_t *obs, int n, int *exc,
                   const nav_t *nav, const double *azel, double *x, double *P)
 {
     (void)rtk; (void)obs; (void)n; (void)exc; (void)nav; (void)azel; (void)x; (void)P;

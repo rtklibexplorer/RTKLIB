@@ -90,8 +90,8 @@
 #define qMaxSHAPEFILE 16             // max number of shape files
 
 extern "C" {
-    extern void settime(gtime_t) {}
-    extern void settspan(gtime_t, gtime_t) {}
+    void settime(gtime_t) {}
+    void settspan(gtime_t, gtime_t) {}
 }
 
 

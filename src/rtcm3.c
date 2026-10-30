@@ -2723,7 +2723,7 @@ static int decode_type4076(rtcm_t *rtcm)
     return 0;
 }
 /* decode RTCM ver.3 message -------------------------------------------------*/
-extern int decode_rtcm3(rtcm_t *rtcm)
+int decode_rtcm3(rtcm_t *rtcm)
 {
     double tow;
     int ret=0,type=getbitu(rtcm->buff,24,12),week;
