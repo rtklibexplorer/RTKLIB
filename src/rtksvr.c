@@ -426,7 +426,7 @@ static int decoderaw(rtksvr_t *svr, int index)
             ephset=svr->rtcm[index].ephset;
         }
         else {
-            ret=input_raw(svr->raw+index,svr->format[index],svr->buff[index][i]);
+            ret=input_raw(svr->raw+index,svr->buff[index][i]);
             obs=&svr->raw[index].obs;
             nav=&svr->raw[index].nav;
             ephsat=svr->raw[index].ephsat;

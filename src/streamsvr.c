@@ -440,7 +440,7 @@ static void strconv(stream_t *str, strconv_t *conv, uint8_t *buff, int n)
         }
         /* input receiver raw messages */
         else {
-            ret=input_raw(&conv->raw,conv->itype,buff[i]);
+            ret=input_raw(&conv->raw,buff[i]);
             raw2rtcm(&conv->out,&conv->raw,ret);
         }
         /* write obs and nav data messages to stream */

@@ -36,63 +36,69 @@ StrMonDialog::StrMonDialog(QWidget *parent)
 //---------------------------------------------------------------------------
 void StrMonDialog::changeFormat()
 {
-    int streamFormat = getStreamFormat();
+  int streamFormat = getStreamFormat();
 
-    if ((streamFormat-3 == STRFMT_RTCM2) || (streamFormat-3 == STRFMT_RTCM3)) {
-        free_rtcm(&rtcm);
-    } else if (streamFormat >= 3) {
-        free_raw(&raw);
+  if (streamFormat >= 3) {
+    int fmt = streamFormat - 3;
+    if (fmt == STRFMT_RTCM2 || fmt == STRFMT_RTCM3)
+      free_rtcm(&rtcm);
+    else if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX)
+      free_raw(&raw);
+  }
+
+  streamFormat = ui->cBSelectFormat->currentIndex();
+  clearConsole();
+
+  if (streamFormat >= 3) {
+    int fmt = streamFormat - 3;
+    if (fmt == STRFMT_RTCM2 || fmt == STRFMT_RTCM3) {
+      init_rtcm(&rtcm);
+      rtcm.outtype = 1;
+    } else if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX) {
+      init_raw(&raw, fmt);
+      raw.outtype = 1;
     }
-
-    streamFormat = ui->cBSelectFormat->currentIndex();
-    clearConsole();
-
-    if ((streamFormat - 3 == STRFMT_RTCM2) || (streamFormat - 3 == STRFMT_RTCM3)) {
-        init_rtcm(&rtcm);
-        rtcm.outtype = 1;
-    } else if (streamFormat >= 3) {
-        init_raw(&raw, streamFormat - 3);
-        raw.outtype = 1;
-    }
+  }
 }
 //---------------------------------------------------------------------------
 void StrMonDialog::addMessage(unsigned char *msg, int len)
 {
-    int streamFormat = getStreamFormat();
-    int i;
+  if (len <= 0) return;
 
-    if (len <= 0) {
-        return;
-    }else if (streamFormat - 3 == STRFMT_RTCM2) {
-        for (i = 0; i < len; i++) {
-            input_rtcm2(&rtcm, msg[i]);
-            if (rtcm.msgtype[0]) {
-                addConsole((unsigned char*)rtcm.msgtype, strlen(rtcm.msgtype), 1, true);
-                rtcm.msgtype[0] = '\0';
-            }
+  int streamFormat = getStreamFormat();
+  if (streamFormat == 0) {  // Streams
+    consoleBuffer.clear();
+    addConsole(msg, len, 1, false);
+  } else if (streamFormat == 1 || streamFormat == 2) {  // Hex or ASCII.
+    addConsole(msg, len, streamFormat - 1, false);
+  } else {
+    int fmt = streamFormat - 3;
+    if (fmt == STRFMT_RTCM2) {
+      for (int i = 0; i < len; i++) {
+        input_rtcm2(&rtcm, msg[i]);
+        if (rtcm.msgtype[0]) {
+          addConsole((unsigned char *)rtcm.msgtype, strlen(rtcm.msgtype), 1, true);
+          rtcm.msgtype[0] = '\0';
         }
-    } else if (streamFormat - 3 == STRFMT_RTCM3) {
-        for (i = 0; i < len; i++) {
-            input_rtcm3(&rtcm, msg[i]);
-            if (rtcm.msgtype[0]) {
-                addConsole((unsigned char*)rtcm.msgtype, strlen(rtcm.msgtype), 1, true);
-                rtcm.msgtype[0] = '\0';
-            }
+      }
+    } else if (fmt == STRFMT_RTCM3) {
+      for (int i = 0; i < len; i++) {
+        input_rtcm3(&rtcm, msg[i]);
+        if (rtcm.msgtype[0]) {
+          addConsole((unsigned char *)rtcm.msgtype, strlen(rtcm.msgtype), 1, true);
+          rtcm.msgtype[0] = '\0';
         }
-    } else if (streamFormat >= 3) { // raw
-        for (i = 0; i < len; i++) {
-            input_raw(&raw, streamFormat - 3, msg[i]);
-            if (raw.msgtype[0]) {
-                addConsole((unsigned char*)raw.msgtype, strlen(raw.msgtype), 1, true);
-                raw.msgtype[0] = '\0';
-            }
+      }
+    } else if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX) {  // Raw
+      for (int i = 0; i < len; i++) {
+        input_raw(&raw, msg[i]);
+        if (raw.msgtype[0]) {
+          addConsole((unsigned char *)raw.msgtype, strlen(raw.msgtype), 1, true);
+          raw.msgtype[0] = '\0';
         }
-    } else if (streamFormat >= 1 ) { // HEX/ASC
-        addConsole(msg, len, streamFormat - 1, false);
-    } else { // Streams
-        consoleBuffer.clear();
-        addConsole(msg, len, 1, false);
+      }
     }
+  }
 }
 //---------------------------------------------------------------------------
 void StrMonDialog::addConsole(unsigned char *msg, int n, int mode, bool newline)
