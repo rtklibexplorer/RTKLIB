@@ -36,6 +36,11 @@ __published:
 	TButton *BtnStr3;
 	TEdit *FilePath3;
 	TButton *BtnFile3;
+	TCheckBox *Stream4C;
+	TComboBox *Stream4;
+	TButton *BtnStr4;
+	TEdit *FilePath4;
+	TButton *BtnFile4;
 	TComboBox *SwapIntv;
 	TLabel *Label1;
 	TLabel *Label2;
@@ -55,6 +60,10 @@ __published:
 	void __fastcall BtnFile3Click(TObject *Sender);
 	void __fastcall Stream3CClick(TObject *Sender);
 	void __fastcall Stream3Change(TObject *Sender);
+	void __fastcall BtnStr4Click(TObject *Sender);
+	void __fastcall BtnFile4Click(TObject *Sender);
+	void __fastcall Stream4CClick(TObject *Sender);
+	void __fastcall Stream4Change(TObject *Sender);
 private:
 	AnsiString __fastcall GetFilePath(AnsiString path);
 	AnsiString __fastcall SetFilePath(AnsiString path);
@@ -62,8 +71,8 @@ private:
 	void __fastcall TcpOpt(int index, int opt);
 	void __fastcall UpdateEnable(void);
 public:
-	int StreamC[3],Stream[3],LogTimeTag,LogAppend;
-	AnsiString Paths[3][4],SwapInterval;
+	int StreamC[RTKSVRNIN],Stream[RTKSVRNIN],LogTimeTag,LogAppend;
+	AnsiString Paths[RTKSVRNIN][4],SwapInterval;
 	AnsiString History[10];
 	__fastcall TLogStrDialog(TComponent* Owner);
 };
