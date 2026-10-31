@@ -262,7 +262,8 @@ object OptDialog: TOptDialog
           'Iono-Free LC'
           'Estimate STEC'
           'IONEX TEC'
-          'QZSS Broadcast')
+          'QZSS Broadcast'
+          'SSR VTEC')
       end
       object TropOpt: TComboBox
         Left = 248

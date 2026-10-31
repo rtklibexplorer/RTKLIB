@@ -1553,7 +1553,7 @@ extern int outprcopts(uint8_t *buff, const prcopt_t *opt)
     };
     const char *s4[]={
         "OFF","Broadcast","SBAS","Iono-Free LC","Estimate TEC","IONEX TEC",
-        "QZSS Broadcast","","","",""
+        "QZSS Broadcast","SSR VTEC","","",""
     };
     const char *s5[]={
         "OFF","Saastamoinen","SBAS","Estimate ZTD","Estimate ZTD+Grad","","",""

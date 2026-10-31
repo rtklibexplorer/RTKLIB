@@ -249,6 +249,8 @@ static void update_rtcm_ssr(gtime_t time)
             navs.ssr[i]=rtcm.ssr[i];
             rtcm.ssr[i].update=0;
         }
+        // Update vtec.
+        navs.vtec = rtcm.nav.vtec;
     }
 }
 /* Input obs data, navigation messages and sbas correction -------------------*/
