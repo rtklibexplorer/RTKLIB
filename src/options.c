@@ -61,7 +61,7 @@ static char snrmask_[NFREQ][1024];
 #define STSOPT  "0:off,1:state,2:residual"
 #define ARMOPT  "0:off,1:continuous,2:instantaneous,3:fix-and-hold"
 #define POSOPT  "0:llh,1:xyz,2:single,3:posfile,4:rinexhead,5:rtcm"
-#define TIDEOPT "1:solid+2:otl+4:spole"
+#define TIDEOPT "0:off,1:solid,2:otl,3:solid+otl,4:spole,5:solid+spole,6:otl+spole,7:solid+otl+spole"
 #define PHWOPT  "0:off,1:on,2:precise"
 
 EXPORT opt_t sysopts[]={
@@ -76,7 +76,7 @@ EXPORT opt_t sysopts[]={
     {"pos1-snrmask_L5", 2,  (void *)snrmask_[2],         ""     },
     {"pos1-snrmask_L6", 2,  (void *)snrmask_[3],         ""     },
     {"pos1-dynamics",   3,  (void *)&prcopt_.dynamics,   SWTOPT },
-    {"pos1-tidecorr",   0,  (void *)&prcopt_.tidecorr,   TIDEOPT},
+    {"pos1-tidecorr",   3,  (void *)&prcopt_.tidecorr,   TIDEOPT},
     {"pos1-ionoopt",    3,  (void *)&prcopt_.ionoopt,    IONOPT },
     {"pos1-tropopt",    3,  (void *)&prcopt_.tropopt,    TRPOPT },
     {"pos1-sateph",     3,  (void *)&prcopt_.sateph,     EPHOPT },

@@ -492,84 +492,7 @@ void MainWindow::showRtkPlot()
 // callback on button-options -----------------------------------------------
 void MainWindow::showOptionsDialog()
 {
-    int itype[] = {STR_SERIAL, STR_TCPCLI, STR_TCPSVR, STR_NTRIPCLI, STR_FILE, STR_FTP, STR_HTTP};
-    int otype[] = {STR_SERIAL, STR_TCPCLI, STR_TCPSVR, STR_NTRIPSVR, STR_NTRIPCAS, STR_FILE};
-    char buff[1024], *p, *q;
-
     trace(3, "showOptionsDialog\n");
-
-    for (int i = 0; i < 8; i++) {
-        int stype = streamType[i];
-        if (i < 3) {
-            if (stype >= 0 && stype < (int)(sizeof(itype) / sizeof(int)))
-                strtype[i] = itype[stype];
-            else
-                strtype[i] = STR_NONE;
-        } else {
-            if (stype >= 0 && stype < (int)(sizeof(otype) / sizeof(int)))
-                strtype[i] = otype[stype];
-            else
-                strtype[i] = STR_NONE;
-        }
-
-        strfmt[i] = inputFormat[i];
-
-        if (!streamEnabled[i]) {
-            strtype[i] = STR_NONE;
-            strncpy(strpath[i], "", MAXSTR-1);
-        } else if (strtype[i] == STR_SERIAL) {
-            strncpy(strpath[i], qPrintable(paths[i][0]), MAXSTR-1);
-        } else if (strtype[i] == STR_FILE) {
-            strncpy(strpath[i], qPrintable(paths[i][2]), MAXSTR-1);
-        } else if (strtype[i] == STR_TCPSVR) {
-            strncpy(buff, qPrintable(paths[i][1]), MAXSTR-1);
-            if ((p = strchr(buff, '/'))) *p = '\0'; // TODO
-            if ((p = strrchr(buff, ':'))) {
-                strncpy(strpath[i], p, MAXSTR-1);
-            }
-            else {
-                strncpy(strpath[i], "", MAXSTR-1);
-            }
-        }
-        else if (strtype[i] == STR_TCPCLI) {
-            strncpy(buff, qPrintable(paths[i][1]), 1023);
-            if ((p = strchr(buff, '/'))) *p = '\0';
-            if ((p = strrchr(buff, '@'))) {
-                strncpy(strpath[i], p+1, MAXSTR-1);
-            }
-            else {
-                strncpy(strpath[i], buff, MAXSTR-1);
-            }
-        }
-        else if (strtype[i] == STR_NTRIPSVR) {
-            strncpy(buff, qPrintable(paths[i][1]), 1023);
-            if ((p = strchr(buff, ':')) && strchr(p + 1, '@')) {
-                strncpy(strpath[i], p, MAXSTR-1);
-            }
-            else {
-                strncpy(strpath[i], buff, MAXSTR-1);
-            }
-        }
-        else if (strtype[i] == STR_NTRIPCLI) {
-            strncpy(buff, qPrintable(paths[i][1]), 1023);
-            if ((p = strchr(buff, '/')) && (q = strchr(p + 1, ':'))) *q = '\0';
-            strncpy(strpath[i], buff, MAXSTR);
-        }
-        else if (strtype[i] == STR_NTRIPCAS) {
-            strncpy(buff, qPrintable(paths[i][1]), 1023);
-            if ((p = strchr(buff, '/')) && (q = strchr(p + 1, ':'))) *q = '\0';
-            if ((p = strchr(buff, '@'))) {
-                *(p + 1) = '\0';
-                strncpy(strpath[i], buff, MAXSTR-1);
-            }
-            if ((p = strchr(p ? p + 2 : buff, ':'))) {
-                strncat(strpath[i], p, MAXSTR-1);
-            }
-        } else if (strtype[i] == STR_FTP || strtype[i] == STR_HTTP)
-        {
-            strncpy(strpath[i], qPrintable(paths[i][3]), MAXSTR-1);
-        }
-    }
 
     int solutionBufferSize_old = optDialog->solutionBufferSize;
     int monitorPort_old = optDialog->monitorPort;
@@ -580,40 +503,6 @@ void MainWindow::showOptionsDialog()
     optDialog->exec();
 
     if (optDialog->result() != QDialog::Accepted) return;
-
-    for (int i = 0; i < 8; i++) {
-        streamType[i] = 0; // Default to serial
-        bool found = false;
-        if (i < 3) {
-            // Input
-            for (int j = 0; j < (int)(sizeof(itype) / sizeof(int)); j++) {
-                if (strtype[i] != itype[j]) continue;
-                streamType[i] = j;
-                found = true;
-                break;
-            }
-        } else {
-            // Output or log
-            for (int j = 0; j < (int)(sizeof(otype) / sizeof(int)); j++) {
-                if (strtype[i] != otype[j]) continue;
-                streamType[i] = j;
-                found = true;
-                break;
-            }
-        }
-        // Disable if the stream type is not found.
-        if (found == false) streamEnabled[i] = false;
-        if (i < 5) inputFormat[i] = strfmt[i];
-
-        if (strtype[i] == STR_SERIAL)
-            paths[i][0] = strpath[i];
-        else if (strtype[i] == STR_FILE)
-            paths[i][2] = strpath[i];
-        else if (strtype[i] <= STR_NTRIPCLI)
-            paths[i][1] = strpath[i];
-        else if (strtype[i] <= STR_HTTP)
-            paths[i][3] = strpath[i];
-    }
 
     if (solutionBufferSize_old != optDialog->solutionBufferSize) {
         initSolutionBuffer();
