@@ -2217,7 +2217,21 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
                 if (f==0) rtk->sol.ns++; /* valid satellite count by L1 */
             }
             /* too few valid phases */
-            if (rtk->sol.ns<4) stat=SOLQ_DGPS;
+            if (rtk->sol.ns<4) {
+                int valid_code[MAXSAT]={0};
+                stat=SOLQ_DGPS;
+                /* Count satellites in accepted code DDs, not AR phase flags.
+                 * vflg: bits 16-23 = reference satellite, bits 8-15 = other satellite,
+                 * bits 4-7 = measurement type, bits 0-3 = zero-based frequency index.
+                 * Mark both satellites to count each only once across all DDs. */
+                for (i=0;i<nv;i++) {
+                    if ((vflg[i]&0xFF)!=0x10) continue; /* type 1: code, frequency index 0 */
+                    valid_code[((vflg[i]>>16)&0xFF)-1]=1;
+                    valid_code[((vflg[i]>>8)&0xFF)-1]=1;
+                }
+                rtk->sol.ns=0;
+                for (i=0;i<MAXSAT;i++) rtk->sol.ns+=valid_code[i];
+            }
         }
         else stat=SOLQ_NONE;
     }
@@ -2274,7 +2288,7 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
             rtk->sol.qv[5]=(float)rtk->Pa[5+3*rtk->na];
         }
     }
-    else {  /* float solution */
+    else if (stat!=SOLQ_NONE) {  /* float or DGPS solution */
         for (i=0;i<3;i++) {
             rtk->sol.rr[i]=rtk->x[i];
             rtk->sol.qr[i]=(float)rtk->P[i+i*rtk->nx];
@@ -2292,8 +2306,8 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
             rtk->sol.qv[4]=(float)rtk->P[5+4*rtk->nx];
             rtk->sol.qv[5]=(float)rtk->P[5+3*rtk->nx];
         }
-        rtk->nfix=0;
     }
+    if (stat!=SOLQ_FIX) rtk->nfix=0;
     trace(3,"sol_rr= ");tracemat(3,rtk->sol.rr,1,6,15,3);
     /* save phase measurements */
     for (i=0;i<n;i++) for (j=0;j<nf;j++) {
