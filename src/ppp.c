@@ -260,7 +260,7 @@ static int sat_yaw(gtime_t time, int sat, const char *type, int opt,
                    const double *rs, double *exs, double *eys)
 {
     double rsun[3],ri[6],es[3],esun[3],n[3],p[3],en[3],ep[3],ex[3],E,beta,mu;
-    double yaw,cosy,siny,erpv[5]={0};
+    double yaw,cosy,siny,cosa,erpv[5]={0};
     int i;
 
     sunmoonpos(gpst2utc(time),erpv,rsun,NULL,NULL);
@@ -273,8 +273,12 @@ static int sat_yaw(gtime_t time, int sat, const char *type, int opt,
     cross3(rsun,n,p);
     if (!normv3(rs,es)||!normv3(rsun,esun)||!normv3(n,en)||
         !normv3(p,ep)) return 0;
-    beta=PI/2.0-acos(dot3(esun,en));
-    E=acos(dot3(es,ep));
+    cosa=dot3(esun,en);
+    cosa=cosa<-1.0?-1.0:(cosa>1.0?1.0:cosa);
+    beta=PI/2.0-acos(cosa);
+    cosa=dot3(es,ep);
+    cosa=cosa<-1.0?-1.0:(cosa>1.0?1.0:cosa);
+    E=acos(cosa);
     mu=PI/2.0+(dot3(es,esun)<=0?-E:E);
     if      (mu<-PI/2.0) mu+=2.0*PI;
     else if (mu>=PI/2.0) mu-=2.0*PI;
