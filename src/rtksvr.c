@@ -1041,7 +1041,6 @@ extern int rtksvrstart(rtksvr_t *svr, int cycle, int buffsize, int *strs,
             svr->rtcm[i].time=strs[i]==STR_FILE?strgettime(svr->stream+i):time;
         }
     }
-    svr->rtk.vtec_used=0;
     if (svr->rtk.opt.sateph==EPHOPT_SSRAPC||svr->rtk.opt.sateph==EPHOPT_SSRCOM)
         setseleph(SYS_GAL,1); // SSR mode not compatible with mixed I/NAV F/NAV ephemeris
     else
