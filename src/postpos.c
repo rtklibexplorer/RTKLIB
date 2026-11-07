@@ -422,6 +422,7 @@ static void corr_phase_bias_ssr(obsd_t *obs, int n, const nav_t *nav)
     int i,j;
 
     for (i=0;i<n;i++) for (j=0;j<NFREQ;j++) {
+        if (obs[i].L[j]==0.0) continue;
         code=obs[i].code[j];
 
         if ((freq=sat2freq(obs[i].sat,code,nav))==0.0) continue;
