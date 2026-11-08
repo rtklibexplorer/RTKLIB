@@ -280,7 +280,12 @@
         </item>
         <item>
          <property name="text">
-          <string>3 Correction</string>
+          <string>3 Correction 1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4 Correction 2</string>
          </property>
         </item>
         <item>
@@ -297,12 +302,17 @@
         </property>
         <item>
          <property name="text">
-          <string>(4) Solution 1</string>
+          <string>(9) Solution 1</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>(5) Solution 2</string>
+          <string>(10) Solution 2</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>(11) Solution 3</string>
          </property>
         </item>
        </widget>

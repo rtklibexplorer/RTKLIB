@@ -177,7 +177,8 @@ object MonitorDialog: TMonitorDialog
       Items.Strings = (
         '(1) Rover'
         '(2) Base Station'
-        '(3) Correction')
+        '(3) Correction 1'
+        '(4) Correction 2')
     end
     object SelSat: TComboBox
       AlignWithMargins = True
@@ -307,11 +308,12 @@ object MonitorDialog: TMonitorDialog
       Style = csDropDownList
       ItemIndex = 0
       TabOrder = 8
-      Text = '(4) Solution 1'
+      Text = '(9) Solution 1'
       OnChange = SelStr2Change
       Items.Strings = (
-        '(4) Solution 1'
-        '(5) Solution 2')
+        '(9)  Solution 1'
+        '(10) Solution 2'
+        '(11) Solution 3')
     end
     object BtnCopy: TButton
       AlignWithMargins = True
