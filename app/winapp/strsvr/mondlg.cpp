@@ -52,72 +52,74 @@ void __fastcall TStrMonDialog::BtnCopyClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TStrMonDialog::SelFmtChange(TObject *Sender)
 {
-	if (StrFmt-3==STRFMT_RTCM2||StrFmt-3==STRFMT_RTCM3) {
-		free_rtcm(&rtcm);
-	}
-	else if (StrFmt>=3) {
-		free_raw(&raw);
-	}
-	StrFmt=SelFmt->ItemIndex;
-	ConBuff->Clear();
-	ConBuff->Add("");
-	
-	if (StrFmt-3==STRFMT_RTCM2||StrFmt-3==STRFMT_RTCM3) {
-		init_rtcm(&rtcm);
-		rtcm.outtype=1;
-	}
-	else if (StrFmt>=3) {
-		init_raw(&raw,StrFmt-2);
-		raw.outtype=1;
-	}
-	Console->Invalidate();
+  if (StrFmt >= 3) {
+    int fmt = StrFmt - 3;
+    if (fmt == STRFMT_RTCM2 || fmt == STRFMT_RTCM3)
+      free_rtcm(&rtcm);
+    else if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX)
+      free_raw(&raw);
+  }
+  StrFmt = SelFmt->ItemIndex;
+  ConBuff->Clear();
+  ConBuff->Add("");
+
+  if (StrFmt >= 3) {
+    int fmt = StrFmt - 3;
+    if (fmt == STRFMT_RTCM2 || fmt == STRFMT_RTCM3) {
+      init_rtcm(&rtcm);
+      rtcm.outtype = 1;
+    } else if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX) {
+      init_raw(&raw, fmt);
+      raw.outtype = 1;
+    }
+  }
+  Console->Invalidate();
 }
 //---------------------------------------------------------------------------
 void __fastcall TStrMonDialog::AddMsg(uint8_t *msg, int len)
 {
-	char buff[256];
-	int i,n;
-	
-	if (len<=0) return;
-	
-	else if (StrFmt-3==STRFMT_RTCM2) {
-		for (i=0;i<len;i++) {
-			input_rtcm2(&rtcm,msg[i]);
-			if (rtcm.msgtype[0]) {
-				n=sprintf(buff,"%s\n",rtcm.msgtype);
-				AddConsole((uint8_t *)buff,n,1);
-				rtcm.msgtype[0]='\0';
-			}
-	    }
-	}
-	else if (StrFmt-3==STRFMT_RTCM3) {
-		for (i=0;i<len;i++) {
-			input_rtcm3(&rtcm,msg[i]);
-			if (rtcm.msgtype[0]) {
-				n=sprintf(buff,"%s\n",rtcm.msgtype);
-				AddConsole((uint8_t *)buff,n,1);
-				rtcm.msgtype[0]='\0';
-			}
-	    }
-	}
-	else if (StrFmt>=3) { // raw
-		for (i=0;i<len;i++) {
-			input_raw(&raw,StrFmt-3,msg[i]);
-			if (raw.msgtype[0]) {
-				n=sprintf(buff,"%s\n",raw.msgtype);
-				AddConsole((uint8_t *)buff,n,1);
-				raw.msgtype[0]='\0';
-			}
-	    }
-	}
-	else if (StrFmt>=1) { // HEX/ASC
-		AddConsole(msg,len,StrFmt-1);
-	}
-	else { // Streams
-		ConBuff->Clear();
-		ConBuff->Add("");
-		AddConsole(msg,len,1);
-	}
+  if (len <= 0) return;
+
+  if (StrFmt == 0) {  // Streams.
+    ConBuff->Clear();
+    ConBuff->Add("");
+    AddConsole(msg, len, 1);
+  } else if (StrFmt == 1 || StrFmt == 2) {  // Hex or ASCII.
+    AddConsole(msg, len, StrFmt - 1);
+  } else {
+    int fmt = StrFmt - 3;
+    if (fmt == STRFMT_RTCM2) {
+      for (int i = 0; i < len; i++) {
+        input_rtcm2(&rtcm, msg[i]);
+        if (rtcm.msgtype[0]) {
+          char buff[256];
+          int n = sprintf(buff, "%s\n", rtcm.msgtype);
+          AddConsole((uint8_t *)buff, n, 1);
+          rtcm.msgtype[0] = '\0';
+        }
+      }
+    } else if (fmt == STRFMT_RTCM3) {
+      for (int i = 0; i < len; i++) {
+        input_rtcm3(&rtcm, msg[i]);
+        if (rtcm.msgtype[0]) {
+          char buff[256];
+          int n = sprintf(buff, "%s\n", rtcm.msgtype);
+          AddConsole((uint8_t *)buff, n, 1);
+          rtcm.msgtype[0] = '\0';
+        }
+      }
+    } else if (fmt > STRFMT_RTCM3 && fmt < STRFMT_RINEX) {  // Raw.
+      for (int i = 0; i < len; i++) {
+        input_raw(&raw, msg[i]);
+        if (raw.msgtype[0]) {
+          char buff[256];
+          int n = sprintf(buff, "%s\n", raw.msgtype);
+          AddConsole((uint8_t *)buff, n, 1);
+          raw.msgtype[0] = '\0';
+        }
+      }
+    }
+  }
 }
 //---------------------------------------------------------------------------
 void __fastcall TStrMonDialog::AddConsole(uint8_t *msg, int n, int mode)

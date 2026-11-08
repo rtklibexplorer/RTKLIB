@@ -1329,7 +1329,7 @@ extern int init_raw(raw_t *raw, int format)
     raw->tod=-1;
     for (i=0;i<MAXRAWLEN;i++) raw->buff[i]=0;
     raw->opt[0]='\0';
-    raw->format=-1;
+    raw->format=format;
     raw->rcvtype=0;
     
     raw->obs.data =NULL;
@@ -1380,7 +1380,6 @@ extern int init_raw(raw_t *raw, int format)
     raw->nav.ng = raw->nav.ngmax = MAXPRNGLO;
 
     /* initialize receiver dependent data */
-    raw->format=format;
     switch (format) {
         case STRFMT_RT17: ret=init_rt17(raw); break;
         case STRFMT_SEPT: ret=init_sbf(raw); break;
@@ -1417,14 +1416,14 @@ extern void free_raw(raw_t *raw)
 /* input receiver raw data from stream -----------------------------------------
 * fetch next receiver raw data and input a message from stream
 * args   : raw_t  *raw   IO     receiver raw data control struct
-*          int    format I      receiver raw data format (STRFMT_???)
 *          uint8_t data     I   stream data (1 byte)
 * return : status (-1: error message, 0: no message, 1: input observation data,
 *                  2: input ephemeris, 3: input sbas message,
 *                  9: input ion/utc parameter)
 *-----------------------------------------------------------------------------*/
-extern int input_raw(raw_t *raw, int format, uint8_t data)
+int input_raw(raw_t *raw, uint8_t data)
 {
+    int format = raw->format;
     trace(5,"input_raw: format=%d data=0x%02x\n",format,data);
     
     switch (format) {
@@ -1447,12 +1446,12 @@ extern int input_raw(raw_t *raw, int format, uint8_t data)
 /* input receiver raw data from file -------------------------------------------
 * fetch next receiver raw data and input a message from file
 * args   : raw_t  *raw   IO     receiver raw data control struct
-*          int    format I      receiver raw data format (STRFMT_???)
 *          FILE   *fp    I      file pointer
 * return : status(-2: end of file/format error, -1...31: same as above)
 *-----------------------------------------------------------------------------*/
-extern int input_rawf(raw_t *raw, int format, FILE *fp)
+int input_rawf(raw_t *raw, FILE *fp)
 {
+    int format = raw->format;
     trace(4,"input_rawf: format=%d\n",format);
     
     switch (format) {
