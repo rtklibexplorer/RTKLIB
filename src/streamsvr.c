@@ -71,7 +71,7 @@ static int is_tint(gtime_t time, double tint)
 *          char   *opt      I   rtcm or receiver raw options
 * return : stream generator (NULL:error)
 *-----------------------------------------------------------------------------*/
-extern strconv_t *strconvnew(int itype, int otype, const char *msgs, int staid,
+strconv_t *strconvnew(int itype, int otype, const char *msgs, int staid,
                              int stasel, const char *opt)
 {
     strconv_t *conv;
@@ -120,7 +120,7 @@ extern strconv_t *strconvnew(int itype, int otype, const char *msgs, int staid,
 * args   : strconv_t *conv  IO  stream converter
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strconvfree(strconv_t *conv)
+void strconvfree(strconv_t *conv)
 {
     if (!conv) return;
     free_rtcm(&conv->rtcm);
@@ -566,7 +566,7 @@ static void *strsvrthread(void *arg)
 *          int    nout      I   number of output streams
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsvrinit(strsvr_t *svr, int nout)
+void strsvrinit(strsvr_t *svr, int nout)
 {
     int i;
     
@@ -639,7 +639,7 @@ extern void strsvrinit(strsvr_t *svr, int nout)
 *          double *nmeapos  I   nmea request position (ecef) (m) (NULL: no)
 * return : status (0:error,1:ok)
 *-----------------------------------------------------------------------------*/
-extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
+int strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
                        const char **logs, strconv_t **conv, const char **cmds,
                        const char **cmds_periodic, const double *nmeapos)
 {
@@ -733,7 +733,7 @@ extern int strsvrstart(strsvr_t *svr, int *opts, int *strs, const char **paths,
 *              ...
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsvrstop(strsvr_t *svr, const char **cmds)
+void strsvrstop(strsvr_t *svr, const char **cmds)
 {
     int i;
     
@@ -761,7 +761,7 @@ extern void strsvrstop(strsvr_t *svr, const char **cmds)
 *          char   *msg      O   messages
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void strsvrstat(strsvr_t *svr, int *stat, int *log_stat, int *byte,
+void strsvrstat(strsvr_t *svr, int *stat, int *log_stat, int *byte,
                        int *bps, char *msg)
 {
     char s[MAXSTRMSG]="",*p=msg;
@@ -788,7 +788,7 @@ extern void strsvrstat(strsvr_t *svr, int *stat, int *log_stat, int *byte,
 *          int    nmax      I   buffer size (bytes)
 * return : stream size (bytes)
 *-----------------------------------------------------------------------------*/
-extern int strsvrpeek(strsvr_t *svr, uint8_t *buff, int nmax)
+int strsvrpeek(strsvr_t *svr, uint8_t *buff, int nmax)
 {
     int n;
     

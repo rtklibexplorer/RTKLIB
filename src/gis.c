@@ -306,7 +306,7 @@ static int gis_read_record(FILE *fp, FILE *fp_idx, int type, double *bound,
 * notes  : only support point, multipoint, polyline and polygon.
 *          only support lat-lon for map projection.
 *-----------------------------------------------------------------------------*/
-extern int gis_read(const char *file, gis_t *gis, int layer)
+int gis_read(const char *file, gis_t *gis, int layer)
 {
     FILE *fp,*fp_idx;
     char path[1024],*p;
@@ -358,7 +358,7 @@ extern int gis_read(const char *file, gis_t *gis, int layer)
 * args   : gis_t  *gis      IO  gis data
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void gis_free(gis_t *gis)
+void gis_free(gis_t *gis)
 {
     gisd_t *data,*next;
     int i;

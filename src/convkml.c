@@ -163,7 +163,7 @@ static int savekml(const char *file, const solbuf_t *solbuf, const char *name,
 * return : status (0:ok,-1:file read,-2:file format,-3:no data,-4:file write)
 * notes  : see ref [1] for google earth kml file format
 *-----------------------------------------------------------------------------*/
-extern int convkml(const char *infile, const char *outfile, gtime_t ts,
+int convkml(const char *infile, const char *outfile, gtime_t ts,
                    gtime_t te, double tint, int qflg, int mean, const char *name,
                    double *offset, int tcolor, int pcolor, int outalt, int outtime)
 {
@@ -277,7 +277,7 @@ static int savecsv(const char *file, const solbuf_t *solbuf, const char *name,
 //          int    outorder  I   output order (0:lat/lon,1:lon/lat)
 // Return : status (0:ok,-1:file read,-2:file format,-3:no data,-4:file write)
 //------------------------------------------------------------------------------
-extern int convcsv(const char *infile, const char *outfile, gtime_t ts, gtime_t te, double tint,
+int convcsv(const char *infile, const char *outfile, gtime_t ts, gtime_t te, double tint,
                    int qflg, int mean, const char *name, double *offset,
                    int outalt, int outtime, int outorder) {
   trace(3, "convcsv : infile=%s outfile=%s\n", infile, outfile);

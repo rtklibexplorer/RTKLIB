@@ -64,7 +64,7 @@ static int abortf = 0;
 
 // show message in message area ---------------------------------------------
 extern "C" {
-    extern int showmsg(const char *format, ...)
+    int showmsg(const char *format, ...)
     {
         va_list arg;
         char buff[1024];
@@ -75,8 +75,8 @@ extern "C" {
 
         return abortf;
     }
-    extern void settime(gtime_t) {}
-    extern void settspan(gtime_t, gtime_t) {}
+    void settime(gtime_t) {}
+    void settspan(gtime_t, gtime_t) {}
 }
 
 // constructor --------------------------------------------------------------

@@ -67,7 +67,7 @@ static int dlatdlon(const double *post, double *dpos)
 * return : status (0:ok,0>:error)
 * notes  : parameters file shall comply with GSI TKY2JGD.par
 *-----------------------------------------------------------------------------*/
-extern int loaddatump(const char *file)
+int loaddatump(const char *file)
 {
     FILE *fp;
     char buff[256];
@@ -97,7 +97,7 @@ extern int loaddatump(const char *file)
 * return : status (0:ok,0>:error,out of range)
 * notes  : before calling, call loaddatump() to set parameter table
 *-----------------------------------------------------------------------------*/
-extern int tokyo2jgd(double *pos)
+int tokyo2jgd(double *pos)
 {
     double post[2],dpos[2];
     
@@ -115,7 +115,7 @@ extern int tokyo2jgd(double *pos)
 * return : status (0:ok,0>:error,out of range)
 * notes  : before calling, call loaddatump() to set parameter table
 *-----------------------------------------------------------------------------*/
-extern int jgd2tokyo(double *pos)
+int jgd2tokyo(double *pos)
 {
     double posj[2],dpos[2];
     int i;

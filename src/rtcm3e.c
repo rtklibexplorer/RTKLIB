@@ -2701,7 +2701,7 @@ static int encode_type4076(rtcm_t *rtcm, int subtype, int sync)
     return 0;
 }
 /* encode RTCM ver.3 message -------------------------------------------------*/
-extern int encode_rtcm3(rtcm_t *rtcm, int type, int subtype, int sync)
+int encode_rtcm3(rtcm_t *rtcm, int type, int subtype, int sync)
 {
     int ret=0;
     
