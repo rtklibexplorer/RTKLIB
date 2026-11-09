@@ -75,6 +75,7 @@ extern int init_rtcm(rtcm_t *rtcm)
 
     rtcm->staid=rtcm->stah=rtcm->seqno=rtcm->outtype=0;
     rtcm->time=rtcm->time_s=time0;
+    memset(&rtcm->nav.vtec,0,sizeof(rtcm->nav.vtec));
     rtcm->sta.name[0]=rtcm->sta.markerno[0]=rtcm->sta.markertype[0]='\0';
     rtcm->sta.observer[0]=rtcm->sta.agency[0]='\0';
     rtcm->sta.antdes[0]=rtcm->sta.antsno[0]='\0';

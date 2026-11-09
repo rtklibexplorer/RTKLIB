@@ -20,8 +20,9 @@
 
 #define SQR(x)      ((x)*(x))
 #define MIN(x,y)    ((x)<=(y)?(x):(y))
+#define MAX(x,y)    ((x)>=(y)?(x):(y))
 #define VAR_NOTEC   SQR(30.0)   /* variance of no tec */
-#define VAR_SSR_VTEC SQR(10.0); /* variance of SSR VTEC */
+#define VAR_SSR_VTEC SQR(10.0) /* minimum vertical L1 variance (m^2) */
 #define MIN_EL      0.0         /* min elevation angle (rad) */
 #define MIN_HGT     -1000.0     /* min user height (m) */
 
@@ -382,7 +383,7 @@ static int interptec(const tec_t *tec, int k, const double *posp, double *value,
 static int iondelay(gtime_t time, const tec_t *tec, const double *pos,
                     const double *azel, int opt, double *delay, double *var)
 {
-    const double fact=40.30E16/FREQL1/FREQL1; /* tecu->L1 iono (m) */
+    const double fact=TECK/SQR(FREQL1); /* tecu->L1 iono (m) */
     double fs,posp[3]={0},vtec,rms,hion,rp;
     int i;
     
@@ -412,7 +413,7 @@ static int iondelay(gtime_t time, const tec_t *tec, const double *pos,
         if (!interptec(tec,i,posp,&vtec,&rms)) return 0;
         
         *delay+=fact*fs*vtec;
-        *var+=fact*fact*fs*fs*rms*rms;
+        *var+=SQR(fact*fs*rms);
     }
     trace(4,"iondelay: delay=%7.2f std=%6.2f\n",*delay,sqrt(*var));
     
@@ -494,15 +495,15 @@ extern int iontec(gtime_t time, const nav_t *nav, const double *pos,
 *          double *delay    O   ionospheric delay (m)
 *          double *var      O   ionospheric delay variance (m^2)
 * return : status (1:ok, 0:error)
-* notes  : delay is positive for code (L1 scale), i.e. corrected = meas - delay
+* notes  : delay is positive for code at freq, i.e. corrected = meas - delay
 *-----------------------------------------------------------------------------*/
 extern int ionvtec(gtime_t time, const nav_t *nav, const double *pos,
                    const double *azel, double freq, double *delay, double *var)
 {
-    const double re=6371.0; /* fallback single-layer height (km) */
-    double pppos[2],fs,vtec,P[17][17],cosl[17],sinl[17];
-    double sinp,cosp,x;
-    int i,j,k,nmax,mmax;
+    const double re=6370.0; /* IGS SSR spherical Earth radius (km) */
+    double pppos[2],fs,stec,P[17][17],cosl[17],sinl[17];
+    double sinp,cosp,vtec,r[3],spos[3],tod,lon,maxfs=0.0,fact,anm,bnm;
+    unsigned i,j,k,nmax,mmax;
     char tstr[40];
 
     trace(4,"ionvtec: time=%s pos=%.3f %.3f azel=%.3f %.3f\n",
@@ -510,58 +511,76 @@ extern int ionvtec(gtime_t time, const nav_t *nav, const double *pos,
 
     *delay=*var=0.0;
 
-    if (nav->vtec.nlay<=0) {
+    if (nav->vtec.nlay==0||nav->vtec.nlay>4) {
         trace(2,"ionvtec: no vtec data\n");
         return 0;
     }
-    if (pos[2]<MIN_HGT||azel[1]<=0.0) return 0;
-
-    vtec=0.0;
+    if (pos[2]<MIN_HGT||azel[1]<=0.0||!isfinite(freq)||freq<=0.0) return 0;
+    /* 0 means unknown; the saturated QI gives only a lower bound. */
+    if (!isfinite(nav->vtec.qi)||nav->vtec.qi<0.0||nav->vtec.qi>=25.55) return 0;
+    pos2ecef(pos,r);
+    spos[0]=atan2(r[2],sqrt(SQR(r[0])+SQR(r[1])));
+    spos[1]=pos[1];
+    spos[2]=norm(r,3)-re*1000.0;
+    /* Retain geodetic az/el: local vertical differs by at most ~0.2 deg.
+     * An exact spherical line of sight would require changing the caller. */
+    tod=fmod(time2gpst(time,NULL),86400.0); /* SSR time is GPST, not UTC */
+    stec=0.0;
     for (i=0;i<nav->vtec.nlay;i++) {
         /* ionospheric pierce point position */
-        ionppp(pos,azel,re,nav->vtec.hgt[i],pppos);
+        if (nav->vtec.hgt[i]*1000.0<=spos[2]) return 0;
+        fs=ionppp(spos,azel,re,nav->vtec.hgt[i],pppos);
+        if (!isfinite(fs)) return 0;
+        maxfs=MAX(maxfs,fs);
+        lon=fmod(pppos[1]+(tod-50400.0)*PI/43200.0,2.0*PI);
 
         nmax=nav->vtec.nmax[i];
         mmax=nav->vtec.mmax[i];
+        if (nmax==0||nmax>16||mmax==0||mmax>nmax) return 0;
         sinp=sin(pppos[0]);
         cosp=cos(pppos[0]);
 
-       /* fully normalized associated Legendre polynomials */
+        /* Fully normalized associated Legendre polynomials. Compute each
+         * degree after the lower degrees used by its recurrence. */
         P[0][0]=1.0;
-        for (j=1;j<=nmax;j++) {
-            /* diagonal term */
-            P[j][j]=sqrt((2*j+1)/(2.0*j))*cosp*P[j-1][j-1];
-            /* one above diagonal */
-            P[j][j-1]=sqrt(2*j+1)*sinp*P[j-1][j-1];
-        }
+        P[1][0]=sqrt(3.0)*sinp;
+        P[1][1]=sqrt(3.0)*cosp;
         for (j=2;j<=nmax;j++) {
-            for (k=0;k<=j-2;k++) {
-                P[j][k]=sqrt((2*j+1)*(2*j-1)/((double)(j-k)*(j+k)))*sinp*P[j-1][k]
-                       -sqrt((2*j+1)*(j+k-1)*(j-k-1)/((double)(j-k)*(j+k)*(2*j-3)))*P[j-2][k];
+            for (k=0;k<j-1;k++) {
+                anm=sqrt((2*j+1)*(2*j-1)/((double)(j-k)*(j+k)));
+                bnm=sqrt((2*j+1)*(j+k-1)*(j-k-1)/
+                         ((double)(j-k)*(j+k)*(2*j-3)));
+                P[j][k]=anm*sinp*P[j-1][k]-bnm*P[j-2][k];
             }
+            P[j][j-1]=sqrt(2*j+1)*sinp*P[j-1][j-1];
+            P[j][j]=sqrt((2*j+1)/(2.0*j))*cosp*P[j-1][j-1];
         }
         /* cosine and sine of longitude multiples */
         cosl[0]=1.0; sinl[0]=0.0;
         for (j=1;j<=mmax;j++) {
-            cosl[j]=cos(j*pppos[1]);
-            sinl[j]=sin(j*pppos[1]);
+            cosl[j]=cos(j*lon);
+            sinl[j]=sin(j*lon);
         }
-        /* evaluate spherical harmonic expansion (TECU) */
-        x=0.0;
+        /* Evaluate vertical TEC for this layer, then accumulate slant TEC. */
+        vtec=0.0;
         for (j=0;j<=nmax;j++) {
-            x+=nav->vtec.cosC[i][j][0]*P[j][0];
+            vtec+=nav->vtec.cosC[i][j][0]*P[j][0];
             for (k=1;k<=MIN(j,mmax);k++) {
-                x+=nav->vtec.cosC[i][j][k]*P[j][k]*cosl[k]+
-                   nav->vtec.sinC[i][j][k]*P[j][k]*sinl[k];
+                vtec+=(nav->vtec.cosC[i][j][k]*cosl[k]+
+                       nav->vtec.sinC[i][j][k]*sinl[k])*P[j][k];
             }
         }
-        vtec+=x;
+        stec+=MAX(vtec,0.0)*fs;
     }
-    /* convert TECU to metres on L1, then scale to signal frequency */
-    fs=ionmapf(pos,azel); /* mapping function  */
-    *delay=40.3E16/SQR(FREQL1)*vtec*SQR(FREQL1/freq)*fs;
-    *var=VAR_SSR_VTEC; /* use fixed variance for now */
-    trace(4,"ionvtec: pppos=%.3f %.3f vtec=%.1f delay=%.3f var=%.2f, freq=%.1f\n",
-          pppos[0]*R2D,pppos[1]*R2D,vtec,*delay,*var,freq);
+    fact=TECK/SQR(freq);
+    *delay=fact*stec;
+    /* QI describes the whole model, not independent errors for each layer.
+     * Use the largest shell mapping once. The spec does not define QI as
+     * sigma; retain a conservative 10 m L1 vertical uncertainty floor.
+     * Unknown QI uses that floor. Saturated QI is rejected above. */
+    *var=SQR(maxfs)*(VAR_SSR_VTEC*SQR(SQR(FREQL1/freq))+
+                     SQR(fact*nav->vtec.qi));
+    trace(4,"ionvtec: pppos=%.3f %.3f stec=%.1f delay=%.3f var=%.2f, freq=%.1f\n",
+          pppos[0]*R2D,pppos[1]*R2D,stec,*delay,*var,freq);
     return 1;
 }

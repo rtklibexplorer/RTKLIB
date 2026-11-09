@@ -2060,11 +2060,29 @@ static int decode_ssr7(rtcm_t *rtcm, int sys, int subtype)
 /* decode SSR 8: VTEC ionosphere --------------------------------------------- */
 static int decode_ssr8(rtcm_t *rtcm, int subtype)
 {
-    double udint,hgt,cosC,sinC,tow;
-    int i=0,j,k,l,type,sync,iod,udi,nlay,nmax,mmax,np,offp,qi;
+    double udint,hgt,cosC,sinC;
+    int i=24+12+(subtype?11:0),j,k,l,sync,iod,udi,nlay,nmax,mmax,qi,ncoef;
     char *msg,tstr[40];
 
-    type=getbitu(rtcm->buff,24,12);
+    /* Validate the whole message before changing the decoder time or model. */
+    if (i+60>rtcm->len*8||getbitu(rtcm->buff,i,20)>=604800) return -1;
+    nlay=getbitu(rtcm->buff,i+58,2)+1;
+    i+=60;
+    for (j=0;j<nlay;j++) {
+        if (i+16>rtcm->len*8) return -1;
+        nmax=getbitu(rtcm->buff,i+8,4)+1;
+        mmax=getbitu(rtcm->buff,i+12,4)+1;
+        i+=16;
+        if (mmax>nmax) return -1;
+        /* Total cosine and sine coefficients for orders 0..mmax. */
+        ncoef=(2*mmax+1)*(nmax+1)-mmax*(mmax+1);
+        if (i+16*ncoef>rtcm->len*8) return -1;
+        /* IGS SSR v1.00 IDF039/IDF040: -163.84 TECU is unavailable/out of range. */
+        for (k=0;k<ncoef;k++,i+=16) {
+            if (getbits(rtcm->buff,i,16)==-32768) return -1;
+        }
+    }
+    i=0;
 
     i+=decode_ssr_epoch(rtcm,SYS_GPS,subtype);
     udi  =getbitu(rtcm->buff,i, 4);             i+= 4;
@@ -2082,12 +2100,10 @@ static int decode_ssr8(rtcm_t *rtcm, int subtype)
         sprintf(msg," %s nsat=   iod=%2d udi=%2d sync=%d",tstr,iod,udi,sync);
     }
 
-    if (nlay>4) {
-        trace(2,"rtcm3 %d too many layers: nlay=%d\n",type,nlay);
-        return -1;
-    }
-
-    for (j=0;j<nlay&&i+16<=rtcm->len*8;j++) {
+    /* Clear once so decoding a later layer retains earlier coefficients. */
+    memset(rtcm->nav.vtec.cosC, 0, sizeof(rtcm->nav.vtec.cosC));
+    memset(rtcm->nav.vtec.sinC, 0, sizeof(rtcm->nav.vtec.sinC));
+    for (j=0;j<nlay;j++) {
         hgt         =getbitu(rtcm->buff,i,8)*10;     i+=8; /* height (km) DF472 */
         nmax        =getbitu(rtcm->buff,i, 4)+1;     i+= 4; /* degree DF473 */
         mmax        =getbitu(rtcm->buff,i, 4)+1;     i+= 4; /* order  DF474 */
@@ -2096,9 +2112,6 @@ static int decode_ssr8(rtcm_t *rtcm, int subtype)
         rtcm->nav.vtec.nmax[j]=nmax;
         rtcm->nav.vtec.mmax[j]=mmax;
 
-        /* clear previous coefficients */
-        memset(rtcm->nav.vtec.cosC, 0, sizeof(rtcm->nav.vtec.cosC));
-        memset(rtcm->nav.vtec.sinC, 0, sizeof(rtcm->nav.vtec.sinC));
         /* cosine coefficients: for order o=0..mmax, degree n=o..nmax */
         for (k=0;k<=mmax;k++) {
             for (l=k;l<=nmax;l++) {
@@ -2718,6 +2731,7 @@ static int decode_type4076(rtcm_t *rtcm)
         case 125: return decode_ssr3(rtcm,SYS_SBS,subtype);
         case 126: return decode_ssr7(rtcm,SYS_SBS,subtype);
         case 127: return decode_ssr5(rtcm,SYS_SBS,subtype);
+        case 201: return ver==1?decode_ssr8(rtcm,subtype):-1;
     }
     trace(2,"rtcm3 4076: unsupported message subtype=%d\n",subtype);
     return 0;
