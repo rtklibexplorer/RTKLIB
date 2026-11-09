@@ -817,6 +817,9 @@ void OptDialog::updateOptions()
     }
 
     processingOptions.pcvr[0] = processingOptions.pcvr[1] = pcv0; // initialize antenna PCV
+    for (int i = 0; i < RNX_NUMSYS; i++) {
+        processingOptions.pcvrs[0][i] = processingOptions.pcvrs[1][i] = pcv0;
+    }
     if ((ui->cBRoverAntennaPcv->isChecked() || ui->cBReferenceAntennaPcv->isChecked()) &&
         fileOptions.rcvantp[0] != '\0' && !readpcv(fileOptions.rcvantp, &pcvr)) {
         QMessageBox::warning(this, tr("Error"), tr("Antenna file read error: \"%1\"").arg(fileOptions.rcvantp));
@@ -824,7 +827,7 @@ void OptDialog::updateOptions()
     }
     if (ui->cBRoverAntennaPcv->isChecked() && processingOptions.anttype[0] != QLatin1String("") &&
         processingOptions.anttype[0] != QStringLiteral("*")) {
-        pcv_t *pcv = searchpcv(0, processingOptions.anttype[0], time, &pcvr);
+        pcv_t *pcv = searchpcvr(processingOptions.anttype[0], time, &pcvr, processingOptions.pcvrs[0]);
         if (pcv)
             processingOptions.pcvr[0] = *pcv;
         else
@@ -832,7 +835,7 @@ void OptDialog::updateOptions()
     }
     if (ui->cBReferenceAntennaPcv->isChecked() && processingOptions.anttype[1] != QLatin1String("") &&
         processingOptions.anttype[1] != QStringLiteral("*")) {
-        pcv_t *pcv = searchpcv(0, processingOptions.anttype[1], time, &pcvr);
+        pcv_t *pcv = searchpcvr(processingOptions.anttype[1], time, &pcvr, processingOptions.pcvrs[1]);
         if (pcv)
             processingOptions.pcvr[1] = *pcv;
         else
