@@ -2558,7 +2558,7 @@ static int readantex(const char *file, pcvs_t *pcvs)
     static const pcv_t pcv0={0};
     pcv_t pcv,pcvr[RNX_NUMSYS],*p=&pcv;
     double neu[3];
-    int i,f,freq=0,state=0,mask[RNX_NUMSYS+1],*m=mask;
+    int i,j,f,freq=0,state=0,mask[RNX_NUMSYS+1],*m=mask;
     char buff[256],*q;
 
     trace(3,"readantex: file=%s\n",file);
@@ -2583,6 +2583,16 @@ static int readantex(const char *file, pcvs_t *pcvs)
             // always, so that searchpcv() finds it as before.
             else for (i=0;i<RNX_NUMSYS;i++) {
                 if (i>0&&!pcvr[i].sys) continue;
+                // Use GPS calibration for frequencies missing from this system.
+                for (j=0;i>0&&j<NFREQ;j++) {
+                    if (mask[i]&(1<<j)) continue;
+                    if (mask[0]&(1<<j)) {
+                        trace(2,"receiver antenna pcv fallback to GPS: type=%s sys=%c frequency index=%d\n",
+                              pcv.type,pcvsyscodes[i],j);
+                    }
+                    memcpy(pcvr[i].off[j],pcvr[0].off[j],sizeof(pcvr[i].off[j]));
+                    memcpy(pcvr[i].var[j],pcvr[0].var[j],sizeof(pcvr[i].var[j]));
+                }
                 strcpy(pcvr[i].type,pcv.type);
                 strcpy(pcvr[i].code,pcv.code);
                 pcvr[i].ts=pcv.ts;
