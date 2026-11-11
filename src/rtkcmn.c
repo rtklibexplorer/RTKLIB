@@ -1151,7 +1151,7 @@ extern void matmulm(const char *tr, int n, int k, int m,
 {
     int lda=tr[0]=='T'?m:n,ldb=tr[1]=='T'?k:m;
     const double alpha=-1,beta=1;
-
+    
     dgemm_((char *)tr,(char *)tr+1,&n,&k,&m,&alpha,(double *)A,&lda,(double *)B,
            &ldb,&beta,C,&n);
 }
@@ -2431,13 +2431,13 @@ extern void eci2ecef(gtime_t tutc, const double *erpv, double *U, double *gmst)
     Rz(-z,R1); Ry(th,R2); Rz(-ze,R3);
     matmul("NN",3,3,3,R1,R2,R);
     matmul("NN",3,3,3,R, R3,P); /* P=Rz(-z)*Ry(th)*Rz(-ze) */
-
+    
     /* iau 1980 nutation */
     nut_iau1980(t,f,&dpsi,&deps);
     Rx(-eps-deps,R1); Rz(-dpsi,R2); Rx(eps,R3);
     matmul("NN",3,3,3,R1,R2,R);
     matmul("NN",3,3,3,R ,R3,N); /* N=Rx(-eps)*Rz(-dspi)*Rx(eps) */
-
+    
     /* greenwich aparent sidereal time (rad) */
     gmst_=utc2gmst(tutc_,erpv[2]);
     gast=gmst_+dpsi*cos(eps);
@@ -2449,7 +2449,7 @@ extern void eci2ecef(gtime_t tutc, const double *erpv, double *U, double *gmst)
     matmul("NN",3,3,3,W ,R3,R ); /* W=Ry(-xp)*Rx(-yp) */
     matmul("NN",3,3,3,N ,P ,NP);
     matmul("NN",3,3,3,R ,NP,U_); /* U=W*Rz(gast)*N*P */
-
+    
     for (i=0;i<9;i++) U[i]=U_[i];
     if (gmst) *gmst=gmst_;
 
@@ -2872,7 +2872,7 @@ extern int readblq(const char *file, const char *sta, double odisp[2][11][3])
 {
     FILE *fp;
     char buff[256],staname[17]="",name[17],*p;
-
+    
     /* station name to upper case */
     if (sscanf(sta,"%16s",staname)<1) return 0;
     for (p=staname;(*p=(char)toupper((int)(*p)));p++) ;
@@ -3770,7 +3770,7 @@ extern void dops(int ns, const double *azel, double elmin, double *dop)
         H[3+4*n++]=1.0;
     }
     if (n<4) return;
-
+    
     matmul("NT",4,4,n,H,H,Q);
     if (!matinv(Q,4)) {
         dop[0]=SQRT(Q[0]+Q[5]+Q[10]+Q[15]); /* GDOP */
