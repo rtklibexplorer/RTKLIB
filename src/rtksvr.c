@@ -281,7 +281,8 @@ static void update_antpos(rtksvr_t *svr, int index) {
     if (sta->antdes[0] != '\0' && strcmp(svr->rtk.opt.pcvr[index].type, sta->antdes) != 0) {
       // Antenna type is to be set from the RTCM stream, and does not match
       // the current pcv_t type, so search for this pcv.
-      pcv_t *pcv = searchpcv(0, sta->antdes, utc2gpst(timeget()), &svr->pcvsr);
+      pcv_t *pcv = searchpcvr(sta->antdes, utc2gpst(timeget()), &svr->pcvsr,
+                               svr->rtk.opt.pcvrs[index]);
       if (!pcv) {
         tracet(2, "antenna index=%d no '%s'\n", index, sta->antdes);
       } else {

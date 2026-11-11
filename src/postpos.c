@@ -975,7 +975,7 @@ static void setpcv(gtime_t time, prcopt_t *popt, nav_t *nav, const pcvs_t *pcvs,
                 for (j=0;j<3;j++) popt->antdel[i][j]=stas[i].del[j];
             }
         }
-        if (!(pcv=searchpcv(0,popt->anttype[i],time,pcvr))) {
+        if (!(pcv=searchpcvr(popt->anttype[i],time,pcvr,popt->pcvrs[i]))) {
             trace(2,"no receiver antenna pcv: %s\n",popt->anttype[i]);
             *popt->anttype[i]='\0';
             continue;

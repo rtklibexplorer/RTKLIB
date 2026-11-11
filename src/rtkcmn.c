@@ -221,7 +221,7 @@ const prcopt_t prcopt_default={ /* defaults processing options */
     {5.0,30.0},                 /* maxinno {phase,code} */
     {0},{0},{0},                /* baseline,ru,rb */
     {"",""},                    /* anttype */
-    {{0}},{{0}},{0},            /* antdel,pcv,exsats */
+    {{0}},{{0}},{{{0}}},{0},    /* antdel,pcv,pcvrs,exsats */
     1,1                         /* maxaveep,initrst */
 };
 const solopt_t solopt_default={ /* defaults solution output options */
@@ -2534,15 +2534,32 @@ static int readngspcv(const char *file, pcvs_t *pcvs)
 
     return 1;
 }
+/* navigation systems of receiver antenna parameters -------------------------*/
+static const char pcvsyscodes[]="GREJSCI";
+static const int pcvsys[RNX_NUMSYS]={
+    SYS_GPS,SYS_GLO,SYS_GAL,SYS_QZS,SYS_SBS,SYS_CMP,SYS_IRN
+};
+/* antex frequency number to frequency index ---------------------------------*/
+static int antfreq2idx(int sys, int f)
+{
+    uint8_t code;
+
+    // Take any valid obs code of frequency f: code2idx() uses only its
+    // frequency to get the frequency index for the system.
+    for (code=1;code<=MAXCODE;code++) {
+        if (code2obs(code)[0]=='0'+f) return code2idx(sys,code);
+    }
+    return -1;
+}
 /* read antex file ----------------------------------------------------------*/
 static int readantex(const char *file, pcvs_t *pcvs)
 {
     FILE *fp;
     static const pcv_t pcv0={0};
-    pcv_t pcv;
+    pcv_t pcv,pcvr[RNX_NUMSYS],*p=&pcv;
     double neu[3];
-    int i,f,freq=0,state=0,freqs[]={1,2,5,0};
-    char buff[256];
+    int i,j,f,freq=0,state=0,mask[RNX_NUMSYS+1],*m=mask;
+    char buff[256],*q;
 
     trace(3,"readantex: file=%s\n",file);
 
@@ -2556,10 +2573,33 @@ static int readantex(const char *file, pcvs_t *pcvs)
 
         if (strstr(buff+60,"START OF ANTENNA")) {
             pcv=pcv0;
+            for (i=0;i<RNX_NUMSYS;i++) pcvr[i]=pcv0;
+            for (i=0;i<=RNX_NUMSYS;i++) mask[i]=0;
             state=1;
         }
         if (strstr(buff+60,"END OF ANTENNA")) {
-            addpcv(&pcv,pcvs);
+            if (pcv.sat) addpcv(&pcv,pcvs);
+            // Receiver antenna: one record for each system, GPS first and
+            // always, so that searchpcv() finds it as before.
+            else for (i=0;i<RNX_NUMSYS;i++) {
+                if (i>0&&!pcvr[i].sys) continue;
+                // Use GPS calibration for frequencies missing from this system.
+                for (j=0;i>0&&j<NFREQ;j++) {
+                    if (mask[i]&(1<<j)) continue;
+                    if (mask[0]&(1<<j)) {
+                        trace(2,"receiver antenna pcv fallback to GPS: type=%s sys=%c frequency index=%d\n",
+                              pcv.type,pcvsyscodes[i],j);
+                    }
+                    memcpy(pcvr[i].off[j],pcvr[0].off[j],sizeof(pcvr[i].off[j]));
+                    memcpy(pcvr[i].var[j],pcvr[0].var[j],sizeof(pcvr[i].var[j]));
+                }
+                strcpy(pcvr[i].type,pcv.type);
+                strcpy(pcvr[i].code,pcv.code);
+                pcvr[i].ts=pcv.ts;
+                pcvr[i].te=pcv.te;
+                pcvr[i].sys=pcvsys[i];
+                addpcv(pcvr+i,pcvs);
+            }
             state=0;
         }
         if (!state) continue;
@@ -2578,12 +2618,24 @@ static int readantex(const char *file, pcvs_t *pcvs)
             if (!str2time(buff,0,43,&pcv.te)) continue;
         }
         else if (strstr(buff+60,"START OF FREQUENCY")) {
-            if (!pcv.sat&&buff[3]!='G') continue; /* only read rec ant for GPS */
             if (sscanf(buff+4,"%d",&f)<1) continue;
-            for (i=0;freqs[i];i++) if (freqs[i]==f) break;
-            if (freqs[i]) freq=i+1;
-            /* for Galileo E5b: save to E2, not E7  */
-            if (satsys(pcv.sat,NULL)==SYS_GAL&&f==7) freq=2;
+            if (pcv.sat) {
+                p=&pcv;
+                m=mask+RNX_NUMSYS;
+                freq=antfreq2idx(satsys(pcv.sat,NULL),f)+1;
+            }
+            else {
+                if (!(q=strchr(pcvsyscodes,buff[3]))) continue;
+                i=(int)(q-pcvsyscodes);
+                p=pcvr+i;
+                p->sys=pcvsys[i];
+                m=mask+i;
+                freq=antfreq2idx(pcvsys[i],f)+1;
+            }
+            // Of the frequencies sharing an index (GLONASS G1/G1a, G2/G2a) keep
+            // the first one.
+            if (freq<1||(*m&(1<<(freq-1)))) freq=0;
+            else *m|=1<<(freq-1);
         }
         else if (strstr(buff+60,"END OF FREQUENCY")) {
             freq=0;
@@ -2591,14 +2643,14 @@ static int readantex(const char *file, pcvs_t *pcvs)
         else if (strstr(buff+60,"NORTH / EAST / UP")) {
             if (freq<1||NFREQ<freq) continue;
             if (decodef(buff,3,neu)<3) continue;
-            pcv.off[freq-1][0]=neu[pcv.sat?0:1]; /* x or e */
-            pcv.off[freq-1][1]=neu[pcv.sat?1:0]; /* y or n */
-            pcv.off[freq-1][2]=neu[2];           /* z or u */
+            p->off[freq-1][0]=neu[pcv.sat?0:1]; /* x or e */
+            p->off[freq-1][1]=neu[pcv.sat?1:0]; /* y or n */
+            p->off[freq-1][2]=neu[2];           /* z or u */
         }
         else if (strstr(buff,"NOAZI")) {
             if (freq<1||NFREQ<freq) continue;
-            if ((i=decodef(buff+8,19,pcv.var[freq-1]))<=0) continue;
-            for (;i<19;i++) pcv.var[freq-1][i]=pcv.var[freq-1][i-1];
+            if ((i=decodef(buff+8,19,p->var[freq-1]))<=0) continue;
+            for (;i<19;i++) p->var[freq-1][i]=p->var[freq-1][i-1];
         }
     }
     fclose(fp);
@@ -2687,6 +2739,56 @@ extern pcv_t *searchpcv(int sat, const char *type, gtime_t time,
         }
     }
     return NULL;
+}
+/* search receiver antenna parameters for each system --------------------------
+* search receiver antenna parameters for each navigation system
+* args   : char   *type       I   antenna type
+*          gtime_t time       I   time to search parameters
+*          pcvs_t *pcvs       I   antenna parameters
+*          pcv_t  *pcvr       O   antenna parameters for each system
+*                                 {GPS,GLO,GAL,QZS,SBS,CMP,IRN}
+*                                 (all 0 for a system without parameters)
+* return : antenna parameter as searchpcv() (NULL: no antenna)
+* notes  : pcvr is not changed if no antenna is found
+*-----------------------------------------------------------------------------*/
+extern pcv_t *searchpcvr(const char *type, gtime_t time, const pcvs_t *pcvs,
+                         pcv_t *pcvr)
+{
+    static const pcv_t pcv0={0};
+    pcv_t *pcv,*p;
+    int i;
+
+    if (!(pcv=searchpcv(0,type,time,pcvs))) return NULL;
+
+    for (i=0;i<RNX_NUMSYS;i++) pcvr[i]=pcv0;
+
+    // readantex() adds the records of the other systems right after the GPS one.
+    for (p=pcv;p<pcvs->pcv+pcvs->n&&p->sys;p++) {
+        if (p>pcv&&p->sys==SYS_GPS) break; /* next antenna */
+        for (i=0;i<RNX_NUMSYS;i++) if (pcvsys[i]==p->sys) pcvr[i]=*p;
+    }
+    return pcv;
+}
+/* receiver antenna parameters for satellite system ----------------------------
+* get receiver antenna parameters for satellite system
+* args   : prcopt_t *opt      I   processing options
+*          int    rcv         I   receiver (0:rover,1:base)
+*          int    sys         I   satellite system (SYS_???)
+* return : antenna parameters for the system (opt->pcvr[rcv] if not set)
+* notes  : opt->pcvrs[rcv] is used only for the antenna type of opt->pcvr[rcv]
+*-----------------------------------------------------------------------------*/
+extern const pcv_t *rcvpcv(const prcopt_t *opt, int rcv, int sys)
+{
+    const pcv_t *pcv;
+    int i;
+
+    for (i=0;i<RNX_NUMSYS;i++) {
+        pcv=opt->pcvrs[rcv]+i;
+        if (pcvsys[i]==sys&&*pcv->type&&!strcmp(pcv->type,opt->pcvr[rcv].type)) {
+            return pcv;
+        }
+    }
+    return opt->pcvr+rcv;
 }
 /* read station positions ------------------------------------------------------
 * read positions from station position file
