@@ -696,7 +696,6 @@ static void *rtksvrthread(void *arg)
             else {
                 /* decode receiver raw/rtcm data */
                 fobs[i]=decoderaw(svr,i);
-                if (1==i&&svr->rtcm[1].staid>0) sol.refstationid=svr->rtcm[1].staid; 
             }
         }
         /* averaging single base pos */
@@ -726,6 +725,7 @@ static void *rtksvrthread(void *arg)
             /* rtk positioning */
             rtksvrlock(svr);
             rtkpos(&svr->rtk,obs.data,obs.n,&svr->nav);
+            if (svr->rtcm[1].staid>0) svr->rtk.sol.refstationid=svr->rtcm[1].staid;
             rtksvrunlock(svr);
             
             if (svr->rtk.sol.stat!=SOLQ_NONE) {
