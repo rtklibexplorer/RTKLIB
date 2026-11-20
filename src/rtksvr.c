@@ -649,7 +649,7 @@ static void *rtksvrthread(void *arg)
     uint32_t tick,ticknmea,tick1hz,tickreset;
     uint8_t *p,*q;
     char msg[128];
-    int i,j,n,cycle,cputime;
+    int i,j,k,n,cycle,cputime;
     
     tracet(3,"rtksvrthread:\n");
     
@@ -715,8 +715,14 @@ static void *rtksvrthread(void *arg)
             for (j=0;j<svr->obs[0][i].n&&obs.n<MAXOBS*2;j++) {
                 obs.data[obs.n++]=svr->obs[0][i].data[j];
             }
-            for (j=0;j<svr->obs[1][0].n&&obs.n<MAXOBS*2;j++) {
-                obs.data[obs.n++]=svr->obs[1][0].data[j];
+            /* pair with the base epoch closest in time decoded this cycle */
+            for (k=0,j=1;j<fobs[1]&&svr->obs[0][i].n>0;j++) {
+                if (svr->obs[1][j].n>0&&(svr->obs[1][k].n==0||
+                    fabs(timediff(svr->obs[1][j].data[0].time,svr->obs[0][i].data[0].time))<
+                    fabs(timediff(svr->obs[1][k].data[0].time,svr->obs[0][i].data[0].time)))) k=j;
+            }
+            for (j=0;j<svr->obs[1][k].n&&obs.n<MAXOBS*2;j++) {
+                obs.data[obs.n++]=svr->obs[1][k].data[j];
             }
             /* carrier phase bias correction */
             if (!strstr(svr->rtk.opt.pppopt,"-DIS_FCB")) {
@@ -741,6 +747,13 @@ static void *rtksvrthread(void *arg)
             if ((int)(tickget()-tick)>=svr->cycle) {
                 svr->prcout+=fobs[0]-i-1;
             }
+        }
+        /* keep the newest base epoch in obs[1][0] for cycles without base data */
+        if (fobs[1]>1) {
+            rtksvrlock(svr);
+            svr->obs[1][0].n=svr->obs[1][fobs[1]-1].n;
+            memcpy(svr->obs[1][0].data,svr->obs[1][fobs[1]-1].data,sizeof(obsd_t)*svr->obs[1][0].n);
+            rtksvrunlock(svr);
         }
         /* send null solution if no solution (1hz) */
         if (svr->rtk.sol.stat==SOLQ_NONE&&(int)(tick-tick1hz)>=1000) {
