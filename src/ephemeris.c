@@ -833,7 +833,7 @@ extern void satposs(gtime_t teph, const obsd_t *obs, int n, const nav_t *nav,
         if (dts[i*2]==0.0) {
             if (!ephclk(time[i],teph,obs[i].sat,nav,dts+i*2)) continue;
             dts[1+i*2]=0.0;
-            *var=SQR(STD_BRDCCLK);
+            var[i]=SQR(STD_BRDCCLK);
             trace(3,"no precise clock, use broadcast %s sat=%2d\n",time2str(time[i],tstr,3),obs[i].sat);
         }
         trace(4,"satposs: %d,time=%.9f dt=%.9f pr=%.3f rs=%13.3f %13.3f %13.3f dts=%12.3f var=%7.3f\n",
