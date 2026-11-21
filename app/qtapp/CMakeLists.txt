@@ -83,3 +83,17 @@ add_subdirectory(rtkplot_qt)
 add_subdirectory(rtkpost_qt)
 add_subdirectory(srctblbrows_qt)
 add_subdirectory(strsvr_qt)
+
+if(BUILD_TESTING)
+    add_executable(t_tcpoptdlg
+        ${PROJECT_SOURCE_DIR}/test/utest/t_tcpoptdlg.cpp
+        appcmn_qt/tcpoptdlg.cpp appcmn_qt/tcpoptdlg.h appcmn_qt/tcpoptdlg.ui
+        appcmn_qt/mntpoptdlg.cpp appcmn_qt/mntpoptdlg.h appcmn_qt/mntpoptdlg.ui)
+    target_link_libraries(t_tcpoptdlg PRIVATE rtklib Qt${QT_VERSION_MAJOR}::Widgets)
+    set_target_properties(t_tcpoptdlg PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/test/utest
+        QT_EXCLUDE_FROM_TRANSLATION ON)
+    add_test(NAME stream_qt_ipv6_paths COMMAND t_tcpoptdlg)
+    set_tests_properties(stream_qt_ipv6_paths PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 15)
+endif()

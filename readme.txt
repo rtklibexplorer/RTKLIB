@@ -59,6 +59,20 @@ Pre-complied linux packages are available at https://build.opensuse.org/package/
 
 The last step will copy the compiled executables into a new directory RTKLIB_bin next to the rtklib source directory.
 
+NETWORK STREAMS (TCP/UDP/NTRIP):
+
+IPv4, IPv6 and hostnames are supported. Enclose IPv6 addresses in brackets when
+specifying a port, for example tcpcli://[::1]:2101 or
+ntrip://user:password@[2001:db8::1]:2101/MOUNT. Link-local addresses can include
+a scope ID, for example [fe80::1%en0]:2101 (use the local interface name).
+
+In Qt network options, enter the address and port in their separate fields.
+The address field accepts IPv6 with or without brackets. For TCP/UDP servers
+and NTRIP casters, an empty Listen Address uses a dual-stack IPv6 listener when
+available and falls back to IPv4 if necessary. A specific address binds that
+address only. TCP clients try the resolved addresses in order after connection
+errors or the configured inactive timeout.
+
 BENCHMARKS:
 For evaluation and comparison purposes, config files (septentrio_urban.conf, f9p_urban.conf, trimble_urban.conf) are included in the data/config folder for real-time compatible solutions for the PPC-Dataset and UrbanNav Tokyo benchmarks.  Both benchmark datasets are available on Github.  Results with the latest code as of 8/24/26 using the PPC_Dataset offficial scoring for both benchmarks are:
 
