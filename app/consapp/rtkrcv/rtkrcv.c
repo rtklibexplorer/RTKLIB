@@ -376,7 +376,7 @@ static void readant(vt_t *vt, prcopt_t *opt, nav_t *nav, pcvs_t *pcvsr) {
     if (readpcv(filopt.rcvantp, pcvsr)) {
       for (int i = 0; i < 2; i++) {
         if (!*opt->anttype[i] || !strcmp(opt->anttype[i], "*")) continue;
-        pcv_t *pcv = searchpcv(0, opt->anttype[i], time, pcvsr);
+        pcv_t *pcv = searchpcvr(opt->anttype[i], time, pcvsr, opt->pcvrs[i]);
         if (!pcv) {
           vt_printf(vt, "no antenna %s in %s", opt->anttype[i], filopt.rcvantp);
           continue;

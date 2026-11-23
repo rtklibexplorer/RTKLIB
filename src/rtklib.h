@@ -626,6 +626,7 @@ typedef struct {        /* earth rotation parameter type */
 
 typedef struct {        /* antenna parameter type */
     int sat;            /* satellite number (0:receiver) */
+    int sys;            /* navigation system of receiver antenna (0:all) */
     char type[MAXANT];  /* antenna type */
     char code[MAXANT];  /* serial number or satellite code */
     gtime_t ts,te;      /* valid time start and end */
@@ -1095,6 +1096,8 @@ typedef struct {        /* processing options type */
     char anttype[2][MAXANT]; /* antenna types {rover,base} */
     double antdel[2][3]; /* antenna delta {{rov_e,rov_n,rov_u},{ref_e,ref_n,ref_u}} */
     pcv_t pcvr[2];      /* receiver antenna parameters {rov,base} */
+    pcv_t pcvrs[2][RNX_NUMSYS]; /* receiver antenna parameters for each system */
+                        /* {rov,base}{GPS,GLO,GAL,QZS,SBS,CMP,IRN} */
     uint8_t exsats[MAXSAT]; /* excluded satellites (1:excluded,2:included) */
     int  maxaveep;      /* max averaging epochs */
     int  initrst;       /* initialize by restart */
@@ -1599,6 +1602,9 @@ EXPORT int seliflc(int optnf, int sys);
 EXPORT int  readpcv(const char *file, pcvs_t *pcvs);
 EXPORT pcv_t *searchpcv(int sat, const char *type, gtime_t time,
                         const pcvs_t *pcvs);
+EXPORT pcv_t *searchpcvr(const char *type, gtime_t time, const pcvs_t *pcvs,
+                         pcv_t *pcvr);
+EXPORT const pcv_t *rcvpcv(const prcopt_t *opt, int rcv, int sys);
 EXPORT void antmodel(const pcv_t *pcv, const double *del, const double *azel,
                      int opt, double *dant);
 EXPORT void antmodel_s(const pcv_t *pcv, double nadir, double *dant);

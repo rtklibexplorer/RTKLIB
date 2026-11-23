@@ -1212,12 +1212,13 @@ void __fastcall TMainForm::SvrStart(void)
         return;
     }
     PrcOpt.pcvr[0]=PrcOpt.pcvr[1]=pcv0; // initialize antenna PCV
+    for (i=0;i<RNX_NUMSYS;i++) PrcOpt.pcvrs[0][i]=PrcOpt.pcvrs[1][i]=pcv0;
 
     for (i=0;i<3;i++) PrcOpt.antdel[0][i]=RovAntDel[i];
     if (RovAntPcvF) strcpy(PrcOpt.anttype[0], RovAntF.c_str());
     if (RovAntPcvF && RovAntF != "" && RovAntF != "*") {
         type=RovAntF.c_str();
-        pcv_t *pcv=searchpcv(0,type,time,&rtksvr.pcvsr);
+        pcv_t *pcv=searchpcvr(type,time,&rtksvr.pcvsr,PrcOpt.pcvrs[0]);
         if (pcv) {
             PrcOpt.pcvr[0]=*pcv;
         }
@@ -1231,7 +1232,7 @@ void __fastcall TMainForm::SvrStart(void)
     if (RefAntPcvF) strcpy(PrcOpt.anttype[1], RefAntF.c_str());
     if (RefAntPcvF && RefAntF != "" && RefAntF != "*") {
         type=RefAntF.c_str();
-        pcv_t *pcv=searchpcv(0,type,time,&rtksvr.pcvsr);
+        pcv_t *pcv=searchpcvr(type,time,&rtksvr.pcvsr,PrcOpt.pcvrs[1]);
         if (pcv) {
             PrcOpt.pcvr[1]=*pcv;
         }
