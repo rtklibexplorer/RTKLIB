@@ -4,6 +4,8 @@
 //---------------------------------------------------------------------------
 #include <QDialog>
 
+#include "rtklib.h"
+
 namespace Ui {
 class LogStrDialog;
 }
@@ -44,16 +46,18 @@ protected:
     SerialOptDialog *serialOptDialog;
     TcpOptDialog *tcpOptDialog;
 
-    QString paths[3][4];
+    QString paths[RTKSVRNIN][4];
     QString history[10];
 
 public slots:
     void showStreamOptions1();
     void showStreamOptions2();
     void showStreamOptions3();
+    void showStreamOptions4();
     void selectFile1();
     void selectFile2();
     void selectFile3();
+    void selectFile4();
     void showKeyDialog();
     void updateEnable();
 

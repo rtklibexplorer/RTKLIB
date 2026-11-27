@@ -4,7 +4,7 @@ object LogStrDialog: TLogStrDialog
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'Log Streams'
-  ClientHeight = 198
+  ClientHeight = 244
   ClientWidth = 394
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
@@ -40,14 +40,14 @@ object LogStrDialog: TLogStrDialog
   end
   object LabelF1: TLabel
     Left = 12
-    Top = 84
+    Top = 107
     Width = 66
     Height = 13
     Caption = 'Log File Paths'
   end
   object BtnKey: TSpeedButton
     Left = 188
-    Top = 168
+    Top = 214
     Width = 21
     Height = 23
     Caption = '?'
@@ -56,21 +56,21 @@ object LogStrDialog: TLogStrDialog
   end
   object Label1: TLabel
     Left = 76
-    Top = 173
+    Top = 219
     Width = 49
     Height = 13
     Caption = 'Swap Intv'
   end
   object Label2: TLabel
     Left = 175
-    Top = 173
+    Top = 219
     Width = 7
     Height = 13
     Caption = 'H'
   end
   object BtnCancel: TButton
     Left = 303
-    Top = 167
+    Top = 213
     Width = 85
     Height = 27
     Caption = '&Cancel'
@@ -79,7 +79,7 @@ object LogStrDialog: TLogStrDialog
   end
   object BtnOk: TButton
     Left = 215
-    Top = 167
+    Top = 213
     Width = 85
     Height = 27
     Caption = '&OK'
@@ -155,21 +155,21 @@ object LogStrDialog: TLogStrDialog
   end
   object FilePath1: TEdit
     Left = 8
-    Top = 98
+    Top = 121
     Width = 355
     Height = 21
     TabOrder = 8
   end
   object FilePath2: TEdit
     Left = 8
-    Top = 120
+    Top = 143
     Width = 355
     Height = 21
     TabOrder = 10
   end
   object BtnFile1: TButton
     Left = 363
-    Top = 97
+    Top = 120
     Width = 25
     Height = 22
     Caption = '...'
@@ -184,7 +184,7 @@ object LogStrDialog: TLogStrDialog
   end
   object BtnFile2: TButton
     Left = 363
-    Top = 119
+    Top = 142
     Width = 25
     Height = 22
     Caption = '...'
@@ -199,7 +199,7 @@ object LogStrDialog: TLogStrDialog
   end
   object TimeTagC: TCheckBox
     Left = 10
-    Top = 170
+    Top = 216
     Width = 63
     Height = 17
     Caption = 'Time-Tag'
@@ -210,7 +210,7 @@ object LogStrDialog: TLogStrDialog
     Top = 19
     Width = 117
     Height = 17
-    Caption = '(6) Rover'
+    Caption = '(5) Rover'
     TabOrder = 2
     OnClick = Stream1CClick
   end
@@ -219,7 +219,7 @@ object LogStrDialog: TLogStrDialog
     Top = 42
     Width = 117
     Height = 17
-    Caption = '(7) Base Station'
+    Caption = '(6) Base Station'
     TabOrder = 5
     OnClick = Stream2CClick
   end
@@ -228,7 +228,7 @@ object LogStrDialog: TLogStrDialog
     Top = 65
     Width = 117
     Height = 17
-    Caption = '(8) Correction'
+    Caption = '(7) Correction'
     TabOrder = 13
     OnClick = Stream3CClick
   end
@@ -267,14 +267,14 @@ object LogStrDialog: TLogStrDialog
   end
   object FilePath3: TEdit
     Left = 8
-    Top = 142
+    Top = 165
     Width = 355
     Height = 21
     TabOrder = 16
   end
   object BtnFile3: TButton
     Left = 363
-    Top = 141
+    Top = 164
     Width = 25
     Height = 22
     Caption = '...'
@@ -287,9 +287,73 @@ object LogStrDialog: TLogStrDialog
     TabOrder = 17
     OnClick = BtnFile3Click
   end
+  object Stream4C: TCheckBox
+    Left = 8
+    Top = 87
+    Width = 117
+    Height = 17
+    Caption = '(8) Correction'
+    TabOrder = 13
+    OnClick = Stream4CClick
+  end
+  object Stream4: TComboBox
+    Left = 133
+    Top = 86
+    Width = 103
+    Height = 21
+    Style = csDropDownList
+    ItemIndex = 0
+    TabOrder = 14
+    Text = 'Serial'
+    OnChange = Stream4Change
+    Items.Strings = (
+      'Serial'
+      'TCP Client'
+      'TCP Server'
+      'NTRIP Server'
+      'NTRIP Caster'
+      'File')
+  end
+  object BtnStr4: TButton
+    Left = 237
+    Top = 85
+    Width = 25
+    Height = 22
+    Caption = '...'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -9
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 15
+    OnClick = BtnStr4Click
+  end
+  object FilePath4: TEdit
+    Left = 8
+    Top = 187
+    Width = 355
+    Height = 21
+    TabOrder = 16
+  end
+  object BtnFile4: TButton
+    Left = 363
+    Top = 186
+    Width = 25
+    Height = 22
+    Caption = '...'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -9
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 17
+    OnClick = BtnFile4Click
+  end
   object SwapIntv: TComboBox
     Left = 128
-    Top = 170
+    Top = 216
     Width = 45
     Height = 21
     TabOrder = 18
