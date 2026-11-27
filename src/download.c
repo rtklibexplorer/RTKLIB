@@ -42,7 +42,7 @@ typedef struct {                    /* download paths type */
 } paths_t;
 
 /* execute command with test timeout -----------------------------------------*/
-extern int execcmd_to(const char *cmd)
+int execcmd_to(const char *cmd)
 {
 #ifdef WIN32
     PROCESS_INFORMATION info;
@@ -672,7 +672,7 @@ static int print_total(const url_t *url, const char **stas, int nsta, int *nc,
 *        %r -> rrrr    : station name
 *        %{env} -> env : environment variable
 *-----------------------------------------------------------------------------*/
-extern int dl_readurls(const char *file, const char **types, int ntype, url_t *urls,
+int dl_readurls(const char *file, const char **types, int ntype, url_t *urls,
                        int nmax)
 {
     FILE *fp;
@@ -716,7 +716,7 @@ extern int dl_readurls(const char *file, const char **types, int ntype, url_t *u
 *    (1) station list file contains station names separated by spaces.
 *    (2) strings after # in a line are treated as comments
 *-----------------------------------------------------------------------------*/
-extern int dl_readstas(const char *file, char **stas, int nmax)
+int dl_readstas(const char *file, char **stas, int nmax)
 {
     FILE *fp;
     char buff[4096],*p;
@@ -772,7 +772,7 @@ extern int dl_readstas(const char *file, char **stas, int nmax)
 *          remote file-list. The secondary matched or the following files are
 *          not downloaded.
 *-----------------------------------------------------------------------------*/
-extern int dl_exec(gtime_t ts, gtime_t te, double ti, int seqnos, int seqnoe,
+int dl_exec(gtime_t ts, gtime_t te, double ti, int seqnos, int seqnoe,
                    const url_t *urls, int nurl, const char **stas, int nsta,
                    const char *dir, const char *usr, const char *pwd,
                    const char *proxy, int opts, char *msg, FILE *fp)
@@ -839,7 +839,7 @@ extern int dl_exec(gtime_t ts, gtime_t te, double ti, int seqnos, int seqnoe,
 *          FILE   *fp       IO  log test result file pointer
 * return : status (1:ok,0:error,-1:aborted)
 *-----------------------------------------------------------------------------*/
-extern void dl_test(gtime_t ts, gtime_t te, double ti, const url_t *urls,
+void dl_test(gtime_t ts, gtime_t te, double ti, const url_t *urls,
                     int nurl, const char **stas, int nsta, const char *dir,
                     int ncol, int datefmt, FILE *fp)
 {

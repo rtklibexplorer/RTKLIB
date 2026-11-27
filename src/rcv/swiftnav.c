@@ -1421,7 +1421,7 @@ static int sync_sbp(uint8_t *buff, uint8_t data) {
  *                  2: input ephemeris, 3: input sbas message,
  *                  9: input ion/utc parameter)
  *-----------------------------------------------------------------------------*/
-extern int input_sbp(raw_t *raw, uint8_t data) {
+int input_sbp(raw_t *raw, uint8_t data) {
   trace(5, "input_sbp: data=%02x\n", data);
 
   if (raw->nbyte == 0) {
@@ -1463,7 +1463,7 @@ static int endfile(raw_t *raw) {
  *          FILE   *fp    I      file pointer
  * return : status(-2: end of file, -1...9: same as above)
  *-----------------------------------------------------------------------------*/
-extern int input_sbpf(raw_t *raw, FILE *fp) {
+int input_sbpf(raw_t *raw, FILE *fp) {
   int i, data, stat;
 
   trace(4, "input_sbpf:\n");
@@ -1513,7 +1513,7 @@ extern int input_sbpf(raw_t *raw, FILE *fp) {
  *          FILE   *fp    I      file pointer
  * return : status(-2: end of file, -1...9: same as above)
  *-----------------------------------------------------------------------------*/
-extern int input_sbpjsonf(raw_t *raw, FILE *fp) {
+int input_sbpjsonf(raw_t *raw, FILE *fp) {
   const char JSON_MSGTYPE_FIELD[] = "\"msg_type\":";
   const char JSON_SENDER_FIELD[] = "\"sender\":";
   const char JSON_PAYLOAD_FIELD[] = "\"payload\":";

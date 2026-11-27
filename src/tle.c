@@ -385,7 +385,7 @@ static int cmp_tle_data(const void *p1, const void *p2)
 *          name + TLE) format.
 *          the characters after # in a line are treated as comments.
 *-----------------------------------------------------------------------------*/
-extern int tle_read(const char *file, tle_t *tle)
+int tle_read(const char *file, tle_t *tle)
 {
     FILE *fp;
     tled_t data={{0}};
@@ -453,7 +453,7 @@ extern int tle_read(const char *file, tle_t *tle)
 *            satno: satellite catalog number
 *            desig: international designator (optional)
 *-----------------------------------------------------------------------------*/
-extern int tle_name_read(const char *file, tle_t *tle)
+int tle_name_read(const char *file, tle_t *tle)
 {
     FILE *fp;
     tled_t data;
@@ -513,7 +513,7 @@ extern int tle_name_read(const char *file, tle_t *tle)
 * notes  : the coordinates of the position and velocity are ECEF (ITRF)
 *          if erp == NULL, polar motion and ut1-utc are neglected
 *-----------------------------------------------------------------------------*/
-extern int tle_pos(gtime_t time, const char *name, const char *satno,
+int tle_pos(gtime_t time, const char *name, const char *satno,
                    const char *desig, const tle_t *tle, const erp_t *erp,
                    double *rs)
 {

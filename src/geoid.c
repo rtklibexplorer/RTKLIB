@@ -196,7 +196,7 @@ static double geoidh_gsi(const double *pos)
 *          gsigeome_ver4 : GSI geoid 2000 1.0x1.5" (japanese area)
 *          (byte-order of binary files must be compatible to cpu)
 *-----------------------------------------------------------------------------*/
-extern int opengeoid(int model, const char *file)
+int opengeoid(int model, const char *file)
 {
     trace(3,"opengeoid: model=%d file=%s\n",model,file);
     
@@ -221,7 +221,7 @@ extern int opengeoid(int model, const char *file)
 * args   : none
 * return : none
 *-----------------------------------------------------------------------------*/
-extern void closegeoid(void)
+void closegeoid(void)
 {
     trace(3,"closegoid:\n");
     
@@ -237,7 +237,7 @@ extern void closegeoid(void)
 *          geoid model before calling the function. If the external geoid model
 *          is not open, the function uses embedded geoid model.
 *-----------------------------------------------------------------------------*/
-extern double geoidh(const double *pos)
+double geoidh(const double *pos)
 {
     double posd[2],h;
     

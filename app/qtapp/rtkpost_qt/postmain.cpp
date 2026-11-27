@@ -78,7 +78,7 @@ MainForm *mainForm;
 extern "C" {
 
 // show message in message area ---------------------------------------------
-extern int showmsg(const char *format, ...)
+int showmsg(const char *format, ...)
 {
     va_list arg;
     char buff[1024];
@@ -93,13 +93,13 @@ extern int showmsg(const char *format, ...)
     return mainForm->abortFlag;
 }
 // set time span of progress bar --------------------------------------------
-extern void settspan(gtime_t ts, gtime_t te)
+void settspan(gtime_t ts, gtime_t te)
 {
     tstart_ = ts;
     tend_ = te;
 }
 // set current time to show progress ----------------------------------------
-extern void settime(gtime_t time)
+void settime(gtime_t time)
 {
     double tt;
     if (tend_.time != 0 && tstart_.time != 0 && (tt = timediff(tend_, tstart_)) > 0.0) {

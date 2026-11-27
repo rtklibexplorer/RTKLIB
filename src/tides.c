@@ -958,7 +958,7 @@ static void tide_pole(gtime_t tutc, const double *pos, const double *erpv, doubl
 * Notes  : see ref [1], [2] chap 7
 *          see ref [4] 5.2.1, 5.2.2, 5.2.3
 *-----------------------------------------------------------------------------*/
-extern void tidedisp(gtime_t tutc, const double *rr, int opt, const erp_t *erp,
+void tidedisp(gtime_t tutc, const double *rr, int opt, const erp_t *erp,
                      const double odisp[2][11][3], double *dr) {
   char tstr[40];
   trace(3, "tidedisp: tutc=%s\n", time2str(tutc, tstr, 0));
